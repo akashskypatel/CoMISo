@@ -1,0 +1,118 @@
+//=============================================================================
+//
+//  CLASS HarmonicExamplePlugin - IMPLEMENTATION
+//
+//=============================================================================
+
+//== INCLUDES =================================================================
+
+#include <Qt>
+#include <QtGui>
+#include <QSpacerItem>
+
+#include "HarmonicExamplePlugin.hh"
+
+#include <iostream>
+#include <ACG/Utils/StopWatch.hh>
+
+#include <OpenFlipper/BasePlugin/PluginFunctions.hh>
+
+// #include <PhySim/QtWidgets/QwtFunctionPlot.hh>
+// #include <PhySim/Meshes/PrincipalCurvatureT.hh>
+// #include <PhySim/Meshes/PrincipalCurvatureJetT.hh>
+// #include <PhySim/Math/Algorithms.hh>
+
+
+#undef min
+#undef max
+
+
+//== IMPLEMENTATION ==========================================================
+
+
+void HarmonicExamplePlugin::initializePlugin()
+{
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+bool HarmonicExamplePlugin::initializeToolbox(QWidget*& _widget)
+{
+  tool_ = new HarmonicExampleToolbar();
+  _widget = tool_;
+
+  QSize size(300,300);
+  tool_->resize(size);
+  
+  // connect button press event to function slotCompute()
+  connect(tool_->compute_pb, SIGNAL( clicked() ), this, SLOT( slotCompute() ) );
+
+  return true;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void HarmonicExamplePlugin::pluginsInitialized() 
+{
+//   emit addPickMode("Separator");
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+HarmonicExamplePlugin::HarmonicExample*
+HarmonicExamplePlugin::
+get_harmonicexample_object( BaseObjectData* _object )
+{
+  // initialize PerObjectData if not done yet
+  if (!_object->hasObjectData(pod_name()))
+  {
+    // get mesh object
+    TriMesh* mesh = dynamic_cast< TriMeshObject* >( _object )->mesh();
+
+    // initialize per object data
+    _object->setObjectData(pod_name(), new POD(*mesh));
+  }
+  
+  // get feature lines object
+  HarmonicExample* harmonicexample = dynamic_cast<HarmonicExample*>(& (dynamic_cast< POD* >(_object->objectData(pod_name() )))->harmonicexample());
+
+  return harmonicexample;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void HarmonicExamplePlugin::slotCompute() 
+{
+  // iterate over all target triangle meshes
+  for ( PluginFunctions::ObjectIterator o_it(PluginFunctions::TARGET_OBJECTS,DATA_TRIANGLE_MESH) ; o_it != PluginFunctions::objectsEnd(); ++o_it) 
+  {
+    // get pointer to mesh
+    TriMesh* mesh = dynamic_cast< TriMeshObject* >( *o_it )->mesh();
+    if ( mesh )
+    {
+      // get feature line object and call compute function
+      get_harmonicexample_object( *o_it )->compute();
+      
+      // set correct draw mode
+      TriMeshObject  *mesh_obj;
+      mesh_obj = PluginFunctions::triMeshObject((*o_it));
+      mesh_obj->meshNode()->drawMode(ACG::SceneGraph::DrawModes::SOLID_POINTS_COLORED);
+      mesh_obj->materialNode()->disable_color_material();
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+Q_EXPORT_PLUGIN2( harmonicexampleplugin , HarmonicExamplePlugin );
+
