@@ -32,101 +32,166 @@
  *                                                                           *
 \*===========================================================================*/ 
 
+
 //=============================================================================
 //
-//  CLASS HarmonicExamplePlugin
+//  CLASS ColorCoder
 //
 //=============================================================================
 
 
-#ifndef HARMONICEXAMPLEPLUGIN_HH
-#define HARMONICEXAMPLEPLUGIN_HH
+#ifndef ACG_COLORCODER_HH
+#define ACG_COLORCODER_HH
+
+#ifdef WIN32
+#undef min
+#undef max
+#endif
 
 
 //== INCLUDES =================================================================
 
-#include <QObject>
-#include <QMenuBar>
-#include <QSpinBox>
 
-#include <OpenFlipper/common/Types.hh>
-#include <OpenFlipper/BasePlugin/BaseInterface.hh>
-#include <OpenFlipper/BasePlugin/ToolboxInterface.hh>
-#include <OpenFlipper/BasePlugin/KeyInterface.hh>
-#include <OpenFlipper/BasePlugin/MouseInterface.hh>
-#include <OpenFlipper/BasePlugin/PickingInterface.hh>
-#include <OpenFlipper/BasePlugin/ScriptInterface.hh>
+#include <ACG/Math/VectorT.hh>
 
-#include <ACG/QtWidgets/QtExaminerViewer.hh>
 
-#include <ObjectTypes/TriangleMesh/TriangleMesh.hh>
+//== NAMESPACES ===============================================================
 
-#include "HarmonicExampleToolbar.hh"
-#include "HarmonicExamplePerObjectDataT.hh"
-#include "HarmonicExampleT.hh"
-
+namespace ACG {
 
 //== CLASS DEFINITION =========================================================
 
 
-class HarmonicExamplePlugin : public QObject, BaseInterface, ToolboxInterface, KeyInterface, ScriptInterface, MouseInterface, PickingInterface
+class ColorCoder
 {
-  Q_OBJECT
-  Q_INTERFACES(BaseInterface)
-  Q_INTERFACES(ToolboxInterface)
-  Q_INTERFACES(KeyInterface)
-  Q_INTERFACES(ScriptInterface)
-  Q_INTERFACES(MouseInterface)
-  Q_INTERFACES(PickingInterface)
+public:
+   
+  /// Default constructor.
+  ColorCoder(float _min=0.0, float _max=1.0, bool _signed=false) 
+  { set_range(_min, _max, _signed); }
+ 
 
 
-  // typedef for easy access
-  typedef ACG::HarmonicExampleT<TriMesh> HarmonicExample;
-  typedef HarmonicExamplePerObjectDataT<TriMesh>   POD;
-
-signals:
-  void updateView();
-  void updatedObject(int);
-
-
-private slots:
-
-  // initialization functions
-  void initializePlugin();
-  void pluginsInitialized();
-
-
-  // compute
-  void slotCompute();
-
-
-public :
-
-  ~HarmonicExamplePlugin() {};
+  /// set the color coding range for unsigned coding
+  void set_range(float _min, float _max, bool _signed) 
+  {
+    if (_min == _max)
+    {
+      val0_ = val1_ = val2_ = val3_ = val4_ = _min;
+    }
+    else
+    {
+      if (_min > _max) std::swap(_min, _max);
+      val0_ = _min;
+      val4_ = _max;
+      val2_ = 0.5f * (val0_ + val4_);
+      val1_ = 0.5f * (val0_ + val2_);
+      val3_ = 0.5f * (val2_ + val4_);
+    }
+    signed_mode_ = _signed;
+  }
 
 
-  bool initializeToolbox(QWidget*& _widget);
+  /// color coding
+  ACG::Vec3uc color(float _v) const {
+    return signed_mode_ ? color_signed(_v) : color_unsigned(_v);
+  }
 
-  QString name() { return (QString("HarmonicExample")); };
-  QString description( ) { return (QString("Computes the HarmonicExample of the the active Mesh")); }; 
+  /// color coding
+  ACG::Vec3f color_float(float _v) const {
+    ACG::Vec3uc c;
+    if(signed_mode_) c=color_signed(_v); else c=color_unsigned(_v);
+    return (ACG::Vec3f(c[0],c[1],c[2])/255.f);
+  }
 
-private :
 
-  // return name of per object data
-  const char * pod_name() { return "HARMONICEXAMPLE_PER_OBJECT_DATA";}
+  /// min scalar value
+  float min() const { return val0_; }
+  /// max scalar value
+  float max() const { return val4_; }
 
-  // get HarmonicExample object for a given object
-  HarmonicExample* get_harmonicexample_object( BaseObjectData* _object );
+
+private:
+
+
+  ACG::Vec3uc color_unsigned(float _v) const 
+  {
+    if (val4_ <= val0_) return ACG::Vec3uc(0, 0, 255);
+
+    unsigned char u;
+
+    if (_v < val0_) return ACG::Vec3uc(0, 0, 255);
+    if (_v > val4_) return ACG::Vec3uc(255, 0, 0);
+
+
+    if (_v <= val2_) 
+    {
+      // [v0, v1]
+      if (_v <= val1_) 
+      {
+	u = (unsigned char) (255.0 * (_v - val0_) / (val1_ - val0_));
+	return ACG::Vec3uc(0, u, 255);
+      }
+      // ]v1, v2]
+      else 
+      {
+	u = (unsigned char) (255.0 * (_v - val1_) / (val2_ - val1_));
+	return ACG::Vec3uc(0, 255, 255-u);
+      }
+    }
+    else 
+    {
+      // ]v2, v3]
+      if (_v <= val3_) 
+      {
+	u = (unsigned char) (255.0 * (_v - val2_) / (val3_ - val2_));
+	return ACG::Vec3uc(u, 255, 0);
+      }
+      // ]v3, v4]
+      else 
+      {
+	u = (unsigned char) (255.0 * (_v - val3_) / (val4_ - val3_));
+	return ACG::Vec3uc(255, 255-u, 0);
+      }
+    }
+  }
+
+
+  ACG::Vec3uc color_signed(float _v) const 
+  {
+    if (val4_ <= val0_) return ACG::Vec3uc(0,255,0);
+
+    unsigned char r,g,b;
+
+    if      (_v < val0_) _v = val0_;
+    else if (_v > val4_) _v = val4_;
+
+    if (_v < 0.0) 
+    {
+      r = val0_ ? (unsigned char)(255.0 * _v / val0_) : 0;
+      b = 0;
+    }
+    else 
+    {
+      r = 0;
+      b = val4_ ? (unsigned char)(255.0 * _v / val4_) : 0;
+    }
+    g = 255 - r - b;
+
+    return ACG::Vec3uc(r, g, b);
+  }
+
+
   
-
-
-private :
-  /// Widget for Toolbox
-  HarmonicExampleToolbar* tool_;
+  
+  float  val0_, val1_, val2_, val3_, val4_;
+  bool   signed_mode_;
 };
 
 
 //=============================================================================
-#endif // HARMONICEXAMPLEPLUGIN_HH defined
+} // namespace ACG
+//=============================================================================
+#endif // ACG_COLORCODER_HH defined
 //=============================================================================
 
