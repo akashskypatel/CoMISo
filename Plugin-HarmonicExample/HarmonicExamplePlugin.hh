@@ -79,6 +79,7 @@ class HarmonicExamplePlugin : public QObject, BaseInterface, ToolboxInterface, K
 signals:
   void updateView();
   void updatedObject(int);
+  void addToolbox( QString _name  , QWidget* _widget );  
 
 
 private slots:
@@ -96,8 +97,6 @@ public :
 
   ~HarmonicExamplePlugin() {};
 
-
-  bool initializeToolbox(QWidget*& _widget);
 
   QString name() { return (QString("HarmonicExample")); };
   QString description( ) { return (QString("Computes the HarmonicExample of the the active Mesh")); }; 

@@ -58,16 +58,7 @@
 
 void HarmonicExamplePlugin::initializePlugin()
 {
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-bool HarmonicExamplePlugin::initializeToolbox(QWidget*& _widget)
-{
   tool_ = new HarmonicExampleToolbar();
-  _widget = tool_;
 
   QSize size(300,300);
   tool_->resize(size);
@@ -75,7 +66,7 @@ bool HarmonicExamplePlugin::initializeToolbox(QWidget*& _widget)
   // connect button press event to function slotCompute()
   connect(tool_->compute_pb, SIGNAL( clicked() ), this, SLOT( slotCompute() ) );
 
-  return true;
+  emit addToolbox( tr("HarmonicExample") , tool_ );
 }
 
 
