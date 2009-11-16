@@ -73,7 +73,7 @@ class HarmonicExamplePlugin : public QObject, BaseInterface, ToolboxInterface, K
 
 
   // typedef for easy access
-  typedef ACG::HarmonicExampleT<TriMesh> HarmonicExample;
+  typedef COMISO::HarmonicExampleT<TriMesh> HarmonicExample;
   typedef HarmonicExamplePerObjectDataT<TriMesh>   POD;
 
 signals:

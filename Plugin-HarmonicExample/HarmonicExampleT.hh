@@ -30,8 +30,8 @@
 //=============================================================================
 
 
-#ifndef ACG_HARMONICEXAMPLET_HH
-#define ACG_HARMONICEXAMPLET_HH
+#ifndef COMISO_HARMONICEXAMPLET_HH
+#define COMISO_HARMONICEXAMPLET_HH
 
 
 //== INCLUDES =================================================================
@@ -56,13 +56,13 @@
 
 //== NAMESPACES ===============================================================
 
-namespace ACG {
+namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
 
 	      
-/** \class HarmonicExampleT HarmonicExampleT.hh <ACG/.../HarmonicExampleT.hh>
+/** \class HarmonicExampleT HarmonicExampleT.hh <COMISO/.../HarmonicExampleT.hh>
 
     Brief Description.
   
@@ -107,7 +107,7 @@ public:
   typedef typename std::vector< int >    VectorIT;
   typedef gmm::dense_matrix<Scalar>      DenseMatrix;
   typedef gmm::csc_matrix<double>        CSCMatrix;
-  //  typedef ACG::MCSCMatrix                MCSCMatrix;
+  //  typedef COMISO::MCSCMatrix                MCSCMatrix;
 
  
 
@@ -155,13 +155,13 @@ private:
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(ACG_HARMONICEXAMPLET_C)
-#define ACG_HARMONICEXAMPLE_TEMPLATES
+#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_HARMONICEXAMPLET_C)
+#define COMISO_HARMONICEXAMPLE_TEMPLATES
 #include "HarmonicExampleT.cc"
 #endif
 //=============================================================================
-#endif // ACG_HARMONICEXAMPLET_HH defined
+#endif // COMISO_HARMONICEXAMPLET_HH defined
 //=============================================================================
 

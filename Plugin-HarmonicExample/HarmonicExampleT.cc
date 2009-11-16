@@ -31,7 +31,7 @@
 //
 //=============================================================================
 
-#define ACG_HARMONICEXAMPLET_C
+#define COMISO_HARMONICEXAMPLET_C
 
 //== INCLUDES =================================================================
 
@@ -39,7 +39,7 @@
 
 //== NAMESPACES ===============================================================
 
-namespace ACG {
+namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
 
@@ -69,7 +69,7 @@ compute()
   rhs_.clear();
   rhs_.resize( mesh_.n_vertices(), 0.0);
 
-  ACG::ConstrainedSolver cs;
+  COMISO::ConstrainedSolver cs;
   cs.solve( constraints_, laplace_, x_, rhs_, ids_to_round_, 0.0, true, true);
 
   // color the vertices of the mesh
@@ -232,7 +232,7 @@ color_mesh()
   double vmax = (double)*std::max_element( x_.begin(), x_.end());
 
   // create ColorCoder
-  ACG::ColorCoder cc( vmin, vmax, false);
+  COMISO::ColorCoder cc( vmin, vmax, false);
 
   VIter v_it  = mesh_.vertices_begin();
   VIter v_end = mesh_.vertices_end();
@@ -254,5 +254,5 @@ color_mesh()
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================

@@ -57,11 +57,11 @@ public:
   ~HarmonicExamplePerObjectDataT() 
   {}
   
-  ACG::HarmonicExampleT<MeshT>& harmonicexample() { return harmonicexample_;}
+  COMISO::HarmonicExampleT<MeshT>& harmonicexample() { return harmonicexample_;}
 
 private:
   // create an FeatureLine
-  ACG::HarmonicExampleT<MeshT> harmonicexample_;
+  COMISO::HarmonicExampleT<MeshT> harmonicexample_;
 };
 
 

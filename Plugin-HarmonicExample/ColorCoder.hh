@@ -30,8 +30,8 @@
 //=============================================================================
 
 
-#ifndef ACG_COLORCODER_HH
-#define ACG_COLORCODER_HH
+#ifndef COMISO_COLORCODER_HH
+#define COMISO_COLORCODER_HH
 
 #ifdef WIN32
 #undef min
@@ -47,7 +47,7 @@
 
 //== NAMESPACES ===============================================================
 
-namespace ACG {
+namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
@@ -180,8 +180,8 @@ private:
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
-#endif // ACG_COLORCODER_HH defined
+#endif // COMISO_COLORCODER_HH defined
 //=============================================================================
 

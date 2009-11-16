@@ -39,7 +39,7 @@
 #include "HarmonicExamplePlugin.hh"
 
 #include <iostream>
-#include <ACG/Utils/StopWatch.hh>
+#include <CoMISo/Utils/StopWatch.hh>
 
 #include <OpenFlipper/BasePlugin/PluginFunctions.hh>
 
