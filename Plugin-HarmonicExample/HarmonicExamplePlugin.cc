@@ -124,6 +124,7 @@ void HarmonicExamplePlugin::slotCompute()
       mesh_obj->meshNode()->drawMode(ACG::SceneGraph::DrawModes::SOLID_POINTS_COLORED);
       mesh_obj->materialNode()->disable_color_material();
     }
+    emit updatedObject( o_it->id(), UPDATE_COLOR);
   }
 }
 

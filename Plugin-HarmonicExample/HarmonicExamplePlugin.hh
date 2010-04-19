@@ -78,7 +78,7 @@ class HarmonicExamplePlugin : public QObject, BaseInterface, ToolboxInterface, K
 
 signals:
   void updateView();
-  void updatedObject(int);
+  void updatedObject(int , const UpdateType );
   void addToolbox( QString _name  , QWidget* _widget );  
 
 
