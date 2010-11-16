@@ -50,7 +50,7 @@ compute()
 {
   // setup simple laplace system
   init_laplace_matrix();
-  gmm::inspect_matrix( laplace_);
+  COMISO_GMM::inspect_matrix( laplace_);
 
   // add the integer constraints for the selected vertices
   add_integer_constraints();
