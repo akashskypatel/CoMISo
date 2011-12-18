@@ -216,6 +216,21 @@ add_boundary_constraints()
       last_bdry_vidx = first_vidx;
     }
   }
+
+  if( boundaries == 0) // add 1 and zero to marked vertices
+  {
+    for( VIter v_it = mesh_.vertices_begin(); v_it != mesh_.vertices_end(); ++v_it)
+    {
+      if( mesh_.status(v_it).selected())
+      {
+        std::cerr << " setting selected point to " << constraints << std::endl;
+        constraints_(constraints, v_it.handle().idx()) = 1.0;
+        constraints_(constraints, mesh_.n_vertices()) = constraints;
+        constraints++;
+      }
+    }
+  }
+    
   return constraints;
 }
 
@@ -231,6 +246,7 @@ color_mesh()
   double vmin = (double)*std::min_element( x_.begin(), x_.end());
   double vmax = (double)*std::max_element( x_.begin(), x_.end());
 
+  std::cerr << "vmin " << vmin << " vmax " << vmax << std::endl;
   // create ColorCoder
   COMISO::ColorCoder cc( vmin, vmax, false);
 
@@ -248,7 +264,7 @@ color_mesh()
     //v_cur = v_cur - int_part;
 
     // set vertex color
-    mesh_.set_color(v_it, cc.color(v_cur));
+    mesh_.set_color(v_it, cc.color_floata(v_cur));
   }
 }
 

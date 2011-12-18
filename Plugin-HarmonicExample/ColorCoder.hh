@@ -93,6 +93,13 @@ public:
     if(signed_mode_) c=color_signed(_v); else c=color_unsigned(_v);
     return (ACG::Vec3f(c[0],c[1],c[2])/255.f);
   }
+  //
+  /// color coding
+  ACG::Vec4f color_floata(float _v) const {
+    ACG::Vec3uc c;
+    if(signed_mode_) c=color_signed(_v); else c=color_unsigned(_v);
+    return (ACG::Vec4f(c[0],c[1],c[2], 255)/255.f);
+  }
 
 
   /// min scalar value
