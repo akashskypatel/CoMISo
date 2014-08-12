@@ -22,7 +22,7 @@ add_library(CoMISo ${SOURCES} ${HEADERS})
 if (MSVC)
 	
 	#add_definitions(-DCOMISODLL) #build static for now
-	add_definitions(-DINCLUDE_TEMPLATES) # TODO: Get rid of this?!
+	#add_definitions(-DINCLUDE_TEMPLATES) (disabled, use explicit instantiation instead)
 	add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
 	add_definitions(-D_USE_MATH_DEFINES)
 	add_definitions(-DNOMINMAX)

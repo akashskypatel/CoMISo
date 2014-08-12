@@ -23,9 +23,7 @@
 \*===========================================================================*/ 
 
 
-#include "ConstrainedSolver.hh"
-
-#include <gmm/gmm.h>
+#include "ConstrainedSolverT.cc"
 
 namespace COMISO {
 
@@ -116,3 +114,24 @@ find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
 
 }
 
+ // explicit instantiation
+
+#include <CoMISo/Config/GmmTypes.hh>
+#include <CoMISo/Config/StdTypes.hh>
+
+namespace COMISO
+{
+using namespace COMISO_GMM;
+using namespace COMISO_STD;
+
+template void ConstrainedSolver::solve(WSRowMatrix&, WSColMatrix&, 
+  DoubleVector&, DoubleVector&, IntVector&, double, bool, bool);
+
+template void ConstrainedSolver::solve_const(const WSRowMatrix&, 
+  const WSColMatrix&, DoubleVector&, const DoubleVector&, const IntVector&, 
+  double, bool, bool);
+
+template void COMISO::ConstrainedSolver::solve_const(const WSRowMatrix&,  
+  const WSRowMatrix&, DoubleVector&, const IntVector&, double, bool, bool);
+
+}//namespace COMISO_GMM

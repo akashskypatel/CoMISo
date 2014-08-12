@@ -1,6 +1,8 @@
 set(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/config.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/CoMISoDefines.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/GmmTypes.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/StdTypes.hh
    PARENT_SCOPE
 )
 

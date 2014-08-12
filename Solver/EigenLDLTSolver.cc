@@ -110,7 +110,20 @@ show_timings()
 }
 
 
-}
+}//namespace COMISO
+
+//////////////////////////////////////////////////////////////////////////
+// explicit instantiation
+
+#include "EigenLDLTSolverT.cc"
+
+namespace COMISO
+{
+
+template bool EigenLDLTSolver::update_system_gmm(const gmm::csc_matrix<double>&);
+template bool EigenLDLTSolver::calc_system_gmm(const gmm::csc_matrix<double>&);
+
+}//namespace COMISO
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE

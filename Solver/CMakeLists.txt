@@ -21,6 +21,7 @@ set(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_Tools.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GMM_Tools.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolverT.cc
