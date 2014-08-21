@@ -1,12 +1,16 @@
-set(my_headers
+SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/ArpackSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenArpackMatrixT.hh
    PARENT_SCOPE
 )
 
-set(my_sources
-   ${CMAKE_CURRENT_SOURCE_DIR}/ArpackSolver.cc
+SET(my_t_impls
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenArpackMatrixT.cc
+   PARENT_SCOPE
+)
+
+SET(my_sources
+   ${CMAKE_CURRENT_SOURCE_DIR}/ArpackSolver.cc
    PARENT_SCOPE
 )
 

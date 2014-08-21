@@ -1,4 +1,4 @@
-set(my_headers
+SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolver.hh
@@ -12,24 +12,28 @@ set(my_headers
    PARENT_SCOPE
 )
 
-set(my_sources
-   ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolver.cc
+SET(my_t_impls
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/MISolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolverT.cc
+   PARENT_SCOPE
+)
+
+SET(my_sources
+   ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_Tools.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GMM_Tools.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/MISolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolverT.cc
    PARENT_SCOPE
 )
