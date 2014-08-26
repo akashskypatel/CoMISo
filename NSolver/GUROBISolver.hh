@@ -23,8 +23,6 @@
 #include "VariableType.hh"
 #include "GurobiHelper.hh"
 
-//#include <gurobi_c++.h>
-
 //== FORWARDDECLARATIONS ======================================================
 class GRBModel;
 class GRBVar;
@@ -54,42 +52,49 @@ public:
   ~GUROBISolver() {}
 
   // ********** SOLVE **************** //
-  bool solve(NProblemInterface*                  _problem,                // problem instance
-             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-             std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
-             const double                        _time_limit = 60     ); // time limit in seconds
+  //! \throws Outcome
+  void solve(
+    NProblemInterface* _problem, // problem instance
+    std::vector<NConstraintInterface*>& _constraints, // linear constraints
+    std::vector<PairIndexVtype>& _discrete_constraints, // discrete constraints
+    const double _time_limit = 60); // time limit in seconds 
 
-  bool solve(NProblemInterface*                  _problem,                // problem instance
-             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-             const double                        _time_limit = 60     ) // time limit in seconds
+  //! \throws Outcome
+  void solve(
+    NProblemInterface* _problem, // problem instance
+    std::vector<NConstraintInterface*>& _constraints, // linear constraints
+    const double _time_limit = 60) // time limit in seconds
   {
-    std::vector<PairIndexVtype> dc; return solve(_problem, _constraints, dc, _time_limit);
+    std::vector<PairIndexVtype> dc; 
+    return solve(_problem, _constraints, dc, _time_limit);
   }
 
 
+#if 0
   // optimization with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
-                    const std::vector<NConstraintInterface*>& _constraints,
-                    const std::vector<NConstraintInterface*>& _lazy_constraints,
-                    std::vector<PairIndexVtype>&              _discrete_constraints,   // discrete constraints
-                    const double                              _almost_infeasible = 0.5,
-                    const int                                 _max_passes        = 5,
-                    const double                              _time_limit = 60,
-                    const bool                                _silent = false);
+    const std::vector<NConstraintInterface*>& _constraints,
+    const std::vector<NConstraintInterface*>& _lazy_constraints,
+    std::vector<PairIndexVtype>& _discrete_constraints,   // discrete constraints
+    const double _almost_infeasible = 0.5,
+    const int _max_passes = 5,
+    const double _time_limit = 60,
+    const bool _silent = false);
 
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
-                    const std::vector<NConstraintInterface*>& _constraints,
-                    const std::vector<NConstraintInterface*>& _lazy_constraints,
-                    const double                              _almost_infeasible = 0.5,
-                    const int                                 _max_passes        = 5,
-                    const double                              _time_limit = 60,
-                    const bool                                _silent = false)
+    const std::vector<NConstraintInterface*>& _constraints,
+    const std::vector<NConstraintInterface*>& _lazy_constraints,
+    const double _almost_infeasible = 0.5,
+    const int _max_passes = 5,
+    const double _time_limit = 60,
+    const bool _silent = false)
   {
-    std::vector<PairIndexVtype> dc; return solve(_problem, _constraints, _lazy_constraints, dc, _almost_infeasible, _max_passes, _time_limit, _silent);
+    std::vector<PairIndexVtype> dc; 
+    return solve(_problem, _constraints, _lazy_constraints, dc, _almost_infeasible, _max_passes, _time_limit, _silent);
   }
-
+#endif//0
 
   void set_problem_output_path    ( const std::string &_problem_output_path);
   void set_problem_env_output_path( const std::string &_problem_env_output_path);

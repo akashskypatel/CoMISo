@@ -14,47 +14,333 @@
 
 #include "IPOPTSolver.hh"
 
+#include <Base/OutcomeUtils.hh>
+
+#include <IpTNLP.hpp>
+#include <IpIpoptApplication.hpp>
+#include <IpSolveStatistics.hpp>
+
+
 //== NAMESPACES ===============================================================
 
 namespace COMISO {
 
+//== CLASS DEFINITION PROBLEM INSTANCE=========================================================
+
+
+class NProblemIPOPT : public Ipopt::TNLP
+{
+public:
+
+  // Ipopt Types
+  typedef Ipopt::Number                    Number;
+  typedef Ipopt::Index                     Index;
+  typedef Ipopt::SolverReturn              SolverReturn;
+  typedef Ipopt::IpoptData                 IpoptData;
+  typedef Ipopt::IpoptCalculatedQuantities IpoptCalculatedQuantities;
+
+  // sparse matrix and vector types
+  typedef NConstraintInterface::SVectorNC SVectorNC;
+  typedef NConstraintInterface::SMatrixNC SMatrixNC;
+  typedef NProblemInterface::SMatrixNP    SMatrixNP;
+
+  /** default constructor */
+  NProblemIPOPT(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+   : problem_(_problem), store_solution_(false) { split_constraints(_constraints); analyze_special_properties(_problem, _constraints);}
+
+  /** default destructor */
+  virtual ~NProblemIPOPT() {};
+
+  /**@name Overloaded from TNLP */
+  //@{
+  /** Method to return some info about the nlp */
+  virtual bool get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
+                            Index& nnz_h_lag, IndexStyleEnum& index_style);
+
+  /** Method to return the bounds for my problem */
+  virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,
+                               Index m, Number* g_l, Number* g_u);
+
+  /** Method to return the starting point for the algorithm */
+  virtual bool get_starting_point(Index n, bool init_x, Number* x,
+                                  bool init_z, Number* z_L, Number* z_U,
+                                  Index m, bool init_lambda,
+                                  Number* lambda);
+
+  /** Method to return the objective value */
+  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value);
+
+  /** Method to return the gradient of the objective */
+  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f);
+
+  /** Method to return the constraint residuals */
+  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g);
+
+  /** Method to return:
+   *   1) The structure of the jacobian (if "values" is NULL)
+   *   2) The values of the jacobian (if "values" is not NULL)
+   */
+  virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
+                          Index m, Index nele_jac, Index* iRow, Index *jCol,
+                          Number* values);
+
+  /** Method to return:
+   *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+   *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+   */
+  virtual bool eval_h(Index n, const Number* x, bool new_x,
+                      Number obj_factor, Index m, const Number* lambda,
+                      bool new_lambda, Index nele_hess, Index* iRow,
+                      Index* jCol, Number* values);
+
+  //@}
+
+  /** @name Solution Methods */
+  //@{
+  /** This method is called when the algorithm is complete so the TNLP can store/write the solution */
+  virtual void finalize_solution(SolverReturn status,
+                                 Index n, const Number* x, const Number* z_L, const Number* z_U,
+                                 Index m, const Number* g, const Number* lambda,
+                                 Number obj_value,
+                                 const IpoptData* ip_data,
+                                 IpoptCalculatedQuantities* ip_cq);
+  //@}
+
+  // special properties of problem
+  bool hessian_constant() const;
+  bool jac_c_constant() const;
+  bool jac_d_constant() const;
+
+  bool&                 store_solution()  {return store_solution_; }
+  std::vector<double>&  solution()        {return x_;}
+
+private:
+  /**@name Methods to block default compiler methods.
+   * The compiler automatically generates the following three methods.
+   *  Since the default compiler implementation is generally not what
+   *  you want (for all but the most simple classes), we usually
+   *  put the declarations of these methods in the private section
+   *  and never implement them. This prevents the compiler from
+   *  implementing an incorrect "default" behavior without us
+   *  knowing. (See Scott Meyers book, "Effective C++")
+   *
+   */
+  //@{
+  //  MyNLP();
+  NProblemIPOPT(const NProblemIPOPT&);
+  NProblemIPOPT& operator=(const NProblemIPOPT&);
+  //@}
+
+  // split user-provided constraints into general-constraints and bound-constraints
+  void split_constraints(const std::vector<NConstraintInterface*>& _constraints);
+
+  // determine if hessian_constant, jac_c_constant or jac_d_constant
+  void analyze_special_properties(const NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints);
+
+
+protected:
+  double* P(std::vector<double>& _v)
+  {
+    if( !_v.empty())
+      return ((double*)&_v[0]);
+    else
+      return 0;
+  }
+
+private:
+
+  // pointer to problem instance
+  NProblemInterface* problem_;
+  // reference to constraints vector
+  std::vector<NConstraintInterface*> constraints_;
+  std::vector<BoundConstraint*>      bound_constraints_;
+
+  bool hessian_constant_;
+  bool jac_c_constant_;
+  bool jac_d_constant_;
+
+  bool store_solution_;
+  std::vector<double> x_;
+};
+
+
+//== CLASS DEFINITION PROBLEM INSTANCE=========================================================
+
+
+class NProblemGmmIPOPT : public Ipopt::TNLP
+{
+public:
+
+  // Ipopt Types
+  typedef Ipopt::Number                    Number;
+  typedef Ipopt::Index                     Index;
+  typedef Ipopt::SolverReturn              SolverReturn;
+  typedef Ipopt::IpoptData                 IpoptData;
+  typedef Ipopt::IpoptCalculatedQuantities IpoptCalculatedQuantities;
+
+  // sparse matrix and vector types
+  typedef NConstraintInterface::SVectorNC SVectorNC;
+  typedef NConstraintInterface::SMatrixNC SMatrixNC;
+  typedef gmm::wsvector<double>           SVectorNP;
+  typedef NProblemGmmInterface::SMatrixNP SMatrixNP;
+
+  typedef gmm::array1D_reference<       double* > VectorPT;
+  typedef gmm::array1D_reference< const double* > VectorPTC;
+
+  typedef gmm::array1D_reference<       Index* > VectorPTi;
+  typedef gmm::array1D_reference< const Index* > VectorPTCi;
+
+  typedef gmm::linalg_traits<SVectorNP>::const_iterator SVectorNP_citer;
+  typedef gmm::linalg_traits<SVectorNP>::iterator       SVectorNP_iter;
+
+  /** default constructor */
+  NProblemGmmIPOPT(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
+   : problem_(_problem), constraints_(_constraints), nnz_jac_g_(0), nnz_h_lag_(0) 
+   {}
+
+  /** default destructor */
+  virtual ~NProblemGmmIPOPT() {};
+
+  /**@name Overloaded from TNLP */
+  //@{
+  /** Method to return some info about the nlp */
+  virtual bool get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
+                            Index& nnz_h_lag, IndexStyleEnum& index_style);
+
+  /** Method to return the bounds for my problem */
+  virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,
+                               Index m, Number* g_l, Number* g_u);
+
+  /** Method to return the starting point for the algorithm */
+  virtual bool get_starting_point(Index n, bool init_x, Number* x,
+                                  bool init_z, Number* z_L, Number* z_U,
+                                  Index m, bool init_lambda,
+                                  Number* lambda);
+
+  /** Method to return the objective value */
+  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value);
+
+  /** Method to return the gradient of the objective */
+  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f);
+
+  /** Method to return the constraint residuals */
+  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g);
+
+  /** Method to return:
+   *   1) The structure of the jacobian (if "values" is NULL)
+   *   2) The values of the jacobian (if "values" is not NULL)
+   */
+  virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
+                          Index m, Index nele_jac, Index* iRow, Index *jCol,
+                          Number* values);
+
+  /** Method to return:
+   *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
+   *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
+   */
+  virtual bool eval_h(Index n, const Number* x, bool new_x,
+                      Number obj_factor, Index m, const Number* lambda,
+                      bool new_lambda, Index nele_hess, Index* iRow,
+                      Index* jCol, Number* values);
+
+  //@}
+
+  /** @name Solution Methods */
+  //@{
+  /** This method is called when the algorithm is complete so the TNLP can store/write the solution */
+  virtual void finalize_solution(SolverReturn status,
+                                 Index n, const Number* x, const Number* z_L, const Number* z_U,
+                                 Index m, const Number* g, const Number* lambda,
+                                 Number obj_value,
+                                 const IpoptData* ip_data,
+                                 IpoptCalculatedQuantities* ip_cq);
+  //@}
+
+private:
+  /**@name Methods to block default compiler methods.
+   * The compiler automatically generates the following three methods.
+   *  Since the default compiler implementation is generally not what
+   *  you want (for all but the most simple classes), we usually
+   *  put the declarations of these methods in the private section
+   *  and never implement them. This prevents the compiler from
+   *  implementing an incorrect "default" behavior without us
+   *  knowing. (See Scott Meyers book, "Effective C++")
+   *
+   */
+  //@{
+  //  MyNLP();
+  NProblemGmmIPOPT(const NProblemGmmIPOPT&);
+  NProblemGmmIPOPT& operator=(const NProblemGmmIPOPT&);
+  //@}
+
+
+private:
+
+  // pointer to problem instance
+  NProblemGmmInterface* problem_;
+  // reference to constraints vector
+  std::vector<NConstraintInterface*>& constraints_;
+
+  int nnz_jac_g_;
+  int nnz_h_lag_;
+
+  // constant structure of jacobian_of_constraints and hessian_of_lagrangian
+  std::vector<Index> jac_g_iRow_;
+  std::vector<Index> jac_g_jCol_;
+  std::vector<Index> h_lag_iRow_;
+  std::vector<Index> h_lag_jCol_;
+
+  // Sparse Matrix of problem (don't initialize every time!!!)
+  SMatrixNP HP_;
+};
+
+
 //== IMPLEMENTATION ========================================================== 
 
 
+// smart pointer to IpoptApplication to set options etc.
+class IPOPTSolver::Impl 
+{// Create an instance of the IpoptApplication
+public:
+  Impl() : app_(IpoptApplicationFactory()) {}
+
+public:
+  Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
+};
+
 // Constructor
-IPOPTSolver::
-IPOPTSolver()
+IPOPTSolver::IPOPTSolver()
+  : impl_(new Impl)
 {
-  // Create an instance of the IpoptApplication
-  app_ = IpoptApplicationFactory();
 
   // Switch to HSL if available in Comiso
-  #if COMISO_HSL_AVAILABLE
-    app_->Options()->SetStringValue("linear_solver", "ma57");
-  #endif
+#if COMISO_HSL_AVAILABLE
+  impl_->app_->Options()->SetStringValue("linear_solver", "ma57");
+#else
+  impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
+#endif
 
+#ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
   // with the default mumps solver
-  #ifdef WIN32
-    app_->Options()->SetIntegerValue("mumps_mem_percent", 5);
-  #endif
+  // TODO: find out what this does and whether it makes sense to do it
+  impl_->app_->Options()->SetIntegerValue("mumps_mem_percent", 5);
+#endif
 
   // set default parameters
-  app_->Options()->SetIntegerValue("max_iter", 100);
+  impl_->app_->Options()->SetIntegerValue("max_iter", 100);
   //  app->Options()->SetStringValue("derivative_test", "second-order");
   //  app->Options()->SetIntegerValue("print_level", 0);
   //  app->Options()->SetStringValue("expect_infeasible_problem", "yes");
-
 }
 
-
+IPOPTSolver::~IPOPTSolver()
+{ delete impl_; }
 //-----------------------------------------------------------------------------
 
 
-
-int
-IPOPTSolver::
-solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+void IPOPTSolver::solve(NProblemInterface* _problem, 
+  const std::vector<NConstraintInterface*>& _constraints)
 {
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
@@ -70,19 +356,19 @@ solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _co
   if(np2->hessian_constant())
   {
     std::cerr << "*constant hessian* ";
-    app().Options()->SetStringValue("hessian_constant", "yes");
+    impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
   }
 
   if(np2->jac_c_constant())
   {
     std::cerr << "*constant jacobian of equality constraints* ";
-    app().Options()->SetStringValue("jac_c_constant", "yes");
+    impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
   }
 
   if(np2->jac_d_constant())
   {
     std::cerr << "*constant jacobian of in-equality constraints*";
-    app().Options()->SetStringValue("jac_d_constant", "yes");
+    impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
   }
   std::cerr << std::endl;
 
@@ -91,39 +377,61 @@ solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _co
   //----------------------------------------------------------------------------
 
   // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
-  if (status != Ipopt::Solve_Succeeded)
-  {
-    printf("\n\n*** Error IPOPT during initialization!\n");
-  }
+  Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
+  if (status != Ipopt::Solve_Succeeded) 
+    THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
 
-  status = app_->OptimizeTNLP( np);
+  status = impl_->app_->OptimizeTNLP( np);
 
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
+  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
   {
-    // Retrieve some statistics about the solve
-    Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-    printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+    // TODO: we could trnslate these return codes, but will not do it for now
+    //  enum ApplicationReturnStatus
+    //    {
+    //      Solve_Succeeded=0,
+    //      Solved_To_Acceptable_Level=1,
+    //      Infeasible_Problem_Detected=2,
+    //      Search_Direction_Becomes_Too_Small=3,
+    //      Diverging_Iterates=4,
+    //      User_Requested_Stop=5,
+    //      Feasible_Point_Found=6,
+    //
+    //      Maximum_Iterations_Exceeded=-1,
+    //      Restoration_Failed=-2,
+    //      Error_In_Step_Computation=-3,
+    //      Maximum_CpuTime_Exceeded=-4,
+    //      Not_Enough_Degrees_Of_Freedom=-10,
+    //      Invalid_Problem_Definition=-11,
+    //      Invalid_Option=-12,
+    //      Invalid_Number_Detected=-13,
+    //
+    //      Unrecoverable_Exception=-100,
+    //      NonIpopt_Exception_Thrown=-101,
+    //      Insufficient_Memory=-102,
+    //      Internal_Error=-199
+    //    };
+    //------------------------------------------------------
 
-    Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-    printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
+    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
   }
+  
+  // Retrieve some statistics about the solve
+  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
+  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
 
-  return status;
+  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
+  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-
-int
-IPOPTSolver::
-solve(NProblemInterface*                        _problem,
+void IPOPTSolver::solve(
+      NProblemInterface*                        _problem,
       const std::vector<NConstraintInterface*>& _constraints,
       const std::vector<NConstraintInterface*>& _lazy_constraints,
       const double                              _almost_infeasible,
@@ -137,11 +445,9 @@ solve(NProblemInterface*                        _problem,
 
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
+  status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-  {
-    printf("\n\n*** Error IPOPT during initialization!\n");
-  }
+    THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
   int  cur_pass = 0;
@@ -173,26 +479,26 @@ solve(NProblemInterface*                        _problem,
     if(np2->hessian_constant())
     {
       std::cerr << "*constant hessian* ";
-      app().Options()->SetStringValue("hessian_constant", "yes");
+      impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
     if(np2->jac_c_constant())
     {
       std::cerr << "*constant jacobian of equality constraints* ";
-      app().Options()->SetStringValue("jac_c_constant", "yes");
+      impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
     if(np2->jac_d_constant())
     {
       std::cerr << "*constant jacobian of in-equality constraints*";
-      app().Options()->SetStringValue("jac_d_constant", "yes");
+      impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
     std::cerr << std::endl;
 
     //----------------------------------------------------------------------------
     // 3. solve problem
     //----------------------------------------------------------------------------
-    status = app_->OptimizeTNLP( np);
+    status = impl_->app_->OptimizeTNLP( np);
 
     // check lazy constraints
     n_inf.push_back(0);
@@ -281,26 +587,26 @@ solve(NProblemInterface*                        _problem,
     if(np2->hessian_constant())
     {
       std::cerr << "*constant hessian* ";
-      app().Options()->SetStringValue("hessian_constant", "yes");
+      impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
     if(np2->jac_c_constant())
     {
       std::cerr << "*constant jacobian of equality constraints* ";
-      app().Options()->SetStringValue("jac_c_constant", "yes");
+      impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
     if(np2->jac_d_constant())
     {
       std::cerr << "*constant jacobian of in-equality constraints*";
-      app().Options()->SetStringValue("jac_d_constant", "yes");
+      impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
     std::cerr << std::endl;
 
     //----------------------------------------------------------------------------
     // 3. solve problem
     //----------------------------------------------------------------------------
-    status = app_->OptimizeTNLP( np);
+    status = impl_->app_->OptimizeTNLP( np);
   }
 
   const double overall_time = sw.stop()/1000.0;
@@ -308,44 +614,38 @@ solve(NProblemInterface*                        _problem,
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
-  {
-    // Retrieve some statistics about the solve
-    Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-    printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
+    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
 
-    Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-    printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
-  }
+  // Retrieve some statistics about the solve
+  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
+  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+
+  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
+  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
 
   std::cerr <<"############# IPOPT with lazy constraints statistics ###############" << std::endl;
   std::cerr << "overall time: " << overall_time << "s" << std::endl;
   std::cerr << "#passes     : " << cur_pass << "( of " << _max_passes << ")" << std::endl;
   for(unsigned int i=0; i<n_inf.size(); ++i)
     std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;
-
-  return status;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int
-IPOPTSolver::
-solve(NProblemInterface*    _problem)
+void IPOPTSolver::solve(NProblemInterface*    _problem)
 {
   std::vector<NConstraintInterface*> constraints;
-  return this->solve(_problem, constraints);
+  solve(_problem, constraints);
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int
-IPOPTSolver::
-solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
+void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
 {
   std::cerr << "****** Warning: NProblemGmmInterface is deprecated!!! -> use NProblemInterface *******\n";
 
@@ -359,32 +659,27 @@ solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _const
   //----------------------------------------------------------------------------
 
   // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
+  Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-  {
-    printf("\n\n*** Error IPOPT during initialization!\n");
-  }
+     THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
 
   //----------------------------------------------------------------------------
   // 3. solve problem
   //----------------------------------------------------------------------------
-  status = app_->OptimizeTNLP(np);
+  status = impl_->app_->OptimizeTNLP(np);
 
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
-  {
-    // Retrieve some statistics about the solve
-    Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-    printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
+    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
 
-    Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-    printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
-  }
+  // Retrieve some statistics about the solve
+  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
+  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
 
-  return status;
+  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
+  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
 }
 
 

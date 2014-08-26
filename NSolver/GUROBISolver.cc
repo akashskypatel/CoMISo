@@ -16,6 +16,7 @@
 #include "GUROBISolver.hh"
 #include <CoMISo/Utils/StopWatch.hh>
 
+#include <Base/OutcomeUtils.hh>
 #include <stdexcept>
 
 //== NAMESPACES ===============================================================
@@ -46,18 +47,12 @@ GUROBISolver()
 //#define TRACE_GUROBI_INPUT(DESCR, EXPR)
 
 // ********** SOLVE **************** //
-bool
-GUROBISolver::
-solve(NProblemInterface*                  _problem,
-      std::vector<NConstraintInterface*>& _constraints,
-      std::vector<PairIndexVtype>&        _discrete_constraints,
-      const double                        /*_time_limit*/)
+void GUROBISolver::solve(
+  NProblemInterface*                  _problem,
+  std::vector<NConstraintInterface*>& _constraints,
+  std::vector<PairIndexVtype>&        _discrete_constraints,
+  const double                        /*_time_limit*/)
 {
-	//std::cout << "_time_limit: " << _time_limit << std::endl;
-	MY_PAUSE;
-	
-	//std::cout.precision(std::numeric_limits< double >::digits10);
-
   try
   {
     //----------------------------------------------
@@ -69,8 +64,8 @@ solve(NProblemInterface*                  _problem,
 
     //model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit);
 
-	// stop when a solution is found
-	model.getEnv().set(GRB_IntParam_SolutionLimit, 2);
+    // stop when a solution is found
+    model.getEnv().set(GRB_IntParam_SolutionLimit, 2);
 
     //----------------------------------------------
     // 1. allocate variables
@@ -110,7 +105,7 @@ solve(NProblemInterface*                  _problem,
 
     for(unsigned int i=0; i<_constraints.size();  ++i)
     {
-		TRACE_GUROBI_INPUT("Constraint index: ", i);
+      TRACE_GUROBI_INPUT("Constraint index: ", i);
       if(!_constraints[i]->is_linear())
         std::cerr << "Warning: GUROBISolver received a problem with non-linear constraints!!!" << std::endl;
 
@@ -118,26 +113,26 @@ solve(NProblemInterface*                  _problem,
       NConstraintInterface::SVectorNC gc;
       _constraints[i]->eval_gradient(P(x), gc);
 
-		TRACE_GUROBI_INPUT("Constraint type: ", 
-			(int)_constraints[i]->constraint_type());
+      TRACE_GUROBI_INPUT("Constraint type: ", 
+        (int)_constraints[i]->constraint_type());
 
       NConstraintInterface::SVectorNC::InnerIterator v_it(gc);
       for(; v_it; ++v_it)
-	  {
-//        lin_expr += v_it.value()*vars[v_it.index()];
+      {
+        //        lin_expr += v_it.value()*vars[v_it.index()];
         lin_expr += vars[v_it.index()]*_QNT(v_it.value());
-		TRACE_GUROBI_INPUT("Constraint linear coeff", _QNT(v_it.value())); 
-		TRACE_GUROBI_INPUT("Constraint linear var idx", v_it.index()); 
-	  }
+        TRACE_GUROBI_INPUT("Constraint linear coeff", _QNT(v_it.value())); 
+        TRACE_GUROBI_INPUT("Constraint linear var idx", v_it.index()); 
+      }
 
       double b = _QNT(_constraints[i]->eval_constraint(P(x)));
-		TRACE_GUROBI_INPUT("Constraint B", b); 
+      TRACE_GUROBI_INPUT("Constraint B", b); 
 
       switch(_constraints[i]->constraint_type())
       {
-        case NConstraintInterface::NC_EQUAL         : model.addConstr(lin_expr + b == 0); break;
-        case NConstraintInterface::NC_LESS_EQUAL    : model.addConstr(lin_expr + b <= 0); break;
-        case NConstraintInterface::NC_GREATER_EQUAL : model.addConstr(lin_expr + b >= 0); break;
+      case NConstraintInterface::NC_EQUAL         : model.addConstr(lin_expr + b == 0); break;
+      case NConstraintInterface::NC_LESS_EQUAL    : model.addConstr(lin_expr + b <= 0); break;
+      case NConstraintInterface::NC_GREATER_EQUAL : model.addConstr(lin_expr + b >= 0); break;
       }
     }
     model.update();
@@ -155,29 +150,29 @@ solve(NProblemInterface*                  _problem,
     NProblemInterface::SMatrixNP H;
     _problem->eval_hessian(P(x), H);
     for( int i=0; i<H.outerSize(); ++i)
-	{
+    {
       for (NProblemInterface::SMatrixNP::InnerIterator it(H,i); it; ++it)
-	  {
+      {
         objective += 0.5*_QNT(it.value())*vars[it.row()]*vars[it.col()];
-		TRACE_GUROBI_INPUT("Objective quadratic term coeff", _QNT(it.value())); 
-		TRACE_GUROBI_INPUT("Objective quadratic term var i idx", it.row()); 
-		TRACE_GUROBI_INPUT("Objective quadratic term var j idx", it.col()); 
-	  }
-	}
+        TRACE_GUROBI_INPUT("Objective quadratic term coeff", _QNT(it.value())); 
+        TRACE_GUROBI_INPUT("Objective quadratic term var i idx", it.row()); 
+        TRACE_GUROBI_INPUT("Objective quadratic term var j idx", it.col()); 
+      }
+    }
 
     // add linear part
     std::vector<double> g(_problem->n_unknowns());
     _problem->eval_gradient(P(x), P(g));
     for(unsigned int i=0; i<g.size(); ++i)
-	{
+    {
       objective += _QNT(g[i])*vars[i];
-		TRACE_GUROBI_INPUT("Objective linear term coeff", _QNT(g[i])); 
-		TRACE_GUROBI_INPUT("Objective linear term var idx", i); 
-	}
+      TRACE_GUROBI_INPUT("Objective linear term coeff", _QNT(g[i])); 
+      TRACE_GUROBI_INPUT("Objective linear term var idx", i); 
+    }
     // add constant part
-	const double c = _QNT(_problem->eval_f(P(x)));
+    const double c = _QNT(_problem->eval_f(P(x)));
     objective += c;
-		TRACE_GUROBI_INPUT("Objective constant term coeff", c); 
+    TRACE_GUROBI_INPUT("Objective constant term coeff", c); 
 
     model.set(GRB_IntAttr_ModelSense, 1);
     model.setObjective(objective);
@@ -206,7 +201,7 @@ solve(NProblemInterface*                  _problem,
     }
     else
     {
-        std::cout << "Reading solution from file \"" << solution_input_path_ << "\"." << std::endl;
+      std::cout << "Reading solution from file \"" << solution_input_path_ << "\"." << std::endl;
     }
 
     //----------------------------------------------
@@ -236,30 +231,27 @@ solve(NProblemInterface*                  _problem,
 
     // ObjVal is only available if the optimize was called.
     if (solution_input_path_.empty())
-        std::cout << "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
-    return true;
+      std::cout << "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
   }
-  catch(GRBException& e)
+  catch (GRBException& e)
   {
     std::cout << "Error code = " << e.getErrorCode() << std::endl;
     std::cout << e.getMessage() << std::endl;
-    return false;
-  }
-  catch(...)
-  {
-    std::cout << "Exception during optimization" << std::endl;
-    return false;
-  }
 
-	MY_PAUSE;
-
-  return false;
+    // NOTE: we could propagate e.getMessage() either using std::exception, or a specialized Reform exception type
+    switch ( e.getErrorCode() )
+    {
+    // TODO: Find where these are defined and use the correct name for 10010 
+    case 10010: THROW_OUTCOME(GUROBI_LICENCE_MODEL_TOO_LARGE);
+    default: THROW_OUTCOME(UNSPECIFIED_GUROBI_EXCEPTION);
+    }
+  }
 }
 
 
 //-----------------------------------------------------------------------------
 
-
+#if 0
 bool
 GUROBISolver::
 solve(NProblemInterface*                        _problem,
@@ -507,7 +499,7 @@ solve(NProblemInterface*                        _problem,
     return false;
   }
   catch(...)
-  {
+    {
     std::cout << "Exception during optimization" << std::endl;
     return false;
   }
@@ -666,6 +658,7 @@ solve(NProblemInterface*                        _problem,
 //    return (solution_found != IloFalse);
 }
 
+#endif//0
 
 //-----------------------------------------------------------------------------
 
