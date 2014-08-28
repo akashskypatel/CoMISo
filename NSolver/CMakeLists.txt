@@ -29,7 +29,6 @@ SET(my_headers
 )
 
 set(my_t_impls
-   ${CMAKE_CURRENT_SOURCE_DIR}/CPLEXSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerPenaltyT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerEliminationT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraintsT.cc
