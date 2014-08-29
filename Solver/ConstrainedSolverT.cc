@@ -1204,7 +1204,7 @@ setup_and_solve_system( CMatrixT& _B,
   DEB_out_if(noisy_ > 1, 1, " BtB resize took " << s1.stop()/1000.0 << "\n");
   s1.start();
   _x.resize( n - 1);
-  DEB_out_if( noisy_ > 1, " x resize took " << s1.stop()/1000.0 << "\n");
+  DEB_out_if( noisy_ > 1, 1, " x resize took " << s1.stop()/1000.0 << "\n");
 
   // regularize if necessary
   if(_reg_factor != 0.0)
@@ -1310,7 +1310,7 @@ verify_mi_factored( const RMatrixT& _conditions,
       ++conditions_not_ok;
     }
 
-  DEB_out_if( conditions_not_ok == 0, 2 "all conditions are ok!\n")
+  DEB_out_if( conditions_not_ok == 0, 2, "all conditions are ok!\n")
   DEB_out_if( conditions_not_ok != 0, 1," conditions are not fullfilled:\n ") 
 
   // verify rounding
