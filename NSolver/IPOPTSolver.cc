@@ -15,10 +15,13 @@
 #include "IPOPTSolver.hh"
 
 #include <Base/OutcomeUtils.hh>
+#include <Base/Debug/DebOut.hh>
+
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
+
 
 
 //== NAMESPACES ===============================================================
@@ -342,6 +345,7 @@ IPOPTSolver::~IPOPTSolver()
 void IPOPTSolver::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
 {
+  DEB_enter_func;
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
@@ -352,25 +356,25 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   // 2. exploit special characteristics of problem
   //----------------------------------------------------------------------------
 
-  std::cerr << "exploit detected special properties: ";
+  DEB_out(2,"exploit detected special properties: ");
   if(np2->hessian_constant())
   {
-    std::cerr << "*constant hessian* ";
+    DEB_out(2,"*constant hessian* ");
     impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
   }
 
   if(np2->jac_c_constant())
   {
-    std::cerr << "*constant jacobian of equality constraints* ";
+    DEB_out(2, "*constant jacobian of equality constraints* ");
     impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
   }
 
   if(np2->jac_d_constant())
   {
-    std::cerr << "*constant jacobian of in-equality constraints*";
+    DEB_out(2, "*constant jacobian of in-equality constraints*");
     impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
   }
-  std::cerr << std::endl;
+  DEB_out(2,"\n");
 
   //----------------------------------------------------------------------------
   // 3. solve problem
@@ -420,10 +424,11 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << "iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
+  DEB_out(1,"\n\n*** IPOPT: The final value of the objective function is "
+    << final_obj << "\n");
 }
 
 
@@ -437,10 +442,11 @@ void IPOPTSolver::solve(
       const double                              _almost_infeasible,
       const int                                 _max_passes        )
 {
+  DEB_enter_func;
   //----------------------------------------------------------------------------
   // 0. Initialize IPOPT Applicaiton
   //----------------------------------------------------------------------------
-
+  
   StopWatch sw; sw.start();
 
   // Initialize the IpoptApplication and process the options
@@ -475,25 +481,25 @@ void IPOPTSolver::solve(
     // 2. exploit special characteristics of problem
     //----------------------------------------------------------------------------
 
-    std::cerr << "detected special properties which will be exploit: ";
+    DEB_out(2, "detected special properties which will be exploit: ");
     if(np2->hessian_constant())
     {
-      std::cerr << "*constant hessian* ";
+      DEB_out(2, "*constant hessian* ");
       impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
     if(np2->jac_c_constant())
     {
-      std::cerr << "*constant jacobian of equality constraints* ";
+      DEB_out(2, "*constant jacobian of equality constraints* ");
       impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
     if(np2->jac_d_constant())
     {
-      std::cerr << "*constant jacobian of in-equality constraints*";
+      DEB_out(2, "*constant jacobian of in-equality constraints*");
       impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
-    std::cerr << std::endl;
+    DEB_out(2, "\n");
 
     //----------------------------------------------------------------------------
     // 3. solve problem
@@ -566,7 +572,8 @@ void IPOPTSolver::solve(
   {
     ++cur_pass;
 
-    std::cerr << "*************** could not find feasible point after " << _max_passes-1 << " -> solving with all lazy constraints..." << std::endl;
+    DEB_warning(2, "*************** could not find feasible point after "
+      << _max_passes-1 << " -> solving with all lazy constraints...\n");
     for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
       if(!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
@@ -583,22 +590,22 @@ void IPOPTSolver::solve(
     // 2. exploit special characteristics of problem
     //----------------------------------------------------------------------------
 
-    std::cerr << "exploit detected special properties: ";
+    DEB_out(2, "exploit detected special properties: ");
     if(np2->hessian_constant())
     {
-      std::cerr << "*constant hessian* ";
+      DEB_out(2, "*constant hessian* ");
       impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
     if(np2->jac_c_constant())
     {
-      std::cerr << "*constant jacobian of equality constraints* ";
+      DEB_out(2, "*constant jacobian of equality constraints* ");
       impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
     if(np2->jac_d_constant())
     {
-      std::cerr << "*constant jacobian of in-equality constraints*";
+      DEB_out(2, "*constant jacobian of in-equality constraints*");
       impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
     std::cerr << std::endl;
@@ -619,16 +626,19 @@ void IPOPTSolver::solve(
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  DEB_out(1, "\n\n*** IPOPT: The problem solved in " 
+    << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
+  DEB_out(1, "\n\n*** IPOPT: The final value of the objective function is "
+    << final_obj << "\n");
 
-  std::cerr <<"############# IPOPT with lazy constraints statistics ###############" << std::endl;
-  std::cerr << "overall time: " << overall_time << "s" << std::endl;
-  std::cerr << "#passes     : " << cur_pass << "( of " << _max_passes << ")" << std::endl;
+  DEB_out(2, "############# IPOPT with lazy constraints statistics ###############\n");
+  DEB_out(2, "overall time: " << overall_time << "s\n");
+  DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
   for(unsigned int i=0; i<n_inf.size(); ++i)
-    std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;
+    DEB_out(3, "pass " << i << " induced " << n_inf[i] 
+      << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
 }
 
 
@@ -647,7 +657,8 @@ void IPOPTSolver::solve(NProblemInterface*    _problem)
 
 void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
 {
-  std::cerr << "****** Warning: NProblemGmmInterface is deprecated!!! -> use NProblemInterface *******\n";
+  DEB_enter_func;
+  DEB_warning(1,"******NProblemGmmInterface is deprecated!!! -> use NProblemInterface *******");
 
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
@@ -676,10 +687,10 @@ void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintI
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
+  DEB_out(1, "\n\n*** IPOPT: The final value of the objective function is " << final_obj << "\n");
 }
 
 
@@ -805,11 +816,12 @@ bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
 bool NProblemIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
                             Index m, Number* g_l, Number* g_u)
 {
+  DEB_enter_func;
   // check dimensions
-  if( n != (Index)problem_->n_unknowns())
-    std::cerr << "Warning: IPOPT #unknowns != n " << n << problem_->n_unknowns() << std::endl;
-  if( m != (Index)constraints_.size())
-    std::cerr << "Warning: IPOPT #constraints != m " << m << constraints_.size() << std::endl;
+  DEB_warning_if(( n != (Index)problem_->n_unknowns() ), 1,
+    "IPOPT #unknowns != n " << n << problem_->n_unknowns() );
+  DEB_warning_if(( m != (Index)constraints_.size() ), 1, 
+    "Warning: IPOPT #constraints != m " << m << constraints_.size() );
 
 
   // first clear all variable bounds
@@ -847,7 +859,7 @@ bool NProblemIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
       }
     }
     else
-      std::cerr << "Warning: invalid bound constraint in IPOPTSolver!!!" << std::endl;
+      DEB_warning(2, "invalid bound constraint in IPOPTSolver!!!")
   }
 
   // set bounds for constraints
@@ -924,6 +936,7 @@ bool NProblemIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
                        Index m, Index nele_jac, Index* iRow, Index *jCol,
                        Number* values)
 {
+  DEB_enter_func;
   if (values == NULL)
   {
     // get x for evaluation (arbitrary position should be ok)
@@ -965,9 +978,9 @@ bool NProblemIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
       }
     }
 
-    if( gi != nele_jac)
-      std::cerr << "Warning: number of non-zeros in Jacobian of C is incorrect: "
-                << gi << " vs " << nele_jac << std::endl;
+    DEB_warning_if((gi != nele_jac), 1, 
+      "number of non-zeros in Jacobian of C is incorrect: "
+                << gi << " vs " << nele_jac)
   }
 
   return true;
@@ -982,6 +995,7 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
                    bool new_lambda, Index nele_hess, Index* iRow,
                    Index* jCol, Number* values)
 {
+  DEB_enter_func;
   if (values == NULL)
   {
     // return structure
@@ -1030,9 +1044,9 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
     }
 
     // error check
-    if( gi != nele_hess)
-      std::cerr << "Warning: number of non-zeros in Hessian of Lagrangian is incorrect while indexing: "
-                << gi << " vs " << nele_hess << std::endl;
+    DEB_warning_if(( gi != nele_hess), 1,
+      "number of non-zeros in Hessian of Lagrangian is incorrect while indexing: "
+                << gi << " vs " << nele_hess )
   }
   else
   {
@@ -1076,9 +1090,9 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
     }
 
     // error check
-    if( gi != nele_hess)
-      std::cerr << "Warning: number of non-zeros in Hessian of Lagrangian is incorrect2: "
-                << gi << " vs " << nele_hess << std::endl;
+    DEB_warning_if(( gi != nele_hess), 1,
+      "number of non-zeros in Hessian of Lagrangian is incorrect2: "
+                << gi << " vs " << nele_hess )
   }
   return true;
 }
@@ -1117,7 +1131,8 @@ void NProblemIPOPT::finalize_solution(SolverReturn status,
                               const IpoptData* ip_data,
                               IpoptCalculatedQuantities* ip_cq)
 {
-	std::cout << "Quantanizing the IPOPT solution" << std::endl;
+  DEB_enter_func;
+	DEB_out(1, "Quantanizing the IPOPT solution\n");
 	std::vector<double> x_qnt(n);
     for( Index i=0; i<n; ++i)
       x_qnt[i] = _QNT(x[i]);
@@ -1344,6 +1359,7 @@ bool NProblemGmmIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
                        Index m, Index nele_jac, Index* iRow, Index *jCol,
                        Number* values)
 {
+  DEB_enter_func;
   if (values == NULL)
   {
     // return the (cached) structure of the jacobian of the constraints
@@ -1373,9 +1389,9 @@ bool NProblemGmmIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
       }
     }
 
-    if( gi != nele_jac)
-      std::cerr << "Warning: number of non-zeros in Jacobian of C is incorrect: "
-                << gi << " vs " << nele_jac << std::endl;
+    DEB_warning_if(( gi != nele_jac), 1,
+      "number of non-zeros in Jacobian of C is incorrect: "
+       << gi << " vs " << nele_jac)
   }
 
   return true;
@@ -1390,6 +1406,7 @@ bool NProblemGmmIPOPT::eval_h(Index n, const Number* x, bool new_x,
                    bool new_lambda, Index nele_hess, Index* iRow,
                    Index* jCol, Number* values)
 {
+  DEB_enter_func;
   if (values == NULL)
   {
     // return the (cached) structure of the hessian
@@ -1447,9 +1464,9 @@ bool NProblemGmmIPOPT::eval_h(Index n, const Number* x, bool new_x,
     }
 
     // error check
-    if( gi != nele_hess)
-      std::cerr << "Warning: number of non-zeros in Hessian of Lagrangian is incorrect: "
-                << gi << " vs " << nele_hess << std::endl;
+    DEB_warning_if(( gi != nele_hess), 1, 
+      "number of non-zeros in Hessian of Lagrangian is incorrect: "
+        << gi << " vs " << nele_hess);
   }
   return true;
 }

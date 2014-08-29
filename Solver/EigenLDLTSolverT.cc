@@ -33,6 +33,8 @@
 #include <CoMISo/Solver/Eigen_Tools.hh>
 #include <CoMISo/Solver/EigenLDLTSolver.hh>
 
+#include <Base/Debug/DebOut.hh>
+
 
 namespace COMISO {
 
@@ -40,16 +42,14 @@ namespace COMISO {
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
+  DEB_enter_func;
   if(show_timings_) sw_.start();
 
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
 
-  if(show_timings_)
-  {
-      std::cerr << "EigenLDLT Timing GMM convert: " << sw_.stop()/1000.0 << "s\n";
-      std::cerr << "#nnz: " << E.nonZeros() << std::endl;
-  }
+  DEB_out_if(show_timings_, 2, "EigenLDLT Timing GMM convert: "
+    << sw_.stop()/1000.0 << "s\n#nnz: " << E.nonZeros() << "\n");
 
   return calc_system_eigen( E);
 }
@@ -61,16 +61,14 @@ bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
 {
+  DEB_enter_func;
   if(show_timings_) sw_.start();
 
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
 
-  if(show_timings_)
-  {
-      std::cerr << "EigenLDLT Timing GMM convert: " << sw_.stop()/1000.0 << "s\n";
-      std::cerr << "#nnz: " << E.nonZeros() << std::endl;
-  }
+  DEB_out_if(show_timings_, 2, "EigenLDLT Timing GMM convert: "
+    << sw_.stop()/1000.0 << "s\n#nnz: " << E.nonZeros() << "\n");
 
   return update_system_eigen( E);
 }
@@ -80,16 +78,15 @@ bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
 template< class Eigen_MatrixT>
 bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
-    n_ = _mat.rows();
+  DEB_enter_func;  
+  n_ = _mat.rows();
 
-    if(show_timings_) sw_.start();
+  if(show_timings_) sw_.start();
 
-    ldlt_.compute(_mat);
+  ldlt_.compute(_mat);
 
-    if(show_timings_)
-    {
-      std::cerr << "EigenLDLT Timing EIGEN compute: " << sw_.stop()/1000.0 << "s\n";
-    }
+  DEB_out_if(show_timings_, 2, "EigenLDLT Timing EIGEN compute: "
+    << sw_.stop()/1000.0 << "s\n");
 
     return (ldlt_.info()==Eigen::Success);
 }
@@ -99,14 +96,13 @@ bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 template< class Eigen_MatrixT>
 bool EigenLDLTSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 {
+  DEB_enter_func;
   if(show_timings_) sw_.start();
 
   ldlt_.factorize(_mat);
 
-  if(show_timings_)
-  {
-    std::cerr << "EigenLDLT Timing EIGEN factorize: " << sw_.stop()/1000.0 << "s\n";
-  }
+  DEB_out_if(show_timings_, 2, "EigenLDLT Timing EIGEN factorize: " 
+    << sw_.stop()/1000.0 << "s\n")
 
   return (ldlt_.info()==Eigen::Success );
 }

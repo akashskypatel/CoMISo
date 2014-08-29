@@ -19,6 +19,8 @@
 #include <Base/OutcomeUtils.hh>
 #include <stdexcept>
 
+#include <Base/Debug/DebOut.hh>
+
 //== NAMESPACES ===============================================================
 
 namespace COMISO {
@@ -36,7 +38,7 @@ GUROBISolver()
 //#define TRACE_GUROBI_INPUT(DESCR, EXPR) \
 //	std::cout << DESCR << ": " << EXPR << std::endl
 
-#define TRACE_GUROBI_INPUT(DESCR, EXPR) 
+#define TRACE_GUROBI_INPUT(DESCR, EXPR) DEB_out(3, DESCR << ":" << EXPR << "\n")
 
 #define _QNT(X) X
 //inline double _QNT(double x) 
@@ -53,6 +55,7 @@ void GUROBISolver::solve(
   std::vector<PairIndexVtype>&        _discrete_constraints,
   const double                        /*_time_limit*/)
 {
+  DEB_enter_func;
   try
   {
     //----------------------------------------------
@@ -106,8 +109,8 @@ void GUROBISolver::solve(
     for(unsigned int i=0; i<_constraints.size();  ++i)
     {
       TRACE_GUROBI_INPUT("Constraint index: ", i);
-      if(!_constraints[i]->is_linear())
-        std::cerr << "Warning: GUROBISolver received a problem with non-linear constraints!!!" << std::endl;
+      DEB_warning_if(!_constraints[i]->is_linear(),1,
+        "GUROBISolver received a problem with non-linear constraints!!!");
 
       GRBLinExpr lin_expr;
       NConstraintInterface::SVectorNC gc;
@@ -141,8 +144,8 @@ void GUROBISolver::solve(
     // 3. setup energy
     //----------------------------------------------
 
-    if(!_problem->constant_hessian())
-      std::cerr << "Warning: GUROBISolver received a problem with non-constant hessian!!!" << std::endl;
+    DEB_warning_if(!_problem->constant_hessian(), 1, 
+      "GUROBISolver received a problem with non-constant hessian!!!");
 
     GRBQuadExpr objective;
 
@@ -201,7 +204,7 @@ void GUROBISolver::solve(
     }
     else
     {
-      std::cout << "Reading solution from file \"" << solution_input_path_ << "\"." << std::endl;
+      DEB_out(2, "Reading solution from file \"" << solution_input_path_ << "\"\n")
     }
 
     //----------------------------------------------
@@ -230,14 +233,13 @@ void GUROBISolver::solve(
     _problem->store_result(P(x));
 
     // ObjVal is only available if the optimize was called.
-    if (solution_input_path_.empty())
-      std::cout << "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
+    DEB_out_if(solution_input_path_.empty(), 2,
+        "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
   }
   catch (GRBException& e)
   {
-    std::cout << "Error code = " << e.getErrorCode() << std::endl;
-    std::cout << e.getMessage() << std::endl;
-
+    DEB_warning(1, "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "]\n");
+    
     // NOTE: we could propagate e.getMessage() either using std::exception, or a specialized Reform exception type
     switch ( e.getErrorCode() )
     {
@@ -263,13 +265,13 @@ solve(NProblemInterface*                        _problem,
       const double                              _time_limit,
       const bool                                _silent)
 {
+  DEB_enter_func;
 //  // hack! solve with all constraints
 //  std::vector<NConstraintInterface*> all_constraints;
 //  std::copy(_constraints.begin(),_constraints.end(),std::back_inserter(all_constraints));
 //  std::copy(_lazy_constraints.begin(),_lazy_constraints.end(),std::back_inserter(all_constraints));
 //
 //  return solve(_problem, all_constraints, _discrete_constraints, _time_limit);
-
   StopWatch sw; sw.start();
 
   bool feasible_point_found = false;
@@ -339,8 +341,8 @@ solve(NProblemInterface*                        _problem,
     // 3. setup energy
     //----------------------------------------------
 
-    if(!_problem->constant_hessian())
-      std::cerr << "Warning: GUROBISolver received a problem with non-constant hessian!!!" << std::endl;
+    DEB_warning_if(!_problem->constant_hessian(), 1,
+      "GUROBISolver received a problem with non-constant hessian!!!\n");
 
     GRBQuadExpr objective;
 
@@ -452,7 +454,8 @@ solve(NProblemInterface*                        _problem,
     {
       ++cur_pass;
 
-      std::cerr << "*************** could not find feasible point after " << _max_passes-1 << " -> solving with all lazy constraints..." << std::endl;
+      DEB_out(1, "*************** could not find feasible point after " 
+        << _max_passes-1 << " -> solving with all lazy constraints...\n");
       for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
         if(!lazy_added[i])
         {
@@ -473,13 +476,14 @@ solve(NProblemInterface*                        _problem,
     //----------------------------------------------------------------------------
     // 4. output statistics
     //----------------------------------------------------------------------------
-
-    std::cerr <<"############# GUROBI with lazy constraints statistics ###############" << std::endl;
-    std::cerr << "overall time: " << overall_time << "s" << std::endl;
-    std::cerr << "#passes     : " << cur_pass << "( of " << _max_passes << ")" << std::endl;
+    // Make this code DEB_only
+    DEB_out(2,"############# GUROBI with lazy constraints statistics ###############\n");
+    DEB_out(2, "overall time: " << overall_time << "s\n");
+    DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
     for(unsigned int i=0; i<n_inf.size(); ++i)
-      std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;
-    std::cout << "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
+      DEB_out(2, "pass " << i << " induced " << n_inf[i]
+        << " infeasible and " << n_almost_inf[i] << " almost infeasible\n");
+    DEB_out(2, "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
 
     //----------------------------------------------
     // 5. store result
@@ -494,13 +498,13 @@ solve(NProblemInterface*                        _problem,
   }
   catch(GRBException& e)
   {
-    std::cout << "Error code = " << e.getErrorCode() << std::endl;
-    std::cout << e.getMessage() << std::endl;
+    DEB_warning(1, 
+      "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "\n");
     return false;
   }
   catch(...)
     {
-    std::cout << "Exception during optimization" << std::endl;
+    DEB_warning)1,"Exception during optimization\n");
     return false;
   }
 
@@ -667,9 +671,9 @@ void
 GUROBISolver::
 add_constraint_to_model(COMISO::NConstraintInterface* _constraint, GRBModel& _model, std::vector<GRBVar>& _vars, double * _x)
 {
-
-  if(!_constraint->is_linear())
-    std::cerr << "Warning: GUROBISolver received a problem with non-linear constraints!!!" << std::endl;
+  DEB_enter_func;
+  DEB_warning_if(!_constraint->is_linear(), 1,
+     "GUROBISolver received a problem with non-linear constraints!!!\n");
 
   GRBLinExpr lin_expr;
   NConstraintInterface::SVectorNC gc;

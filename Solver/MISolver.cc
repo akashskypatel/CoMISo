@@ -43,6 +43,7 @@
 
 #include <gmm/gmm.h>
 #include <float.h>
+#include <Base/Debug/DebOut.hh>
 
 // hack for testing only
 #include "SparseQRSolver.hh"
@@ -102,9 +103,10 @@ MISolver::solve(
     Veci&      _to_round,
     bool       _fixed_order )
 {
+  DEB_enter_func
 
-	std::cerr << "# integer    variables: " << _to_round.size() << std::endl;
-	std::cerr << "# continuous variables: " << _x.size()-_to_round.size() << std::endl;
+  DEB_out(2, "# integer    variables: " << _to_round.size() 
+    << "\n# continuous variables: " << _x.size()-_to_round.size() << "\n")
 
 	MY_PAUSE;
 
@@ -137,7 +139,8 @@ MISolver::solve_cplex(
     Vecd&      _rhs,
     Veci&      _to_round)
 {
-	std::cout << "gurobi_max_time_: " << gurobi_max_time_ << std::endl;
+  DEB_enter_func;
+	DEB_out(2, "gurobi_max_time_: " << gurobi_max_time_ << "\n")
 	MY_PAUSE;
 
 #if COMISO_CPLEX_AVAILABLE
@@ -209,21 +212,21 @@ MISolver::solve_cplex(
     for(unsigned int i=0; i<n; ++i)
       _x[i] = cplex.getValue(vars[i]);
 
-    std::cout << "CPLEX objective: " << cplex.getObjValue() << std::endl;
+    DEB_out(2, "CPLEX objective: " << cplex.getObjValue() <<"\n");
 
   }
   catch (IloException& e)
   {
-    std::cerr << "CPLEX Concert exception caught: " << e << std::endl;
+    DEB_warning(2, "CPLEX Concert exception caught: " << e )
   }
   catch (...)
   {
-    std::cerr << "CPLEX Unknown exception caught" << std::endl;
+    DEB_warning(1, "CPLEX Unknown exception caught" )
   }
 
 
 #else
-  std::cerr << "CPLEX solver is not available, please install it..." << std::endl;
+  DEB_out(1, "CPLEX solver is not available, please install it...\n")
 #endif
 }
 
@@ -263,6 +266,7 @@ MISolver::solve_direct_rounding(
     Vecd&      _rhs, 
     Veci&      _to_round)
 {
+  DEB_enter_func
   Veci to_round(_to_round);
   // copy to round vector and make it unique
   std::sort(to_round.begin(), to_round.end());
@@ -344,14 +348,14 @@ MISolver::solve_direct_rounding(
       sw.start();
       COMISO::EigenLDLTSolver ldlt;
       ldlt.calc_system_gmm(_A);
-      std::cerr << "Eigen LDLT factor took: " << sw.stop()/1000.0 << "s\n";
+      DEB_out(2, "Eigen LDLT factor took: " << sw.stop()/1000.0 << "s\n")
       Vecd x5(_x);
       sw.start();
       ldlt.solve(x5,_rhs);
-      std::cerr << "Eigen LDLT solve took: " << sw.stop()/1000.0 << "s\n";
+      DEB_out(2, "Eigen LDLT solve took: " << sw.stop()/1000.0 << "s\n")
       Vecd res(_x);
       gmm::add(_x,gmm::scaled(x5,-1.0),res);
-      std::cerr << "DIFFERENCE IN RESULT: " << gmm::vect_norm2(res) << std::endl;
+      DEB_warning(2, "DIFFERENCE IN RESULT: " << gmm::vect_norm2(res) )
     }
 #endif
   }
@@ -406,6 +410,7 @@ MISolver::solve_iterative(
     Veci&      _to_round,
     bool       _fixed_order )
 {
+  DEB_enter_func;
   // StopWatch
   COMISO::StopWatch sw;
   double time_search_next_integer = 0;
@@ -437,7 +442,7 @@ MISolver::solve_iterative(
 
   if( initial_full_solution_)
   {
-    if( noisy_ > 2) std::cerr << "initial full solution" << std::endl;
+    DEB_out_if( noisy_ > 2, 2,  "initial full solution\n")
     direct_solver_.calc_system_gmm(_A);
     direct_solver_.solve(_x, _rhs);
 
@@ -457,9 +462,9 @@ MISolver::solve_iterative(
   {
     if( noisy_ > 0)
     {
-      std::cerr << "Integer DOF's left: " << to_round.size()-(i+1) << " ";
-      if( noisy_ > 1)
-        std::cerr << "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << std::endl;
+      DEB_out(2, "Integer DOF's left: " << to_round.size()-(i+1) << " ")
+      DEB_out_if( noisy_ > 1, 1, "residuum_norm: "
+        << COMISO_GMM::residuum_norm( _A, xr, _rhs) << "\n")
     }
 
     // index to eliminate
@@ -519,7 +524,7 @@ MISolver::solve_iterative(
   // final full solution?
   if( final_full_solution_)
   {
-    if( noisy_ > 2) std::cerr << "final full solution" << std::endl;
+    DEB_out_if( noisy_ > 2, 2, "final full solution\n")
 
     if( gmm::mat_ncols( _A) > 0)
     {
@@ -540,18 +545,15 @@ MISolver::solve_iterative(
   }
 
   // output statistics
-  if( stats_)
-  {
-    std::cerr << "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***\n";
-    std::cerr << "\t\t Number of CG    iterations  = " << n_cg_ << std::endl;
-    std::cerr << "\t\t Number of LOCAL iterations  = " << n_local_ << std::endl;
-    std::cerr << "\t\t Number of FULL  iterations  = " << n_full_ << std::endl;
-    std::cerr << "\t\t Number of ROUNDING          = " << _to_round.size() << std::endl;
-    std::cerr << "\t\t time searching next integer = " << time_search_next_integer / 1000.0 <<"s\n";
-    std::cerr << std::endl;
-  }
+  DEB_out_if( stats_, 2,
+    "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***"
+    << "\n\t\t Number of CG    iterations  = " << n_cg_
+    << "\n\t\t Number of LOCAL iterations  = " << n_local_
+    << "\n\t\t Number of FULL  iterations  = " << n_full_
+    << "\n\t\t Number of ROUNDING          = " << _to_round.size()
+    << "\n\t\t time searching next integer = " << time_search_next_integer / 1000.0 
+    << "s\n\n")
 }
-
 
 
 //-----------------------------------------------------------------------------
@@ -564,13 +566,14 @@ MISolver::update_solution(
     Vecd&      _rhs, 
     Vecui&     _neigh_i )
 {
+  DEB_enter_func
   // set to not converged
   bool converged = false;
 
   // compute new solution
   if(max_local_iters_ > 0)
   {
-    if( noisy_ > 2)std::cerr << "use local iteration ";
+    DEB_out_if( noisy_ > 2, 2, "use local iteration ")
 
     int    n_its     = max_local_iters_;
     double tolerance = max_local_error_;
@@ -583,22 +586,21 @@ MISolver::update_solution(
   // conjugate gradient
   if( !converged && max_cg_iters_ > 0)
   {
-    if( noisy_ > 2) std::cerr << ", cg ";
+    DEB_out_if( noisy_ > 2, 2, ", cg ")
 
     int max_cg_iters = max_cg_iters_;
     double tolerance = max_cg_error_;
     converged = siter_.conjugate_gradient(_A, _x,_rhs, max_cg_iters, tolerance);
 
-    if( noisy_ > 3) 
-      std::cerr << "( converged " << converged << " "
-		<< " iters " << max_cg_iters   << " "
-		<< " res_norm " << tolerance << std::endl;
+    DEB_out_if( noisy_ > 3, 3,  "( converged " << converged << " "
+		  << " iters " << max_cg_iters   << " "
+  		<< " res_norm " << tolerance << "\n")
     ++n_cg_;
   }
 
   if(!converged && iter_full_solution_)
   {
-    if( noisy_ > 2)std::cerr << ", full ";
+    DEB_out_if( noisy_ > 2, 2, ", full ")
 
     if( gmm::mat_ncols( _A) > 0)
     {
@@ -615,7 +617,7 @@ MISolver::update_solution(
     }
   }
 
-  if( noisy_ > 2)std::cerr << std::endl;
+  DEB_out_if( noisy_ > 2, 2, "\n")
 }
 
 //-----------------------------------------------------------------------------
@@ -628,6 +630,7 @@ void MISolver::solve_multiple_rounding(
 	Veci&      _to_round 
 	)
 {
+  DEB_enter_func
 	// StopWatch
 	COMISO::StopWatch sw;
 	double time_search_next_integer = 0;
@@ -655,7 +658,7 @@ void MISolver::solve_multiple_rounding(
 
 	if( initial_full_solution_)
 	{
-		if( noisy_ > 2) std::cerr << "initial full solution" << std::endl;
+		DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
 		direct_solver_.calc_system_gmm(_A);
 		direct_solver_.solve(_x, _rhs);
 
@@ -673,12 +676,8 @@ void MISolver::solve_multiple_rounding(
 	// loop until solution computed
 	for(unsigned int i=0; i<to_round.size(); ++i)
 	{
-		if( noisy_ > 0)
-		{
-			std::cerr << "Integer DOF's left: " << to_round.size()-(i+1) << " ";
-			if( noisy_ > 1)
-				std::cerr << "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << std::endl;
-		}
+    DEB_out_if(noisy_ > 0, 1, "Integer DOF's left: " << to_round.size()-(i+1) << " ")
+  	DEB_out_if(noisy_ > 1, 1, "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << "\n")
 
 		// position in round vector
 		std::vector<int> tr_best;
@@ -708,8 +707,8 @@ void MISolver::solve_multiple_rounding(
 		if( tr_best.empty() )
 			break;
 
-		if( noisy_ > 5)
-			std::cerr << "round " << tr_best.size() << " variables simultaneously\n";
+		DEB_out_if( noisy_ > 5, 5, 
+      "round " << tr_best.size() << " variables simultaneously\n")
 
 		// clear neigh for local update
 		neigh_i.clear();
@@ -743,7 +742,7 @@ void MISolver::solve_multiple_rounding(
 	// final full solution?
 	if( final_full_solution_)
 	{
-		if( noisy_ > 2) std::cerr << "final full solution" << std::endl;
+		DEB_out_if( noisy_ > 2, 2, "final full solution\n")
 
 		if( gmm::mat_ncols( _A) > 0)
 		{
@@ -764,16 +763,13 @@ void MISolver::solve_multiple_rounding(
 	}
 
 	// output statistics
-	if( stats_)
-	{
-		std::cerr << "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***\n";
-		std::cerr << "\t\t Number of CG    iterations  = " << n_cg_ << std::endl;
-		std::cerr << "\t\t Number of LOCAL iterations  = " << n_local_ << std::endl;
-		std::cerr << "\t\t Number of FULL  iterations  = " << n_full_ << std::endl;
-		std::cerr << "\t\t Number of ROUNDING          = " << _to_round.size() << std::endl;
-		std::cerr << "\t\t time searching next integer = " << time_search_next_integer / 1000.0 <<"s\n";
-		std::cerr << std::endl;
-	}
+	DEB_out_if( stats_, 2, "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***"
+		<< "\t\t Number of CG    iterations  = " << n_cg_ 
+	  << "\t\t Number of LOCAL iterations  = " << n_local_ 
+		<< "\t\t Number of FULL  iterations  = " << n_full_ 
+		<< "\t\t Number of ROUNDING          = " << _to_round.size()
+		<< "\t\t time searching next integer = " << time_search_next_integer / 1000.0 <<"s\n"
+		<< "\n")
 }
 
 
@@ -787,6 +783,7 @@ MISolver::solve_gurobi(
     Vecd&      _rhs,
     Veci&      _to_round)
 {
+  DEB_enter_func
 #if COMISO_GUROBI_AVAILABLE
 
   // get round-indices in set
@@ -846,21 +843,20 @@ MISolver::solve_gurobi(
     for(unsigned int i=0; i<n; ++i)
       _x[i] = vars[i].get(GRB_DoubleAttr_X);
 
-    std::cout << "GUROBI objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
+    DEB_out(2, "GUROBI objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n")
 
   }
   catch(GRBException& e)
   {
-    std::cout << "Error code = " << e.getErrorCode() << std::endl;
-    std::cout << e.getMessage() << std::endl;
+    DEB_warning(2, "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "]\n")
   }
   catch(...)
   {
-    std::cout << "Exception during optimization" << std::endl;
+    DEB_warning(1, "Exception during optimization")
   }
 
 #else
-  std::cerr << "GUROBI solver is not available, please install it..." << std::endl;
+  DEB_out(1,"GUROBI solver is not available, please install it...\n")
 #endif
 }
 
@@ -872,11 +868,12 @@ void
 MISolver::
 show_options_dialog()
 {
+  DEB_enter_func;
 #if(COMISO_QT4_AVAILABLE)
   MISolverDialog* pd = new MISolverDialog(*this);
   pd->exec();
 #else
-  std::cerr << "Warning: Qt not available to show solver dialog!!!" << std::endl;
+  DEB_warning(1, "Qt not available to show solver dialog!!!")
 #endif
 }
 

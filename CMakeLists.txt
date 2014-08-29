@@ -17,6 +17,7 @@ include_directories(${3P_DIR}/IPOPT/${INC_DIR})
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
+target_link_libraries(Base)
 
 # generate dllexport macros on windows
 if (MSVC)
