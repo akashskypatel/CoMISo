@@ -38,7 +38,7 @@ GUROBISolver()
 //#define TRACE_GUROBI_INPUT(DESCR, EXPR) \
 //	std::cout << DESCR << ": " << EXPR << std::endl
 
-#define TRACE_GUROBI_INPUT(DESCR, EXPR) DEB_out(3, DESCR << ":" << EXPR << "\n")
+#define TRACE_GUROBI_INPUT(DESCR, EXPR) DEB_out(7, DESCR << ":" << EXPR << "\n")
 
 #define _QNT(X) X
 //inline double _QNT(double x) 

@@ -545,14 +545,13 @@ MISolver::solve_iterative(
   }
 
   // output statistics
-  DEB_out_if( stats_, 2,
-    "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***"
-    << "\n\t\t Number of CG    iterations  = " << n_cg_
-    << "\n\t\t Number of LOCAL iterations  = " << n_local_
-    << "\n\t\t Number of FULL  iterations  = " << n_full_
-    << "\n\t\t Number of ROUNDING          = " << _to_round.size()
-    << "\n\t\t time searching next integer = " << time_search_next_integer / 1000.0 
-    << "s\n\n")
+  DEB_out_if( stats_, 2, " *** Statistics of MiSo Solver ***"
+    << "\n Number of CG    iterations  = " << n_cg_
+    << "\n Number of LOCAL iterations  = " << n_local_
+    << "\n Number of FULL  iterations  = " << n_full_
+    << "\n Number of ROUNDING          = " << _to_round.size()
+    << "\n time searching next integer = " 
+    << time_search_next_integer / 1000.0 << "s\n\n")
 }
 
 
@@ -763,13 +762,13 @@ void MISolver::solve_multiple_rounding(
 	}
 
 	// output statistics
-	DEB_out_if( stats_, 2, "\t" << __FUNCTION__ << " *** Statistics of MiSo Solver ***"
-		<< "\t\t Number of CG    iterations  = " << n_cg_ 
-	  << "\t\t Number of LOCAL iterations  = " << n_local_ 
-		<< "\t\t Number of FULL  iterations  = " << n_full_ 
-		<< "\t\t Number of ROUNDING          = " << _to_round.size()
-		<< "\t\t time searching next integer = " << time_search_next_integer / 1000.0 <<"s\n"
-		<< "\n")
+	DEB_out_if( stats_, 2, " *** Statistics of MiSo Solver ***"
+		<< "\n Number of CG    iterations  = " << n_cg_ 
+        << "\n Number of LOCAL iterations  = " << n_local_ 
+		<< "\n Number of FULL  iterations  = " << n_full_ 
+		<< "\n Number of ROUNDING          = " << _to_round.size()
+		<< "\n time searching next integer = " 
+        << time_search_next_integer / 1000.0 <<"s\n\n")
 }
 
 
