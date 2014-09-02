@@ -16,7 +16,7 @@
 #include "GUROBISolver.hh"
 #include <CoMISo/Utils/StopWatch.hh>
 
-#include <Base/OutcomeUtils.hh>
+#include <Base/Utils/OutcomeUtils.hh>
 #include <stdexcept>
 
 #include <Base/Debug/DebOut.hh>

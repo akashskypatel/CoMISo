@@ -14,7 +14,7 @@
 
 #include "IPOPTSolver.hh"
 
-#include <Base/OutcomeUtils.hh>
+#include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Debug/DebOut.hh>
 
 
@@ -342,6 +342,45 @@ IPOPTSolver::~IPOPTSolver()
 //-----------------------------------------------------------------------------
 
 
+
+static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const status)
+{
+  DEB_enter_func
+  DEB_warning(1, " IPOPT solve failure code is " << status)
+  // TODO: we could translate these return codes, but will not do it for now
+  //  enum ApplicationReturnStatus
+  //    {
+  //      Solve_Succeeded=0,
+  //      Solved_To_Acceptable_Level=1,
+  //      Infeasible_Problem_Detected=2,
+  //      Search_Direction_Becomes_Too_Small=3,
+  //      Diverging_Iterates=4,
+  //      User_Requested_Stop=5,
+  //      Feasible_Point_Found=6,
+  //
+  //      Maximum_Iterations_Exceeded=-1,
+  //      Restoration_Failed=-2,
+  //      Error_In_Step_Computation=-3,
+  //      Maximum_CpuTime_Exceeded=-4,
+  //      Not_Enough_Degrees_Of_Freedom=-10,
+  //      Invalid_Problem_Definition=-11,
+  //      Invalid_Option=-12,
+  //      Invalid_Number_Detected=-13,
+  //
+  //      Unrecoverable_Exception=-100,
+  //      NonIpopt_Exception_Thrown=-101,
+  //      Insufficient_Memory=-102,
+  //      Internal_Error=-199
+  //    };
+  //------------------------------------------------------
+  switch(status) {
+  case Ipopt::ApplicationReturnStatus::Maximum_Iterations_Exceeded:
+    THROW_OUTCOME(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+  default:
+    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
+  } // endswicth
+}
+
 void IPOPTSolver::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
 {
@@ -392,34 +431,7 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   //----------------------------------------------------------------------------
   if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
   {
-    // TODO: we could trnslate these return codes, but will not do it for now
-    //  enum ApplicationReturnStatus
-    //    {
-    //      Solve_Succeeded=0,
-    //      Solved_To_Acceptable_Level=1,
-    //      Infeasible_Problem_Detected=2,
-    //      Search_Direction_Becomes_Too_Small=3,
-    //      Diverging_Iterates=4,
-    //      User_Requested_Stop=5,
-    //      Feasible_Point_Found=6,
-    //
-    //      Maximum_Iterations_Exceeded=-1,
-    //      Restoration_Failed=-2,
-    //      Error_In_Step_Computation=-3,
-    //      Maximum_CpuTime_Exceeded=-4,
-    //      Not_Enough_Degrees_Of_Freedom=-10,
-    //      Invalid_Problem_Definition=-11,
-    //      Invalid_Option=-12,
-    //      Invalid_Number_Detected=-13,
-    //
-    //      Unrecoverable_Exception=-100,
-    //      NonIpopt_Exception_Thrown=-101,
-    //      Insufficient_Memory=-102,
-    //      Internal_Error=-199
-    //    };
-    //------------------------------------------------------
-
-    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
+    throw_ipopt_solve_failure(status);
   }
   
   // Retrieve some statistics about the solve
@@ -622,7 +634,7 @@ void IPOPTSolver::solve(
   // 4. output statistics
   //----------------------------------------------------------------------------
   if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
-    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
+    throw_ipopt_solve_failure(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -683,7 +695,7 @@ void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintI
   // 4. output statistics
   //----------------------------------------------------------------------------
   if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
-    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
+    throw_ipopt_solve_failure(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
