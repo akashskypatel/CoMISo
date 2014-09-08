@@ -436,10 +436,11 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
+  DEB_out(1,"\n*** IPOPT: The problem solved in " 
+    << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  DEB_out(1,"\n\n*** IPOPT: The final value of the objective function is "
+  DEB_out(1,"\n*** IPOPT: The final value of the objective function is "
     << final_obj << "\n");
 }
 
@@ -638,11 +639,11 @@ void IPOPTSolver::solve(
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  DEB_out(1, "\n\n*** IPOPT: The problem solved in " 
+  DEB_out(1, "\n*** IPOPT: The problem solved in " 
     << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  DEB_out(1, "\n\n*** IPOPT: The final value of the objective function is "
+  DEB_out(1, "\n*** IPOPT: The final value of the objective function is "
     << final_obj << "\n");
 
   DEB_out(2, "############# IPOPT with lazy constraints statistics ###############\n");
@@ -699,10 +700,11 @@ void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintI
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
+  DEB_out(1,"\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  DEB_out(1, "\n\n*** IPOPT: The final value of the objective function is " << final_obj << "\n");
+  DEB_out(1, "\n*** IPOPT: The final value of the objective function is "
+    << final_obj << "\n");
 }
 
 
