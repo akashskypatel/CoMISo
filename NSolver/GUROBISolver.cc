@@ -21,6 +21,9 @@
 
 #include <Base/Debug/DebOut.hh>
 
+DEB_module("NSLV")
+
+
 //== NAMESPACES ===============================================================
 
 namespace COMISO {

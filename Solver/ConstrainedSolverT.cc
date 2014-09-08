@@ -41,7 +41,7 @@
 
 #include <Base/Debug/DebOut.hh>
 
-
+DEB_module("SOLV");
 
 //== NAMESPACES ===============================================================
 

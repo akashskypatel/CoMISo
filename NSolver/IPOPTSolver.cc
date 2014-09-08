@@ -22,7 +22,7 @@
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
 
-
+DEB_module("NSLV")
 
 //== NAMESPACES ===============================================================
 
@@ -436,7 +436,7 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << "iterations!\n");
+  DEB_out(1,"\n\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
 
   Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
   DEB_out(1,"\n\n*** IPOPT: The final value of the objective function is "

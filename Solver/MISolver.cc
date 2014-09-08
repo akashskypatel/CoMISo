@@ -50,6 +50,8 @@
 #include "UMFPACKSolver.hh"
 #include "EigenLDLTSolver.hh"
 
+DEB_module("SOLV");
+
 #define ROUND(x) ((x)<0?int((x)-0.5):int((x)+0.5))
 
 namespace COMISO {
