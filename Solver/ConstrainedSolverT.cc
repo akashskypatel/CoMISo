@@ -249,10 +249,11 @@ solve(
   eliminate_constraints( _constraints, _A, _x, _rhs, _idx_to_round, c_elim, new_idx, Acsc);
   double time_eliminate = sw.stop()/1000.0;
 
-  DEB_out_if( _show_timings, 2,
-    "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc 
-    << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
-
+  /// TODO: temporary disable this since it was causing performance issues
+  //DEB_out_if( _show_timings, 2,
+  //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc 
+  //  << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
+  
   sw.start();
   miso_.solve( Acsc, _x, _rhs, _idx_to_round);
   double time_miso = sw.stop()/1000.0; sw.start();
