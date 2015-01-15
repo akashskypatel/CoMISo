@@ -41,9 +41,12 @@
 
 #include <CoMISo/Utils/StopWatch.hh>
 
+#include <Base/Debug/DebOut.hh>
+#include <Base/Utils/OutcomeUtils.hh>
+
 #include <gmm/gmm.h>
 #include <float.h>
-#include <Base/Debug/DebOut.hh>
+
 
 // hack for testing only
 #include "SparseQRSolver.hh"
@@ -652,16 +655,19 @@ void MISolver::solve_multiple_rounding(
 	int r = last_unique - to_round.begin();
 	to_round.resize( r);
 
-	// initalize old indices
+	// initialize old indices
 	Veci old_idx(_rhs.size());
 	for(unsigned int i=0; i<old_idx.size(); ++i)
 		old_idx[i] = i;
 
-	if( initial_full_solution_)
+	if(initial_full_solution_)
 	{
 		DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
-		direct_solver_.calc_system_gmm(_A);
-		direct_solver_.solve(_x, _rhs);
+    // TODO: we can throw more specific outcomes in the body of the fucntions below
+    THROW_OUTCOME_if(!direct_solver_.calc_system_gmm(_A), 
+      UNSPECIFIED_EIGEN_FAILURE);
+    THROW_OUTCOME_if(!direct_solver_.solve(_x, _rhs), 
+      UNSPECIFIED_EIGEN_FAILURE);
 
 		cholmod_step_done_ = true;
 
