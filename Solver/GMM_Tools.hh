@@ -35,8 +35,9 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
-
+ENABLE_BANNED_COMPLIANCE
 #if COMISO_SUITESPARSE_AVAILABLE
 #include <cholmod.h>
 #endif

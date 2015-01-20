@@ -19,7 +19,9 @@
 #include <CoMISo/Utils/StopWatch.hh>
 #include <vector>
 #include <cstddef>
+DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
+ENABLE_BANNED_COMPLIANCE
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"

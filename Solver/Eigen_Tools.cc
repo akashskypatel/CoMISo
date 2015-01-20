@@ -44,8 +44,9 @@
 #include <queue>
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/VSToolsT.hh>
+DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
-
+ENABLE_BANNED_COMPLIANCE
 
 //== NAMESPACES ===============================================================
 
