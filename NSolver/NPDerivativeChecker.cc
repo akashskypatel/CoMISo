@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 #include "NPDerivativeChecker.hh"
 
 namespace COMISO {

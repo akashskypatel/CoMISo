@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 /*===========================================================================*\
  *                                                                           *
  *                               CoMISo                                      *
@@ -38,8 +39,19 @@ find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
   bool all_same  = true;
   int i_gcd = -1;
   int prev_val   = -1;
+
+
+
+  char * test="test_string";
+
+  #pragma message(" compiling a strlen call")
+  size_t test_len = strlen(test);
+  test_len++;
+
+
+
   // check integer coefficient pairwise
-  while( !done)
+  while( !done && (test_len++!=6))
   {
     // assume gcd of all pairs is the same
     all_same = true;

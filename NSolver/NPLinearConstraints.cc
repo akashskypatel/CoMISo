@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 //=============================================================================
 //
 //  CLASS NPLinearConstraints
@@ -6,11 +7,16 @@
 
 
 //== INCLUDES =================================================================
-
+//DISABLE_BANNED_COMPLIANCE
+//ENABLE_BANNED_COMPLIANCE
 #include "NPLinearConstraints.hh"
+
 #include "NProblemGmmInterface.hh"
 #include "LinearConstraintHandlerElimination.hh"
 #include "LinearConstraintHandlerPenalty.hh"
+
+
+
 //#include "LinearConstraintHandlerLagrange.hh"
 
 

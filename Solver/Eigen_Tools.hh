@@ -39,10 +39,12 @@
 #include <limits>
 #include <cmath>
 
-
+DISABLE_BANNED_COMPLIANCE
 #include <Eigen/Dense>
 #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #include <Eigen/Sparse>
+ENABLE_BANNED_COMPLIANCE
+
 
 #if COMISO_SUITESPARSE_AVAILABLE
 #include <cholmod.h>
@@ -118,7 +120,9 @@ void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_Eigen_TOOLS_C)
 #define COMISO_Eigen_TOOLS_TEMPLATES
+DISABLE_BANNED_COMPLIANCE
 #include "Eigen_Tools.cc"
+ENABLE_BANNED_COMPLIANCE
 #endif
 
 //=============================================================================

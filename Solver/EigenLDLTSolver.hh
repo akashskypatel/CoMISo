@@ -45,11 +45,11 @@
 #include <iostream>
 #include <vector>
 
-
+DISABLE_BANNED_COMPLIANCE
 #include <Eigen/Eigen>
 #include <Eigen/Sparse>
 #include <Eigen/SparseCholesky>
-
+ENABLE_BANNED_COMPLIANCE
 
 //== NAMESPACES ===============================================================
 

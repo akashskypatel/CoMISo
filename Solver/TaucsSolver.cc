@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 #include "TaucsSolver.hh"
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================

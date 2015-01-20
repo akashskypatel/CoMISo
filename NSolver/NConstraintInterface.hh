@@ -13,14 +13,14 @@
 #if COMISO_EIGEN3_AVAILABLE
 
 //== INCLUDES =================================================================
-
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include "SuperSparseMatrixT.hh"
 
 
 #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
+DISABLE_BANNED_COMPLIANCE
 #include <Eigen/Sparse>
-
+ENABLE_BANNED_COMPLIANCE
 
 //== FORWARDDECLARATIONS ======================================================
 

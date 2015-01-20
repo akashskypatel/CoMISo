@@ -14,8 +14,9 @@
 #include <iostream>
 #include <map>
 #include <math.h>
+DISABLE_BANNED_COMPLIANCE
 #include <Eigen/Dense>
-
+ENABLE_BANNED_COMPLIANCE
 //== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================

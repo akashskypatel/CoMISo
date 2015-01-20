@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 //=============================================================================
 //
 //  CLASS LinearConstraintHandlerPenalty - IMPLEMENTATION TEMPLATES

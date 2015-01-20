@@ -1,3 +1,4 @@
+#include <Base/Security/Mandatory.hh>
 // (C) Copyright 2014 by Autodesk, Inc.
 //
 // The information contained herein is confidential, proprietary
