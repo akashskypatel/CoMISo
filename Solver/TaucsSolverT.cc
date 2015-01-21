@@ -1,4 +1,3 @@
-#include <Base/Security/Mandatory.hh>
 #define COMISO_TAUCS_SOLVER_TEMPLATES_C
 
 #include "TaucsSolver.hh"

@@ -1,4 +1,3 @@
-#include <Base/Security/Mandatory.hh>
 //=============================================================================
 //
 //  CLASS IterativeSolverT - IMPLEMENTATION

@@ -12,9 +12,7 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Utils/StopWatch.hh>
-DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
-ENABLE_BANNED_COMPLIANCE
 #include "NProblemInterface.hh"
 #include <CoMISo/Config/CoMISoDefines.hh>
 

@@ -24,9 +24,8 @@
 
 #include <CoMISo/Utils/VSToolsT.hh>
 #include <CoMISo/Utils/StopWatch.hh>
-DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
-ENABLE_BANNED_COMPLIANCE
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 
 //== FORWARDDECLARATIONS ======================================================

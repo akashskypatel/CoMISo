@@ -17,15 +17,11 @@
 
 #include <iostream>
 
-DISABLE_BANNED_COMPLIANCE
-
 #include <Eigen/Eigen>
 #if !(EIGEN_VERSION_AT_LEAST(3,1,0))
   #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #endif
 #include <Eigen/Sparse>
-
-ENABLE_BANNED_COMPLIANCE
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 

@@ -13,9 +13,8 @@
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <iostream>
-DISABLE_BANNED_COMPLIANCE
 #include <gmm/gmm.h>
-ENABLE_BANNED_COMPLIANCE
+
 //== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================
