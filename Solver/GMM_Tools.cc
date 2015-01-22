@@ -38,7 +38,6 @@
 #define GMM_USES_LAPACK
 #include <gmm/gmm_lapack_interface.h>
 #include <queue>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/VSToolsT.hh>
 
 

@@ -11,7 +11,7 @@
 #include "LinearConstraint.hh"
 #include "BoundConstraint.hh"
 #include "ConeConstraint.hh"
-#include <CoMISo/Utils/StopWatch.hh>
+#include <Base/Debug/DebTime.hh>
 
 
 #if COMISO_CPLEX_AVAILABLE
@@ -31,7 +31,6 @@ solve2(NProblemInterface*                  _problem,
       const double                        _time_limit,
       const bool                          _silent)
 {
-	MY_PAUSE;
   try
   {
     //----------------------------------------------
@@ -639,14 +638,13 @@ solve(NProblemInterface*                        _problem,
       const double                              _time_limit,
       const bool                                _silent)
 {
-	MY_PAUSE;
 
 //  std::cerr << "Warning: CPLEXSolver does not support lazy constraints yet -> solve with all constraints instead" << std::endl;
 //  std::vector<NConstraintInterface*> C;
 //  std::copy(_constraints.begin(),_constraints.end(),std::back_inserter(C));
 //  return solve(_problem, C, _time_limit, _silent);
 
-  StopWatch sw; sw.start();
+  DEB_time_func_def;
 
   bool feasible_point_found = false;
   int  cur_pass = 0;
@@ -902,8 +900,6 @@ solve(NProblemInterface*                        _problem,
       }
     }
 
-    const double overall_time = sw.stop()/1000.0;
-
     //----------------------------------------------------------------------------
     // 4. output statistics
     //----------------------------------------------------------------------------
@@ -918,7 +914,6 @@ solve(NProblemInterface*                        _problem,
 //    }
 
     std::cerr <<"############# CPLEX with lazy constraints statistics ###############" << std::endl;
-    std::cerr << "overall time: " << overall_time << "s" << std::endl;
     std::cerr << "#passes     : " << cur_pass << "( of " << _max_passes << ")" << std::endl;
     for(unsigned int i=0; i<n_inf.size(); ++i)
       std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;

@@ -11,7 +11,7 @@
 
 //== INCLUDES =================================================================
 
-#include <CoMISo/Utils/StopWatch.hh>
+#include <Base/Utils/StopWatch.hh>
 #include <gmm/gmm.h>
 #include "NProblemInterface.hh"
 #include <CoMISo/Config/CoMISoDefines.hh>
@@ -67,8 +67,8 @@ protected:
 
 private:
   NProblemInterface* base_;
-  StopWatch swg_;
-  StopWatch sw_;
+  Base::StopWatch swg_;
+  Base::StopWatch sw_;
 
   // timings
   double timing_eval_f_;

@@ -14,12 +14,11 @@
 
 
 #include "GUROBISolver.hh"
-#include <CoMISo/Utils/StopWatch.hh>
 
+#include <Base/Debug/DebTime.hh>
 #include <Base/Utils/OutcomeUtils.hh>
 #include <stdexcept>
 
-#include <Base/Debug/DebOut.hh>
 
 DEB_module("NSLV")
 
@@ -268,14 +267,13 @@ solve(NProblemInterface*                        _problem,
       const double                              _time_limit,
       const bool                                _silent)
 {
-  DEB_enter_func;
+  DEB_time_func_def;
 //  // hack! solve with all constraints
 //  std::vector<NConstraintInterface*> all_constraints;
 //  std::copy(_constraints.begin(),_constraints.end(),std::back_inserter(all_constraints));
 //  std::copy(_lazy_constraints.begin(),_lazy_constraints.end(),std::back_inserter(all_constraints));
 //
 //  return solve(_problem, all_constraints, _discrete_constraints, _time_limit);
-  StopWatch sw; sw.start();
 
   bool feasible_point_found = false;
   int  cur_pass = 0;

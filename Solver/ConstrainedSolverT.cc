@@ -36,9 +36,9 @@
 #include <gmm/gmm.h>
 #include "GMM_Tools.hh"
 #include <float.h>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/MutablePriorityQueueT.hh>
 
+#include <Base/Utils/StopWatch.hh>
 #include <Base/Debug/DebOut.hh>
 
 DEB_module("SOLV");
@@ -153,7 +153,7 @@ solve(
 //   if( _show_timings) std::cerr << __FUNCTION__ << "\n Initial dimension: " << nrows << " x " << ncols << ", number of constraints: " << ncons << std::endl;
  
 //   // StopWatch for Timings
-//   COMISO::StopWatch sw, sw2; sw.start(); sw2.start();
+//   Base::StopWatch sw, sw2; sw.start(); sw2.start();
 
 //   // c_elim[i] = index of variable which is eliminated in condition i
 //   // or -1 if condition is invalid
@@ -228,7 +228,7 @@ solve(
              << " use reordering: " << use_constraint_reordering() << "\n")
 
   // StopWatch for Timings
-  COMISO::StopWatch sw, sw2; sw.start(); sw2.start();
+  Base::StopWatch sw, sw2; sw.start(); sw2.start();
 
   // c_elim[i] = index of variable which is eliminated in condition i
   // or -1 if condition is invalid
@@ -339,7 +339,7 @@ resolve(
 {
   DEB_enter_func;
   // StopWatch for Timings
-  COMISO::StopWatch sw;
+  Base::StopWatch sw;
 
   sw.start();
   // apply stored updates and eliminations to exchanged rhs
@@ -403,7 +403,7 @@ make_constraints_independent(
   gmm::clear(rhs_update_table_.D_);
   for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
-  //  COMISO::StopWatch sw;
+  //  Base::StopWatch sw;
   // number of variables
   int n_vars = gmm::mat_ncols(_constraints);
 
@@ -592,7 +592,7 @@ make_constraints_independent_reordering(
   gmm::clear(rhs_update_table_.D_);
   for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
-  //  COMISO::StopWatch sw;
+  //  Base::StopWatch sw;
   // number of variables
   int n_vars = gmm::mat_ncols(_constraints);
 
@@ -965,7 +965,7 @@ eliminate_constraints(
     CSCMatrixT&                 _Acsc)
 {
   DEB_enter_func;
-  COMISO::StopWatch sw;
+  Base::StopWatch sw;
   sw.start();
   // define iterator on matrix A and on constraints C
   typedef typename gmm::linalg_traits<SVector2T>::const_iterator  AIter;
@@ -1168,8 +1168,8 @@ setup_and_solve_system( CMatrixT& _B,
   if( _show_miso_settings)
     miso_.show_options_dialog();
 
-  COMISO::StopWatch s1;
-  COMISO::StopWatch sw; sw.start();
+  Base::StopWatch s1;
+  Base::StopWatch sw; sw.start();
   unsigned int m = gmm::mat_nrows(_B);
   unsigned int n = gmm::mat_ncols(_B);
 
@@ -1220,7 +1220,7 @@ setup_and_solve_system( CMatrixT& _B,
   double setup_time = sw.stop()/1000.0;
   
 
-  COMISO::StopWatch misw;
+  Base::StopWatch misw;
   misw.start();
   // miso solve
   miso_.solve( BtBCSC, _x, rhs, _idx_to_round);

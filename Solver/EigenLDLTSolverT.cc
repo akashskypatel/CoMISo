@@ -33,7 +33,7 @@
 #include <CoMISo/Solver/Eigen_Tools.hh>
 #include <CoMISo/Solver/EigenLDLTSolver.hh>
 
-#include <Base/Debug/DebOut.hh>
+#include <Base/Debug/DebTime.hh>
 
 DEB_module("SOLV")
 
@@ -43,14 +43,10 @@ namespace COMISO {
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
-  DEB_enter_func;
-  if(show_timings_) sw_.start();
+  DEB_time_func_def;
 
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
-
-  DEB_out_if(show_timings_, 2, "EigenLDLT Timing GMM convert: "
-    << sw_.stop()/1000.0 << "s\n#nnz: " << E.nonZeros() << "\n");
 
   return calc_system_eigen( E);
 }
@@ -62,14 +58,10 @@ bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
 {
-  DEB_enter_func;
-  if(show_timings_) sw_.start();
+  DEB_time_func_def;
 
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
-
-  DEB_out_if(show_timings_, 2, "EigenLDLT Timing GMM convert: "
-    << sw_.stop()/1000.0 << "s\n#nnz: " << E.nonZeros() << "\n");
 
   return update_system_eigen( E);
 }
@@ -79,17 +71,11 @@ bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
 template< class Eigen_MatrixT>
 bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
-  DEB_enter_func;  
+  DEB_time_func_def;  
+
   n_ = _mat.rows();
-
-  if(show_timings_) sw_.start();
-
   ldlt_.compute(_mat);
-
-  DEB_out_if(show_timings_, 2, "EigenLDLT Timing EIGEN compute: "
-    << sw_.stop()/1000.0 << "s\n");
-
-    return (ldlt_.info()==Eigen::Success);
+  return (ldlt_.info()==Eigen::Success);
 }
   
 //-----------------------------------------------------------------------------
@@ -97,14 +83,9 @@ bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 template< class Eigen_MatrixT>
 bool EigenLDLTSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 {
-  DEB_enter_func;
-  if(show_timings_) sw_.start();
+  DEB_time_func_def;
 
   ldlt_.factorize(_mat);
-
-  DEB_out_if(show_timings_, 2, "EigenLDLT Timing EIGEN factorize: " 
-    << sw_.stop()/1000.0 << "s\n")
-
   return (ldlt_.info()==Eigen::Success );
 }
 

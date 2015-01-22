@@ -16,7 +16,6 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <vector>
 #include <cstddef>
 #include <gmm/gmm.h>

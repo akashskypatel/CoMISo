@@ -15,8 +15,7 @@
 #include "IPOPTSolver.hh"
 
 #include <Base/Utils/OutcomeUtils.hh>
-#include <Base/Debug/DebOut.hh>
-
+#include <Base/Debug/DebTime.hh>
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
@@ -339,8 +338,8 @@ IPOPTSolver::IPOPTSolver()
 
 IPOPTSolver::~IPOPTSolver()
 { delete impl_; }
-//-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
 
 
 static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const status)
@@ -384,7 +383,7 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
 void IPOPTSolver::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
 {
-  DEB_enter_func;
+  DEB_time_func_def;
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
@@ -429,10 +428,9 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
-  {
+  if (!(status == Ipopt::Solve_Succeeded || 
+        status == Ipopt::Solved_To_Acceptable_Level))
     throw_ipopt_solve_failure(status);
-  }
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -455,12 +453,10 @@ void IPOPTSolver::solve(
       const double                              _almost_infeasible,
       const int                                 _max_passes        )
 {
-  DEB_enter_func;
+  DEB_time_func_def;
   //----------------------------------------------------------------------------
-  // 0. Initialize IPOPT Applicaiton
+  // 0. Initialize IPOPT Application
   //----------------------------------------------------------------------------
-  
-  StopWatch sw; sw.start();
 
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status;
@@ -629,12 +625,11 @@ void IPOPTSolver::solve(
     status = impl_->app_->OptimizeTNLP( np);
   }
 
-  const double overall_time = sw.stop()/1000.0;
-
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
+  if (!(status == Ipopt::Solve_Succeeded || 
+        status == Ipopt::Solved_To_Acceptable_Level))
     throw_ipopt_solve_failure(status);
 
   // Retrieve some statistics about the solve
@@ -647,7 +642,6 @@ void IPOPTSolver::solve(
     << final_obj << "\n");
 
   DEB_out(2, "############# IPOPT with lazy constraints statistics ###############\n");
-  DEB_out(2, "overall time: " << overall_time << "s\n");
   DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
   for(unsigned int i=0; i<n_inf.size(); ++i)
     DEB_out(3, "pass " << i << " induced " << n_inf[i] 

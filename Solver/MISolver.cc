@@ -39,10 +39,10 @@
 //#include <ilcplex/cplex.h>
 #endif
 
-#include <CoMISo/Utils/StopWatch.hh>
 
 #include <Base/Debug/DebOut.hh>
 #include <Base/Utils/OutcomeUtils.hh>
+#include <Base/Utils/StopWatch.hh>
 
 #include <gmm/gmm.h>
 #include <float.h>
@@ -113,8 +113,6 @@ MISolver::solve(
   DEB_out(2, "# integer    variables: " << _to_round.size() 
     << "\n# continuous variables: " << _x.size()-_to_round.size() << "\n")
 
-	MY_PAUSE;
-
 	// nothing to solve?
 	if( gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
 		return;
@@ -146,7 +144,6 @@ MISolver::solve_cplex(
 {
   DEB_enter_func;
 	DEB_out(2, "gurobi_max_time_: " << gurobi_max_time_ << "\n")
-	MY_PAUSE;
 
 #if COMISO_CPLEX_AVAILABLE
 
@@ -289,7 +286,7 @@ MISolver::solve_direct_rounding(
 
   // check solver performance (only for testing!!!)
   {
-    StopWatch sw;
+    Base::StopWatch sw;
 
     // hack
     const bool enable_performance_test = false;
@@ -417,7 +414,7 @@ MISolver::solve_iterative(
 {
   DEB_enter_func;
   // StopWatch
-  COMISO::StopWatch sw;
+  Base::StopWatch sw;
   double time_search_next_integer = 0;
 
   // some statistics
@@ -636,7 +633,7 @@ void MISolver::solve_multiple_rounding(
 {
   DEB_enter_func
 	// StopWatch
-	COMISO::StopWatch sw;
+	Base::StopWatch sw;
 	double time_search_next_integer = 0;
 
 	// some statistics

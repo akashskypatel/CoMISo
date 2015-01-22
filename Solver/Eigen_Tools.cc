@@ -41,7 +41,6 @@
 
 #include "Eigen_Tools.hh"
 #include <queue>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/VSToolsT.hh>
 #include <gmm/gmm.h>
 

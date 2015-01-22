@@ -40,8 +40,6 @@
 #include <CoMISo/Config/config.hh>
 #include "GMM_Tools.hh"
 
-#include <CoMISo/Utils/StopWatch.hh>
-
 #include <iostream>
 #include <vector>
 
@@ -156,7 +154,6 @@ private:
     std::vector<Int>    rowind_;
 
     bool show_timings_;
-    StopWatch sw_;
 };
 
 //=============================================================================
