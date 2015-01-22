@@ -11,7 +11,7 @@
 #ifndef GMMTYPES_HH_INCLUDED
 #define GMMTYPES_HH_INCLUDED
 
-#include <gmm/gmm.h>
+#include <gmm/gmm_matrix.h>
 
 namespace COMISO_GMM
 {  
