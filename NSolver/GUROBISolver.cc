@@ -245,8 +245,9 @@ void GUROBISolver::solve(
     // NOTE: we could propagate e.getMessage() either using std::exception, or a specialized Reform exception type
     switch ( e.getErrorCode() )
     {
-    // TODO: Find where these are defined and use the correct name for 10010 
-    case 10010: THROW_OUTCOME(GUROBI_LICENCE_MODEL_TOO_LARGE);
+    // The GRB_ error codes are defined in gurobi_c.h Gurobi header. 
+    case GRB_ERROR_NO_LICENSE: THROW_OUTCOME(GUROBI_LICENCE_ABSENT);
+    case GRB_ERROR_SIZE_LIMIT_EXCEEDED: THROW_OUTCOME(GUROBI_LICENCE_MODEL_TOO_LARGE);
     default: THROW_OUTCOME(UNSPECIFIED_GUROBI_EXCEPTION);
     }
   }
