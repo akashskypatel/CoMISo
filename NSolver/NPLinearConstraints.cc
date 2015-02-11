@@ -29,8 +29,6 @@ namespace COMISO {
 NPLinearConstraintsElimination::NPLinearConstraintsElimination(NProblemGmmInterface* _np) 
   : base_(_np), cache_initialized_(false)
 {
-  DEB_enter_func;
-  DEB_error_if(base_ == nullptr, "initialized NPLinearConstraints with zero pointer");
   this->initialize_identity(base_->n_unknowns());
 }
 
