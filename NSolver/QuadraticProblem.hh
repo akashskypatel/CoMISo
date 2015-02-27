@@ -75,7 +75,7 @@ public:
   Eigen::VectorXd& x() { return x_;}
 
   // advanced properties
-  virtual bool   constant_hessian() { return true; }
+  virtual bool   constant_hessian() const { return true; }
 
 private:
 

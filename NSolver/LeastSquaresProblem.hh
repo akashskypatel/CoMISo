@@ -61,7 +61,7 @@ public:
   virtual void   store_result ( const double* _x               );
 
   // advanced properties
-  virtual bool   constant_hessian();
+  virtual bool   constant_hessian() const;
 
 private:
 
