@@ -91,8 +91,8 @@ private:
   Impl* impl_;
 
   // inhibit copy
-  IPOPTSolver(const IPOPTSolver &);
-  IPOPTSolver & operator=(const IPOPTSolver &);
+  IPOPTSolver(const IPOPTSolver&);
+  IPOPTSolver& operator=(const IPOPTSolver&);
 
 };
 
