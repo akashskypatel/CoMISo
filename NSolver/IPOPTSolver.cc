@@ -339,6 +339,11 @@ IPOPTSolver::IPOPTSolver()
 IPOPTSolver::~IPOPTSolver()
 { delete impl_; }
 
+double IPOPTSolver::energy()
+{
+  return impl_->app_->Statistics()->FinalObjective();
+}
+
 //-----------------------------------------------------------------------------
 
 

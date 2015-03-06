@@ -76,6 +76,7 @@ public:
   //           app().Options()->SetStringValue("derivative_test", "second-order");
   //Ipopt::IpoptApplication& app() {return (*app_); }
 
+  double energy();
 
 protected:
   double* P(std::vector<double>& _v)
