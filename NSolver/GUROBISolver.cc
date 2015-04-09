@@ -67,10 +67,13 @@ void GUROBISolver::solve(
     GRBEnv   env   = GRBEnv();
     GRBModel model = GRBModel(env);
 
-    //model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit);
+    //if (_problem->constant_gradient())
+    //  model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit);
 
-    // stop when a solution is found
-    model.getEnv().set(GRB_IntParam_SolutionLimit, 2);
+    // LP optimization is more likely to hit a poor feasible solution, so 
+    // increase the number of tested feasible solutions
+    model.getEnv().set(GRB_IntParam_SolutionLimit, 
+      _problem->constant_gradient() ? 4 : 2); 
 
     //----------------------------------------------
     // 1. allocate variables
