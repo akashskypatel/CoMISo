@@ -14,6 +14,7 @@ include_directories(${3P_DIR}/Gmm/${INC_DIR})
 # include_directories(${3P_DIR}/CPLEX/${INC_DIR}) # CPLEX is no longer used
 include_directories(${3P_DIR}/Gurobi/${INC_DIR})
 include_directories(${3P_DIR}/IPOPT/${INC_DIR})
+include_directories(${3P_DIR}/Cbc/${INC_DIR})
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
