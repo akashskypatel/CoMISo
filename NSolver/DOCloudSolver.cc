@@ -1,17 +1,20 @@
 //=============================================================================
 //
-//  CLASS CBCSolver - IMPLEMENTATION
+//  CLASS DOCloudSolver - IMPLEMENTATION
 //
 //=============================================================================
+
+// TODO: this uses CBC for the MPS file export; consider implementing our own 
+// MPS/LP export to remove the dependency.
 
 //== INCLUDES =================================================================
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_CBC_AVAILABLE
+#if COMISO_DOCLOUD_AVAILABLE
 
 //=============================================================================
-#include "CBCSolver.hh"
+#include "DOCloudSolver.hh"
 
 #include <Base/Debug/DebTime.hh>
 #include <Base/Utils/OutcomeUtils.hh>
@@ -24,28 +27,10 @@
 #include "CbcHeuristicLocal.hpp"
 #include "OsiClpSolverInterface.hpp"
 
-// Cuts
-#include <CbcModel.hpp>
-#include <OsiClpSolverInterface.hpp>
-
-#include "CglGomory.hpp"
-#include "CglProbing.hpp"
-#include "CglKnapsackCover.hpp"
-#include "CglRedSplit.hpp"
-#include "CglClique.hpp"
-#include "CglFlowCover.hpp"
-#include "CglMixedIntegerRounding2.hpp"
-
-// Preprocessing
-#include "CglPreProcess.hpp"
-
-// Heuristics
-#include "CbcHeuristic.hpp"
-
 #include <stdexcept>
 #include <stdio.h>
 
-DEB_module("CBCSolver")
+DEB_module("DOCloudSolver")
 
 #define CBC_INFINITY COIN_DBL_MAX
 
@@ -54,88 +39,10 @@ DEB_module("CBCSolver")
 namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
-
-namespace {
-
-// These are some "tweaks" for the CbcModel, copied from some sample Cbc code
-// I have no idea what any of these do!
-void model_tweak(CbcModel& model)
-{
-  CglProbing generator1;
-  generator1.setUsingObjective(true);
-  generator1.setMaxPass(1);
-  generator1.setMaxPassRoot(5);
-  // Number of unsatisfied variables to look at
-  generator1.setMaxProbe(10);
-  generator1.setMaxProbeRoot(1000);
-  // How far to follow the consequences
-  generator1.setMaxLook(50);
-  generator1.setMaxLookRoot(500);
-  // Only look at rows with fewer than this number of elements
-  generator1.setMaxElements(200);
-  generator1.setRowCuts(3);
-
-  CglGomory generator2;
-  // try larger limit
-  generator2.setLimit(300);
-
-  CglKnapsackCover generator3;
-
-  CglRedSplit generator4;
-  // try larger limit
-  generator4.setLimit(200);
-
-  CglClique generator5;
-  generator5.setStarCliqueReport(false);
-  generator5.setRowCliqueReport(false);
-
-  CglMixedIntegerRounding2 mixedGen;
-  CglFlowCover flowGen;
-
-  // Add in generators
-  // Experiment with -1 and -99 etc
-  //model.addCutGenerator(&generator1, -1, "Probing");
-  model.addCutGenerator(&generator2, -1, "Gomory");
-  //model.addCutGenerator(&generator3, -1, "Knapsack");
-  //model.addCutGenerator(&generator4,-1,"RedSplit");
-  //model.addCutGenerator(&generator5, -1, "Clique");
-  //model.addCutGenerator(&flowGen, -1, "FlowCover");
-  //model.addCutGenerator(&mixedGen, -1, "MixedIntegerRounding");
-  // Say we want timings
-  int numberGenerators = model.numberCutGenerators();
-  int iGenerator;
-  for (iGenerator = 0; iGenerator < numberGenerators; iGenerator++)
-  {
-    CbcCutGenerator* generator = model.cutGenerator(iGenerator);
-    generator->setTiming(true);
-  }
-  //auto osiclp = dynamic_cast<OsiClpSolverInterface*>(model.solver());
-  //// go faster stripes
-  //if (osiclp)
-  //{
-  //  // Turn this off if you get problems
-  //  // Used to be automatically set
-  //  osiclp->setSpecialOptions(128);
-  //  if (osiclp->getNumRows() < 300 && osiclp->getNumCols() < 500)
-  //  {
-  //    //osiclp->setupForRepeatedUse(2,0);
-  //    osiclp->setupForRepeatedUse(0, 0);
-  //  }
-  //}
-  // Uncommenting this should switch off all CBC messages
-  // model.messagesPointer()->setDetailMessages(10,10000,NULL);
-  // Allow rounding heuristic
-
-  CbcRounding heuristic1(model);
-  model.addHeuristic(&heuristic1);
-
-  // And local search when new solution found
-  //CbcHeuristicLocal heuristic2(model);
-  //model.addHeuristic(&heuristic2);
-}
-
 #define TRACE_CBT(DESCR, EXPR) DEB_line(7, DESCR << ": " << EXPR)
 #define P(X) ((X).data())
+
+namespace {
 
 void solve_impl(
   NProblemInterface*                        _problem,
@@ -146,9 +53,9 @@ void solve_impl(
 {
   DEB_enter_func;
   DEB_warning_if(!_problem->constant_hessian(), 1,
-                 "CBCSolver received a problem with non-constant hessian!");
+    "DOCloudSolver received a problem with non-constant hessian!");
   DEB_warning_if(!_problem->constant_gradient(), 1,
-                 "CBCSolver received a problem with non-constant gradient!");
+    "DOCloudSolver received a problem with non-constant gradient!");
 
   const int n_rows = _constraints.size(); // Constraints #
   const int n_cols = _problem->n_unknowns(); // Unknowns #
@@ -243,39 +150,28 @@ void solve_impl(
       break;
     }
   }
-  si.initialSolve();
 
   // TODO: make this accessible through the DEB system instead
-  volatile static bool dump_problem = false; // change on run-time if necessary
+  volatile static bool dump_problem = true; // change on run-time if necessary
   if (dump_problem)
   {
     static int n_mps_dumps = 0;
     char filename[64];
-    sprintf_s(filename, "CBC_problem_dump_%04i", n_mps_dumps); 
+    sprintf_s(filename, "DOCloud_problem_dump_%04i", n_mps_dumps); 
     si.writeMps(filename); //output problem as .MPS
   }
-  // Pass the OsiSolver with the problem to be solved to CbcModel
-  CbcModel model(si);
-  model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
-  model.setMaximumSolutions(4);
-  TRACE_CBT("CbcModel::getMaximumSolutions()", model.getMaximumSolutions());
-  //model.setMaximumSeconds(_time_limit);
-  TRACE_CBT("CbcModel::getMaximumSeconds()", model.getMaximumSeconds());
 
-  model_tweak(model);
-  model.branchAndBound();
-
-  auto solution = model.bestSolution();
-  THROW_OUTCOME_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
-  _problem->store_result(solution);
+  THROW_OUTCOME(TODO); // unimplemented
+  //THROW_OUTCOME_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
+  //_problem->store_result(solution);
 }
+
+}// namespace 
 
 #undef TRACE_CBT
 #undef P
 
-}//namespace 
-
-void CBCSolver::solve(
+void DOCloudSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
@@ -290,7 +186,7 @@ void CBCSolver::solve(
   catch (CoinError& ce)
   {
     DEB_warning(1, "CoinError code = " << ce.message() << "]\n");
-    THROW_OUTCOME(UNSPECIFIED_CBC_EXCEPTION);
+    THROW_OUTCOME(TODO);
   }
 }
 
@@ -299,6 +195,6 @@ void CBCSolver::solve(
 } // namespace COMISO
 //=============================================================================
 
-#endif // COMISO_CBC_AVAILABLE
+#endif // COMISO_DOCLOUD_AVAILABLE
 //=============================================================================
 
