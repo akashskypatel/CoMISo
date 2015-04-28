@@ -132,7 +132,7 @@ void solve_impl(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
-  const double                              /*_time_limit*/
+  const double                              _time_limit
 )
 {
   if(!_problem->constant_hessian())
@@ -243,9 +243,9 @@ void solve_impl(
   // Pass the OsiSolver with the problem to be solved to CbcModel
   CbcModel model(si);
   model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
-  model.setMaximumSolutions(4);
+//  model.setMaximumSolutions(4);
 //  TRACE_CBT("CbcModel::getMaximumSolutions()", model.getMaximumSolutions());
-  //model.setMaximumSeconds(_time_limit);
+  model.setMaximumSeconds(_time_limit);
 //  TRACE_CBT("CbcModel::getMaximumSeconds()", model.getMaximumSeconds());
 
   model_tweak(model);
