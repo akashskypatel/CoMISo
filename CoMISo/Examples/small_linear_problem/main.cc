@@ -32,6 +32,7 @@
 #include <CoMISo/NSolver/NPDerivativeChecker.hh>
 #include <CoMISo/NSolver/CPLEXSolver.hh>
 #include <CoMISo/NSolver/GUROBISolver.hh>
+#include <CoMISo/NSolver/CBCSolver.hh>
 
 
 // minimize linear problem E = 8*x + 2*y + 3*z subject to x+y+z >= 2 and z-y >= 1 and x, y, z binary
@@ -97,6 +98,18 @@ int main(void)
 #endif
 
   std::cout << "---------- 6) Print solution..." << std::endl;
+  for( int i=0; i<n; ++i)
+    std::cerr << "x_" << i << " = " << lp.x()[i] << std::endl;
+
+
+    // check if CBC solver available in current configuration
+#if( COMISO_CBC_AVAILABLE)
+    std::cout << "---------- 6) Get CBC and optimize... " << std::endl;
+    COMISO::CBCSolver cbc_sol;
+    cbc_sol.solve(&lp, constraints, dc);
+#endif
+
+  std::cout << "---------- 8) Print solution..." << std::endl;
   for( int i=0; i<n; ++i)
     std::cerr << "x_" << i << " = " << lp.x()[i] << std::endl;
 

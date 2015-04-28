@@ -1,0 +1,74 @@
+//=============================================================================
+//
+//  CLASS CBCSolver
+//
+//=============================================================================
+#ifndef COMISO_CBCSolver_HH
+#define COMISO_CBCSolver_HH
+
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_CBC_AVAILABLE
+
+//== INCLUDES =================================================================
+
+#include <CoMISo/Config/CoMISoDefines.hh>
+#include <vector>
+#include <string>
+#include "NProblemInterface.hh"
+#include "NConstraintInterface.hh"
+#include "VariableType.hh"
+
+//== FORWARDDECLARATIONS ======================================================
+class GRBModel;
+class GRBVar;
+
+//== NAMESPACES ===============================================================
+
+namespace COMISO {
+
+//== CLASS DEFINITION =========================================================
+
+/**
+    Solver interface for Coin-or Cbc.
+
+    A more elaborate description follows.
+*/
+class COMISODLLEXPORT CBCSolver
+{
+public:
+  /// Default constructor
+  CBCSolver() {}
+
+  /// Destructor
+  ~CBCSolver() {}
+
+  // ********** SOLVE **************** //
+  //! \throws Outcome
+  void solve(
+    NProblemInterface* _problem, // problem instance
+    const std::vector<NConstraintInterface*>& _constraints, // linear constraints
+    const std::vector<PairIndexVtype>& _discrete_constraints, // discrete constraints
+    const double _time_limit = 60); // time limit in seconds
+
+  //! \throws Outcome
+  void solve(
+    NProblemInterface* _problem, // problem instance
+    const std::vector<NConstraintInterface*>& _constraints, // linear constraints
+    const double _time_limit = 60) // time limit in seconds
+  {
+    std::vector<PairIndexVtype> dc;
+    return solve(_problem, _constraints, dc, _time_limit);
+  }
+};
+
+
+//=============================================================================
+} // namespace COMISO
+
+//=============================================================================
+#endif // COMISO_CBC_AVAILABLE
+//=============================================================================
+#endif // COMISO_CBCSolver_HH
+//=============================================================================
+

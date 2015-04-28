@@ -1241,7 +1241,7 @@ add_constraint_to_model( NConstraintInterface* _constraint, std::vector<IloNumVa
     NConstraintInterface::SVectorNC::InnerIterator v_it(gc);
     for(; v_it; ++v_it)
     {
-      assert(v_it.index() >= 0 && v_it.index() < _vars.size());
+      assert(v_it.index() >= 0 && v_it.index() < (int)_vars.size());
       lin_expr += _vars[v_it.index()]*v_it.value();
     }
 
@@ -1260,7 +1260,7 @@ add_constraint_to_model( NConstraintInterface* _constraint, std::vector<IloNumVa
     BoundConstraint* bnd_ptr = dynamic_cast<BoundConstraint*>(_constraint);
     if(bnd_ptr)
     {
-      assert( int(bnd_ptr->idx()) < _vars.size());
+      assert( int(bnd_ptr->idx()) < (int)_vars.size());
 
       switch(bnd_ptr->constraint_type())
       {
@@ -1277,15 +1277,15 @@ add_constraint_to_model( NConstraintInterface* _constraint, std::vector<IloNumVa
         IloExpr soc_lhs(_env);
         IloExpr soc_rhs(_env);
 
-        assert(cone_ptr->i() >= 0 && cone_ptr->i() <= _vars.size());
+        assert(cone_ptr->i() >= 0 && cone_ptr->i() <= (int)_vars.size());
 
         soc_rhs= 0.5*cone_ptr->c()*_vars[cone_ptr->i()]*_vars[cone_ptr->i()];
 
         NConstraintInterface::SMatrixNC::iterator q_it = cone_ptr->Q().begin();
         for(; q_it != cone_ptr->Q().end(); ++q_it)
         {
-          assert( int(q_it.col()) < _vars.size());
-          assert( int(q_it.row()) < _vars.size());
+          assert( int(q_it.col()) < (int)_vars.size());
+          assert( int(q_it.row()) < (int)_vars.size());
 
           soc_lhs += 0.5*(*q_it)*_vars[q_it.col()]*_vars[q_it.row()];
         }
