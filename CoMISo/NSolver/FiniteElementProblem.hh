@@ -214,78 +214,34 @@ public:
   typedef FiniteElementSetBase::Triplet Triplet;
 
   /// Default constructor
-  FiniteElementProblem(const unsigned int _n) : NProblemInterface(), n_(_n), x_(_n,0.0)
-  {}
+  FiniteElementProblem(const unsigned int _n);
 
   /// Destructor
-  virtual ~FiniteElementProblem()
-  {}
+  virtual ~FiniteElementProblem();
 
-  void add_set(FiniteElementSetBase* _fe_set)
-  {
-    fe_sets_.push_back(_fe_set);
-  }
+  void add_set(FiniteElementSetBase* _fe_set);
 
-  void clear_sets()
-  {
-    fe_sets_.clear();
-  }
+  void clear_sets();
 
-  std::vector<double>& x() {return x_;}
+  std::vector<double>& x();
 
   // problem definition
-  virtual int    n_unknowns   (                                )
-  {
-    return n_;
-  }
+  virtual int    n_unknowns   (                                );
 
-  virtual void   initial_x    (       double* _x               )
-  {
-    if(n_ > 0)
-      memcpy(_x, &(x_[0]), n_*sizeof(double));
-  }
+  virtual void   initial_x    (       double* _x               );
 
-  virtual double eval_f       ( const double* _x )
-  {
-    double f(0.0);
+  virtual double eval_f       ( const double* _x );
 
-    for(unsigned int i=0; i<fe_sets_.size(); ++i)
-      f += fe_sets_[i]->eval_f(_x);
+  virtual void   eval_gradient( const double* _x, double*    _g);
 
-    return f;
-  }
-
-  virtual void   eval_gradient( const double* _x, double*    _g)
-  {
-    // clear gradient (assume floating point 0 has only zero bits)
-    memset(_g, 0, n_*sizeof(double));
-
-    for(unsigned int i=0; i<fe_sets_.size(); ++i)
-      fe_sets_[i]->accumulate_gradient(_x, _g);
-  }
-
-  virtual void   eval_hessian ( const double* _x, SMatrixNP& _H)
-  {
-    triplets_.clear();
-
-    for(unsigned int i=0; i<fe_sets_.size(); ++i)
-      fe_sets_[i]->accumulate_hessian(_x, triplets_);
-
-    // set data
-    _H.resize(n_unknowns(), n_unknowns());
-    _H.setFromTriplets(triplets_.begin(), triplets_.end());
-  }
+  virtual void   eval_hessian ( const double* _x, SMatrixNP& _H);
 
 
-  virtual void   store_result ( const double* _x )
-  {
-    if(n_ > 0)
-      memcpy(&(x_[0]), _x, n_*sizeof(double));
-  }
+  virtual void   store_result ( const double* _x );
 
   // advanced properties (ToDo better handling)
-  virtual bool   constant_gradient() const { return false; }
-  virtual bool   constant_hessian()  const { return false; }
+  virtual bool   constant_gradient() const;
+  virtual bool   constant_hessian()  const;
 
 private:
 
