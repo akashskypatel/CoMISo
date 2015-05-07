@@ -25,6 +25,7 @@ else (OSI_INCLUDE_DIR)
 
 find_path(OSI_INCLUDE_DIR 
           NAMES OsiConfig.h
+		  PATH_SUFFIXES "Osi"
           PATHS "$ENV{OSI_DIR}/include/coin"
                 "$ENV{CBC_DIR}/include/coin"
                  "/usr/include/coin"

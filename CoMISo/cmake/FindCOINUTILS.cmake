@@ -40,7 +40,7 @@ find_library( COINUTILS_LIBRARY
                     "/usr/lib/coin"
                     "C:\\libs\\coinutils\\lib"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/include"
+					"${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/lib"
               )
 
 set(COINUTILS_INCLUDE_DIRS "${COINUTILS_INCLUDE_DIR}" )
