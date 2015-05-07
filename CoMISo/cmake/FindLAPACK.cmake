@@ -234,6 +234,7 @@ else()
       cheev
       ""
       "liblapack"
+      "${BLAS_LIBRARIES}"
       "${VS_SEARCH_PATH}OpenBLAS-v0.2.9.rc2/lib"
       )
     endif()
