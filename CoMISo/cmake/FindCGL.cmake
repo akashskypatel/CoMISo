@@ -29,19 +29,18 @@ find_path(CGL_INCLUDE_DIR
                  "/usr/include/coin"
                  "C:\\libs\\cgl\\include"
                  "C:\\libs\\cbc\\include"
-				 "${VS_SEARCH_PATH}\\CBC-2.9.4\\Cgl\\include"
+				 "${VS_SEARCH_PATH}CBC-2.9.4/Cgl/include"
           )
 
 find_library( CGL_LIBRARY 
-              NAMES Cgl
-
+              NAMES Cgl libCgl
               PATHS "$ENV{CGL_DIR}/lib"
                     "$ENV{CBC_DIR}/lib" 
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cgl\\lib"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}\\CBC-2.9.4\\Cgl\\lib"
+					"${VS_SEARCH_PATH}CBC-2.9.4/Cgl/lib"
               )
 
 set(CGL_INCLUDE_DIRS "${CGL_INCLUDE_DIR}" )

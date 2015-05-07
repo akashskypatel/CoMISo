@@ -29,19 +29,18 @@ find_path(COINUTILS_INCLUDE_DIR
                  "/usr/include/coin"
                  "C:\\libs\\coinutils\\include"
                  "C:\\libs\\cbc\\include"
-				 "${VS_SEARCH_PATH}\\CBC-2.9.4\\CoinUtils\\include"
+				 "${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/include"
           )
 
 find_library( COINUTILS_LIBRARY 
-              NAMES CoinUtils
-
+              NAMES CoinUtils libCoinUtils
               PATHS "$ENV{COINUTILS_DIR}/lib"
                     "$ENV{CBC_DIR}/lib" 
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\coinutils\\lib"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}\\CBC-2.9.4\\CoinUtils\\include"
+					"${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/include"
               )
 
 set(COINUTILS_INCLUDE_DIRS "${COINUTILS_INCLUDE_DIR}" )

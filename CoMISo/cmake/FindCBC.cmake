@@ -22,32 +22,32 @@ if (CBC_INCLUDE_DIR)
   set(CBC_LIBRARIES "${CBC_LIBRARY};${CBC_SOLVER_LIBRARY}" )
 else (CBC_INCLUDE_DIR)
 
+
 find_path(CBC_INCLUDE_DIR 
           NAMES CbcConfig.h
           PATHS "$ENV{CBC_DIR}/include/coin"
                  "/usr/include/coin"
                  "C:\\libs\\cbc\\include"
-				 "${VS_SEARCH_PATH}\\CBC-2.9.4\\Cbc\\include"
+				 "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/include"
           )
 
 find_library( CBC_LIBRARY 
-              NAMES Cbc
-
+              NAMES Cbc libCbc
               PATHS "$ENV{CBC_DIR}/lib" 
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}\\CBC-2.9.4\\Cbc\\lib"
+					"${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 find_library( CBC_SOLVER_LIBRARY 
-              NAMES CbcSolver
+              NAMES CbcSolver libCbcSolver
 
               PATHS "$ENV{CBC_DIR}/lib" 
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}\\CBC-2.9.4\\Cbc\\lib"
+					"${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 set(CBC_INCLUDE_DIRS "${CBC_INCLUDE_DIR}" )

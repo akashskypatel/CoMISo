@@ -30,19 +30,18 @@ find_path(CLP_INCLUDE_DIR
                  "/usr/include/coin"
                  "C:\\libs\\clp\\include"
                  "C:\\libs\\cbc\\include"
-				 "${VS_SEARCH_PATH}\\CBC-2.9.4\\Clp\\include"
+				 "${VS_SEARCH_PATH}CBC-2.9.4/Clp/include"
           )
 
 find_library( CLP_LIBRARY 
-              NAMES Clp
-
+              NAMES Clp libClp
               PATHS "$ENV{CLP_DIR}/lib"
                     "$ENV{CBC_DIR}/lib" 
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\clp\\lib"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}\\CBC-2.9.4\\Clp\\lib"
+					"${VS_SEARCH_PATH}CBC-2.9.4/Clp/lib"
               )
 
 set(CLP_INCLUDE_DIRS "${CLP_INCLUDE_DIR}" )
