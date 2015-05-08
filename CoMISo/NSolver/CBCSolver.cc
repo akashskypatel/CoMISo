@@ -38,6 +38,7 @@
 
 // Heuristics
 #include "CbcHeuristic.hpp"
+#include "CbcCompareDepth.hpp"
 
 #include <stdexcept>
 
@@ -128,7 +129,7 @@ void model_tweak(CbcModel& model)
 
 #define P(X) ((X).data())
 
-void solve_impl(
+bool solve_impl(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
@@ -249,6 +250,10 @@ void solve_impl(
 //  TRACE_CBT("CbcModel::getMaximumSeconds()", model.getMaximumSeconds());
 
   model_tweak(model);
+
+  CbcCompareDepth compare_depth;
+  model.setNodeComparison(&compare_depth);
+
   model.branchAndBound();
 
   const double* solution = model.bestSolution();
@@ -256,27 +261,34 @@ void solve_impl(
 
   // store if solution available
   if(solution != 0)
+  {
     _problem->store_result(solution);
+    return true;
+  }
+  else
+    return false;
 }
 
 #undef P
 
-void CBCSolver::solve(
+bool CBCSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
   const double                              _time_limit
 )
 {
+  bool valid_solution = false;
   try
   {
-    solve_impl(_problem, _constraints, _discrete_constraints, _time_limit);
+    valid_solution = solve_impl(_problem, _constraints, _discrete_constraints, _time_limit);
   }
   catch (CoinError& ce)
   {
     std::cerr << "CoinError code = " << ce.message() << std::endl;
 //    THROW_OUTCOME(UNSPECIFIED_CBC_EXCEPTION);
   }
+  return valid_solution;
 }
 
 
