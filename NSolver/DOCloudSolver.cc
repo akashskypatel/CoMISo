@@ -4,7 +4,7 @@
 //
 //=============================================================================
 
-// TODO: this uses CBC for the MPS file export; consider implementing our own 
+// TODO: this uses Cbc for the MPS file export; consider implementing our own 
 // MPS/LP export to remove the dependency.
 
 //== INCLUDES =================================================================
@@ -17,22 +17,29 @@
 #include "DOCloudSolver.hh"
 
 #include <Base/Debug/DebTime.hh>
+#include <Base/Debug/DebUtils.hh>
 #include <Base/Utils/OutcomeUtils.hh>
 
-// For Branch and bound
-#include "OsiSolverInterface.hpp"
-#include "CbcModel.hpp"
-#include "CbcCutGenerator.hpp"
-#include "CbcStrategy.hpp"
-#include "CbcHeuristicLocal.hpp"
-#include "OsiClpSolverInterface.hpp"
+// Cbc includes, we use them to construct the problem .mps file
+#include <CoinPackedVector.hpp>
+#include <OsiClpSolverInterface.hpp>
+
+#include <curl/curl.h>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <stdexcept>
+#include <iostream>
+#include <algorithm>
+#include <thread>         
+#include <chrono>         
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <io.h>
 
 DEB_module("DOCloudSolver")
-
-#define CBC_INFINITY COIN_DBL_MAX
 
 //== NAMESPACES ===============================================================
 
@@ -43,6 +50,561 @@ namespace COMISO {
 #define P(X) ((X).data())
 
 namespace {
+
+namespace cURLpp { // some classes to wrap around the libcurl C data
+
+struct Session
+{
+  Session() { curl_global_init(CURL_GLOBAL_DEFAULT); }
+  ~Session() { curl_global_cleanup(); }
+};
+
+// TODO: This inheritance could be restrictive in the future for now is OK
+class Request
+{
+public:
+  Request() : hnd_(curl_easy_init()), http_hdr_(nullptr) {}
+  
+  virtual ~Request() 
+  { 
+    curl_easy_cleanup(hnd_); 
+    if (http_hdr_ != nullptr)
+      curl_slist_free_all(http_hdr_);
+  }
+
+  //operator CURL*() { return hnd_; } 
+  //operator const CURL*() const { return hnd_; } 
+
+  bool valid() const { return hnd_ != nullptr; }
+
+  void set_url(const char* _url)
+  {
+    curl_easy_setopt(hnd_, CURLOPT_URL, _url);
+  }
+
+  void add_http_header(const char* _hdr)
+  {
+    http_hdr_ = curl_slist_append(http_hdr_, _hdr);
+  }
+
+  // TODO: REMOVE this security hole!!
+  void disable_ssl_verification()
+  {
+    /*
+     * If you want to connect to a site who isn't using a certificate that is
+     * signed by one of the certs in the CA bundle you have, you can skip the
+     * verification of the server's certificate. This makes the connection
+     * A LOT LESS SECURE.
+     *
+     * If you have a CA cert for the server stored someplace else than in the
+     * default bundle, then the CURLOPT_CAPATH option might come handy for
+     * you.
+     */ 
+    curl_easy_setopt(hnd_, CURLOPT_SSL_VERIFYPEER, 0L);
+ 
+    /*
+     * If the site you're connecting to uses a different host name that what
+     * they have mentioned in their server certificate's commonName (or
+     * subjectAltName) fields, libcurl will refuse to connect. You can skip
+     * this check, but this will make the connection less secure.
+     */ 
+    curl_easy_setopt(hnd_, CURLOPT_SSL_VERIFYHOST, 0L);
+  }
+
+  void perform()
+  {
+    // TODO: This function is not MT-safe due to statics use
+    DEB_enter_func;
+
+    prepare();
+
+    // set the header we send to the server
+    curl_easy_setopt(hnd_, CURLOPT_HTTPHEADER, http_hdr_);
+    // set the write function to handle incoming data from the server
+    curl_easy_setopt(hnd_, CURLOPT_WRITEFUNCTION, write_func);
+    // set the string to store the incoming header data
+    curl_easy_setopt(hnd_, CURLOPT_HEADERDATA, reinterpret_cast<void*>(&hdr_));
+    // set the string to store the incoming main body (data)
+    curl_easy_setopt(hnd_, CURLOPT_WRITEDATA, reinterpret_cast<void*>(&bdy_));
+    // do the transmission
+    auto res = curl_easy_perform(hnd_);
+
+    if (res != CURLE_OK)
+    {
+      DEB_warning(1, "curl_easy_perform() failed: " << curl_easy_strerror(res));
+      THROW_OUTCOME(TODO);
+    }
+
+    DEB_line(3, "Received Header: " << hdr_);
+    DEB_line(4, "Received Body: " << bdy_);
+
+    finalize();
+  }
+
+  const std::string& header() const { return hdr_; }
+  const std::string& body() const { return bdy_; }
+
+protected:
+  static size_t write_func(const char* _ptr, const size_t _size, 
+    const size_t _nmemb, void* _str)
+  {
+    // TODO: not sure how much exception-safe (e.g. out of memory this is!)
+    size_t n_add = _size * _nmemb;
+    if (n_add == 0)
+      return 0;
+
+    auto& str = *reinterpret_cast<std::string*>(_str);
+    str.append(_ptr, n_add);
+    return n_add;
+  }
+
+  // Apparently read callback function is required with Windows libcurl DLL!?
+  //static size_t read_func(void* _ptr, const size_t _size, 
+  //  const size_t _nmemb, FILE* _file)
+  //{
+  //  return fread(_ptr, _size, _nmemb, _file);
+  //}
+
+
+protected:
+  CURL* hnd_;
+
+protected:
+  //virtual functions to control the perform() behavior
+  virtual void prepare() {}
+  virtual void finalize() {}
+
+private:
+  curl_slist* http_hdr_;
+  std::string hdr_;
+  std::string bdy_;
+};
+
+class Post : public Request
+{
+public: 
+  Post(const char* _post) : post_(_post) {}
+  Post(const std::string& _post) : post_(_post) {}
+
+protected:
+    virtual void prepare()
+    {
+      // set the post fields
+      curl_easy_setopt(hnd_, CURLOPT_POSTFIELDS, post_.data());
+      curl_easy_setopt(hnd_, CURLOPT_POSTFIELDSIZE, post_.size());
+    }
+
+private:
+  std::string post_;
+};
+
+class Upload : public Request
+{
+public:
+  Upload(const char* _filename) : filename_(_filename), file_(nullptr) {}
+  Upload(const std::string& _filename) : filename_(_filename), file_(nullptr) {}
+  virtual ~Upload()
+  {
+    if (file_ != nullptr)
+      std::fclose(file_);
+  }
+
+protected:
+  virtual void prepare();
+  virtual void finalize();
+
+private:
+  std::string filename_;
+  FILE* file_;
+};
+
+void Upload::prepare()
+{
+  /* tell it to "upload" to the URL */ 
+  curl_easy_setopt(hnd_, CURLOPT_UPLOAD, 1L);
+
+  /* set where to read from (on Windows you need to use READFUNCTION too) */ 
+  file_ = std::fopen(filename_.data(), "rb");
+  curl_easy_setopt(hnd_, CURLOPT_READDATA, file_);
+
+  /* and give the size of the upload (optional) */ 
+  const auto filelen = _filelength(fileno(file_));
+  curl_easy_setopt(hnd_, CURLOPT_INFILESIZE_LARGE, (curl_off_t)filelen);
+
+  /* we want to use our own read function */
+  //curl_easy_setopt(hnd_, CURLOPT_READFUNCTION, read_func);
+
+  /* enable verbose for easier tracing */ 
+  //curl_easy_setopt(hnd_, CURLOPT_VERBOSE, 1L);
+}
+
+void Upload::finalize()
+{
+  DEB_enter_func;
+
+  double rate, time;
+
+  /* now extract transfer info */ 
+  curl_easy_getinfo(hnd_, CURLINFO_SPEED_UPLOAD, &rate);
+  curl_easy_getinfo(hnd_, CURLINFO_TOTAL_TIME, &time);
+
+  DEB_double_format("%.2f");
+  DEB_line(2, 
+    "Upload speed: " << rate / 1024. << "Kbps; Time: " << time << "s.");
+}
+
+class Get : public Request
+{
+protected:
+    virtual void prepare() { curl_easy_setopt(hnd_, CURLOPT_HTTPGET, 1L); }
+};
+
+class Delete : public Request
+{
+protected:
+    virtual void prepare() 
+    { 
+      curl_easy_setopt(hnd_, CURLOPT_CUSTOMREQUEST, "DELETE"); 
+    }
+};
+
+}//cURLpp 
+
+namespace DOcloud {
+
+static char* root_url__ = 
+  "https://api-oaas-beta.mybluemix.net/job_manager/rest/v1/jobs";
+static char* api_key__ = 
+  "X-IBM-Client-Id: api_bda733ba-44d7-40b2-8b71-cb5a272153e4";
+static char* app_type__ = "Content-Type: application/json";
+
+class HeaderTokens
+{
+public:
+  HeaderTokens(const std::string& _hdr)
+  {
+    // TODO: Performance can be improved by indexing, strtok_r(), etc ...
+    //  ... but probably not worth the effort
+    std::istringstream strm(_hdr);
+    typedef std::istream_iterator<std::string> Iter;
+    std::copy(Iter(strm), Iter(), std::back_inserter(tkns_));  
+  }
+
+  const std::string& operator[](const size_t _idx) const
+  {
+    return tkns_[_idx];
+  }
+
+  size_t number() const { return tkns_.size(); }
+
+  // Find a token equal to the label and return its value (next token)
+  bool find_value(const std::string& _lbl, std::string& _val) const
+  {
+    auto it = std::find(tkns_.begin(), tkns_.end(), _lbl);
+    if (it == tkns_.end() || ++it == tkns_.end())
+      return false;
+
+    _val = *it;
+    return true;
+  }
+
+  typedef std::vector<std::string>::const_iterator const_iterator;
+
+  const_iterator begin() const { return tkns_.begin();}
+  const_iterator end() const { return tkns_.end();}
+
+private:
+  std::vector<std::string> tkns_;
+};
+
+class JsonTokens
+{
+public:
+  JsonTokens() {}
+  JsonTokens(const std::string& _bdy) { set(_bdy); }
+
+  void set(const std::string& _bdy)
+  {
+    ptree_.clear();
+    std::istringstream strm(_bdy);
+    boost::property_tree::json_parser::read_json(strm, ptree_);
+  }
+
+  //size_t number() const { return tkns_.size(); }
+
+  // Find a token equal to the label and return its value
+  bool find_value(const std::string& _lbl, std::string& _val) const
+  {
+    auto it = ptree_.find(_lbl);
+    if (it == ptree_.not_found())
+      return false;
+
+    _val = it->second.get_value<std::string>();
+    return true;
+  }
+
+  typedef boost::property_tree::ptree PTree;
+
+  const PTree& ptree() const { return ptree_; }
+
+private:
+  PTree ptree_;
+};
+
+Debug::Stream& operator<<(Debug::Stream& _ds, const JsonTokens& _json_tkns)
+{
+  DEB_enter_func;
+  std::stringstream os;
+  boost::property_tree::json_parser::write_json(os, _json_tkns.ptree());
+  _ds << os.str();
+  return _ds;
+}
+
+void throw_http_error(const int _err_code, const std::string& _bdy)
+{
+  DEB_enter_func;
+
+  std::string err_msg;
+  JsonTokens bdy_tkns(_bdy);
+  bdy_tkns.find_value("message", err_msg);
+  DEB_warning(1, "HTTP Status Code: " << _err_code << "; Message: " << err_msg);
+
+  switch (_err_code)
+  {
+  case 400 : THROW_OUTCOME(TODO); // Invalid job creation data / status
+  case 403 : THROW_OUTCOME(TODO); // Subscription limit exceeded
+  case 404 : THROW_OUTCOME(TODO); // Requested job could not be found
+  default : THROW_OUTCOME(TODO); // Unrecognized HTTP status code
+  }
+}
+
+void check_http_error(
+  const cURLpp::Request& _rqst, 
+  const HeaderTokens& _hdr_tkns,
+  const int code_ok = 201
+  )
+{
+  const std::string http_lbl = "HTTP/1.1";
+  const int code_cntn = 100; // continue code, ignore
+  
+  for (auto it = _hdr_tkns.begin(), it_end = _hdr_tkns.end(); it != it_end; 
+    ++it)
+  {
+    if (*it != http_lbl) // search for the http label token
+      continue; 
+    THROW_OUTCOME_if(++it == it_end, TODO); // missing http code
+    const auto code = atoi(it->data());
+
+    if (code == code_ok) 
+      return; // success code found, exit here
+    else if (code == code_cntn)
+      continue; // continue code found, continue
+    else // another code found, throw an error
+      throw_http_error(code, _rqst.body());
+  }
+  THROW_OUTCOME(TODO); // final http code not found
+}
+
+
+class Job : public cURLpp::Session
+{
+public:
+  Job(const char* _filename) : filename_(_filename) {}
+  Job(const std::string& _filename) : filename_(_filename) {}
+  ~Job();
+
+  void setup()
+  {
+    make();
+    upload();
+    start();
+  }
+
+  void wait();
+  void sync_status();
+  bool active() const; // requires synchronized status
+  void solution(std::vector<double>& _x) const;
+
+private:
+  const std::string filename_;
+  std::string url_;
+  JsonTokens stts_;
+
+private:
+  void make();
+  void upload();
+  void start();
+};
+
+Job::~Job()
+{
+  DEB_enter_func;
+
+  if (url_.empty()) // not setup
+    return;
+
+  cURLpp::Delete del;
+  if (!del.valid()) 
+  {
+    DEB_error("Failed to construct a delete request");
+    return; // no point in throwing an exception here
+  }
+
+  del.set_url(url_.data());
+  del.add_http_header(api_key__);
+  del.perform();
+
+  // no point in checking the return value either, we can't do much if the
+  // delete request has failed
+}
+
+void Job::make()
+{
+  DEB_enter_func;
+
+  cURLpp::Post post(std::string(
+    "{\"attachments\" : [{\"name\" :\"" + filename_ + "\"}]}"));
+  THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
+
+  post.set_url(root_url__);
+  post.add_http_header(api_key__);
+  post.add_http_header(app_type__);
+  post.perform();
+
+  HeaderTokens hdr_tkns(post.header());
+  check_http_error(post, hdr_tkns);
+  // TODO: DOcloud header is successful but no location value
+  THROW_OUTCOME_if(!hdr_tkns.find_value("Location:", url_), TODO); 
+}
+
+void Job::upload()
+{
+  cURLpp::Upload upload(filename_);
+  THROW_OUTCOME_if(!upload.valid(), TODO); //Failed to initialize the request
+
+  auto url = url_ + "/attachments/" + filename_ + "/blob";
+  upload.set_url(url.data());
+  upload.add_http_header(api_key__);
+  upload.perform();
+  HeaderTokens hdr_tkns(upload.header());
+  check_http_error(upload, hdr_tkns, 204);
+}
+
+void Job::start()
+{
+  cURLpp::Post post("");
+  THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
+
+  auto url = url_ + "/execute";
+  post.set_url(url.data());
+  post.add_http_header(api_key__);
+  post.add_http_header(app_type__);
+  post.perform();
+  HeaderTokens hdr_tkns(post.header());
+  check_http_error(post, hdr_tkns, 204);
+}
+
+void Job::sync_status()
+{
+  cURLpp::Get get;
+  THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
+  get.set_url(url_.data());
+  get.add_http_header(api_key__);
+  get.perform();
+  HeaderTokens hdr_tkns(get.header());
+  check_http_error(get, hdr_tkns, 200);
+
+  stts_.set(get.body());
+}
+
+bool Job::active() const
+{
+  std::string exct_stts;
+  stts_.find_value("executionStatus", exct_stts);
+  
+  // assume the job is not active if the status is not recognized
+  return exct_stts == "CREATED" || exct_stts == "NOT_STARTED" || 
+    exct_stts == "RUNNING" || exct_stts == "INTERRUPTING";
+
+  /*
+  Backup of old code converting execution status strings to enum value
+  enum StatusType { ST_CREATED, ST_NOT_STARTED, ST_RUNNING, ST_INTERRUPTING, 
+    ST_INTERRUPTED, ST_FAILED, ST_PROCESSED, ST_UNKNOWN };
+
+  const int n_stts = (int)ST_UNKNOWN;
+  const char stts_tbl[n_stts][16] = { "CREATED", "NOT_STARTED", "RUNNING", 
+    "INTERRUPTING", "INTERRUPTED", "FAILED", "PROCESSED" };
+
+  for (int i = 0; i < n_stts; ++i)
+  {
+    if (stts == stts_tbl[i])
+      return (StatusType)i;
+  }
+  return ST_UNKNOWN;
+  while (stts == ST_CREATED || stts == ST_NOT_STARTED || stts == ST_RUNNING ||
+      stts == ST_INTERRUPTING);
+  */
+}
+
+void Job::wait()
+{
+  do 
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    sync_status();
+  } while (active());
+}
+
+void Job::solution(std::vector<double>& _x) const
+{
+  DEB_enter_func;
+
+  // check the solution status (assume it's synchronized already)
+
+  // What are the possible values for this??
+  std::string slv_stts;
+  stts_.find_value("solveStatus", slv_stts);
+  DEB_line(2, "solveStatus=" << slv_stts);
+  
+  cURLpp::Get get;
+  THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
+
+  auto url = url_ + "/attachments/solution.json/blob";
+  get.set_url(url.data());
+  get.add_http_header(api_key__);
+  get.perform();
+
+  HeaderTokens hdr_tkns(get.header());
+  check_http_error(get, hdr_tkns, 200);
+
+  JsonTokens bdy_tkns(get.body());
+  DEB_line(3, bdy_tkns);
+
+  const auto& vrbls = bdy_tkns.ptree().get_child("CPLEXSolution.variables");
+  const auto n_vrbls = vrbls.size();
+  THROW_OUTCOME_if(n_vrbls != _x.size(), TODO); // Solution variables number does not match
+  
+  size_t i = 0;
+  for (const auto& v : vrbls)
+  {
+    // TODO: this way of conversion is rather hacky
+    const std::string name = 
+      v.second.get_child("name").get_value<std::string>(); // this is x#IDX
+    const int idx = atoi(name.data() + 1);
+    THROW_OUTCOME_if(idx < 0 || idx > n_vrbls, TODO);  // Invalid index
+    _x[idx] = v.second.get_child("value").get_value<double>();
+
+    DEB_out(1, "#" << idx << "=" << 
+      v.second.get_child("value").get_value<std::string>() << "; ");
+  }
+
+  DEB_line(1, "X=" << _x);
+}
+
+
+} // namespace DOcloud
+
+#define CBC_INFINITY COIN_DBL_MAX
 
 void solve_impl(
   NProblemInterface*                        _problem,
@@ -151,23 +713,25 @@ void solve_impl(
     }
   }
 
-  // TODO: make this accessible through the DEB system instead
-  volatile static bool dump_problem = true; // change on run-time if necessary
-  if (dump_problem)
-  {
-    static int n_mps_dumps = 0;
-    char filename[64];
-    sprintf_s(filename, "DOCloud_problem_dump_%04i", n_mps_dumps); 
-    si.writeMps(filename); //output problem as .MPS
-  }
-
-  THROW_OUTCOME(TODO); // unimplemented
-  //THROW_OUTCOME_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
-  //_problem->store_result(solution);
+  // TODO: This is not MT-safe, it's not even process-safe!
+  static int n_mps = 0;
+  std::string filename("DOcloud_problem_");
+  filename += std::to_string(n_mps++);
+  //si.writeMps(filename.data()); //output problem as .MPS
+  //filename += ".mps";
+  si.writeLp(filename.data(), "lp", DBL_EPSILON, 10, 17);
+  filename += ".lp";
+  DOcloud::Job job(filename);
+  job.setup();
+  job.wait();
+  job.solution(x);
+  
+  _problem->store_result(P(x));
 }
 
 }// namespace 
 
+#undef CBC_INFINITY
 #undef TRACE_CBT
 #undef P
 
