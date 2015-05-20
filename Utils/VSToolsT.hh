@@ -77,6 +77,10 @@
    return nearbyint(_value);
  }
 
+inline bool same(const double _x, const double _y, const double _tol)
+{
+  return fabs(_x - _y) < _tol;
+}
 
 #endif
 
