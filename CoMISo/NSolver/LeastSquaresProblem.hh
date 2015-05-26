@@ -35,6 +35,9 @@ namespace COMISO {
 class COMISODLLEXPORT LeastSquaresProblem : public NProblemInterface
 {
 public:
+
+  // Eigen Triplet for Hessian Accumulation
+  typedef Eigen::Triplet<double> Triplet;
    
   /// Default constructor
   LeastSquaresProblem(const int _n_unknowns) :n_(_n_unknowns), x_(_n_unknowns, 0.0) {}
@@ -62,6 +65,11 @@ public:
 
   // advanced properties
   virtual bool   constant_hessian();
+
+  // advanced usage
+  void add_to_gradient   ( const double* _x, double* _g, const double _c);
+  void add_hessian_coeffs( const double* _x, std::vector<Triplet>& _trips, const double _c);
+  double max_deviaton    ( const double* _x );
 
 private:
 
