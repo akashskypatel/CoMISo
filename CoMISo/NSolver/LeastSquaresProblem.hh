@@ -40,13 +40,14 @@ public:
   typedef Eigen::Triplet<double> Triplet;
    
   /// Default constructor
-  LeastSquaresProblem(const int _n_unknowns) :n_(_n_unknowns), x_(_n_unknowns, 0.0) {}
+  LeastSquaresProblem(const int _n_unknowns = 0) :n_(_n_unknowns), x_(_n_unknowns, 0.0) {}
  
   /// Destructor
   ~LeastSquaresProblem() {}
 
 
   void add_term(NConstraintInterface* _term);
+  void clear_terms() {terms_.clear();}
 
   double eval_term(const unsigned int _i, const double* _x);
   double eval_term(const unsigned int _i);
