@@ -191,6 +191,7 @@ solve(NProblemInterface*                        _problem,
 
   while(!feasible_point_found && cur_pass <(_max_passes-1))
   {
+
     ++cur_pass;
     //----------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
@@ -237,9 +238,7 @@ solve(NProblemInterface*                        _problem,
       if(!lazy_added[i])
       {
         NConstraintInterface* lc = _lazy_constraints[i];
-
         double v = lc->eval_constraint(&(np2->solution()[0]));
-
         bool inf        = false;
         bool almost_inf = false;
 

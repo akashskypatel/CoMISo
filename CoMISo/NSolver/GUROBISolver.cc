@@ -217,6 +217,20 @@ solve(NProblemInterface*                  _problem,
 
 //-----------------------------------------------------------------------------
 
+bool
+GUROBISolver::
+solve_two_phase(NProblemInterface*                  _problem,                // problem instance
+            std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+            std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+            const double                        _time_limit0, // time limit phase 1 in seconds
+            const double                        _gap0,     // MIP gap phase 1
+            const double                        _time_limit1, // time limit phase 2 in seconds
+            const double                        _gap1)       // MIP gap phase 2
+{
+  double dummy;
+  return solve_two_phase(_problem, _constraints, _discrete_constraints, _time_limit0, _gap0, _time_limit1, _gap1, dummy);
+}
+
 
 bool
 GUROBISolver::
@@ -226,7 +240,8 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
            const double                        _time_limit0, // time limit phase 1 in seconds
            const double                        _gap0,     // MIP gap phase 1
            const double                        _time_limit1, // time limit phase 2 in seconds
-           const double                        _gap1)       // MIP gap phase 2
+           const double                        _gap1,       // MIP gap phase 2
+           double&                             _final_gap)  //return final gap
 {
   try
   {
@@ -352,13 +367,15 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
       model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit0);
       model.getEnv().set(GRB_DoubleParam_MIPGap, _gap0);
       model.optimize();
+      _final_gap = model.get(GRB_DoubleAttr_MIPGap);
 
       // jump into phase 2?
-      if(model.get(GRB_DoubleAttr_MIPGap) > _gap1)
+      if(model.get(GRB_DoubleAttr_MIPGap) > _gap1 && _time_limit1 > 0)
       {
         model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit1);
         model.getEnv().set(GRB_DoubleParam_MIPGap, _gap1);
         model.optimize();
+        _final_gap = model.get(GRB_DoubleAttr_MIPGap);
       }
     }
     else

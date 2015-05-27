@@ -76,6 +76,15 @@ public:
              const double                        _gap0 = 0.001,     // MIP gap phase 1
              const double                        _time_limit1 = 120, // time limit phase 2 in seconds
              const double                        _gap1 = 0.2 );       // MIP gap phase 2
+  
+  bool solve_two_phase(NProblemInterface*                  _problem,                // problem instance
+                       std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+                       std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+                       const double                        _time_limit0, // time limit phase 1 in seconds
+                       const double                        _gap0 ,     // MIP gap phase 1
+                       const double                        _time_limit1, // time limit phase 2 in seconds
+                       const double                        _gap1,  // MIP gap phase 2
+                       double&                             _final_gap);  //return final gap
 
 
   // optimization with additional lazy constraints that are only added iteratively to the problem if not satisfied
