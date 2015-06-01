@@ -113,7 +113,6 @@ public:
 
   void perform()
   {
-    // TODO: This function is not MT-safe due to statics use
     DEB_enter_func;
 
     prepare();
@@ -127,13 +126,22 @@ public:
     // set the string to store the incoming main body (data)
     curl_easy_setopt(hnd_, CURLOPT_WRITEDATA, reinterpret_cast<void*>(&bdy_));
     // do the transmission
-    auto res = curl_easy_perform(hnd_);
-
-    if (res != CURLE_OK)
+    CURLcode res;
+    int try_nmbr = 0;
+    do
     {
-      DEB_warning(1, "curl_easy_perform() failed: " << curl_easy_strerror(res));
-      THROW_OUTCOME(TODO);
-    }
+      // CURLE_SSL_CONNECT_ERROR is something that we are seeing a lot with 
+      // the DOcloud service, a single retry is usually sufficient to recover.
+      DEB_line_if(try_nmbr > 0, 2, "curl_easy_perform() retry #" << try_nmbr);
+      res = curl_easy_perform(hnd_);
+      if (res != CURLE_OK)
+      {
+        DEB_warning(1, "curl_easy_perform() failed with code: " << res << 
+          ", message: " << curl_easy_strerror(res));
+      }
+    } while (res == CURLE_SSL_CONNECT_ERROR && try_nmbr++ < 10);
+
+    THROW_OUTCOME_if(res != CURLE_OK, TODO);
 
     DEB_line(6, "Received Header: " << hdr_);
     DEB_line(6, "Received Body: " << bdy_);
@@ -273,9 +281,9 @@ protected:
 namespace DOcloud {
 
 static char* root_url__ = 
-  "https://api-oaas-beta.mybluemix.net/job_manager/rest/v1/jobs";
+  "https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs";
 static char* api_key__ = 
-  "X-IBM-Client-Id: api_bda733ba-44d7-40b2-8b71-cb5a272153e4";
+  "X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd";
 static char* app_type__ = "Content-Type: application/json";
 
 class HeaderTokens
@@ -326,6 +334,8 @@ public:
   void set(const std::string& _bdy)
   {
     ptree_.clear();
+    if (_bdy.empty())
+      return;
     std::istringstream strm(_bdy);
     boost::property_tree::json_parser::read_json(strm, ptree_);
   }
