@@ -44,6 +44,8 @@ public:
   /// Destructor
   ~DOCloudSolver() {}
 
+  static void set_api_key(const char* _api_key);
+
   // ********** SOLVE **************** //
   //! \throws Outcome
   void solve(

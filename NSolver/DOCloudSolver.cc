@@ -282,7 +282,7 @@ namespace DOcloud {
 
 static char* root_url__ = 
   "https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs";
-static char* api_key__ = 
+static std::string api_key__ = 
   "X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd";
 static char* app_type__ = "Content-Type: application/json";
 
@@ -479,7 +479,7 @@ Job::~Job()
   }
 
   del.set_url(url_.data());
-  del.add_http_header(api_key__);
+  del.add_http_header(api_key__.c_str());
   del.perform();
 
   // no point in checking the return value either, we can't do much if the
@@ -495,7 +495,7 @@ void Job::make()
   THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
 
   post.set_url(root_url__);
-  post.add_http_header(api_key__);
+  post.add_http_header(api_key__.c_str());
   post.add_http_header(app_type__);
   post.perform();
 
@@ -512,7 +512,7 @@ void Job::upload()
 
   auto url = url_ + "/attachments/" + filename_ + "/blob";
   upload.set_url(url.data());
-  upload.add_http_header(api_key__);
+  upload.add_http_header(api_key__.c_str());
   upload.perform();
   HeaderTokens hdr_tkns(upload.header());
   check_http_error(upload, hdr_tkns, 204);
@@ -525,7 +525,7 @@ void Job::start()
 
   auto url = url_ + "/execute";
   post.set_url(url.data());
-  post.add_http_header(api_key__);
+  post.add_http_header(api_key__.c_str());
   post.add_http_header(app_type__);
   post.perform();
   HeaderTokens hdr_tkns(post.header());
@@ -541,7 +541,7 @@ void Job::sync_status()
   cURLpp::Get get;
   THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
   get.set_url(url_.data());
-  get.add_http_header(api_key__);
+  get.add_http_header(api_key__.c_str());
   get.perform();
   HeaderTokens hdr_tkns(get.header());
   check_http_error(get, hdr_tkns, 200);
@@ -580,7 +580,7 @@ void Job::sync_log()
   const std::string url = url_ + "/log/items?start=" + 
     std::to_string(log_seq_idx_) + "&continuous=true";
   get.set_url(url.data());
-  get.add_http_header(api_key__);
+  get.add_http_header(api_key__.c_str());
   get.perform();
   HeaderTokens hdr_tkns(get.header());
   check_http_error(get, hdr_tkns, 200);
@@ -667,7 +667,7 @@ void Job::abort()
   THROW_OUTCOME_if(!del.valid(), TODO); //Failed to initialize the request
   const std::string url = url_ + "/execute";
   del.set_url(url.data());
-  del.add_http_header(api_key__);
+  del.add_http_header(api_key__.c_str());
   del.perform();
 
   HeaderTokens hdr_tkns(del.header());
@@ -702,7 +702,7 @@ void Job::solution(std::vector<double>& _x) const
 
   auto url = url_ + "/attachments/solution.json/blob";
   get.set_url(url.data());
-  get.add_http_header(api_key__);
+  get.add_http_header(api_key__.c_str());
   get.perform();
 
   HeaderTokens hdr_tkns(get.header());
@@ -865,6 +865,11 @@ void solve_impl(
 #undef CBC_INFINITY
 #undef TRACE_CBT
 #undef P
+
+void DOCloudSolver::set_api_key(const char* _api_key)
+{
+  DOcloud::api_key__ = std::string("X-IBM-Client-Id: ") + _api_key;
+}
 
 void DOCloudSolver::solve(
   NProblemInterface*                        _problem,
