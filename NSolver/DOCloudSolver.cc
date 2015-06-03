@@ -735,7 +735,192 @@ void Job::solution(std::vector<double>& _x) const
 
 } // namespace DOcloud
 
-#define CBC_INFINITY COIN_DBL_MAX
+
+namespace {
+
+std::string lp_file_name()
+{
+  // TODO: This is not MT-safe, it's not even process-safe!
+  static int n_mps = 0;
+  std::string filename("DOcloud_problem_");
+  filename += std::to_string(n_mps++);
+  return filename + ".lp";
+}
+
+#define XVAR(IDX) "x" << IDX
+
+class WriteExpression
+{
+  // lp format allows a max line length = 560.
+  // For simplicity we put end line when the number of written characters on the
+  // same line exceeds LINE_TRESHOLD_LEN.
+  enum { LINE_TRESHOLD_LEN = 100 };
+
+public:
+  WriteExpression(std::ofstream& _out_str) : out_str_(_out_str)
+  {
+    start();
+  }
+
+  void start()
+  {
+    f_size_ = out_str_.tellp();
+    at_start_ = true;
+  }
+  
+  // Writes a monomial.
+  void add_monomial(const double _coeff, const size_t _i_var)
+  {
+    if (_coeff == 0)
+      return;
+    if (_coeff == 1)
+    {
+      if (!at_start_)
+        out_str_ << " + ";
+    }
+    else if (_coeff == -1)
+      out_str_ << " - ";
+    else
+    {
+      if (!at_start_)
+      {
+        if (_coeff > 0)
+          out_str_ << " + ";
+        else
+          out_str_ << ' ';
+      }
+      out_str_ << _coeff << ' ';
+    }
+    out_str_ << XVAR(_i_var);
+
+    at_start_ = false;
+
+    const auto new_f_size = out_str_.tellp();
+    if (new_f_size - f_size_ > LINE_TRESHOLD_LEN)
+    {
+      out_str_ << std::endl;
+      f_size_ = new_f_size;
+    }
+  }
+
+private:
+  std::ofstream& out_str_;
+  std::fstream::pos_type f_size_;
+  bool at_start_;
+};
+
+// Create a lp file for the given constraints and object function.
+// Here is the lp format specifications:
+// http://www-01.ibm.com/support/knowledgecenter/SSSA5P_12.6.1/ilog.odms.cplex.help/CPLEX/FileFormats/topics/LP.html
+std::string create_lp_file(
+  NProblemInterface* _problem,
+  const std::vector<NConstraintInterface*>& _constraints,
+  const std::vector<PairIndexVtype>& _discrete_constraints,
+  const std::vector<double>& _x
+  )
+{
+  const int n_cols = _problem->n_unknowns(); // Unknowns #
+
+  const std::string f_name(lp_file_name());
+  std::ofstream lp_file(f_name);
+  THROW_OUTCOME_if(!lp_file.is_open(), TODO);
+
+  // Set the ofstream options.
+  lp_file << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+
+  lp_file << "\\Problem name: " << std::endl << std::endl;
+  lp_file << "Minimize" << std::endl;
+
+  // Writes objective function.
+  lp_file << "obj: ";
+
+  std::vector<double> objective(n_cols);
+  _problem->eval_gradient(P(_x), P(objective));
+  WriteExpression wrte_expr(lp_file);
+  for (size_t i = 0; i < objective.size(); ++i)
+    wrte_expr.add_monomial(objective[i], i);
+
+  // Writes constraints.
+  lp_file << std::endl << "Subject To" << std::endl;
+  for (const auto& cstr : _constraints)
+  {
+    NConstraintInterface::SVectorNC gc;
+    cstr->eval_gradient(P(_x), gc);
+
+    wrte_expr.start();
+    for (NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
+    {
+      auto coeff = v_it.value();
+      wrte_expr.add_monomial(coeff, v_it.index());
+    }
+    switch (cstr->constraint_type())
+    {
+    case NConstraintInterface::NC_EQUAL:
+      lp_file << " = ";
+      break;
+    case NConstraintInterface::NC_GREATER_EQUAL:
+      lp_file << " >= ";
+      break;
+    case NConstraintInterface::NC_LESS_EQUAL:
+      lp_file << " <= ";
+      break;
+    default:
+      THROW_OUTCOME(TODO); // Can not express current constraint.
+    }
+    lp_file << -cstr->eval_constraint(P(_x)) << std::endl;
+  }
+
+  // Writes the variables.
+  lp_file << "Bounds" << std::endl;
+  for (size_t i = 0; i < n_cols; ++i)
+    lp_file << XVAR(i) << " Free" << std::endl;
+
+  // Integer and binary variables.
+  std::vector<unsigned int> int_var, bin_var;
+  for (const auto& dc : _discrete_constraints)
+  {
+    if (dc.second == Integer)
+      int_var.push_back(dc.first);
+    else if (dc.second == Binary)
+      bin_var.push_back(dc.first);
+  }
+  auto write_var_set = [&lp_file](const std::vector<unsigned int>& _vars,
+    const char* _type)
+  {
+    if (_vars.empty())
+      return;
+    // Writes integer variables.
+    lp_file << _type << std::endl;
+    auto var_it = _vars.begin();
+    lp_file << XVAR(*var_it);
+    size_t n_wrt_var = 1;
+    while (++var_it != _vars.end())
+    {
+      if (n_wrt_var++ % 16) // 16 variables per line. Lines length must be < 560.
+        lp_file << ' ';
+      else
+        lp_file << std::endl;
+      lp_file << XVAR(*var_it);
+    }
+    lp_file << std::endl;
+
+  };
+  // Writes integer variables.
+  write_var_set(int_var, "Integers");
+
+  // Writes Binary variables.
+  write_var_set(bin_var, "Binary");
+
+  lp_file << "End";
+
+  return f_name;
+}
+
+#undef XVAR // don't propagate macros otside of scope
+} // namespace
+
+
+
 
 void solve_impl(
   NProblemInterface*                        _problem,
@@ -750,108 +935,10 @@ void solve_impl(
   DEB_warning_if(!_problem->constant_gradient(), 1,
     "DOCloudSolver received a problem with non-constant gradient!");
 
-  const int n_rows = _constraints.size(); // Constraints #
-  const int n_cols = _problem->n_unknowns(); // Unknowns #
+  std::vector<double> x(_problem->n_unknowns(), 0.0); // solution
+  std::string filename = create_lp_file(_problem, _constraints, 
+    _discrete_constraints, x);
 
-  // expand the variable types from discrete mtrx array
-  std::vector<VariableType> var_type(n_cols, Real);
-  for (size_t i = 0; i < _discrete_constraints.size(); ++i)
-    var_type[_discrete_constraints[i].first] = _discrete_constraints[i].second;
-
-  //----------------------------------------------
-  // set up constraints
-  //----------------------------------------------
-  std::vector<double> x(n_cols, 0.0); // solution
-
-  CoinPackedMatrix mtrx(false, 0, 0);// make a row-ordered, empty mtrx
-  mtrx.setDimensions(0, n_cols);
-
-  std::vector<double> row_lb(n_rows, -CBC_INFINITY);
-  std::vector<double> row_ub(n_rows,  CBC_INFINITY);
-
-  for (size_t i = 0; i < _constraints.size();  ++i)
-  {
-    DEB_error_if(!_constraints[i]->is_linear(), "constraint " << i <<
-                 " is non-linear");
-
-    NConstraintInterface::SVectorNC gc;
-    _constraints[i]->eval_gradient(P(x), gc);
-
-    // the setup below appears inefficient, the interface is rather restrictive
-    CoinPackedVector lin_expr;
-    lin_expr.reserve(gc.size());
-    for (NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
-      lin_expr.insert(v_it.index(), v_it.value());
-    mtrx.appendRow(lin_expr);
-
-    const double b = -_constraints[i]->eval_constraint(P(x));
-    switch (_constraints[i]->constraint_type())
-    {
-    case NConstraintInterface::NC_EQUAL         :
-      row_lb[i] = row_ub[i] = b;
-      break;
-    case NConstraintInterface::NC_LESS_EQUAL    :
-      row_ub[i] = b;
-      break;
-    case NConstraintInterface::NC_GREATER_EQUAL :
-      row_lb[i] = b;
-      break;
-    }
-
-    TRACE_CBT("Constraint " << i << " is of type " <<
-              _constraints[i]->constraint_type() << "; RHS val", b);
-  }
-
-  //----------------------------------------------
-  // setup energy
-  //----------------------------------------------
-
-  std::vector<double> objective(n_cols);
-  _problem->eval_gradient(P(x), P(objective));
-  TRACE_CBT("Objective linear term", objective);
-
-  const double c = _problem->eval_f(P(x));
-  // ICGB: Where does objective constant term go in CBC?
-  // MCM: I could not find this either: It is possible that the entire model
-  // can be translated to accomodate the constant (if != 0). Ask DB!
-  DEB_error_if(c > FLT_EPSILON, "Ignoring a non-zero constant objective term: "
-               << c);
-  TRACE_CBT("Objective constant term", c);
-
-  // CBC Problem initialize
-  OsiClpSolverInterface si;
-  si.setHintParam(OsiDoReducePrint, true, OsiHintTry);
-
-  const std::vector<double> col_lb(n_cols, -CBC_INFINITY);
-  const std::vector<double> col_ub(n_cols,  CBC_INFINITY);
-  si.loadProblem(mtrx, P(col_lb), P(col_ub), P(objective), P(row_lb), P(row_ub));
-
-  // set variables
-  for (int i = 0; i < n_cols; ++i)
-  {
-    switch (var_type[i])
-    {
-    case Real:
-      si.setContinuous(i);
-      break;
-    case Integer:
-      si.setInteger(i);
-      break;
-    case Binary :
-      si.setInteger(i);
-      si.setColBounds(i, 0.0, 1.0);
-      break;
-    }
-  }
-
-  // TODO: This is not MT-safe, it's not even process-safe!
-  static int n_mps = 0;
-  std::string filename("DOcloud_problem_");
-  filename += std::to_string(n_mps++);
-  //si.writeMps(filename.data()); //output problem as .MPS
-  //filename += ".mps";
-  si.writeLp(filename.data(), "lp", DBL_EPSILON, 10, 17);
-  filename += ".lp";
   DOcloud::Job job(filename);
   job.setup();
   job.wait();
