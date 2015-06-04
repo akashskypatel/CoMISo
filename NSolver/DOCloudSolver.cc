@@ -440,7 +440,7 @@ public:
   }
 
   void abort();
-  void solution(std::vector<double>& _x) const;
+  double solution(std::vector<double>& _x) const;
 
 private:
   const std::string filename_;
@@ -680,7 +680,7 @@ void Job::wait()
   } while (active());
 }
 
-void Job::solution(std::vector<double>& _x) const
+double Job::solution(std::vector<double>& _x) const
 {
   DEB_enter_func;
 
@@ -722,8 +722,11 @@ void Job::solution(std::vector<double>& _x) const
     DEB_out(7, "#" << idx << "=" << 
       v.second.get_child("value").get_value<std::string>() << "; ");
   }
+  const auto obj_val = 
+    bdy_tkns.ptree().get_child("CPLEXSolution.header.objectiveValue").get_value<double>();
 
   DEB_line(3, "X=" << _x);
+  return obj_val;
 }
 
 
@@ -765,6 +768,37 @@ public:
   {
     if (_coeff == 0)
       return;
+    add_monomial_internal(_coeff, _i_var);
+    wrap_long_line();
+  }
+
+  // Writes a binomial.
+  void add_binomial(const double _coeff, const size_t _i_var, const size_t _j_var)
+  {
+    if (_coeff == 0)
+      return;
+    add_monomial_internal(_coeff, _i_var);
+    if (_j_var == _i_var)
+      out_str_ << "^2";
+    else
+      out_str_ << " * " << XVAR(_j_var);
+    wrap_long_line();
+  }
+
+private:
+
+  void wrap_long_line()
+  {
+    const auto new_f_size = out_str_.tellp();
+    if (new_f_size - f_size_ > LINE_TRESHOLD_LEN)
+    {
+      out_str_ << std::endl;
+      f_size_ = new_f_size;
+    }
+  }
+
+  void add_monomial_internal(const double _coeff, const size_t _i_var)
+  {
     if (_coeff == 1)
     {
       if (!at_start_)
@@ -784,15 +818,7 @@ public:
       out_str_ << _coeff << ' ';
     }
     out_str_ << XVAR(_i_var);
-
     at_start_ = false;
-
-    const auto new_f_size = out_str_.tellp();
-    if (new_f_size - f_size_ > LINE_TRESHOLD_LEN)
-    {
-      out_str_ << std::endl;
-      f_size_ = new_f_size;
-    }
   }
 
 private:
@@ -826,11 +852,27 @@ std::string create_lp_file(
   // Writes objective function.
   lp_file << "obj: ";
 
+  WriteExpression wrte_expr(lp_file);
+  // 1. Linear part.
   std::vector<double> objective(n_cols);
   _problem->eval_gradient(P(_x), P(objective));
-  WriteExpression wrte_expr(lp_file);
   for (size_t i = 0; i < objective.size(); ++i)
     wrte_expr.add_monomial(objective[i], i);
+
+  // 2. Quadratic part (if requested).
+  if (!_problem->constant_gradient())
+  {
+    NProblemInterface::SMatrixNP H;
+    _problem->eval_hessian(P(_x), H);
+    lp_file << " + [ ";
+    for (int i = 0; i < H.outerSize(); ++i)
+    {
+      for (NProblemInterface::SMatrixNP::InnerIterator it(H, i); it; ++it)
+        wrte_expr.add_binomial(it.value(), it.row(), it.col());
+    }
+    lp_file << " ] / 2";
+  }
+
 
   // Writes constraints.
   lp_file << std::endl << "Subject To" << std::endl;
@@ -938,7 +980,16 @@ void DOCloudSolver::solve(
   DOcloud::Job job(filename);
   job.setup();
   job.wait();
-  job.solution(x);
+  DEB_only(const auto dc_obj_val = ) job.solution(x);
+
+  DEB_only(
+  // The lp problem ignores the constant term in the objective function.
+  const std::vector<double> x_zero(_problem->n_unknowns(), 0.0);
+  const auto zero_val = _problem->eval_f(P(x_zero));
+  const auto obj_val = _problem->eval_f(P(x));
+  DEB_error_if(fabs(dc_obj_val + zero_val - obj_val) > (1e-10 + zero_val * 0.01),
+               "DOCloudSolver solved a wrong problem.");
+  )
   
   _problem->store_result(P(x));
 }
