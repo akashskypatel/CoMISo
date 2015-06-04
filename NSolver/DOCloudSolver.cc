@@ -20,10 +20,6 @@
 #include <Base/Debug/DebUtils.hh>
 #include <Base/Utils/OutcomeUtils.hh>
 
-// Cbc includes, we use them to construct the problem .mps file
-#include <CoinPackedVector.hpp>
-#include <OsiClpSolverInterface.hpp>
-
 #include <curl/curl.h>
 
 #include <boost/property_tree/ptree.hpp>
@@ -46,8 +42,6 @@ DEB_module("DOCloudSolver")
 namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
-#define TRACE_CBT(DESCR, EXPR) DEB_line(7, DESCR << ": " << EXPR)
-#define P(X) ((X).data())
 
 namespace {
 
@@ -735,9 +729,6 @@ void Job::solution(std::vector<double>& _x) const
 
 } // namespace DOcloud
 
-
-namespace {
-
 std::string lp_file_name()
 {
   // TODO: This is not MT-safe, it's not even process-safe!
@@ -747,6 +738,7 @@ std::string lp_file_name()
   return filename + ".lp";
 }
 
+#define P(X) ((X).data())
 #define XVAR(IDX) "x" << IDX
 
 class WriteExpression
@@ -916,17 +908,21 @@ std::string create_lp_file(
   return f_name;
 }
 
-#undef XVAR // don't propagate macros otside of scope
-} // namespace
+#undef XVAR 
+
+}// namespace 
 
 
+void DOCloudSolver::set_api_key(const char* _api_key)
+{
+  DOcloud::api_key__ = std::string("X-IBM-Client-Id: ") + _api_key;
+}
 
-
-void solve_impl(
+void DOCloudSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
-  const double                              /*_time_limit*/
+  const double                              _time_limit
 )
 {
   DEB_enter_func;
@@ -947,36 +943,7 @@ void solve_impl(
   _problem->store_result(P(x));
 }
 
-}// namespace 
-
-#undef CBC_INFINITY
-#undef TRACE_CBT
 #undef P
-
-void DOCloudSolver::set_api_key(const char* _api_key)
-{
-  DOcloud::api_key__ = std::string("X-IBM-Client-Id: ") + _api_key;
-}
-
-void DOCloudSolver::solve(
-  NProblemInterface*                        _problem,
-  const std::vector<NConstraintInterface*>& _constraints,
-  const std::vector<PairIndexVtype>&        _discrete_constraints,
-  const double                              _time_limit
-)
-{
-  DEB_enter_func;
-  try
-  {
-    solve_impl(_problem, _constraints, _discrete_constraints, _time_limit);
-  }
-  catch (CoinError& ce)
-  {
-    DEB_warning(1, "CoinError code = " << ce.message() << "]\n");
-    THROW_OUTCOME(TODO);
-  }
-}
-
 
 //=============================================================================
 } // namespace COMISO
