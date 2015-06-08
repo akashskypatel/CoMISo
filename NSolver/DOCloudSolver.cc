@@ -120,22 +120,21 @@ public:
     // set the string to store the incoming main body (data)
     curl_easy_setopt(hnd_, CURLOPT_WRITEDATA, reinterpret_cast<void*>(&bdy_));
     // do the transmission
-    CURLcode res;
-    int try_nmbr = 0;
-    do
+    for (int try_nmbr = 0; ; ++try_nmbr) // test exit conditions below
     {
-      // CURLE_SSL_CONNECT_ERROR is something that we are seeing a lot with 
-      // the DOcloud service, a single retry is usually sufficient to recover.
-      DEB_line_if(try_nmbr > 0, 2, "curl_easy_perform() retry #" << try_nmbr);
-      res = curl_easy_perform(hnd_);
-      if (res != CURLE_OK)
-      {
-        DEB_warning(1, "curl_easy_perform() failed with code: " << res << 
-          ", message: " << curl_easy_strerror(res));
-      }
-    } while (res == CURLE_SSL_CONNECT_ERROR && try_nmbr++ < 10);
-
-    THROW_OUTCOME_if(res != CURLE_OK, TODO);
+      auto res = curl_easy_perform(hnd_);
+      // Various errors can occur while performing the request, but a single 
+      // retry is usually sufficient to recover, we do up to 10 attempts.
+      // CURLE_SSL_CONNECT_ERROR happens a lot with the DOcloud service
+      // CURLE_COULDNT_CONNECT happens occasionally.
+      if (res == CURLE_OK) 
+        break; // success, exit here
+      else if (try_nmbr < 10) // retry
+        DEB_warning(1, "curl_easy_perform() try #" << try_nmbr << " failed "
+          "with code: " << res << ", message: " << curl_easy_strerror(res))
+      else 
+        THROW_OUTCOME(TODO)
+    }
 
     DEB_line(6, "Received Header: " << hdr_);
     DEB_line(6, "Received Body: " << bdy_);
