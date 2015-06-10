@@ -15,6 +15,7 @@
 
 //=============================================================================
 #include "DOCloudSolver.hh"
+#include "DOCloudCache.hh"
 
 #include <Base/Debug/DebTime.hh>
 #include <Base/Debug/DebUtils.hh>
@@ -42,8 +43,6 @@ DEB_module("DOCloudSolver")
 namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
-
-namespace {
 
 namespace cURLpp { // some classes to wrap around the libcurl C data
 
@@ -201,22 +200,11 @@ private:
 
 class Upload : public Request
 {
-public:
-  Upload(const char* _filename) : filename_(_filename), file_(nullptr) {}
-  Upload(const std::string& _filename) : filename_(_filename), file_(nullptr) {}
-  virtual ~Upload()
-  {
-    if (file_ != nullptr)
-      std::fclose(file_);
-  }
-
 protected:
   virtual void prepare();
   virtual void finalize();
 
-private:
-  std::string filename_;
-  FILE* file_;
+  virtual size_t send_data() = 0;
 };
 
 void Upload::prepare()
@@ -224,13 +212,9 @@ void Upload::prepare()
   /* tell it to "upload" to the URL */ 
   curl_easy_setopt(hnd_, CURLOPT_UPLOAD, 1L);
 
-  /* set where to read from (on Windows you need to use READFUNCTION too) */ 
-  file_ = std::fopen(filename_.data(), "rb");
-  curl_easy_setopt(hnd_, CURLOPT_READDATA, file_);
-
+  size_t data_len = send_data();
   /* and give the size of the upload (optional) */ 
-  const auto filelen = _filelength(fileno(file_));
-  curl_easy_setopt(hnd_, CURLOPT_INFILESIZE_LARGE, (curl_off_t)filelen);
+  curl_easy_setopt(hnd_, CURLOPT_INFILESIZE_LARGE, (curl_off_t)data_len);
 
   /* we want to use our own read function */
   //curl_easy_setopt(hnd_, CURLOPT_READFUNCTION, read_func);
@@ -254,6 +238,77 @@ void Upload::finalize()
     "Upload speed: " << rate / 1024. << "Kbps; Time: " << time << "s.");
 }
 
+class UploadFile : public Upload
+{
+public:
+  UploadFile(const char* _filename) : filename_(_filename) {}
+  UploadFile(const std::string& _filename) : filename_(_filename) {}
+
+  virtual ~UploadFile()
+  {
+    if (file_ != nullptr)
+      std::fclose(file_);
+  }
+
+protected:
+  virtual size_t send_data()
+  {
+    /* set where to read from (on Windows you need to use READFUNCTION too) */ 
+    file_ = std::fopen(filename_.data(), "rb");
+    curl_easy_setopt(hnd_, CURLOPT_READDATA, file_);
+
+    return  _filelength(fileno(file_));
+  }
+
+private:
+  std::string filename_;
+  FILE* file_;
+};
+
+class UploadData : public Upload
+{
+public:
+  UploadData(const std::string& _data) : file_dat_(_data)  { }
+
+protected:
+  virtual size_t send_data()
+  {
+    curl_easy_setopt(hnd_, CURLOPT_READFUNCTION, Buffer::copy);
+    curl_easy_setopt(hnd_, CURLOPT_READDATA, &file_dat_);
+    return file_dat_.len_;
+  }
+
+private:
+  class Buffer
+  {
+  public:
+    Buffer(const std::string& _data)
+      : ptr_(_data.c_str()), len_(_data.size()), pos_(0) {}
+    static size_t copy(void* _target, const size_t _elem_size, 
+      const size_t _n_elem, void* _from_buf);
+
+    const char* ptr_;
+    size_t len_;
+  private:
+    size_t pos_;
+  };
+  Buffer file_dat_;
+};
+
+size_t UploadData::Buffer::copy(void* _target, const size_t _elem_size, 
+                                const size_t _n_elem, void* _from_buf)
+{
+  auto dat = reinterpret_cast<Buffer *>(_from_buf);
+  size_t char_to_write = dat->len_ - dat->pos_;
+  size_t buffer_len = _elem_size * _n_elem;
+  if (char_to_write > buffer_len)
+    char_to_write = buffer_len;
+  std::copy(dat->ptr_ + dat->pos_, dat->ptr_ + dat->pos_ + char_to_write,
+    (char*)_target);
+  dat->pos_ += char_to_write;
+  return char_to_write;
+}
+
 class Get : public Request
 {
 protected:
@@ -269,7 +324,8 @@ protected:
     }
 };
 
-}//cURLpp 
+} // namespace cURLpp 
+
 
 namespace DOcloud {
 
@@ -451,10 +507,33 @@ private:
   int sol_sec_nmbr_; // number of seconds at the last new solution 
   int stld_sec_nmbr_; // number of seconds since the last new solution 
 
-private:
+protected:
   void make();
-  void upload();
   void start();
+  void upload_internal(cURLpp::Upload& _upload);
+
+  virtual void upload()
+  {
+    cURLpp::UploadFile upl(filename_);
+    upload_internal(upl);
+  }
+};
+
+class JobWithDat : public Job
+{
+public:
+  JobWithDat(const char* _filename, const std::string& _file_dat)
+    : Job(_filename), file_dat_(_file_dat) {}
+
+private:
+  const std::string& file_dat_; // data to be sent as data attachment.
+
+protected:
+  virtual void upload()
+  {
+    cURLpp::UploadData upl_dat(file_dat_);
+    upload_internal(upl_dat);
+  }
 };
 
 Job::~Job()
@@ -498,17 +577,16 @@ void Job::make()
   THROW_OUTCOME_if(!hdr_tkns.find_value("Location:", url_), TODO); 
 }
 
-void Job::upload()
+void Job::upload_internal(cURLpp::Upload& _upload)
 {
-  cURLpp::Upload upload(filename_);
-  THROW_OUTCOME_if(!upload.valid(), TODO); //Failed to initialize the request
+  THROW_OUTCOME_if(!_upload.valid(), TODO); //Failed to initialize the request
 
   auto url = url_ + "/attachments/" + filename_ + "/blob";
-  upload.set_url(url.data());
-  upload.add_http_header(api_key__.c_str());
-  upload.perform();
-  HeaderTokens hdr_tkns(upload.header());
-  check_http_error(upload, hdr_tkns, 204);
+  _upload.set_url(url.data());
+  _upload.add_http_header(api_key__.c_str());
+  _upload.perform();
+  HeaderTokens hdr_tkns(_upload.header());
+  check_http_error(_upload, hdr_tkns, 204);
 }
 
 void Job::start()
@@ -728,8 +806,7 @@ double Job::solution(std::vector<double>& _x) const
   return obj_val;
 }
 
-
-} // namespace DOcloud
+namespace {
 
 std::string lp_file_name()
 {
@@ -751,14 +828,14 @@ class WriteExpression
   enum { LINE_TRESHOLD_LEN = 100 };
 
 public:
-  WriteExpression(std::ofstream& _out_str) : out_str_(_out_str)
+  WriteExpression(std::ostringstream& _out_str) : out_str_stream(_out_str)
   {
     start();
   }
 
   void start()
   {
-    f_size_ = out_str_.tellp();
+    f_size_ = out_str_stream.tellp();
     at_start_ = true;
   }
   
@@ -778,9 +855,9 @@ public:
       return;
     add_monomial_internal(_coeff, _i_var);
     if (_j_var == _i_var)
-      out_str_ << "^2";
+      out_str_stream << "^2";
     else
-      out_str_ << " * " << XVAR(_j_var);
+      out_str_stream << " * " << XVAR(_j_var);
     wrap_long_line();
   }
 
@@ -788,10 +865,10 @@ private:
 
   void wrap_long_line()
   {
-    const auto new_f_size = out_str_.tellp();
+    const auto new_f_size = out_str_stream.tellp();
     if (new_f_size - f_size_ > LINE_TRESHOLD_LEN)
     {
-      out_str_ << std::endl;
+      out_str_stream << std::endl;
       f_size_ = new_f_size;
     }
   }
@@ -801,27 +878,27 @@ private:
     if (_coeff == 1)
     {
       if (!at_start_)
-        out_str_ << " + ";
+        out_str_stream << " + ";
     }
     else if (_coeff == -1)
-      out_str_ << " - ";
+      out_str_stream << " - ";
     else
     {
       if (!at_start_)
       {
         if (_coeff > 0)
-          out_str_ << " + ";
+          out_str_stream << " + ";
         else
-          out_str_ << ' ';
+          out_str_stream << ' ';
       }
-      out_str_ << _coeff << ' ';
+      out_str_stream << _coeff << ' ';
     }
-    out_str_ << XVAR(_i_var);
+    out_str_stream << XVAR(_i_var);
     at_start_ = false;
   }
 
 private:
-  std::ofstream& out_str_;
+  std::ostringstream& out_str_stream;
   std::fstream::pos_type f_size_;
   bool at_start_;
 };
@@ -829,7 +906,7 @@ private:
 // Create a lp file for the given constraints and object function.
 // Here is the lp format specifications:
 // http://www-01.ibm.com/support/knowledgecenter/SSSA5P_12.6.1/ilog.odms.cplex.help/CPLEX/FileFormats/topics/LP.html
-std::string create_lp_file(
+std::string create_lp_string(
   NProblemInterface* _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>& _discrete_constraints,
@@ -838,20 +915,18 @@ std::string create_lp_file(
 {
   const int n_cols = _problem->n_unknowns(); // Unknowns #
 
-  const std::string f_name(lp_file_name());
-  std::ofstream lp_file(f_name);
-  THROW_OUTCOME_if(!lp_file.is_open(), TODO);
+  std::ostringstream lp_str_stream;
 
   // Set the ofstream options.
-  lp_file << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+  lp_str_stream << std::setprecision(std::numeric_limits<double>::digits10 + 2);
 
-  lp_file << "\\Problem name: " << std::endl << std::endl;
-  lp_file << "Minimize" << std::endl;
+  lp_str_stream << "\\Problem name: " << std::endl << std::endl;
+  lp_str_stream << "Minimize" << std::endl;
 
   // Writes objective function.
-  lp_file << "obj: ";
+  lp_str_stream << "obj: ";
 
-  WriteExpression wrte_expr(lp_file);
+  WriteExpression wrte_expr(lp_str_stream);
   // 1. Linear part.
   std::vector<double> objective(n_cols);
   _problem->eval_gradient(P(_x), P(objective));
@@ -863,18 +938,18 @@ std::string create_lp_file(
   {
     NProblemInterface::SMatrixNP H;
     _problem->eval_hessian(P(_x), H);
-    lp_file << " + [ ";
+    lp_str_stream << " + [ ";
     for (int i = 0; i < H.outerSize(); ++i)
     {
       for (NProblemInterface::SMatrixNP::InnerIterator it(H, i); it; ++it)
         wrte_expr.add_binomial(it.value(), it.row(), it.col());
     }
-    lp_file << " ] / 2";
+    lp_str_stream << " ] / 2";
   }
 
 
   // Writes constraints.
-  lp_file << std::endl << "Subject To" << std::endl;
+  lp_str_stream << std::endl << "Subject To" << std::endl;
   for (const auto& cstr : _constraints)
   {
     NConstraintInterface::SVectorNC gc;
@@ -889,24 +964,24 @@ std::string create_lp_file(
     switch (cstr->constraint_type())
     {
     case NConstraintInterface::NC_EQUAL:
-      lp_file << " = ";
+      lp_str_stream << " = ";
       break;
     case NConstraintInterface::NC_GREATER_EQUAL:
-      lp_file << " >= ";
+      lp_str_stream << " >= ";
       break;
     case NConstraintInterface::NC_LESS_EQUAL:
-      lp_file << " <= ";
+      lp_str_stream << " <= ";
       break;
     default:
       THROW_OUTCOME(TODO); // Can not express current constraint.
     }
-    lp_file << -cstr->eval_constraint(P(_x)) << std::endl;
+    lp_str_stream << -cstr->eval_constraint(P(_x)) << std::endl;
   }
 
   // Writes the variables.
-  lp_file << "Bounds" << std::endl;
+  lp_str_stream << "Bounds" << std::endl;
   for (size_t i = 0; i < n_cols; ++i)
-    lp_file << XVAR(i) << " Free" << std::endl;
+    lp_str_stream << XVAR(i) << " Free" << std::endl;
 
   // Integer and binary variables.
   std::vector<unsigned int> int_var, bin_var;
@@ -917,25 +992,25 @@ std::string create_lp_file(
     else if (dc.second == Binary)
       bin_var.push_back(dc.first);
   }
-  auto write_var_set = [&lp_file](const std::vector<unsigned int>& _vars,
+  auto write_var_set = [&lp_str_stream](const std::vector<unsigned int>& _vars,
     const char* _type)
   {
     if (_vars.empty())
       return;
     // Writes integer variables.
-    lp_file << _type << std::endl;
+    lp_str_stream << _type << std::endl;
     auto var_it = _vars.begin();
-    lp_file << XVAR(*var_it);
+    lp_str_stream << XVAR(*var_it);
     size_t n_wrt_var = 1;
     while (++var_it != _vars.end())
     {
       if (n_wrt_var++ % 16) // 16 variables per line. Lines length must be < 560.
-        lp_file << ' ';
+        lp_str_stream << ' ';
       else
-        lp_file << std::endl;
-      lp_file << XVAR(*var_it);
+        lp_str_stream << std::endl;
+      lp_str_stream << XVAR(*var_it);
     }
-    lp_file << std::endl;
+    lp_str_stream << std::endl;
 
   };
   // Writes integer variables.
@@ -944,15 +1019,16 @@ std::string create_lp_file(
   // Writes Binary variables.
   write_var_set(bin_var, "Binary");
 
-  lp_file << "End";
+  lp_str_stream << "End";
 
-  return f_name;
+  return std::string(lp_str_stream.str());
 }
 
-#undef XVAR 
+#undef XVAR
 
-}// namespace 
+} // namespace
 
+} // namespace DOcloud
 
 void DOCloudSolver::set_api_key(const char* _api_key)
 {
@@ -973,20 +1049,31 @@ void DOCloudSolver::solve(
     "DOCloudSolver received a problem with non-constant gradient!");
 
   std::vector<double> x(_problem->n_unknowns(), 0.0); // solution
-  std::string filename = create_lp_file(_problem, _constraints, 
-    _discrete_constraints, x);
+  std::string lp_prbl_str =
+    DOcloud::create_lp_string(_problem, _constraints,  _discrete_constraints, x);
 
-  DOcloud::Job job(filename);
-  job.setup();
-  job.wait();
-  DEB_only(const auto dc_obj_val = ) job.solution(x);
+  double obj_val;
+  DOcloud::Cache cache;
+  if (cache.restore_result(lp_prbl_str, x, obj_val))
+  {
+    DEB_line(3, "DOCloudSolver uses cache data.");
+  }
+  else
+  {
+    DEB_line(1, "DOCloudSolver does NOT use cached data - computing optimization.");
+    DOcloud::JobWithDat job("DoClouProblem.lp", cache.get_lp_content());
+    job.setup();
+    job.wait();
+    obj_val = job.solution(x);
+    cache.store_result(x, obj_val);
+  }
 
   DEB_only(
   // The lp problem ignores the constant term in the objective function.
   const std::vector<double> x_zero(_problem->n_unknowns(), 0.0);
   const auto zero_val = _problem->eval_f(P(x_zero));
-  const auto obj_val = _problem->eval_f(P(x));
-  DEB_error_if(fabs(dc_obj_val + zero_val - obj_val) > (1e-10 + zero_val * 0.01),
+  const auto test_obj_val = _problem->eval_f(P(x));
+  DEB_error_if(fabs(obj_val + zero_val - test_obj_val) > (1e-8 + zero_val * 0.01),
                "DOCloudSolver solved a wrong problem.");
   )
   
