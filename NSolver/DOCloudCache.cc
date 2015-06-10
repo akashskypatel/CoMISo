@@ -123,6 +123,8 @@ void string_to_key(const std::string& _str, std::string& _key)
   _key = std::to_string(hash_fn(_str));
 }
 
+const size_t NO_SOLUTION_CODE = UINT_MAX;
+
 // Load variables and objective values from a file.
 bool load_data(const std::string& _filename, 
                std::vector<double>& _x, double& _obj_val)
@@ -133,6 +135,12 @@ bool load_data(const std::string& _filename,
 
   size_t dim = std::numeric_limits<size_t>::max();
   in_file_strm >> dim;
+  if (dim == NO_SOLUTION_CODE)
+  {
+    _x.clear();
+    return true;
+  }
+
   if (dim != _x.size())
     return false;
 
@@ -151,6 +159,11 @@ bool save_data(const std::string& _filename,
   if (!out_file_strm.is_open())
     return false;
 
+  if (_x.empty())
+  {
+    out_file_strm << NO_SOLUTION_CODE;
+    return true;
+  }
   out_file_strm << _x.size() << std::endl;
   for (const auto& xi : _x)
     out_file_strm << xi << std::endl;;

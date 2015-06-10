@@ -441,33 +441,42 @@ void throw_http_error(const int _err_code, const std::string& _bdy)
   }
 }
 
-void check_http_error(
-  const cURLpp::Request& _rqst, 
-  const HeaderTokens& _hdr_tkns,
-  const int code_ok = 201
-  )
+class HttpStatus
 {
-  const std::string http_lbl = "HTTP/1.1";
-  const int code_cntn = 100; // continue code, ignore
-  
-  for (auto it = _hdr_tkns.begin(), it_end = _hdr_tkns.end(); it != it_end; 
-    ++it)
+public:
+  HttpStatus(const cURLpp::Request& _rqst)
+    : rqst_(_rqst), hdr_tkns_(_rqst.header()), code_(0)
   {
-    if (*it != http_lbl) // search for the http label token
-      continue; 
-    THROW_OUTCOME_if(++it == it_end, TODO); // missing http code
-    const auto code = atoi(it->data());
+    const std::string http_lbl = "HTTP/1.1";
+    const int code_cntn = 100; // continue code, ignore
 
-    if (code == code_ok) 
-      return; // success code found, exit here
-    else if (code == code_cntn)
-      continue; // continue code found, continue
-    else // another code found, throw an error
-      throw_http_error(code, _rqst.body());
+    for (auto it = hdr_tkns_.begin(), it_end = hdr_tkns_.end(); it != it_end; ++it)
+    {
+      if (*it != http_lbl) // search for the http label token
+        continue; 
+      THROW_OUTCOME_if(++it == it_end, TODO); // missing http code
+      code_ = atoi(it->data());
+      if (code_ != code_cntn)
+        return;
+    }
+    THROW_OUTCOME(TODO); // final http code not found
   }
-  THROW_OUTCOME(TODO); // final http code not found
-}
 
+  void check(int _code_ok) const
+  {
+    if (code_ != _code_ok)  // another code found, throw an error
+      throw_http_error(code_, rqst_.body());
+  }
+
+  const int& code() const { return code_; }
+
+  const HeaderTokens& header_tokens() const { return hdr_tkns_; }
+
+private:
+  const cURLpp::Request& rqst_;
+  HeaderTokens hdr_tkns_;
+  int code_;
+};
 
 class Job : public cURLpp::Session
 {
@@ -571,10 +580,11 @@ void Job::make()
   post.add_http_header(app_type__);
   post.perform();
 
-  HeaderTokens hdr_tkns(post.header());
-  check_http_error(post, hdr_tkns);
+  HttpStatus http_stat(post);
+  http_stat.check(201);
   // TODO: DOcloud header is successful but no location value
-  THROW_OUTCOME_if(!hdr_tkns.find_value("Location:", url_), TODO); 
+  THROW_OUTCOME_if(!http_stat.header_tokens().find_value("Location:", url_),
+    TODO); 
 }
 
 void Job::upload_internal(cURLpp::Upload& _upload)
@@ -585,8 +595,8 @@ void Job::upload_internal(cURLpp::Upload& _upload)
   _upload.set_url(url.data());
   _upload.add_http_header(api_key__.c_str());
   _upload.perform();
-  HeaderTokens hdr_tkns(_upload.header());
-  check_http_error(_upload, hdr_tkns, 204);
+  HttpStatus http_stat(_upload);
+  http_stat.check(204);
 }
 
 void Job::start()
@@ -599,8 +609,8 @@ void Job::start()
   post.add_http_header(api_key__.c_str());
   post.add_http_header(app_type__);
   post.perform();
-  HeaderTokens hdr_tkns(post.header());
-  check_http_error(post, hdr_tkns, 204);
+  HttpStatus http_stat(post);
+  http_stat.check(204);
 
   log_seq_idx_ = sol_nmbr_ = sol_sec_nmbr_ = stld_sec_nmbr_ = 0;
 }
@@ -614,8 +624,8 @@ void Job::sync_status()
   get.set_url(url_.data());
   get.add_http_header(api_key__.c_str());
   get.perform();
-  HeaderTokens hdr_tkns(get.header());
-  check_http_error(get, hdr_tkns, 200);
+  HttpStatus http_stat(get);
+  http_stat.check(200);
 
   stts_.set(get.body());
 /*
@@ -653,8 +663,8 @@ void Job::sync_log()
   get.set_url(url.data());
   get.add_http_header(api_key__.c_str());
   get.perform();
-  HeaderTokens hdr_tkns(get.header());
-  check_http_error(get, hdr_tkns, 200);
+  HttpStatus http_stat(get);
+  http_stat.check(200);
 
   JsonTokens log(get.body());
 
@@ -741,8 +751,8 @@ void Job::abort()
   del.add_http_header(api_key__.c_str());
   del.perform();
 
-  HeaderTokens hdr_tkns(del.header());
-  check_http_error(del, hdr_tkns, 204);
+  HttpStatus http_stat(del);
+  http_stat.check(204);
 }
 
 void Job::wait()
@@ -776,8 +786,15 @@ double Job::solution(std::vector<double>& _x) const
   get.add_http_header(api_key__.c_str());
   get.perform();
 
-  HeaderTokens hdr_tkns(get.header());
-  check_http_error(get, hdr_tkns, 200);
+  HttpStatus http_stat(get);
+  if (http_stat.code() == 404 &&
+      get.body().find("CIVOC5102E") != std::string::npos)
+  {
+    // The mixed integer optimization has not found any solution.
+    _x.clear();
+    return 0;
+  }
+  http_stat.check(200);
 
   JsonTokens bdy_tkns(get.body());
   DEB_line(7, bdy_tkns);
@@ -1067,6 +1084,7 @@ void DOCloudSolver::solve(
     obj_val = job.solution(x);
     cache.store_result(x, obj_val);
   }
+  THROW_OUTCOME_if(x.empty(), MIPS_NO_SOLUTION);
 
   DEB_only(
   // The lp problem ignores the constant term in the objective function.
