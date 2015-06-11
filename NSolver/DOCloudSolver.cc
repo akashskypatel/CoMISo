@@ -515,6 +515,7 @@ private:
   int sol_nmbr_; // number of solutions found so far, according to the log
   int sol_sec_nmbr_; // number of seconds at the last new solution 
   int stld_sec_nmbr_; // number of seconds since the last new solution 
+  Base::StopWatch stop_wtch_; // time since last successful log synchronization.
 
 protected:
   void make();
@@ -613,6 +614,7 @@ void Job::start()
   http_stat.check(204);
 
   log_seq_idx_ = sol_nmbr_ = sol_sec_nmbr_ = stld_sec_nmbr_ = 0;
+  stop_wtch_.start();
 }
 
 void Job::sync_status()
@@ -668,6 +670,7 @@ void Job::sync_log()
 
   JsonTokens log(get.body());
 
+  bool got_time_data = false;
   // iterate the log items, deb_out messages and analyze for solutions #
   for (const auto& log_item : log.ptree())
   {
@@ -695,6 +698,7 @@ void Job::sync_log()
       if (sol_str_idx == std::string::npos)
         continue;
 
+      got_time_data = true;
       const int sol_nmbr = atoi(msg.data() + sol_str_idx + sol_str_len);
       //DEB_line(1, "# solutions found so far: " << sol_nmbr);
       if (sol_nmbr > sol_nmbr_) // new solution(s) found
@@ -703,8 +707,15 @@ void Job::sync_log()
         sol_sec_nmbr_ = sec_nmbr;
       }
       stld_sec_nmbr_ = sec_nmbr - sol_sec_nmbr_;
+      stop_wtch_.restart();
     }
     log_seq_idx_ = log_item.second.get_child("seqid").get_value<int>() + 1; 
+  }
+  if (!got_time_data)
+  {
+    DEB_warning(2, "DOCloud did not provide time and solutions number-"
+                   "using internal time counter.");
+    stld_sec_nmbr_ += stop_wtch_.restart() / 1000;
   }
 }
 
@@ -763,7 +774,8 @@ void Job::wait()
     sync_status();
     sync_log();
     if (stalled())
-      abort();
+      abort(); // The waiting loop must continue until the timer request has been
+               // processed by the server.
   } while (active());
 }
 
