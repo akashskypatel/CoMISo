@@ -179,11 +179,13 @@ bool Cache::restore_result(
   std::vector<double>& _x,   // result.
   double& _obj_val)          // objective function value.
 {
+  DEB_enter_func;
   found_ = false;
   lp_file_cnts_ = std::move(_lp_prbl_str);
   if (cache_directory().empty())
     return false;
   string_to_key(lp_file_cnts_, key_);
+  DEB_line(2, "Key cache name: " << key_);
   key_ += '_';
   for (size_t iter_nmbr = 0; iter_nmbr < 10; ++iter_nmbr)
   {
