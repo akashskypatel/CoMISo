@@ -11,10 +11,10 @@ my_add_subdir(Utils)
 include_directories(${PROJECT_SOURCE_DIR}/..)
 include_directories(${3P_DIR}/Eigen/${INC_DIR})
 include_directories(${3P_DIR}/Gmm/${INC_DIR})
-# include_directories(${3P_DIR}/CPLEX/${INC_DIR}) # CPLEX is no longer used
-include_directories(${3P_DIR}/Gurobi/${INC_DIR})
+# include_directories(${3P_DIR}/CPLEX/${INC_DIR}) # no longer used
+# include_directories(${3P_DIR}/Gurobi/${INC_DIR}) # no longer used
 include_directories(${3P_DIR}/IPOPT/${INC_DIR})
-include_directories(${3P_DIR}/Cbc/${INC_DIR})
+# include_directories(${3P_DIR}/Cbc/${INC_DIR}) # no longer used
 include_directories(${3P_DIR}/libcurl/${INC_DIR})
 include_directories(${3P_DIR}/Boost/${INC_DIR})
 
