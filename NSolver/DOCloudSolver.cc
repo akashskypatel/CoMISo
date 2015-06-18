@@ -259,11 +259,6 @@ std::string create_lp_string(
 
 } // namespace DOcloud
 
-void DOCloudSolver::set_api_key(const char* _api_key)
-{
-//  DOcloud::api_key__ = std::string("X-IBM-Client-Id: ") + _api_key;
-}
-
 void DOCloudSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,

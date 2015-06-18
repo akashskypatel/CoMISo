@@ -48,6 +48,31 @@ Config& Config::object()
   return config;
 }
 
+void Config::set_root_url(const char* const _root_url)
+{
+  root_url_ = _root_url;
+}
+
+void Config::set_api_key(const char* _api_key)
+{
+  api_key_ = std::string("X-IBM-Client-Id: ") + _api_key;
+}
+
+void Config::set_infeasible_timeout(const int _infs_time)
+{
+  infs_time_ = _infs_time;
+}
+
+void Config::set_feasible_timeout(const int _fsbl_time)
+{
+  fsbl_time_ = _fsbl_time;
+}
+
+void Config::set_cache_location(const char* const _cache_loc)
+{
+  cache_loc_ = _cache_loc;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Config
 const Config& Config::query() { return object(); } 
@@ -414,6 +439,14 @@ bool Job::active() const
   while (stts == ST_CREATED || stts == ST_NOT_STARTED || stts == ST_RUNNING ||
       stts == ST_INTERRUPTING);
   */
+}
+
+bool Job::stalled() const 
+{ 
+  // exit quick if we have a solution, or wait if we don't have one
+  const auto& config = Config::query();
+  return (sol_nmbr_ > 0 && stld_sec_nmbr_ >= config.feasible_timeout()) 
+    || (sol_nmbr_ == 0 && stld_sec_nmbr_ >= config.infeasible_timeout());
 }
 
 void Job::abort()

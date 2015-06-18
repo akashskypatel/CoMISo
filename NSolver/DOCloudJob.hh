@@ -41,12 +41,7 @@ public:
   void sync_status();
   void sync_log();
   bool active() const; // requires synchronized status
-  bool stalled() const 
-  { 
-    // exit quick if we have a solution, or wait 5 min if we don't have one
-    return (sol_nmbr_ > 0 && stld_sec_nmbr_ >= 15) || 
-      (sol_nmbr_ == 0 && stld_sec_nmbr_ >= 300);
-  }
+  bool stalled() const;
 
   void abort();
   double solution(std::vector<double>& _x) const;
