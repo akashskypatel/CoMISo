@@ -21,27 +21,27 @@ namespace DOcloud {
 class Cache
 {
 public:
-  Cache() : found_(false) {}
+  // Manage the cache for an optimization problem stored in .lp format
+  Cache(const std::string& _mip_lp);
+
+  const std::string& hash() const { return hash_; }
 
   bool restore_result(
-    std::string& _file_name,  // .lp file defining the optimization problem
     std::vector<double>& _x,  // result.
-    double& _obj_val);        // objective function value.
+    double& _obj_val // objective function value.
+    ); 
 
   // We can store the result for the given .lp file. This makes sense only we have
   // not found cache data for the given .lp file, and in order to avoid data
   // corruption this function fails if the data have been found.
   void store_result(const std::vector<double>& _x, const double& _obj_val);
 
-  const std::string& get_lp_content() { return lp_file_cnts_; }
+
 private:
-  std::string key_;          // String generated from .lp file content data. 
-                             // This is a sort of hash key generate form the .lp
-                             // file content.
-  std::string last_filename_;// Last name we have tried to get cached data. 
-  std::string lp_file_cnts_; // Content of the input .lp file.
-  bool        found_;        // Remembers if we have found a cache for the input
-                             // .lp file.
+  const std::string& mip_lp_; // The MIP represented in the .lp format 
+  const std::string hash_; // hask for the lp_ problem
+  bool found_; // Remembers if we have found a cache for the input problem
+  std::string filename_; // File name to access the cached data (no extension)
 };
 
 } // namespace DOcloud

@@ -6,6 +6,8 @@
 
 //=============================================================================
 #include "DOCloudCache.hh"
+#include "DOCloudConfig.hh"
+
 #include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Debug/DebOut.hh>
 
@@ -13,6 +15,7 @@
 #include <iomanip>
 #include <cctype>
 #include <functional>
+#include <sstream>
 
 #include <boost/filesystem.hpp>
 
@@ -26,31 +29,6 @@ namespace COMISO {
 namespace DOcloud {
 
 namespace {
-
-const std::string& cache_directory()
-{
-  static std::string cache_dir = 
-    "\\\\camfs1\\General_access\\Martin_Marinov\\ReForm\\Cache\\";
-  static bool already_read = false;
-  if (!already_read)
-  {
-    already_read = true;
-    const char* env_cache_dir = getenv("ReFormCacheDir");
-    if (env_cache_dir != nullptr && env_cache_dir[0] != 0)
-    {
-      cache_dir = env_cache_dir;
-      if (cache_dir.back() != '\\')
-        cache_dir += '\\'; // Eventually add '\' to the directory string.
-    }
-  }
-  return cache_dir;
-}
-
-// 
-std::string full_cache_filename(const std::string& _filename)
-{
-  return cache_directory() + _filename;
-}
 
 // Create a new temporary exclusive file without extension that is used to 
 // prevent write or read operation on files with the same name and extension
@@ -116,11 +94,12 @@ bool save_file(const std::string& _filename, const std::string& _file_cnts)
 
 // Finds a key string from the file name. This string will be used as file name
 // where to store the related cached data.
-void string_to_key(const std::string& _str, std::string& _key)
+std::string string_to_hash(const std::string& _str)
 {
-  // 1. Writes the file length.
   const std::hash<std::string> hash_fn;
-  _key = std::to_string(hash_fn(_str));
+  std::stringstream strm;
+  strm << std::hex << hash_fn(_str);
+  return strm.str();
 }
 
 const size_t NO_SOLUTION_CODE = UINT_MAX;
@@ -173,25 +152,25 @@ bool save_data(const std::string& _filename,
 
 } // namespace
 
-
-bool Cache::restore_result(
-  std::string& _lp_prbl_str, // string containing the .lp problem
-  std::vector<double>& _x,   // result.
-  double& _obj_val)          // objective function value.
+Cache::Cache(const std::string& _mip_lp) 
+  : mip_lp_(_mip_lp), hash_(string_to_hash(mip_lp_)), found_(false) 
 {
   DEB_enter_func;
-  found_ = false;
-  lp_file_cnts_ = std::move(_lp_prbl_str);
-  if (cache_directory().empty())
+  DEB_line(2, "Cache hash: " << hash_);
+}
+
+bool Cache::restore_result(std::vector<double>& _x, double& _obj_val) 
+{
+  DEB_enter_func;
+  const auto* cache_loc = Config::query().cache_location();
+  if (cache_loc == nullptr) // cache location not provided, disabale the cache
     return false;
-  string_to_key(lp_file_cnts_, key_);
-  DEB_line(2, "Key cache name: " << key_);
-  key_ += '_';
+
   for (size_t iter_nmbr = 0; iter_nmbr < 10; ++iter_nmbr)
   {
-    last_filename_ = full_cache_filename(key_) + std::to_string(iter_nmbr);
+    filename_ = cache_loc + hash_ + '_' + std::to_string(iter_nmbr);
 
-    std::string dat_filename(last_filename_ + ".dat");
+    std::string dat_filename(filename_ + ".dat");
     boost::system::error_code err_cod;
     if (!boost::filesystem::exists(
           boost::filesystem::path(dat_filename.c_str()), err_cod) ||
@@ -203,16 +182,16 @@ bool Cache::restore_result(
       break;
     }
 
-    if (FileLock::active(last_filename_))
+    if (FileLock::active(filename_))
       break;
 
     std::string cache_cnts;
-    if (!load_file(last_filename_ + ".lp", cache_cnts))
+    if (!load_file(filename_ + ".lp", cache_cnts))
       break;
 
-    if (cache_cnts == lp_file_cnts_)
+    if (cache_cnts == mip_lp_)
     {
-      found_ = load_data(last_filename_ + ".dat", _x, _obj_val);
+      found_ = load_data(filename_ + ".dat", _x, _obj_val);
       return found_;
     }
   }
@@ -233,10 +212,10 @@ public:
     if (success_)
       return;
     // Removes files eventually written if there has been any kind of failure.
-    for (const auto& f_name : used_files_)
+    for (const auto& filename : used_files_)
     {
-      if (!f_name.empty())
-        std::remove(f_name.c_str());
+      if (!filename.empty())
+        std::remove(filename.c_str());
     }
   }
 
@@ -269,11 +248,11 @@ void
 Cache::store_result(const std::vector<double>& _x, const double& _obj_val)
 {
   DEB_enter_func;
-  THROW_OUTCOME_if(found_, TODO); /* Multiple store of Docloud cache value. */
-  if (!last_filename_.empty())
+  THROW_OUTCOME_if(found_, TODO); /* Multiple store of DOcloud cache value. */
+  if (!filename_.empty())
   {
     CacheSaver saver;
-    saver.save(last_filename_, _x, _obj_val, lp_file_cnts_);
+    saver.save(filename_, _x, _obj_val, mip_lp_);
   }
 }
 

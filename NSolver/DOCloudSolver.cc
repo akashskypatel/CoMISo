@@ -278,21 +278,22 @@ void DOCloudSolver::solve(
     "DOCloudSolver received a problem with non-constant gradient!");
 
   std::vector<double> x(_problem->n_unknowns(), 0.0); // solution
-  std::string lp_prbl_str =
-    DOcloud::create_lp_string(_problem, _constraints,  _discrete_constraints, x);
+  const std::string mip_lp = DOcloud::create_lp_string(_problem, _constraints,  
+    _discrete_constraints, x);
 
   double obj_val;
-  DOcloud::Cache cache;
-  if (cache.restore_result(lp_prbl_str, x, obj_val))
+  DOcloud::Cache cache(mip_lp);
+  if (cache.restore_result(x, obj_val))
     DEB_line(3, "MIP cached.")
   else
   {
     DEB_line(1, "MIP not cached, computing optimization.");
-    DOcloud::Job job("DoClouProblem.lp", cache.get_lp_content().data());
+    const std::string lp_hash = cache.hash() + ".lp";
+    DOcloud::Job job(lp_hash, mip_lp);
     job.setup();
     job.wait();
     obj_val = job.solution(x);
-    //cache.store_result(x, obj_val);
+    cache.store_result(x, obj_val);
   }
   THROW_OUTCOME_if(x.empty(), MIPS_NO_SOLUTION);
 

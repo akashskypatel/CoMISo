@@ -25,7 +25,7 @@ class JsonTokens;
 class Job : public cURLpp::Session
 {
 public:
-  Job(const char* _filename, const char* _file_buf = nullptr) 
+  Job(const std::string& _filename, const std::string& _file_buf) 
     : filename_(_filename), file_buf_(_file_buf), stts_(nullptr) 
   {}
   ~Job();
@@ -54,12 +54,12 @@ public:
 protected:
   void make();
   void start();
-  void upload(cURLpp::Upload& _upload);
+  void upload(cURLpp::Upload& _upld);
   void upload();
 
 private:
-  const char* filename_;
-  const char* file_buf_;
+  const std::string filename_;
+  const std::string file_buf_;
   std::string url_;
   JsonTokens* stts_;
   // these variables are initialized in start() 

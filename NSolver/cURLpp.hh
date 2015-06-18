@@ -106,7 +106,7 @@ private:
 class UploadData : public Upload
 {
 public:
-  UploadData(const std::string& _buf) : buf_(_buf)  {}
+  explicit UploadData(const std::string& _buf) : buf_(_buf)  {}
 
 protected:
   virtual size_t send_data();
@@ -115,7 +115,7 @@ private:
   class Buffer
   {
   public:
-    Buffer(const std::string& _data)
+    explicit Buffer(const std::string& _data)
       : ptr_(_data.c_str()), len_(_data.size()), pos_(0) 
     {}
 
@@ -123,13 +123,13 @@ private:
       const size_t _n_elem, void* _from_buf);
 
     size_t length() const { return len_; }
+
   private:
     const char* ptr_;
     size_t len_;
     size_t pos_;
   };
 
-  class Buffer;
   Buffer buf_;
 };
 

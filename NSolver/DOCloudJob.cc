@@ -7,6 +7,7 @@
 #include "DOcloudJob.hh"
 #if COMISO_DOCLOUD_AVAILABLE
 
+#include "DOCloudConfig.hh"
 #include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Debug/DebUtils.hh>
 
@@ -21,11 +22,36 @@ DEB_module("DOcloud")
 namespace COMISO {
 namespace DOcloud { 
 
-static char* root_url__ = 
-  "https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs";
-static std::string api_key__ = 
-  "X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd";
-static char* app_type__ = "Content-Type: application/json";
+//////////////////////////////////////////////////////////////////////////
+// Config
+static const char* app_type__ = "Content-Type: application/json";
+
+Config::Config()
+  : root_url_("https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs"),
+    api_key_("X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd"),
+    infs_time_(300), fsbl_time_(15), 
+    cache_loc_("\\\\camfs1\\General_access\\Martin_Marinov\\ReForm\\Cache\\")
+{
+  const char* env_cache_dir = getenv("ReFormCacheDir");
+  if (env_cache_dir != nullptr && env_cache_dir[0] != 0)
+  {
+    cache_loc_ = env_cache_dir;
+    if (cache_loc_.back() != '\\')
+      cache_loc_ += '\\'; // Eventually add '\' to the directory string.
+  }
+}
+
+Config& Config::object()
+{
+  // TODO: implement MT-lock
+  static Config config;
+  return config;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Config
+const Config& Config::query() { return object(); } 
+Config& Config::modify() { return object(); } 
 
 class HeaderTokens
 {
@@ -59,8 +85,8 @@ public:
 
   typedef std::vector<std::string>::const_iterator const_iterator;
 
-  const_iterator begin() const { return tkns_.begin();}
-  const_iterator end() const { return tkns_.end();}
+  const_iterator begin() const { return tkns_.begin(); }
+  const_iterator end() const { return tkns_.end(); }
 
 private:
   std::vector<std::string> tkns_;
@@ -185,7 +211,7 @@ Job::~Job()
   }
 
   del.set_url(url_.data());
-  del.add_http_header(api_key__.c_str());
+  del.add_http_header(Config::query().api_key());
   del.perform();
 
   delete stts_;
@@ -201,8 +227,8 @@ void Job::make()
   cURLpp::Post post(post_loc);
   THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
 
-  post.set_url(root_url__);
-  post.add_http_header(api_key__.c_str());
+  post.set_url(Config::query().root_url());
+  post.add_http_header(Config::query().api_key());
   post.add_http_header(app_type__);
   post.perform();
 
@@ -216,21 +242,21 @@ void Job::make()
     stts_ = new JsonTokens;
 }
 
-void Job::upload(cURLpp::Upload& _upload)
+void Job::upload(cURLpp::Upload& _upld)
 {
-  THROW_OUTCOME_if(!_upload.valid(), TODO); //Failed to initialize the request
+  THROW_OUTCOME_if(!_upld.valid(), TODO); //Failed to initialize the request
 
   auto url = url_ + "/attachments/" + filename_ + "/blob";
-  _upload.set_url(url.data());
-  _upload.add_http_header(api_key__.c_str());
-  _upload.perform();
-  HttpStatus http_stat(_upload);
+  _upld.set_url(url.data());
+  _upld.add_http_header(Config::query().api_key());
+  _upld.perform();
+  HttpStatus http_stat(_upld);
   http_stat.check(204);
 }
 
 void Job::upload()
 {
-  if (file_buf_ == nullptr)
+  if (file_buf_.empty())
   {// file is not buffered into memory
     cURLpp::UploadFile upld(filename_);
     upload(upld);
@@ -249,7 +275,7 @@ void Job::start()
 
   auto url = url_ + "/execute";
   post.set_url(url.data());
-  post.add_http_header(api_key__.c_str());
+  post.add_http_header(Config::query().api_key());
   post.add_http_header(app_type__);
   post.perform();
   HttpStatus http_stat(post);
@@ -266,7 +292,7 @@ void Job::sync_status()
   cURLpp::Get get;
   THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
   get.set_url(url_.data());
-  get.add_http_header(api_key__.c_str());
+  get.add_http_header(Config::query().api_key());
   get.perform();
   HttpStatus http_stat(get);
   http_stat.check(200);
@@ -305,7 +331,7 @@ void Job::sync_log()
   const std::string url = url_ + "/log/items?start=" + 
     std::to_string(log_seq_idx_) + "&continuous=true";
   get.set_url(url.data());
-  get.add_http_header(api_key__.c_str());
+  get.add_http_header(Config::query().api_key());
   get.perform();
   HttpStatus http_stat(get);
   http_stat.check(200);
@@ -401,7 +427,7 @@ void Job::abort()
   THROW_OUTCOME_if(!del.valid(), TODO); //Failed to initialize the request
   const std::string url = url_ + "/execute";
   del.set_url(url.data());
-  del.add_http_header(api_key__.c_str());
+  del.add_http_header(Config::query().api_key());
   del.perform();
 
   HttpStatus http_stat(del);
@@ -437,7 +463,7 @@ double Job::solution(std::vector<double>& _x) const
 
   auto url = url_ + "/attachments/solution.json/blob";
   get.set_url(url.data());
-  get.add_http_header(api_key__.c_str());
+  get.add_http_header(Config::query().api_key());
   get.perform();
 
   HttpStatus http_stat(get);
