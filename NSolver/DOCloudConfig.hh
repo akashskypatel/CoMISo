@@ -41,7 +41,10 @@ public:
   int feasible_timeout() const { return fsbl_time_; }
 
   void set_cache_location(const char* const _cache_loc);
-  const char* cache_location() const { return cache_loc_.data(); }
+  const char* cache_location() const 
+  { 
+    return cache_loc_.empty() ? nullptr : cache_loc_.data(); 
+  }
 
 private:
   std::string root_url_;

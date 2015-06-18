@@ -50,27 +50,34 @@ Config& Config::object()
 
 void Config::set_root_url(const char* const _root_url)
 {
+  THROW_OUTCOME_if(_root_url == nullptr, TODO);
   root_url_ = _root_url;
 }
 
 void Config::set_api_key(const char* _api_key)
 {
+  THROW_OUTCOME_if(_api_key == nullptr, TODO);
   api_key_ = std::string("X-IBM-Client-Id: ") + _api_key;
 }
 
 void Config::set_infeasible_timeout(const int _infs_time)
 {
+  THROW_OUTCOME_if(_infs_time < 1, TODO);
   infs_time_ = _infs_time;
 }
 
 void Config::set_feasible_timeout(const int _fsbl_time)
 {
+  THROW_OUTCOME_if(_fsbl_time < 0, TODO);
   fsbl_time_ = _fsbl_time;
 }
 
 void Config::set_cache_location(const char* const _cache_loc)
 {
-  cache_loc_ = _cache_loc;
+  if (_cache_loc == nullptr) 
+    cache_loc_.clear();
+  else
+    cache_loc_ = _cache_loc;
 }
 
 //////////////////////////////////////////////////////////////////////////
