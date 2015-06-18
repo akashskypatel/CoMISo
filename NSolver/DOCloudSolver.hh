@@ -38,15 +38,6 @@ namespace COMISO {
 class COMISODLLEXPORT DOCloudSolver
 {
 public:
-  /// Default constructor
-  DOCloudSolver() {}
-
-  /// Destructor
-  ~DOCloudSolver() {}
-
-  static void set_api_key(const char* _api_key);
-
-  // ********** SOLVE **************** //
   //! \throws Outcome
   void solve(
     NProblemInterface* _problem, // problem instance
