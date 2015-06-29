@@ -24,11 +24,12 @@ namespace DOcloud {
 
 //////////////////////////////////////////////////////////////////////////
 // Config
-static const char* app_type__ = "Content-Type: application/json";
+static const char* json_app_type__ = "Content-Type: application/json";
+static const char* gen_app_type__ = "Content-Type: application/octet-stream";
 
 Config::Config()
   : root_url_("https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs"),
-    api_key_("X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd"),
+  api_key_("X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd"),
     infs_time_(300), fsbl_time_(15), 
     cache_loc_("\\\\camfs1\\General_access\\Martin_Marinov\\ReForm\\Cache\\")
 {
@@ -261,7 +262,7 @@ void Job::make()
 
   post.set_url(Config::query().root_url());
   post.add_http_header(Config::query().api_key());
-  post.add_http_header(app_type__);
+  post.add_http_header(json_app_type__);
   post.perform();
 
   HttpStatus http_stat(post);
@@ -281,6 +282,7 @@ void Job::upload(cURLpp::Upload& _upld)
   auto url = url_ + "/attachments/" + filename_ + "/blob";
   _upld.set_url(url.data());
   _upld.add_http_header(Config::query().api_key());
+  _upld.add_http_header(gen_app_type__);
   _upld.perform();
   HttpStatus http_stat(_upld);
   http_stat.check(204);
@@ -308,7 +310,7 @@ void Job::start()
   auto url = url_ + "/execute";
   post.set_url(url.data());
   post.add_http_header(Config::query().api_key());
-  post.add_http_header(app_type__);
+  post.add_http_header(json_app_type__);
   post.perform();
   HttpStatus http_stat(post);
   http_stat.check(204);
