@@ -29,7 +29,7 @@ static const char* gen_app_type__ = "Content-Type: application/octet-stream";
 
 Config::Config()
   : root_url_("https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs"),
-  api_key_("X-IBM-Client-Id: api_0821c92f-0f2b-4ea5-be24-ecc9cd7695dd"),
+  api_key_("X-IBM-Client-Id: api_cc4223a4-ecad-4dd0-a1a5-59dac8db0b41"),
     infs_time_(300), fsbl_time_(15), 
     cache_loc_("\\\\camfs1\\General_access\\Martin_Marinov\\ReForm\\Cache\\")
 {
