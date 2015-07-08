@@ -401,11 +401,11 @@ private:
       std::sort( evar.begin(), evar.end() );
       evar.push_back( std::numeric_limits<int>::max() );
 
-      int cur_evar_idx=0;
-      unsigned int nc = _rhs.size();
-      for( unsigned int i=0; i<nc; ++i )
+      int cur_evar_idx = 0;
+      size_t nc = _rhs.size();
+      for (size_t i = 0; i < nc; ++i)
       {
-        unsigned int next_i = evar[cur_evar_idx];
+        size_t next_i = evar[cur_evar_idx];
 
         if ( i != next_i ) _rhs[i-cur_evar_idx] = _rhs[i];
         else ++cur_evar_idx;
