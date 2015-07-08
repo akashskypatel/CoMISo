@@ -33,8 +33,6 @@ public:
   Request();
   virtual ~Request();
 
-  bool valid() const { return hnd_ != nullptr; }
-
   void set_url(const char* _url);
 
   void add_http_header(const char* _hdr);

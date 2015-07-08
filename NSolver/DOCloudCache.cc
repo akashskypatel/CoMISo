@@ -244,20 +244,19 @@ private:
 
 } // namespace
 
-void
-Cache::store_result(const std::vector<double>& _x, const double& _obj_val)
+void Cache::store_result(const std::vector<double>& _x, const double& _obj_val)
 {
   DEB_enter_func;
-  THROW_OUTCOME_if(found_, TODO); /* Multiple store of DOcloud cache value. */
-  if (!filename_.empty())
-  {
-    CacheSaver saver;
-    saver.save(filename_, _x, _obj_val, mip_lp_);
+  if (filename_.empty() || found_)
+  {// restore_result() either not called at all, or hit the cache
+    DEB_error("store_result() called incorrectly");
+    return;
   }
+  CacheSaver saver;
+  saver.save(filename_, _x, _obj_val, mip_lp_);
 }
 
 } // namespace DOcloud
-
 } // namespace COMISO
 
 #endif // COMISO_DOCLOUD_AVAILABLE

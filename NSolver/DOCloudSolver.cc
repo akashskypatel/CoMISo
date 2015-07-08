@@ -4,9 +4,6 @@
 //
 //=============================================================================
 
-// TODO: this uses Cbc for the MPS file export; consider implementing our own 
-// MPS/LP export to remove the dependency.
-
 //== INCLUDES =================================================================
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
@@ -22,7 +19,6 @@
 
 #include <stdexcept>
 #include <algorithm>
-//#include <chrono>         
 #include <fstream>
 #include <iomanip>
 
@@ -36,15 +32,6 @@ namespace COMISO {
 namespace DOcloud {
 
 namespace {
-
-std::string lp_file_name()
-{
-  // TODO: This is not MT-safe, it's not even process-safe!
-  static int n_mps = 0;
-  std::string filename("DOcloud_problem_");
-  filename += std::to_string(n_mps++);
-  return filename + ".lp";
-}
 
 #define P(X) ((X).data())
 #define XVAR(IDX) "x" << IDX
@@ -201,8 +188,6 @@ std::string create_lp_string(
     case NConstraintInterface::NC_LESS_EQUAL:
       lp_str_stream << " <= ";
       break;
-    default:
-      THROW_OUTCOME(TODO); // Can not express current constraint.
     }
     lp_str_stream << -cstr->eval_constraint(P(_x)) << std::endl;
   }

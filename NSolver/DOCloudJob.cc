@@ -29,7 +29,7 @@ static const char* gen_app_type__ = "Content-Type: application/octet-stream";
 
 Config::Config()
   : root_url_("https://api-oaas.docloud.ibmcloud.com/job_manager/rest/v1/jobs"),
-  api_key_("X-IBM-Client-Id: api_cc4223a4-ecad-4dd0-a1a5-59dac8db0b41"),
+    api_key_("X-IBM-Client-Id: api_cc4223a4-ecad-4dd0-a1a5-59dac8db0b41"),
     infs_time_(300), fsbl_time_(15), 
     cache_loc_("\\\\camfs1\\General_access\\Martin_Marinov\\ReForm\\Cache\\")
 {
@@ -51,25 +51,25 @@ Config& Config::object()
 
 void Config::set_root_url(const char* const _root_url)
 {
-  THROW_OUTCOME_if(_root_url == nullptr, TODO);
+  THROW_OUTCOME_if(_root_url == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   root_url_ = _root_url;
 }
 
 void Config::set_api_key(const char* _api_key)
 {
-  THROW_OUTCOME_if(_api_key == nullptr, TODO);
+  THROW_OUTCOME_if(_api_key == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   api_key_ = std::string("X-IBM-Client-Id: ") + _api_key;
 }
 
 void Config::set_infeasible_timeout(const int _infs_time)
 {
-  THROW_OUTCOME_if(_infs_time < 1, TODO);
+  THROW_OUTCOME_if(_infs_time < 1, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   infs_time_ = _infs_time;
 }
 
 void Config::set_feasible_timeout(const int _fsbl_time)
 {
-  THROW_OUTCOME_if(_fsbl_time < 0, TODO);
+  THROW_OUTCOME_if(_fsbl_time < 0, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   fsbl_time_ = _fsbl_time;
 }
 
@@ -185,10 +185,10 @@ void throw_http_error(const int _err_code, const std::string& _bdy)
 
   switch (_err_code)
   {
-  case 400 : THROW_OUTCOME(TODO); // Invalid job creation data / status
-  case 403 : THROW_OUTCOME(TODO); // Subscription limit exceeded
-  case 404 : THROW_OUTCOME(TODO); // Requested job could not be found
-  default : THROW_OUTCOME(TODO); // Unrecognized HTTP status code
+  case 400 : THROW_OUTCOME(DOCLOUD_JOB_DATA_INVALID);
+  case 403 : THROW_OUTCOME(DOCLOUD_SUBSCRIPTION_LIMIT);
+  case 404 : THROW_OUTCOME(DOCLOUD_JOB_NOT_FOUND);
+  default : THROW_OUTCOME(DOCLOUD_JOB_UNRECOGNIZED_FAILURE); 
   }
 }
 
@@ -205,12 +205,12 @@ public:
     {
       if (*it != http_lbl) // search for the http label token
         continue; 
-      THROW_OUTCOME_if(++it == it_end, TODO); // missing http code
+      THROW_OUTCOME_if(++it == it_end, DOCLOUD_JOB_HTTP_CODE_NOT_FOUND);
       code_ = atoi(it->data());
       if (code_ != code_cntn)
         return;
     }
-    THROW_OUTCOME(TODO); // final http code not found
+    THROW_OUTCOME(DOCLOUD_JOB_HTTP_CODE_NOT_FOUND); // final http code not found
   }
 
   void check(int _code_ok) const
@@ -233,33 +233,24 @@ Job::~Job()
 {
   DEB_enter_func;
 
+  delete stts_;
+
   if (url_.empty()) // not setup
     return;
-
   cURLpp::Delete del;
-  if (!del.valid()) 
-  {
-    DEB_error("Failed to construct a delete request");
-    return; // no point in throwing an exception here
-  }
-
   del.set_url(url_.data());
   del.add_http_header(Config::query().api_key());
   del.perform();
-
-  delete stts_;
-  // no point in checking the return value either, we can't do much if the
+  // no point in checking the return value, we can't do much if the
   // delete request has failed
 }
 
 void Job::make()
 {
   DEB_enter_func;
-  std::string post_loc = 
-    "{\"attachments\" : [{\"name\" :\"" + std::string(filename_) + "\"}]}";
+  const auto post_loc = "{\"attachments\" : [{\"name\" :\"" + 
+    std::string(filename_) + "\"}]}";
   cURLpp::Post post(post_loc);
-  THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
-
   post.set_url(Config::query().root_url());
   post.add_http_header(Config::query().api_key());
   post.add_http_header(json_app_type__);
@@ -269,7 +260,7 @@ void Job::make()
   http_stat.check(201);
   // TODO: DOcloud header is successful but no location value
   THROW_OUTCOME_if(!http_stat.header_tokens().find_value("Location:", url_),
-    TODO); 
+    DOCLOUD_JOB_LOCATION_NOT_FOUND); 
 
   if (stts_ == nullptr) 
     stts_ = new JsonTokens;
@@ -277,8 +268,6 @@ void Job::make()
 
 void Job::upload(cURLpp::Upload& _upld)
 {
-  THROW_OUTCOME_if(!_upld.valid(), TODO); //Failed to initialize the request
-
   auto url = url_ + "/attachments/" + filename_ + "/blob";
   _upld.set_url(url.data());
   _upld.add_http_header(Config::query().api_key());
@@ -305,9 +294,7 @@ void Job::upload()
 void Job::start()
 {
   cURLpp::Post post("");
-  THROW_OUTCOME_if(!post.valid(), TODO); //Failed to initialize the request
-
-  auto url = url_ + "/execute";
+  const auto url = url_ + "/execute";
   post.set_url(url.data());
   post.add_http_header(Config::query().api_key());
   post.add_http_header(json_app_type__);
@@ -324,7 +311,6 @@ void Job::sync_status()
   DEB_enter_func;
 
   cURLpp::Get get;
-  THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
   get.set_url(url_.data());
   get.add_http_header(Config::query().api_key());
   get.perform();
@@ -361,9 +347,8 @@ void Job::sync_log()
   DEB_enter_func;
 
   cURLpp::Get get;
-  THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
-  const std::string url = url_ + "/log/items?start=" + 
-    std::to_string(log_seq_idx_) + "&continuous=true";
+  const auto url = url_ + "/log/items?start=" + std::to_string(log_seq_idx_) + 
+    "&continuous=true";
   get.set_url(url.data());
   get.add_http_header(Config::query().api_key());
   get.perform();
@@ -466,8 +451,7 @@ void Job::abort()
     return; // already aborted or aborting
 
   cURLpp::Delete del;
-  THROW_OUTCOME_if(!del.valid(), TODO); //Failed to initialize the request
-  const std::string url = url_ + "/execute";
+  const auto url = url_ + "/execute";
   del.set_url(url.data());
   del.add_http_header(Config::query().api_key());
   del.perform();
@@ -501,9 +485,7 @@ double Job::solution(std::vector<double>& _x) const
   DEB_line(2, "solveStatus=" << slv_stts);
   
   cURLpp::Get get;
-  THROW_OUTCOME_if(!get.valid(), TODO); //Failed to initialize the request
-
-  auto url = url_ + "/attachments/solution.json/blob";
+  const auto url = url_ + "/attachments/solution.json/blob";
   get.set_url(url.data());
   get.add_http_header(Config::query().api_key());
   get.perform();
@@ -523,7 +505,7 @@ double Job::solution(std::vector<double>& _x) const
 
   const auto& vrbls = bdy_tkns.ptree().get_child("CPLEXSolution.variables");
   const auto n_vrbls = vrbls.size();
-  THROW_OUTCOME_if(n_vrbls != _x.size(), TODO); // Solution variables number does not match
+  THROW_OUTCOME_if(n_vrbls != _x.size(), DOCLOUD_CPLEX_SOLUTION_MISMATCH); 
   
   size_t i = 0;
   for (const auto& v : vrbls)
@@ -532,7 +514,7 @@ double Job::solution(std::vector<double>& _x) const
     const std::string name = 
       v.second.get_child("name").get_value<std::string>(); // this is x#IDX
     const int idx = atoi(name.data() + 1);
-    THROW_OUTCOME_if(idx < 0 || idx > n_vrbls, TODO);  // Invalid index
+    THROW_OUTCOME_if(idx < 0 || idx > n_vrbls, DOCLOUD_CPLEX_SOLUTION_MISMATCH);
     _x[idx] = v.second.get_child("value").get_value<double>();
 
     DEB_out(7, "#" << idx << "=" << 

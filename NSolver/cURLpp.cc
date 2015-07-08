@@ -26,7 +26,10 @@ Session::~Session() { curl_global_cleanup(); }
 
 //////////////////////////////////////////////////////////////////////////
 // Request 
-Request::Request() : hnd_(curl_easy_init()), http_hdr_(nullptr) {}
+Request::Request() : hnd_(curl_easy_init()), http_hdr_(nullptr) 
+{
+  THROW_OUTCOME_if(hnd_ == nullptr, DOCLOUD_REQUEST_INIT_FAILED);
+}
 
 Request::~Request() 
 { 
@@ -97,7 +100,7 @@ void Request::perform()
       DEB_warning(1, "curl_easy_perform() try #" << try_nmbr << " failed "
         "with code: " << res << ", message: " << curl_easy_strerror(res))
     else 
-      THROW_OUTCOME(TODO)
+      THROW_OUTCOME(DOCLOUD_REQUEST_EXEC_FAILED)
   }
 
   DEB_line(6, "Received Header: " << hdr_);
