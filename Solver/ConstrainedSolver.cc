@@ -131,7 +131,13 @@ template void ConstrainedSolver::solve_const(const WSRowMatrix&,
   const WSColMatrix&, DoubleVector&, const DoubleVector&, const IntVector&, 
   double, bool, bool);
 
+template void COMISO::ConstrainedSolver::resolve(const WSRowMatrix&,
+  DoubleVector&, DoubleVector*, bool);
+
 template void COMISO::ConstrainedSolver::solve_const(const WSRowMatrix&,  
   const WSRowMatrix&, DoubleVector&, const IntVector&, double, bool, bool);
+
+template void COMISO::ConstrainedSolver::solve_const(const RSRowMatrix&,
+  const RSRowMatrix&, DoubleVector&, const IntVector&, double, bool, bool);
 
 }//namespace COMISO_GMM

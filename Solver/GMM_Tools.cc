@@ -1271,6 +1271,7 @@ using namespace COMISO_STD;
 
 template void factored_to_quadratic(WSRowMatrix&, WSColMatrix&, DoubleVector&);
 template void factored_to_quadratic(WSRowMatrix&, RSColMatrix&, DoubleVector&);
+template void factored_to_quadratic(RSRowMatrix&, RSColMatrix&, DoubleVector&);
 
 template void eliminate_csc_vars(const IntVector&, const DoubleVector&,
   CSCMatrix&, DoubleVector&, DoubleVector&);
