@@ -22,51 +22,45 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-
-
-
 #ifndef VSTOOLS_HH
 #define VSTOOLS_HH
 
-
-//== FORWARDDECLARATIONS ======================================================
-
-//== NAMESPACES ===============================================================
-
-//== DEFINITION =========================================================
+#include <math.h>
+#include <float.h>
 
 /** These functions are required for Visual Studio to work around missing 
     functions. Basic equivalent functions for double exist in the float 
     header but are named different. So this wrapper makes them standard compatible.
     */
 #ifdef WIN32
- #include <float.h>
 
- namespace std {
+namespace std {
 
-   inline int isnan(double x)
-   {
-     return _isnan(x);
-   } 
+inline int isnan(double x)
+{
+  return _isnan(x);
+} 
 
-   // Which idiot defines isinf as a macro somewhere?
-   #ifdef isinf 
-     #undef isinf
-   #endif
+// Which idiot defines isinf as a macro somewhere?
+#ifdef isinf 
+#undef isinf
+#endif
 
-   inline int isinf(double x)
-   {
-     return !_finite(x);
-   } 
+inline int isinf(double x)
+{
+  return !_finite(x);
+} 
 
-   inline int isfinite(double x)
-     {
-       return _finite(x);
-     }
+inline int isfinite(double x)
+{
+  return _finite(x);
+}
 
-  }
+} // std
 
- inline double nearbyint(double x) {
+#endif
+ 
+inline double nearbyint(double x) {
    if( x >= 0.0 )
      return int( x + 0.5 );
    else
@@ -82,8 +76,7 @@ inline bool same(const double _x, const double _y, const double _tol)
   return fabs(_x - _y) < _tol;
 }
 
-#endif
-
+template <typename T> inline T sqr(const T& _a) { return _a * _a; }
 
 //=============================================================================
 #endif // VSTOOLS_HH defined
