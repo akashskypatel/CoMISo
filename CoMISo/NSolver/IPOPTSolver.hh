@@ -151,7 +151,15 @@ public:
 
   /** default constructor */
   NProblemIPOPT(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, const bool _hessian_approximation = false)
-   : problem_(_problem), store_solution_(false), hessian_approximation_(_hessian_approximation) { split_constraints(_constraints); analyze_special_properties(_problem, _constraints);}
+   : problem_(_problem), store_solution_(false), hessian_approximation_(_hessian_approximation)
+  {
+    // initialize solution
+    x_.resize(_problem->n_unknowns());
+    _problem->initial_x(P(x_));
+
+    split_constraints(_constraints);
+    analyze_special_properties(_problem, _constraints);
+  }
 
   /** default destructor */
   virtual ~NProblemIPOPT() {};
