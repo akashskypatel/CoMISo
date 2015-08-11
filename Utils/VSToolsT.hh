@@ -56,26 +56,15 @@ inline int isfinite(double x)
   return _finite(x);
 }
 
-} // std
+}// namespace std
 
 #endif
  
-inline double nearbyint(double x) {
-   if( x >= 0.0 )
-     return int( x + 0.5 );
-   else
-     return int( x - 0.5 );
- }
-
- inline double round ( double _value ) {
-   return nearbyint(_value);
- }
-
+inline int round(double _x) { return int(_x >= 0.0 ? _x + 0.5 : _x - 0.5); }
 inline bool same(const double _x, const double _y, const double _tol)
 {
   return fabs(_x - _y) < _tol;
 }
-
 template <typename T> inline T sqr(const T& _a) { return _a * _a; }
 
 //=============================================================================
