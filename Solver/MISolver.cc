@@ -241,8 +241,8 @@ MISolver::solve_no_rounding(
     Vecd&      _x, 
     Vecd&      _rhs )
 {
-  direct_solver_.calc_system_gmm(_A);
-  direct_solver_.solve(_x, _rhs);
+  THROW_OUTCOME_if(!direct_solver_.calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
+  THROW_OUTCOME_if(!direct_solver_.solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
 }
 
 
