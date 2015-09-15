@@ -447,7 +447,7 @@ void Job::abort()
 {
   std::string exct_stts;
   stts_->find_value("executionStatus", exct_stts);
-  if (exct_stts != "RUNNING")
+  if (exct_stts != "RUNNING" && exct_stts != "NOT_STARTED")
     return; // already aborted or aborting
 
   cURLpp::Delete del;
