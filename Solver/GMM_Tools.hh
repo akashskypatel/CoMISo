@@ -236,6 +236,9 @@ double residuum_norm( MatrixT& _A, VectorT& _x, VectorT& _rhs );
 template<class MatrixT, class MatrixT2, class VectorT>
 void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs);
 
+template<class MatrixT, class VectorT>
+  void factored_to_quadratic_rhs_only( MatrixT& _F, VectorT& _rhs);
+
 
 /// Inspect the matrix (print)
 /** Prints useful matrix informations such as, dimension, symmetry, zero_rows, zero_cols, nnz, max, min, max_abs, min_abs, NAN, INF

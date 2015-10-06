@@ -41,6 +41,7 @@
 
 // Heuristics
 #include "CbcHeuristic.hpp"
+#include "CbcCompareDepth.hpp"
 
 #include <stdexcept>
 #include <stdio.h>
@@ -257,12 +258,16 @@ void solve_impl(
   // Pass the OsiSolver with the problem to be solved to CbcModel
   CbcModel model(si);
   model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
-  model.setMaximumSolutions(4);
-  TRACE_CBT("CbcModel::getMaximumSolutions()", model.getMaximumSolutions());
-  //model.setMaximumSeconds(_time_limit);
-  TRACE_CBT("CbcModel::getMaximumSeconds()", model.getMaximumSeconds());
+//  model.setMaximumSolutions(4);
+//  TRACE_CBT("CbcModel::getMaximumSolutions()", model.getMaximumSolutions());
+  model.setMaximumSeconds(_time_limit);
+//  TRACE_CBT("CbcModel::getMaximumSeconds()", model.getMaximumSeconds());
 
   model_tweak(model);
+
+  CbcCompareDepth compare_depth;
+  model.setNodeComparison(&compare_depth);
+
   model.branchAndBound();
 
   auto solution = model.bestSolution();

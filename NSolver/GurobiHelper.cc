@@ -1,5 +1,3 @@
-#if 0
-
 /*
  * GurobiHelper.cc
  *
@@ -11,8 +9,11 @@
 
 #if (COMISO_GUROBI_AVAILABLE && COMISO_BOOST_AVAILABLE)
 
+#if (COMISO_QT_AVAILABLE)
 #include <QTemporaryFile>
 #include <QFileInfo>
+#endif
+
 #include <boost/filesystem.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
@@ -84,6 +85,7 @@ void GurobiHelper::outputModelToMpsGz(GRBModel &model, const std::string &proble
 #if OUTPUT_UNCOMPRESSED_WITH_CONSTANT_COMMENT
     boost::scoped_ptr<TempFileGuard> tempFileGuard;
     {
+#if (COMISO_QT_AVAILABLE)
         QTemporaryFile tempFile("XXXXXX.mps");
         tempFile.setAutoRemove(false);
         tempFile.open();
@@ -92,6 +94,7 @@ void GurobiHelper::outputModelToMpsGz(GRBModel &model, const std::string &proble
         // we initialize tempFileGuard right here.
         tempFileGuard.reset(new TempFileGuard(QFileInfo(tempFile).absoluteFilePath().toStdString()));
         tempFile.close();
+#endif
     }
 
     const std::string fileName = tempFileGuard->filePath().string();
@@ -130,6 +133,7 @@ void GurobiHelper::outputModelToMpsGz(GRBModel &model, const std::string &proble
 void GurobiHelper::importInitialSolutionIntoModel(GRBModel &model, const std::string &solution_path_) {
     boost::scoped_ptr<TempFileGuard> tempFileGuard;
     {
+#if (COMISO_QT_AVAILABLE)
         QTemporaryFile tempFile("XXXXXX.mst");
         tempFile.setAutoRemove(false);
         tempFile.open();
@@ -138,6 +142,7 @@ void GurobiHelper::importInitialSolutionIntoModel(GRBModel &model, const std::st
         // we initialize tempFileGuard right here.
         tempFileGuard.reset(new TempFileGuard(QFileInfo(tempFile).absoluteFilePath().toStdString()));
         tempFile.close();
+#endif
     }
 
     const std::string fileName = tempFileGuard->filePath().string();
@@ -175,5 +180,3 @@ void GurobiHelper::readSolutionVectorFromSOL(std::vector<double> &out_solution_,
 } /* namespace COMISO */
 
 #endif
-
-#endif//0

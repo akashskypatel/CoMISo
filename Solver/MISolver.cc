@@ -26,19 +26,13 @@
 #include <CoMISo/Config/config.hh>
 #include "MISolver.hh"
 
-#if(COMISO_QT4_AVAILABLE)
+#if(COMISO_QT_AVAILABLE)
 #include <CoMISo/QtWidgets/MISolverDialogUI.hh>
 #endif
 
 #if COMISO_GUROBI_AVAILABLE
   #include <gurobi_c++.h>
 #endif
-
-#if COMISO_CPLEX_AVAILABLE
-#include <ilcplex/ilocplex.h>
-//#include <ilcplex/cplex.h>
-#endif
-
 
 #include <Base/Debug/DebOut.hh>
 #include <Base/Utils/OutcomeUtils.hh>
@@ -47,25 +41,17 @@
 #include <gmm/gmm.h>
 #include <float.h>
 
-
 // hack for testing only
 #include "SparseQRSolver.hh"
 #include "UMFPACKSolver.hh"
 #include "EigenLDLTSolver.hh"
 
-DEB_module("SOLV");
+DEB_module("MISolver");
 
 #define ROUND(x) ((x)<0?int((x)-0.5):int((x)+0.5))
 
 namespace COMISO {
 
-void my_pause(const char* __caller)	
-{
-	//std::cout << __caller << ": press a key to continue... " << std::endl;
-	//char wait_ch = _getch();
-	//if (wait_ch == 27)
-	//	throw std::exception();
-}
 
 
 // Constructor

@@ -1,5 +1,3 @@
-#if 0
-
 /*
  * GurobiHelper.hh
  *
@@ -51,4 +49,3 @@ class GurobiHelper {
 #endif /* GUROBIHELPER_HH_ */
 
 
-#endif//0

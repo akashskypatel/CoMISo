@@ -4,7 +4,6 @@
 //
 //=============================================================================
 
-#ifndef COMISO_LINEARCONSTRAINTHANDLERPENALTY_C
 #define COMISO_LINEARCONSTRAINTHANDLERPENALTY_C
 
 //== INCLUDES =================================================================
@@ -58,4 +57,3 @@ initialize( const MatrixT& _C, const VectorT& _c)
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif//COMISO_LINEARCONSTRAINTHANDLERPENALTY_C

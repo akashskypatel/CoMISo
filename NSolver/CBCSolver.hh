@@ -18,7 +18,6 @@
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 #include "VariableType.hh"
-#include "GurobiHelper.hh"
 
 //== FORWARDDECLARATIONS ======================================================
 class GRBModel;
@@ -61,6 +60,7 @@ public:
     std::vector<PairIndexVtype> dc;
     return solve(_problem, _constraints, dc, _time_limit);
   }
+
 };
 
 

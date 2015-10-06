@@ -9,6 +9,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudConfig.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudJob.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudSolver.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.hh
@@ -24,6 +25,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemGmmInterface.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterface.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceADOLC.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceDCO.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/QuadraticProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT.hh
@@ -52,6 +54,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudCache.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudJob.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudSolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.cc
@@ -59,6 +62,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraint.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerElimination.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerPenalty.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/LinearProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NewtonSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPDerivativeChecker.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraints.cc

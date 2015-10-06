@@ -66,6 +66,20 @@ public:
                     const bool                          _silent = false)  // time limit in seconds
   { std::vector<PairIndexVtype> dc; return solve(_problem, _constraints, dc, _time_limit, _silent);}
 
+  // same as previous but more control over stopping criteria
+  // the optimizer runs in two phases
+  // phase 1) stops if solution with a MIP gap lower than _gap0 is found or _time_limit0 is reached
+  // phase 2) starts only if in phase 1 no solution with a MIP gap lower than _gap1 was found and
+  //          uses _gap1 and _time_limit2 as parameters
+  inline bool solve_two_phase(NProblemInterface*                  _problem,                // problem instance
+                    std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+                    std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+                    const double                        _time_limit0 = 60, // time limit phase 1 in seconds
+                    const double                        _gap0 = 0.001,     // MIP gap phase 1
+                    const double                        _time_limit1 = 120, // time limit phase 2 in seconds
+                    const double                        _gap1 = 0.2,        // MIP gap phase 2
+                    const bool                          _silent = false);
+
 
   // optimization with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
