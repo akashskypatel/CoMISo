@@ -12,11 +12,14 @@
 //=============================================================================
  #include <gurobi_c++.h>
 
-
 #include "GUROBISolver.hh"
+#if (COMISO_QT_AVAILABLE)
+#include "GUROBIHelper.hh"
+#endif//COMISO_QT_AVAILABLE
+#include <CoMISo/Utils/CoMISoError.hh>
+
 
 #include <Base/Debug/DebTime.hh>
-#include <Base/Utils/OutcomeUtils.hh>
 #include <stdexcept>
 
 
@@ -30,6 +33,34 @@ namespace COMISO {
 //== IMPLEMENTATION ========================================================== 
 
 
+void add_constraint_to_model(COMISO::NConstraintInterface* _constraint, 
+  GRBModel& _model, std::vector<GRBVar>& _vars, const double* _x)
+{
+  DEB_enter_func;
+  DEB_warning_if(!_constraint->is_linear(), 1,
+     "GUROBISolver received a problem with non-linear constraints!!!\n");
+
+  GRBLinExpr lin_expr;
+  NConstraintInterface::SVectorNC gc;
+  _constraint->eval_gradient(_x, gc);
+
+  NConstraintInterface::SVectorNC::InnerIterator v_it(gc);
+  for(; v_it; ++v_it)
+    lin_expr += _vars[v_it.index()]*v_it.value();
+
+  double b = _constraint->eval_constraint(_x);
+
+  switch(_constraint->constraint_type())
+  {
+    case NConstraintInterface::NC_EQUAL         : _model.addConstr(lin_expr + b == 0); break;
+    case NConstraintInterface::NC_LESS_EQUAL    : _model.addConstr(lin_expr + b <= 0); break;
+    case NConstraintInterface::NC_GREATER_EQUAL : _model.addConstr(lin_expr + b >= 0); break;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+
 
 GUROBISolver::
 GUROBISolver()
@@ -38,13 +69,33 @@ GUROBISolver()
 
 //-----------------------------------------------------------------------------
 
+static void process_gurobi_exception(const GRBException& _exc)
+{
+  DEB_enter_func;
+  DEB_error("Gurobi exception error code = " << _exc.getErrorCode() << 
+    " and message: [" << _exc.getMessage() << "]");
+    
+  // NOTE: we could propagate e.getMessage() either using std::exception, 
+  // or a specialized Reform exception type
 
-bool
+  // The GRB_ error codes are defined in gurobi_c.h Gurobi header. 
+  switch (_exc.getErrorCode())
+  {
+  case GRB_ERROR_NO_LICENSE: 
+    COMISO_THROW(GUROBI_LICENCE_ABSENT); 
+  case GRB_ERROR_SIZE_LIMIT_EXCEEDED: 
+    COMISO_THROW(GUROBI_LICENCE_MODEL_TOO_LARGE); break;
+  default: 
+    COMISO_THROW(UNSPECIFIED_GUROBI_EXCEPTION);
+  }
+}
+
+void
 GUROBISolver::
 solve(NProblemInterface*                  _problem,
   std::vector<NConstraintInterface*>& _constraints,
   std::vector<PairIndexVtype>&        _discrete_constraints,
-      const double                        _time_limit)
+  const double                        _time_limit)
 {
   DEB_enter_func;
   try
@@ -163,12 +214,14 @@ solve(NProblemInterface*                  _problem,
         std::cout << "Writing problem's environment into file \"" << problem_env_output_path_ << "\"." << std::endl;
         model.getEnv().writeParams(problem_env_output_path_);
       }
+
+#if (COMISO_QT_AVAILABLE)
       if (!problem_output_path_.empty())
       {
         std::cout << "Writing problem into file \"" << problem_output_path_ << "\"." << std::endl;
         GurobiHelper::outputModelToMpsGz(model, problem_output_path_);
       }
-
+#endif//COMISO_QT_AVAILABLE
       model.optimize();
     }
     else
@@ -188,6 +241,7 @@ solve(NProblemInterface*                  _problem,
     }
     else
     {
+#if (COMISO_QT_AVAILABLE)
         std::cout << "Loading stored solution from \"" << solution_input_path_ << "\"." << std::endl;
         // store loaded result
         const size_t oldSize = x.size();
@@ -197,6 +251,7 @@ solve(NProblemInterface*                  _problem,
             std::cerr << "oldSize != x.size() <=> " << oldSize << " != " << x.size() << std::endl;
             throw std::runtime_error("Loaded solution vector doesn't have expected dimension.");
         }
+#endif//COMISO_QT_AVAILABLE
     }
 
     _problem->store_result(P(x));
@@ -205,25 +260,16 @@ solve(NProblemInterface*                  _problem,
     DEB_out_if(solution_input_path_.empty(), 2,
         "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
   }
-  catch (GRBException& e)
+  catch (const GRBException& e)
   {
-    DEB_warning(1, "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "]\n");
-    
-    // NOTE: we could propagate e.getMessage() either using std::exception, or a specialized Reform exception type
-    switch ( e.getErrorCode() )
-    {
-    // The GRB_ error codes are defined in gurobi_c.h Gurobi header. 
-    case GRB_ERROR_NO_LICENSE: THROW_OUTCOME(GUROBI_LICENCE_ABSENT);
-    case GRB_ERROR_SIZE_LIMIT_EXCEEDED: THROW_OUTCOME(GUROBI_LICENCE_MODEL_TOO_LARGE);
-    default: THROW_OUTCOME(UNSPECIFIED_GUROBI_EXCEPTION);
-    }
+    process_gurobi_exception(e);
   }
 }
 
 
 //-----------------------------------------------------------------------------
 
-bool
+void
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
@@ -238,7 +284,7 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
 }
 
 
-bool
+void
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
            std::vector<NConstraintInterface*>& _constraints,            // linear constraints
@@ -249,6 +295,7 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
            const double                        _gap1,       // MIP gap phase 2
            double&                             _final_gap)  //return final gap
 {
+  DEB_enter_func;
   try
   {
     //----------------------------------------------
@@ -363,11 +410,13 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
         std::cout << "Writing problem's environment into file \"" << problem_env_output_path_ << "\"." << std::endl;
         model.getEnv().writeParams(problem_env_output_path_);
       }
+#if (COMISO_QT_AVAILABLE)
       if (!problem_output_path_.empty())
       {
         std::cout << "Writing problem into file \"" << problem_output_path_ << "\"." << std::endl;
         GurobiHelper::outputModelToMpsGz(model, problem_output_path_);
       }
+#endif//COMISO_QT_AVAILABLE
 
       // optimize
       model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit0);
@@ -401,6 +450,7 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
     }
     else
     {
+#if (COMISO_QT_AVAILABLE)
         std::cout << "Loading stored solution from \"" << solution_input_path_ << "\"." << std::endl;
         // store loaded result
         const size_t oldSize = x.size();
@@ -410,35 +460,26 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
             std::cerr << "oldSize != x.size() <=> " << oldSize << " != " << x.size() << std::endl;
             throw std::runtime_error("Loaded solution vector doesn't have expected dimension.");
         }
+#endif//COMISO_QT_AVAILABLE
     }
 
     _problem->store_result(P(x));
 
     // ObjVal is only available if the optimize was called.
-    if (solution_input_path_.empty())
-        std::cout << "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
-    return true;
+    DEB_line_if(solution_input_path_.empty(), 2, 
+      "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal));
   }
-  catch(GRBException& e)
+  catch (const GRBException& e)
   {
-    std::cout << "Error code = " << e.getErrorCode() << std::endl;
-    std::cout << e.getMessage() << std::endl;
-    return false;
+    process_gurobi_exception(e);
   }
-  catch(...)
-  {
-    std::cout << "Exception during optimization" << std::endl;
-    return false;
-  }
-
-  return false;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-bool
+void
 GUROBISolver::
 solve(NProblemInterface*                        _problem,
       const std::vector<NConstraintInterface*>& _constraints,
@@ -654,44 +695,32 @@ solve(NProblemInterface*                        _problem,
           x[i] = vars[i].get(GRB_DoubleAttr_X);
     }
 
-    const double overall_time = sw.stop()/1000.0;
 
     //----------------------------------------------------------------------------
     // 4. output statistics
     //----------------------------------------------------------------------------
     // Make this code DEB_only
-    DEB_out(2,"############# GUROBI with lazy constraints statistics ###############\n");
-    DEB_out(2, "overall time: " << overall_time << "s\n");
-    DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
+    DEB_line(2,
+      "############# GUROBI with lazy constraints statistics ###############");
+    DEB_line(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")");
     for(unsigned int i=0; i<n_inf.size(); ++i)
-      DEB_out(2, "pass " << i << " induced " << n_inf[i]
-        << " infeasible and " << n_almost_inf[i] << " almost infeasible\n");
-    DEB_out(2, "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
+    {
+      DEB_line(2, "pass " << i << " induced " << n_inf[i]
+        << " infeasible and " << n_almost_inf[i] << " almost infeasible");
+    }
+    DEB_line(2, "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal));
 
     //----------------------------------------------
     // 5. store result
     //----------------------------------------------
-    if(model.get(GRB_IntAttr_Status) != GRB_OPTIMAL)
-      return false;
-    else
-    {
-      _problem->store_result(P(x));
-      return true;
-    }
+    COMISO_THROW_TODO_if(model.get(GRB_IntAttr_Status) != GRB_OPTIMAL, 
+      "Gurobi solution not optimal");
+    _problem->store_result(P(x));
   }
-  catch(GRBException& e)
+  catch (const GRBException& e)
   {
-    DEB_warning(1, 
-      "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "\n");
-    return false;
+    process_gurobi_exception(e);
   }
-  catch(...)
-    {
-    DEB_warning)1,"Exception during optimization\n");
-    return false;
-  }
-
-  return false;
 
 //    //----------------------------------------------
 //    // 4. iteratively solve problem
@@ -845,35 +874,6 @@ solve(NProblemInterface*                        _problem,
 //    return (solution_found != IloFalse);
 }
 
-
-//-----------------------------------------------------------------------------
-
-
-void
-GUROBISolver::
-add_constraint_to_model(COMISO::NConstraintInterface* _constraint, GRBModel& _model, std::vector<GRBVar>& _vars, double * _x)
-{
-  DEB_enter_func;
-  DEB_warning_if(!_constraint->is_linear(), 1,
-     "GUROBISolver received a problem with non-linear constraints!!!\n");
-
-  GRBLinExpr lin_expr;
-  NConstraintInterface::SVectorNC gc;
-  _constraint->eval_gradient(_x, gc);
-
-  NConstraintInterface::SVectorNC::InnerIterator v_it(gc);
-  for(; v_it; ++v_it)
-    lin_expr += _vars[v_it.index()]*v_it.value();
-
-  double b = _constraint->eval_constraint(_x);
-
-  switch(_constraint->constraint_type())
-  {
-    case NConstraintInterface::NC_EQUAL         : _model.addConstr(lin_expr + b == 0); break;
-    case NConstraintInterface::NC_LESS_EQUAL    : _model.addConstr(lin_expr + b <= 0); break;
-    case NConstraintInterface::NC_GREATER_EQUAL : _model.addConstr(lin_expr + b >= 0); break;
-  }
-}
 
 //-----------------------------------------------------------------------------
 

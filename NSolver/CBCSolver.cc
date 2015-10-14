@@ -12,9 +12,9 @@
 
 //=============================================================================
 #include "CBCSolver.hh"
+#include <CoMISo/Utils/CoMISoError.hh>
 
 #include <Base/Debug/DebTime.hh>
-#include <Base/Utils/OutcomeUtils.hh>
 
 // For Branch and bound
 #include "OsiSolverInterface.hpp"
@@ -142,7 +142,7 @@ void solve_impl(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
-  const double                              /*_time_limit*/
+  const double                              _time_limit
 )
 {
   DEB_enter_func;
@@ -271,7 +271,7 @@ void solve_impl(
   model.branchAndBound();
 
   auto solution = model.bestSolution();
-  THROW_OUTCOME_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
+  COMISO_THROW_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
   _problem->store_result(solution);
 }
 
@@ -295,7 +295,7 @@ void CBCSolver::solve(
   catch (CoinError& ce)
   {
     DEB_warning(1, "CoinError code = " << ce.message() << "]\n");
-    THROW_OUTCOME(UNSPECIFIED_CBC_EXCEPTION);
+    COMISO_THROW(UNSPECIFIED_CBC_EXCEPTION);
   }
 }
 

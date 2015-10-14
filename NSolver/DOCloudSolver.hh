@@ -18,11 +18,8 @@
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 #include "VariableType.hh"
-#include "GurobiHelper.hh"
 
 //== FORWARDDECLARATIONS ======================================================
-class GRBModel;
-class GRBVar;
 
 //== NAMESPACES ===============================================================
 
