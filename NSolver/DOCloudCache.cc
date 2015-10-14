@@ -8,7 +8,6 @@
 #include "DOCloudCache.hh"
 #include "DOCloudConfig.hh"
 
-#include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Debug/DebOut.hh>
 
 #include <fstream>

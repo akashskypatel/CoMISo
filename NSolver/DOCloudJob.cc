@@ -6,9 +6,9 @@
 
 #include "DOcloudJob.hh"
 #if COMISO_DOCLOUD_AVAILABLE
-
 #include "DOCloudConfig.hh"
-#include <Base/Utils/OutcomeUtils.hh>
+#include "CoMISo/Utils/CoMISoError.hh"
+
 #include <Base/Debug/DebUtils.hh>
 
 #include <boost/property_tree/ptree.hpp>
@@ -51,25 +51,25 @@ Config& Config::object()
 
 void Config::set_root_url(const char* const _root_url)
 {
-  THROW_OUTCOME_if(_root_url == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
+  COMISO_THROW_if(_root_url == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   root_url_ = _root_url;
 }
 
 void Config::set_api_key(const char* _api_key)
 {
-  THROW_OUTCOME_if(_api_key == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
+  COMISO_THROW_if(_api_key == nullptr, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   api_key_ = std::string("X-IBM-Client-Id: ") + _api_key;
 }
 
 void Config::set_infeasible_timeout(const int _infs_time)
 {
-  THROW_OUTCOME_if(_infs_time < 1, DOCLOUD_CONFIG_SET_VALUE_INVALID);
+  COMISO_THROW_if(_infs_time < 1, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   infs_time_ = _infs_time;
 }
 
 void Config::set_feasible_timeout(const int _fsbl_time)
 {
-  THROW_OUTCOME_if(_fsbl_time < 0, DOCLOUD_CONFIG_SET_VALUE_INVALID);
+  COMISO_THROW_if(_fsbl_time < 0, DOCLOUD_CONFIG_SET_VALUE_INVALID);
   fsbl_time_ = _fsbl_time;
 }
 
@@ -185,10 +185,10 @@ void throw_http_error(const int _err_code, const std::string& _bdy)
 
   switch (_err_code)
   {
-  case 400 : THROW_OUTCOME(DOCLOUD_JOB_DATA_INVALID);
-  case 403 : THROW_OUTCOME(DOCLOUD_SUBSCRIPTION_LIMIT);
-  case 404 : THROW_OUTCOME(DOCLOUD_JOB_NOT_FOUND);
-  default : THROW_OUTCOME(DOCLOUD_JOB_UNRECOGNIZED_FAILURE); 
+  case 400 : COMISO_THROW(DOCLOUD_JOB_DATA_INVALID);
+  case 403 : COMISO_THROW(DOCLOUD_SUBSCRIPTION_LIMIT);
+  case 404 : COMISO_THROW(DOCLOUD_JOB_NOT_FOUND);
+  default : COMISO_THROW(DOCLOUD_JOB_UNRECOGNIZED_FAILURE); 
   }
 }
 
@@ -205,12 +205,12 @@ public:
     {
       if (*it != http_lbl) // search for the http label token
         continue; 
-      THROW_OUTCOME_if(++it == it_end, DOCLOUD_JOB_HTTP_CODE_NOT_FOUND);
+      COMISO_THROW_if(++it == it_end, DOCLOUD_JOB_HTTP_CODE_NOT_FOUND);
       code_ = atoi(it->data());
       if (code_ != code_cntn)
         return;
     }
-    THROW_OUTCOME(DOCLOUD_JOB_HTTP_CODE_NOT_FOUND); // final http code not found
+    COMISO_THROW(DOCLOUD_JOB_HTTP_CODE_NOT_FOUND); // final http code not found
   }
 
   void check(int _code_ok) const
@@ -259,7 +259,7 @@ void Job::make()
   HttpStatus http_stat(post);
   http_stat.check(201);
   // TODO: DOcloud header is successful but no location value
-  THROW_OUTCOME_if(!http_stat.header_tokens().find_value("Location:", url_),
+  COMISO_THROW_if(!http_stat.header_tokens().find_value("Location:", url_),
     DOCLOUD_JOB_LOCATION_NOT_FOUND); 
 
   if (stts_ == nullptr) 
@@ -505,7 +505,7 @@ double Job::solution(std::vector<double>& _x) const
 
   const auto& vrbls = bdy_tkns.ptree().get_child("CPLEXSolution.variables");
   const auto n_vrbls = vrbls.size();
-  THROW_OUTCOME_if(n_vrbls != _x.size(), DOCLOUD_CPLEX_SOLUTION_MISMATCH); 
+  COMISO_THROW_if(n_vrbls != _x.size(), DOCLOUD_CPLEX_SOLUTION_MISMATCH); 
   
   size_t i = 0;
   for (const auto& v : vrbls)
@@ -514,7 +514,7 @@ double Job::solution(std::vector<double>& _x) const
     const std::string name = 
       v.second.get_child("name").get_value<std::string>(); // this is x#IDX
     const int idx = atoi(name.data() + 1);
-    THROW_OUTCOME_if(idx < 0 || idx > n_vrbls, DOCLOUD_CPLEX_SOLUTION_MISMATCH);
+    COMISO_THROW_if(idx < 0 || idx > n_vrbls, DOCLOUD_CPLEX_SOLUTION_MISMATCH);
     _x[idx] = v.second.get_child("value").get_value<double>();
 
     DEB_out(7, "#" << idx << "=" << 

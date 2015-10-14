@@ -13,9 +13,9 @@
 #include "DOCloudCache.hh"
 #include "DOCloudJob.hh"
 #include "cURLpp.hh"
+#include "CoMISo/Utils/CoMISoError.hh"
 
 #include <Base/Debug/DebUtils.hh>
-#include <Base/Utils/OutcomeUtils.hh>
 
 #include <stdexcept>
 #include <algorithm>
@@ -275,7 +275,7 @@ void DOCloudSolver::solve(
     obj_val = job.solution(x);
     cache.store_result(x, obj_val);
   }
-  THROW_OUTCOME_if(x.empty(), MIPS_NO_SOLUTION);
+  COMISO_THROW_if(x.empty(), MIPS_NO_SOLUTION);
 
   DEB_only(
   // The lp problem ignores the constant term in the objective function.

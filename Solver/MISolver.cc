@@ -25,6 +25,7 @@
 
 #include <CoMISo/Config/config.hh>
 #include "MISolver.hh"
+#include "CoMISo/Utils/CoMISoError.hh"
 
 #if(COMISO_QT_AVAILABLE)
 #include <CoMISo/QtWidgets/MISolverDialogUI.hh>
@@ -35,7 +36,6 @@
 #endif
 
 #include <Base/Debug/DebOut.hh>
-#include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Utils/StopWatch.hh>
 
 #include <gmm/gmm.h>
@@ -227,8 +227,8 @@ MISolver::solve_no_rounding(
     Vecd&      _x, 
     Vecd&      _rhs )
 {
-  THROW_OUTCOME_if(!direct_solver_.calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
-  THROW_OUTCOME_if(!direct_solver_.solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
+  COMISO_THROW_if(!direct_solver_.calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
+  COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
 }
 
 
@@ -647,9 +647,9 @@ void MISolver::solve_multiple_rounding(
 	{
 		DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
     // TODO: we can throw more specific outcomes in the body of the fucntions below
-    THROW_OUTCOME_if(!direct_solver_.calc_system_gmm(_A), 
+    COMISO_THROW_if(!direct_solver_.calc_system_gmm(_A), 
       UNSPECIFIED_EIGEN_FAILURE);
-    THROW_OUTCOME_if(!direct_solver_.solve(_x, _rhs), 
+    COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), 
       UNSPECIFIED_EIGEN_FAILURE);
 
 		cholmod_step_done_ = true;

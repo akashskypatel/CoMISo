@@ -1,4 +1,6 @@
 set(my_headers
+   ${CMAKE_CURRENT_SOURCE_DIR}/CoMISoError.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/CoMISoErrorInc.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/MutablePriorityQueueT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SmartPointer.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/VSToolsT.hh
@@ -6,5 +8,6 @@ set(my_headers
 )
 
 set(my_sources
+   ${CMAKE_CURRENT_SOURCE_DIR}/CoMISoError.cc
    PARENT_SCOPE
 )

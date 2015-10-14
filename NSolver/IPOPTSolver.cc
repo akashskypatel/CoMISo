@@ -13,8 +13,8 @@
 
 
 #include "IPOPTSolver.hh"
+#include "CoMISo/Utils/CoMISoError.hh"
 
-#include <Base/Utils/OutcomeUtils.hh>
 #include <Base/Debug/DebTime.hh>
 
 #include <IpTNLP.hpp>
@@ -379,9 +379,9 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
   //------------------------------------------------------
   switch(status) {
   case Ipopt::ApplicationReturnStatus::Maximum_Iterations_Exceeded:
-    THROW_OUTCOME(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
   default:
-    THROW_OUTCOME(IPOPT_OPTIMIZATION_FAILED);
+    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
   } // endswicth
 }
 
@@ -426,7 +426,7 @@ void IPOPTSolver::solve(NProblemInterface* _problem,
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded) 
-    THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
+    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   status = impl_->app_->OptimizeTNLP( np);
 
@@ -467,7 +467,7 @@ void IPOPTSolver::solve(
   Ipopt::ApplicationReturnStatus status;
   status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-    THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
+    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
   int  cur_pass = 0;
@@ -684,7 +684,7 @@ void IPOPTSolver::solve(NProblemGmmInterface* _problem, std::vector<NConstraintI
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-     THROW_OUTCOME(IPOPT_INITIALIZATION_FAILED);
+     COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   //----------------------------------------------------------------------------
   // 3. solve problem
