@@ -16,6 +16,7 @@ SET(my_t_impls
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_ToolsT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolverT.cc

@@ -50,6 +50,10 @@ DEB_module("CBCSolver")
 
 #define CBC_INFINITY COIN_DBL_MAX
 
+#ifndef _MSC_VER
+  #define sprintf_s snprintf
+#endif
+
 //== NAMESPACES ===============================================================
 
 namespace COMISO {
@@ -252,7 +256,7 @@ void solve_impl(
   {
     static int n_mps_dumps = 0;
     char filename[64];
-    sprintf_s(filename, "CBC_problem_dump_%04i", n_mps_dumps); 
+    sprintf_s(filename, sizeof(filename), "CBC_problem_dump_%04i", n_mps_dumps++);
     si.writeMps(filename); //output problem as .MPS
   }
   // Pass the OsiSolver with the problem to be solved to CbcModel

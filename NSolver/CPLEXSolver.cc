@@ -14,10 +14,9 @@
 #include "BoundConstraint.hh"
 #include "ConeConstraint.hh"
 #include <Base/Debug/DebTime.hh>
-
+#include <Base/Utils/StopWatch.hh>
 
 #if COMISO_CPLEX_AVAILABLE
-
 //=============================================================================
 
 
@@ -929,7 +928,7 @@ solve(NProblemInterface*                        _problem,
 //  std::copy(_constraints.begin(),_constraints.end(),std::back_inserter(C));
 //  return solve(_problem, C, _time_limit, _silent);
 
-  StopWatch sw; sw.start();
+  Base::StopWatch sw; sw.start();
 
   bool feasible_point_found = false;
   int  cur_pass = 0;

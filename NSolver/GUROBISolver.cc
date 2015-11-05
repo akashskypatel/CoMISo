@@ -14,7 +14,7 @@
 
 #include "GUROBISolver.hh"
 #if (COMISO_QT_AVAILABLE)
-#include "GUROBIHelper.hh"
+#include "GurobiHelper.hh"
 #endif//COMISO_QT_AVAILABLE
 #include <CoMISo/Utils/CoMISoError.hh>
 
