@@ -60,8 +60,11 @@ inline int isfinite(double x)
 
 #endif
 
-//TODO: round_to_int (or a better name) 
-inline int round(double _x) { return int(_x >= 0.0 ? _x + 0.5 : _x - 0.5); }
+inline int int_round(const double _x) 
+{ 
+  return int(_x >= 0.0 ? _x + 0.5 : _x - 0.5);
+}
+
 inline bool same(const double _x, const double _y, const double _tol)
 {
   return fabs(_x - _y) < _tol;
