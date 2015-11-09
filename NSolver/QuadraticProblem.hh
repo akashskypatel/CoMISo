@@ -18,13 +18,13 @@ public:
   // Sparse Matrix Type
   //  typedef Eigen::DynamicSparseMatrix<double,Eigen::ColMajor> SMatrixNP;
 
-    QuadraticProblem(SMatrixNP& _A, VectorXd _b, const double _c)
+    QuadraticProblem(SMatrixNP& _A, Eigen::VectorXd _b, const double _c)
         : A_(_A), c_(_c)
     {
        if(A_.rows() != A_.cols())
            std::cerr << "Warning: matrix not square in QuadraticProblem" << std::endl;
        b_ = _b;
-       x_ = Eigen::VectorXd(A_.cols(),0.0);
+       x_ = Eigen::VectorXd::Zero(A_.cols());
     }
 
 
@@ -44,7 +44,7 @@ public:
   // function evaluation at location _x
   virtual double eval_f( const double* _x )
   {
-    Eigen::Map<const VectorXd> x(_x, this->n_unknowns());
+    Eigen::Map<const Eigen::VectorXd> x(_x, this->n_unknowns());
 
     return (double)(x.transpose()*A_*x)*0.5 - (double)(x.transpose()*b_) + c_;
   }
@@ -52,8 +52,8 @@ public:
   // gradient evaluation at location _x
   virtual void   eval_gradient( const double* _x, double*    _g)
   {
-    Eigen::Map<const VectorXd> x(_x, this->n_unknowns());
-    Eigen::Map<VectorXd> g(_g, this->n_unknowns());
+    Eigen::Map<const Eigen::VectorXd> x(_x, this->n_unknowns());
+    Eigen::Map<Eigen::VectorXd> g(_g, this->n_unknowns());
 
     g = A_*x - b_;
    }
@@ -67,7 +67,7 @@ public:
   // print result
   virtual void   store_result ( const double* _x               )
   {
-    Eigen::Map<const VectorXd> x(_x, this->n_unknowns());
+    Eigen::Map<const Eigen::VectorXd> x(_x, this->n_unknowns());
     x_ = x;
   }
 
