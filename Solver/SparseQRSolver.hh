@@ -155,7 +155,7 @@ private:
     std::vector<Int>    rowind_;
 
     bool show_timings_;
-    Base:StopWatch sw_;
+    Base::StopWatch sw_;
 
 };
 

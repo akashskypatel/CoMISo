@@ -22,8 +22,8 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-#ifndef VSTOOLS_HH
-#define VSTOOLS_HH
+#ifndef COMISO_VSTOOLS_HH
+#define COMISO_VSTOOLS_HH
 
 #include <math.h>
 #include <float.h>
@@ -72,6 +72,6 @@ inline bool same(const double _x, const double _y, const double _tol)
 template <typename T> inline T sqr(const T& _a) { return _a * _a; }
 
 //=============================================================================
-#endif // VSTOOLS_HH defined
+#endif // COMISO_VSTOOLS_HH defined
 //=============================================================================
 

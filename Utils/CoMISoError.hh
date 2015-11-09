@@ -12,10 +12,11 @@
 #define COMISO_ERROR_HH_INCLUDED
 
 #include <Base/Utils/BaseError.hh>
+#include <CoMISo/Config/CoMISoDefines.hh>
 
 namespace COMISO {
 
-class Error : public Base::Error
+class COMISODLLEXPORT Error : public Base::Error
 {
 public:
   enum Index
