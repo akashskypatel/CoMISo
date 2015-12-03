@@ -5,6 +5,10 @@ set -e
 
 LANGUAGE=$1
 
+echo "============================="
+echo "Build information"
+echo "============================="
+
 PATH=$PATH:/opt/local/bin
 export PATH
 
@@ -16,6 +20,17 @@ elif [ "$LANGUAGE" == "C++11" ]; then
   echo "Building with C++11";
   OPTIONS="$OPTIONS -DCMAKE_CXX_FLAGS='-std=c++11' "
 fi
+
+echo "============================="
+echo "Software Directory content:  "
+echo "============================="
+
+ls ~/sw
+
+echo "============================="
+echo "Starting Build: "
+echo "============================="
+
 
 
 #########################################
