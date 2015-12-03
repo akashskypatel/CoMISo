@@ -422,7 +422,7 @@ acg_print_configure_header (COMISO "CoMISo")
 
 # write config file
 configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config.hh.in"
-     "Config/config.hh" @ONLY IMMEDIATE)
+     "CoMISo/Config/config.hh" @ONLY IMMEDIATE)
      
      
      
