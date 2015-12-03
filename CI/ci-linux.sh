@@ -55,3 +55,5 @@ fi
 cd build-debug-$BUILDPATH
 
 cmake -DCMAKE_BUILD_TYPE=Debug -DSTL_VECTOR_CHECKS=ON $OPTIONS ../
+
+make
