@@ -1,1 +1,4 @@
 Config/config.hh
+*.orig
+*.rej
+.project
