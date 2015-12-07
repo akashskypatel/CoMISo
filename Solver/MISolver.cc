@@ -99,22 +99,22 @@ MISolver::solve(
   DEB_out(2, "# integer    variables: " << _to_round.size() 
     << "\n# continuous variables: " << _x.size()-_to_round.size() << "\n")
 
-	// nothing to solve?
-	if( gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
-		return;
+        // nothing to solve?
+        if( gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
+                return;
 
-	if( gurobi_rounding_)
-		solve_gurobi(_A, _x, _rhs, _to_round);
-	else if( cplex_rounding_)
-		solve_cplex(_A, _x, _rhs, _to_round);
-	else if( no_rounding_ || _to_round.size() == 0)
-		solve_no_rounding( _A, _x, _rhs);
-	else if( direct_rounding_)
-		solve_direct_rounding( _A, _x, _rhs, _to_round);
-	else if( multiple_rounding_)
-		solve_multiple_rounding( _A, _x, _rhs, _to_round);
-	else
-		solve_iterative( _A, _x, _rhs, _to_round, _fixed_order);
+        if( gurobi_rounding_)
+                solve_gurobi(_A, _x, _rhs, _to_round);
+        else if( cplex_rounding_)
+                solve_cplex(_A, _x, _rhs, _to_round);
+        else if( no_rounding_ || _to_round.size() == 0)
+                solve_no_rounding( _A, _x, _rhs);
+        else if( direct_rounding_)
+                solve_direct_rounding( _A, _x, _rhs, _to_round);
+        else if( multiple_rounding_)
+                solve_multiple_rounding( _A, _x, _rhs, _to_round);
+        else
+                solve_iterative( _A, _x, _rhs, _to_round, _fixed_order);
 }
 
 
@@ -129,7 +129,7 @@ MISolver::solve_cplex(
     Veci&      _to_round)
 {
   DEB_enter_func;
-	DEB_out(2, "gurobi_max_time_: " << gurobi_max_time_ << "\n")
+        DEB_out(2, "gurobi_max_time_: " << gurobi_max_time_ << "\n")
 
 #if COMISO_CPLEX_AVAILABLE
 
@@ -580,8 +580,8 @@ MISolver::update_solution(
     converged = siter_.conjugate_gradient(_A, _x,_rhs, max_cg_iters, tolerance);
 
     DEB_out_if( noisy_ > 3, 3,  "( converged " << converged << " "
-		  << " iters " << max_cg_iters   << " "
-  		<< " res_norm " << tolerance << "\n")
+                  << " iters " << max_cg_iters   << " "
+                << " res_norm " << tolerance << "\n")
     ++n_cg_;
   }
 
@@ -611,18 +611,18 @@ MISolver::update_solution(
 
 
 void MISolver::solve_multiple_rounding( 
-	CSCMatrix& _A, 
-	Vecd&      _x, 
-	Vecd&      _rhs, 
-	Veci&      _to_round 
-	)
+        CSCMatrix& _A, 
+        Vecd&      _x, 
+        Vecd&      _rhs, 
+        Veci&      _to_round 
+        )
 {
   DEB_enter_func
-	// StopWatch
-	Base::StopWatch sw;
-	double time_search_next_integer = 0;
+        // StopWatch
+        Base::StopWatch sw;
+        double time_search_next_integer = 0;
 
-	// some statistics
+        // some statistics
 	n_local_ = 0;
 	n_cg_    = 0;
 	n_full_  = 0;
@@ -635,24 +635,24 @@ void MISolver::solve_multiple_rounding(
 	std::sort(to_round.begin(), to_round.end());
 	Veci::iterator last_unique;
 	last_unique = std::unique(to_round.begin(), to_round.end());
-	int r = last_unique - to_round.begin();
-	to_round.resize( r);
+        int r = last_unique - to_round.begin();
+        to_round.resize( r);
 
-	// initialize old indices
-	Veci old_idx(_rhs.size());
-	for(unsigned int i=0; i<old_idx.size(); ++i)
-		old_idx[i] = i;
+        // initialize old indices
+        Veci old_idx(_rhs.size());
+        for(unsigned int i=0; i<old_idx.size(); ++i)
+                old_idx[i] = i;
 
-	if(initial_full_solution_)
-	{
-		DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
+        if(initial_full_solution_)
+        {
+                DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
     // TODO: we can throw more specific outcomes in the body of the fucntions below
     COMISO_THROW_if(!direct_solver_.calc_system_gmm(_A), 
       UNSPECIFIED_EIGEN_FAILURE);
     COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), 
       UNSPECIFIED_EIGEN_FAILURE);
 
-		cholmod_step_done_ = true;
+                cholmod_step_done_ = true;
 
 		++n_full_;
 	}
@@ -663,14 +663,14 @@ void MISolver::solve_multiple_rounding(
 	// Vector for reduced solution
 	Vecd xr(_x);
 
-	// loop until solution computed
-	for(unsigned int i=0; i<to_round.size(); ++i)
-	{
+        // loop until solution computed
+        for(unsigned int i=0; i<to_round.size(); ++i)
+        {
     DEB_out_if(noisy_ > 0, 1, "Integer DOF's left: " << to_round.size()-(i+1) << " ")
-  	DEB_out_if(noisy_ > 1, 1, "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << "\n")
+        DEB_out_if(noisy_ > 1, 1, "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << "\n")
 
-		// position in round vector
-		std::vector<int> tr_best;
+                // position in round vector
+                std::vector<int> tr_best;
 
 		sw.start();
 
@@ -694,14 +694,14 @@ void MISolver::solve_multiple_rounding(
 		time_search_next_integer += sw.stop();
 
 		// nothing more to do?
-		if( tr_best.empty() )
-			break;
+                if( tr_best.empty() )
+                        break;
 
-		DEB_out_if( noisy_ > 5, 5, 
+                DEB_out_if( noisy_ > 5, 5, 
       "round " << tr_best.size() << " variables simultaneously\n")
 
-		// clear neigh for local update
-		neigh_i.clear();
+                // clear neigh for local update
+                neigh_i.clear();
 
 		for(unsigned int j = 0; j<tr_best.size(); ++j)
 		{
@@ -729,13 +729,13 @@ void MISolver::solve_multiple_rounding(
 		update_solution( _A, xr, _rhs, neigh_i);
 	}
 
-	// final full solution?
-	if( final_full_solution_)
-	{
-		DEB_out_if( noisy_ > 2, 2, "final full solution\n")
+        // final full solution?
+        if( final_full_solution_)
+        {
+                DEB_out_if( noisy_ > 2, 2, "final full solution\n")
 
-		if( gmm::mat_ncols( _A) > 0)
-		{
+                if( gmm::mat_ncols( _A) > 0)
+                {
 			if(cholmod_step_done_)
 				direct_solver_.update_system_gmm(_A);
 			else
@@ -750,15 +750,15 @@ void MISolver::solve_multiple_rounding(
 	for(unsigned int i=0; i<old_idx.size(); ++i)
 	{
 		_x[ old_idx[i] ] = xr[i];
-	}
+        }
 
-	// output statistics
-	DEB_out_if( stats_, 2, " *** Statistics of MiSo Solver ***"
-		<< "\n Number of CG    iterations  = " << n_cg_ 
+        // output statistics
+        DEB_out_if( stats_, 2, " *** Statistics of MiSo Solver ***"
+                << "\n Number of CG    iterations  = " << n_cg_ 
         << "\n Number of LOCAL iterations  = " << n_local_ 
-		<< "\n Number of FULL  iterations  = " << n_full_ 
-		<< "\n Number of ROUNDING          = " << _to_round.size()
-		<< "\n time searching next integer = " 
+                << "\n Number of FULL  iterations  = " << n_full_ 
+                << "\n Number of ROUNDING          = " << _to_round.size()
+                << "\n time searching next integer = " 
         << time_search_next_integer / 1000.0 <<"s\n\n")
 }
 

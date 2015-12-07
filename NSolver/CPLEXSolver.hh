@@ -150,12 +150,6 @@ private:
 
 //=============================================================================
 #endif // COMISO_CPLEX_AVAILABLE
-//=============================================================================
-//#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_CPLEXSOLVER_C)
-//#define COMISO_CPLEXSOLVER_TEMPLATES
-//#include "CPLEXSolverT.cc"
-//#endif
-//=============================================================================
 #endif // ACG_CPLEXSOLVER_HH defined
 //=============================================================================
 

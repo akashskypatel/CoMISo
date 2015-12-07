@@ -642,7 +642,7 @@ void eigen_to_cholmod_dense( const MatrixT& _A, cholmod_dense* &_AC, cholmod_com
 
 }*/
 
-	/*
+        /*
 // convert a gmm col-sparse matrix into an eigen sparse matrix
 template<class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E)

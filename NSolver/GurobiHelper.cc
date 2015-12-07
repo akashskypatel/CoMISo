@@ -10,8 +10,8 @@
 #if (COMISO_GUROBI_AVAILABLE && COMISO_BOOST_AVAILABLE)
 
 #if (COMISO_QT_AVAILABLE)
-#include <QTemporaryFile>
-#include <QFileInfo>
+  #include <QTemporaryFile>
+  #include <QFileInfo>
 #endif
 
 #include <boost/filesystem.hpp>

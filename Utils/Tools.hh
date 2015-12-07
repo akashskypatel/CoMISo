@@ -22,45 +22,24 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-#ifndef VSTOOLS_HH
-#define VSTOOLS_HH
+#ifndef TOOLS_HH
+#define TOOLS_HH
 
 #include <math.h>
 #include <float.h>
 
-/** These functions are required for Visual Studio to work around missing 
-    functions. Basic equivalent functions for double exist in the float 
-    header but are named different. So this wrapper makes them standard compatible.
-    */
-#ifdef WIN32
-
-namespace std {
-
-inline int isnan(double x)
-{
-  return _isnan(x);
-} 
-
-// Which idiot defines isinf as a macro somewhere?
-#ifdef isinf 
-#undef isinf
-#endif
-
-inline int isinf(double x)
-{
-  return !_finite(x);
-} 
-
-inline int isfinite(double x)
-{
-  return _finite(x);
+inline int int_round(const double _x) 
+{ 
+  return int(_x >= 0.0 ? _x + 0.5 : _x - 0.5);
 }
 
-}// namespace std
-
-#endif
+inline bool same(const double _x, const double _y, const double _tol)
+{
+  return fabs(_x - _y) < _tol;
+}
+template <typename T> inline T sqr(const T& _a) { return _a * _a; }
 
 //=============================================================================
-#endif // VSTOOLS_HH defined
+#endif // TOOLS_HH defined
 //=============================================================================
 

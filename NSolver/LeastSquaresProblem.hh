@@ -35,7 +35,7 @@ namespace COMISO {
 class COMISODLLEXPORT LeastSquaresProblem : public NProblemInterface
 {
 public:
-   
+
   // Eigen Triplet for Hessian Accumulation
   typedef Eigen::Triplet<double> Triplet;
    

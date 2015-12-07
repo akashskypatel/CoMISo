@@ -202,32 +202,32 @@ public:
 
 
         int ec = sparse_hess( tape_,
-                              this->n_unknowns(),
-                              sparsity_pattern_available,
-                              _x,
-                              &sparse_nz_,
-                              &sparse_r_ind_p_,
-                              &sparse_c_ind_p_,
-                              &sparse_val_p_,
-                              opt);
+            this->n_unknowns(),
+            sparsity_pattern_available,
+            _x,
+            &sparse_nz_,
+            &sparse_r_ind_p_,
+            &sparse_c_ind_p_,
+            &sparse_val_p_,
+            opt);
 
         if(ec < 0)
         {
 #ifdef ADOLC_RET_CODES
-          std::cout << __FUNCTION__ << " invokes retaping of function due to discontinuity! Return code: " << ec << std::endl;
+std::cout << __FUNCTION__ << " invokes retaping of function due to discontinuity! Return code: " << ec << std::endl;
 #endif
-          // Retape function if return code indicates discontinuity
-          tape_available_ = false;
-          eval_f(_x);
-          ec = sparse_hess( tape_,
-                            this->n_unknowns(),
-                            sparsity_pattern_available,
-                            _x,
-                            &sparse_nz_,
-                            &sparse_r_ind_p_,
-                            &sparse_c_ind_p_,
-                            &sparse_val_p_,
-                            opt);
+// Retape function if return code indicates discontinuity
+tape_available_ = false;
+eval_f(_x);
+ec = sparse_hess( tape_,
+    this->n_unknowns(),
+    sparsity_pattern_available,
+    _x,
+    &sparse_nz_,
+    &sparse_r_ind_p_,
+    &sparse_c_ind_p_,
+    &sparse_val_p_,
+    opt);
         }
 
         // data should be available now
