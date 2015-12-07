@@ -13,15 +13,19 @@
 
 
 #include "IPOPTSolver.hh"
+#include "NProblemGmmInterface.hh"
+#include "NProblemInterface.hh"
+#include "NConstraintInterface.hh"
+#include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
 
 #include <Base/Debug/DebTime.hh>
 
+#include <gmm/gmm.h>
+
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
-
-DEB_module("NSLV")
 
 //== NAMESPACES ===============================================================
 
@@ -141,13 +145,7 @@ private:
 
 
 protected:
-  double* P(std::vector<double>& _v)
-  {
-    if( !_v.empty())
-      return ((double*)&_v[0]);
-    else
-      return 0;
-  }
+  double* P(std::vector<double>& _v) { return _v.empty() ? nullptr : _v.data(); }
 
 private:
 
