@@ -79,7 +79,7 @@ public:
   virtual bool   constant_hessian () const { return false;}
   virtual bool   sparse_hessian()    const { return true; }
 
-  bool is_linear_equality() const { return is_linear() && type_ == NC_EQUAL; }
+  bool linear_equality() const { return is_linear() && type_ == NC_EQUAL; }
 
   virtual double gradient_update_factor( const double* _x, double _eps = 1e-6)
   {
