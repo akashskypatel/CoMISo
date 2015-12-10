@@ -12,20 +12,22 @@
 #include "LinearConstraintHandlerElimination.hh"
 #include "LinearConstraintHandlerPenalty.hh"
 //#include "LinearConstraintHandlerLagrange.hh"
+#include <Base/Debug/DebOut.hh>
 
 
 //== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================
 
+
 namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
 /// Default constructor having a pointer to the main problem
-NPLinearConstraintsElimination::NPLinearConstraintsElimination( NProblemGmmInterface* _np) : base_(_np), cache_initialized_(false)
+NPLinearConstraintsElimination::NPLinearConstraintsElimination(NProblemGmmInterface* _np) 
+  : base_(_np), cache_initialized_(false)
 {
-  if( !base_) std::cerr << "Warning: initialized NPLinearConstraints with zero pointer...\n";
   this->initialize_identity(base_->n_unknowns());
 }
 

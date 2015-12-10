@@ -53,14 +53,14 @@ public:
 
   // ********** SOLVE **************** //
   // this function has to be inline due to static linking issues
-  inline bool solve(NProblemInterface*                  _problem,                // problem instance
+  bool solve(NProblemInterface*                  _problem,                // problem instance
                     std::vector<NConstraintInterface*>& _constraints,            // linear constraints
                     std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
                     const double                        _time_limit = 60,
                     const bool                          _silent = false);  // time limit in seconds
 
   // same as above but without discrete constraints (for convenience)
-  inline bool solve(NProblemInterface*                  _problem,                // problem instance
+  bool solve(NProblemInterface*                  _problem,                // problem instance
                     std::vector<NConstraintInterface*>& _constraints,            // linear constraints
                     const double                        _time_limit = 60,
                     const bool                          _silent = false)  // time limit in seconds
@@ -82,7 +82,7 @@ public:
 
 
   // optimization with additional lazy constraints that are only added iteratively to the problem if not satisfied
-  inline bool solve(NProblemInterface*                        _problem,
+  bool solve(NProblemInterface*                        _problem,
                     const std::vector<NConstraintInterface*>& _constraints,
                     const std::vector<NConstraintInterface*>& _lazy_constraints,
                     std::vector<PairIndexVtype>&              _discrete_constraints,   // discrete constraints
@@ -93,7 +93,7 @@ public:
 
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
-  inline bool solve(NProblemInterface*                        _problem,
+  bool solve(NProblemInterface*                        _problem,
                     const std::vector<NConstraintInterface*>& _constraints,
                     const std::vector<NConstraintInterface*>& _lazy_constraints,
                     const double                              _almost_infeasible = 0.5,
@@ -106,7 +106,7 @@ public:
 
 
   // with handling of cone constrints
-  inline bool solve2(NProblemInterface*                  _problem,                // problem instance
+  bool solve2(NProblemInterface*                  _problem,                // problem instance
                     std::vector<NConstraintInterface*>& _constraints,            // linear constraints
                     std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
                     const double                        _time_limit = 60,
@@ -117,10 +117,10 @@ public:
 //  void set_problem_env_output_path( const std::string &_problem_env_output_path);
 //  void set_solution_input_path    ( const std::string &_solution_input_path);
 
-    inline void test();
+    void test();
 
 protected:
-  double* P(std::vector<double>& _v)
+  inline double* P(std::vector<double>& _v)
   {
     if( !_v.empty())
       return ((double*)&_v[0]);
@@ -150,12 +150,6 @@ private:
 
 //=============================================================================
 #endif // COMISO_CPLEX_AVAILABLE
-//=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_CPLEXSOLVER_C)
-#define COMISO_CPLEXSOLVER_TEMPLATES
-#include "CPLEXSolverT.cc"
-#endif
-//=============================================================================
 #endif // ACG_CPLEXSOLVER_HH defined
 //=============================================================================
 

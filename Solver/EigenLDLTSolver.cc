@@ -22,9 +22,7 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-
-
-#include "EigenLDLTSolver.hh"
+#include "EigenLDLTSolverT.cc"
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #if (COMISO_EIGEN3_AVAILABLE)
@@ -110,7 +108,18 @@ show_timings()
 }
 
 
-}
+}//namespace COMISO
+
+//////////////////////////////////////////////////////////////////////////
+// explicit instantiation
+
+namespace COMISO
+{
+
+template bool EigenLDLTSolver::update_system_gmm(const gmm::csc_matrix<double>&);
+template bool EigenLDLTSolver::calc_system_gmm(const gmm::csc_matrix<double>&);
+
+}//namespace COMISO
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
