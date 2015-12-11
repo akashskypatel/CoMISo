@@ -303,6 +303,8 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
            const double                        _gap1,       // MIP gap phase 2
            double&                             _final_gap)  //return final gap
 {
+  DEB_enter_func;
+
   try
   {
     //----------------------------------------------
