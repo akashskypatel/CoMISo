@@ -44,15 +44,8 @@
 #include "CbcCompareDepth.hpp"
 
 #include <stdexcept>
-#include <stdio.h>
-
-DEB_module("CBCSolver")
 
 #define CBC_INFINITY COIN_DBL_MAX
-
-#ifndef _MSC_VER
-  #define sprintf_s snprintf
-#endif
 
 //== NAMESPACES ===============================================================
 
@@ -142,7 +135,7 @@ void model_tweak(CbcModel& model)
 #define TRACE_CBT(DESCR, EXPR) DEB_line(7, DESCR << ": " << EXPR)
 #define P(X) ((X).data())
 
-void solve_impl(
+bool solve_impl(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
@@ -253,12 +246,8 @@ void solve_impl(
   // TODO: make this accessible through the DEB system instead
   volatile static bool dump_problem = false; // change on run-time if necessary
   if (dump_problem)
-  {
-    static int n_mps_dumps = 0;
-    char filename[64];
-    sprintf_s(filename, sizeof(filename), "CBC_problem_dump_%04i", n_mps_dumps++);
-    si.writeMps(filename); //output problem as .MPS
-  }
+    si.writeMps("CBC_problem_dump"); //output problem as .MPS
+
   // Pass the OsiSolver with the problem to be solved to CbcModel
   CbcModel model(si);
   model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
@@ -274,17 +263,24 @@ void solve_impl(
 
   model.branchAndBound();
 
-  auto solution = model.bestSolution();
-  COMISO_THROW_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
-  _problem->store_result(solution);
+  const double* solution = model.bestSolution();
+  //COMISO_THROW_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
+
+  // store if solution available
+  if(solution != 0)
+  {
+    _problem->store_result(solution);
+    return true;
+  }
+  else
+    return false;
 }
 
-#undef TRACE_CBT
 #undef P
 
 }//namespace 
 
-void CBCSolver::solve(
+bool CBCSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
   const std::vector<PairIndexVtype>&        _discrete_constraints,
@@ -292,15 +288,17 @@ void CBCSolver::solve(
 )
 {
   DEB_enter_func;
+  bool valid_solution = false;
   try
   {
-    solve_impl(_problem, _constraints, _discrete_constraints, _time_limit);
+    valid_solution = solve_impl(_problem, _constraints, _discrete_constraints, _time_limit);
   }
   catch (CoinError& ce)
   {
     DEB_warning(1, "CoinError code = " << ce.message() << "]\n");
-    COMISO_THROW(UNSPECIFIED_CBC_EXCEPTION);
+    //COMISO_THROW(UNSPECIFIED_CBC_EXCEPTION);
   }
+  return valid_solution;
 }
 
 

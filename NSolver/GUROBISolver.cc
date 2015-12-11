@@ -22,10 +22,6 @@
 #include <Base/Debug/DebTime.hh>
 #include <stdexcept>
 
-
-DEB_module("Gurobi")
-
-
 //== NAMESPACES ===============================================================
 
 namespace COMISO {
@@ -90,12 +86,12 @@ static void process_gurobi_exception(const GRBException& _exc)
   }
 }
 
-void
+bool
 GUROBISolver::
 solve(NProblemInterface*                  _problem,
-  std::vector<NConstraintInterface*>& _constraints,
-  std::vector<PairIndexVtype>&        _discrete_constraints,
-  const double                        _time_limit)
+      std::vector<NConstraintInterface*>& _constraints,
+      std::vector<PairIndexVtype>&        _discrete_constraints,
+      const double                        _time_limit)
 {
   DEB_enter_func;
   try
@@ -163,9 +159,9 @@ solve(NProblemInterface*                  _problem,
 
       switch(_constraints[i]->constraint_type())
       {
-      case NConstraintInterface::NC_EQUAL         : model.addConstr(lin_expr + b == 0); break;
-      case NConstraintInterface::NC_LESS_EQUAL    : model.addConstr(lin_expr + b <= 0); break;
-      case NConstraintInterface::NC_GREATER_EQUAL : model.addConstr(lin_expr + b >= 0); break;
+        case NConstraintInterface::NC_EQUAL         : model.addConstr(lin_expr + b == 0); break;
+        case NConstraintInterface::NC_LESS_EQUAL    : model.addConstr(lin_expr + b <= 0); break;
+        case NConstraintInterface::NC_GREATER_EQUAL : model.addConstr(lin_expr + b >= 0); break;
       }
     }
     model.update();
@@ -259,17 +255,28 @@ solve(NProblemInterface*                  _problem,
     // ObjVal is only available if the optimize was called.
     DEB_out_if(solution_input_path_.empty(), 2,
         "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
+    return true;
   }
-  catch (const GRBException& e)
+  catch(GRBException& e)
   {
-    process_gurobi_exception(e);
+    //process_gurobi_exception(e);
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+    return false;
   }
+  catch(...)
+  {
+    std::cout << "Exception during optimization" << std::endl;
+    return false;
+  }
+
+  return false;
 }
 
 
 //-----------------------------------------------------------------------------
 
-void
+bool
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
@@ -284,7 +291,7 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
 }
 
 
-void
+bool
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
            std::vector<NConstraintInterface*>& _constraints,            // linear constraints
@@ -295,7 +302,6 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
            const double                        _gap1,       // MIP gap phase 2
            double&                             _final_gap)  //return final gap
 {
-  DEB_enter_func;
   try
   {
     //----------------------------------------------
@@ -468,18 +474,29 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
     // ObjVal is only available if the optimize was called.
     DEB_line_if(solution_input_path_.empty(), 2, 
       "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal));
+    return true;
   }
-  catch (const GRBException& e)
+  catch(GRBException& e)
   {
-    process_gurobi_exception(e);
+    //process_gurobi_exception(e);
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+    return false;
   }
+  catch(...)
+  {
+    std::cout << "Exception during optimization" << std::endl;
+    return false;
+  }
+
+  return false;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-void
+bool
 GUROBISolver::
 solve(NProblemInterface*                        _problem,
       const std::vector<NConstraintInterface*>& _constraints,
@@ -695,6 +712,7 @@ solve(NProblemInterface*                        _problem,
           x[i] = vars[i].get(GRB_DoubleAttr_X);
     }
 
+    const double overall_time = sw.stop()/1000.0;
 
     //----------------------------------------------------------------------------
     // 4. output statistics
@@ -713,14 +731,32 @@ solve(NProblemInterface*                        _problem,
     //----------------------------------------------
     // 5. store result
     //----------------------------------------------
-    COMISO_THROW_TODO_if(model.get(GRB_IntAttr_Status) != GRB_OPTIMAL, 
-      "Gurobi solution not optimal");
-    _problem->store_result(P(x));
+    //COMISO_THROW_TODO_if(model.get(GRB_IntAttr_Status) != GRB_OPTIMAL, 
+    //  "Gurobi solution not optimal");
+
+    if(model.get(GRB_IntAttr_Status) != GRB_OPTIMAL)
+      return false;
+    else
+    {
+      _problem->store_result(P(x));
+      return true;
+    }
   }
-  catch (const GRBException& e)
+  catch(GRBException& e)
   {
-    process_gurobi_exception(e);
+    //process_gurobi_exception(e);
+
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+    return false;
   }
+  catch(...)
+  {
+    std::cout << "Exception during optimization" << std::endl;
+    return false;
+  }
+
+  return false;
 
 //    //----------------------------------------------
 //    // 4. iteratively solve problem

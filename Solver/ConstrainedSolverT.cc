@@ -41,7 +41,6 @@
 #include <Base/Utils/StopWatch.hh>
 #include <Base/Debug/DebOut.hh>
 
-DEB_module("SOLV");
 
 //== NAMESPACES ===============================================================
 
@@ -253,7 +252,7 @@ solve(
   //DEB_out_if( _show_timings, 2,
   //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc 
   //  << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
-  
+
   sw.start();
   miso_.solve( Acsc, _x, _rhs, _idx_to_round);
   double time_miso = sw.stop()/1000.0; sw.start();
@@ -393,8 +392,8 @@ void
 ConstrainedSolver::
 make_constraints_independent(
     RMatrixT&         _constraints,
-                VectorIT&         _idx_to_round,
-                std::vector<int>& _c_elim)
+		VectorIT&         _idx_to_round,
+		std::vector<int>& _c_elim)
 {
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
@@ -582,8 +581,8 @@ void
 ConstrainedSolver::
 make_constraints_independent_reordering(
     RMatrixT&         _constraints,
-                VectorIT&         _idx_to_round,
-                std::vector<int>& _c_elim)
+		VectorIT&         _idx_to_round,
+		std::vector<int>& _c_elim)
 {
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
@@ -742,15 +741,15 @@ make_constraints_independent_reordering(
         else
         {
           if( noisy_ > 0)
-          {
-            if( !do_gcd_)
+	  {
+	    if( !do_gcd_)
               DEB_warning(1, "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! " 
           << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
-            else
+	    else
               DEB_warning(1, "GCD of non-integer cannot be computed! "
           << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
 
-          }
+	  }
         }
       }
 
@@ -1162,8 +1161,8 @@ ConstrainedSolver::
 setup_and_solve_system( CMatrixT& _B,
 			VectorT&  _x,
 			VectorIT& _idx_to_round,
-                        double    _reg_factor,
-                        bool      _show_miso_settings)
+			double    _reg_factor,
+			bool      _show_miso_settings)
 {
   DEB_enter_func;
   // show options dialog
@@ -1239,8 +1238,8 @@ void
 ConstrainedSolver::
 restore_eliminated_vars( RMatrixT&         _constraints,
 			 VectorT&          _x,
-                         std::vector<int>& _c_elim,
-                         std::vector<int>& _new_idx)
+			 std::vector<int>& _c_elim,
+			 std::vector<int>& _new_idx)
 {
   DEB_enter_func;
   // restore original ordering of _x
@@ -1290,8 +1289,8 @@ void
 ConstrainedSolver::
 verify_mi_factored( const RMatrixT& _conditions,
 		    const RMatrixT& _B, 
-                    const VectorT&  _x,
-                    const VectorIT& _idx_to_round )
+		    const VectorT&  _x,
+		    const VectorIT& _idx_to_round )
 {
   DEB_enter_func;
   DEB_out(2, "######### Verify Constrained Solver Result ############\n");
@@ -1406,7 +1405,7 @@ verify_constrained_system_round(
               const VectorT&  _x,
               const VectorT&  _rhs,
               const VectorIT& _idx_to_round,
-              double          _eps)
+	      double          _eps)
 {
   DEB_enter_func;
   // test integer roundings

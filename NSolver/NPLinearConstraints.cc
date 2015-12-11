@@ -14,7 +14,6 @@
 //#include "LinearConstraintHandlerLagrange.hh"
 #include <Base/Debug/DebOut.hh>
 
-DEB_module("COMISO");
 
 //== FORWARDDECLARATIONS ======================================================
 

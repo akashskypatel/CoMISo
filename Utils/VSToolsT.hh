@@ -25,14 +25,20 @@
 #ifndef VSTOOLS_HH
 #define VSTOOLS_HH
 
-#include <math.h>
-#include <float.h>
+
+//== FORWARDDECLARATIONS ======================================================
+
+//== NAMESPACES ===============================================================
+
+//== DEFINITION =========================================================
 
 /** These functions are required for Visual Studio to work around missing 
     functions. Basic equivalent functions for double exist in the float 
     header but are named different. So this wrapper makes them standard compatible.
     */
 #ifdef WIN32
+#include <math.h>
+#include <float.h>
 
 namespace std {
 
@@ -58,7 +64,20 @@ inline int isfinite(double x)
 
 }// namespace std
 
-#endif
+inline double nearbyint(double x) 
+{
+   if( x >= 0.0 )
+     return int( x + 0.5 );
+   else
+     return int( x - 0.5 );
+}
+
+inline double round ( double _value ) 
+{
+   return nearbyint(_value);
+}
+
+#endif //WIN32
 
 //=============================================================================
 #endif // VSTOOLS_HH defined
