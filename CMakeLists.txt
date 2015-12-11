@@ -350,9 +350,19 @@ link_directories (
   ${COMISO_LINK_DIRECTORIES}
 )
 
+# enable debug stuff
+add_definitions(-DDEB_ON)
+
+# enable c++11
+add_definitions(-std=c++11)
+
 # source code directories
 set (directories 
   .
+  Base/Code
+  Base/Debug
+  Base/Security
+  Base/Utils
   Solver
   NSolver
   EigenSolver
