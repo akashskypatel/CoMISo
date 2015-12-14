@@ -684,11 +684,11 @@ make_constraints_independent_reordering(
           // if the coefficient of an integer variable is not an integer, then
           // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
           if( (double(int(cur_row_val))- cur_row_val) != 0.0)
-	  {
-// 	    std::cerr << __FUNCTION__ << " Warning: coefficient of integer variable is NOT integer: " 
-// 		      << cur_row_val << std::endl;
-	    gcd_update_valid = false;
-	  }
+          {
+//            std::cerr << __FUNCTION__ << " Warning: coefficient of integer variable is NOT integer: " 
+//              << cur_row_val << std::endl;
+            gcd_update_valid = false;
+          }
 
           v_gcd[n_ints] = cur_row_val;
           ++n_ints;
@@ -741,15 +741,14 @@ make_constraints_independent_reordering(
         else
         {
           if( noisy_ > 0)
-	  {
-	    if( !do_gcd_)
-              DEB_warning(1, "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! " 
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
-	    else
+          {
+            if (!do_gcd_)
+              DEB_warning(1, "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! "
+                << DEB_os_str(gmm::mat_const_row(_constraints, i)))
+            else
               DEB_warning(1, "GCD of non-integer cannot be computed! "
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
-
-	  }
+                << DEB_os_str(gmm::mat_const_row(_constraints, i)))
+          }
         }
       }
 
@@ -1400,12 +1399,12 @@ template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
 double
 ConstrainedSolver::
 verify_constrained_system_round( 
-              const RMatrixT& _conditions,
-              const CMatrixT& _A,
-              const VectorT&  _x,
-              const VectorT&  _rhs,
-              const VectorIT& _idx_to_round,
-	      double          _eps)
+    const RMatrixT& _conditions,
+    const CMatrixT& _A,
+    const VectorT&  _x,
+    const VectorT&  _rhs,
+    const VectorIT& _idx_to_round,
+    double          _eps)
 {
   DEB_enter_func;
   // test integer roundings

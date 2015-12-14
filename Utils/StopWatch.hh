@@ -51,6 +51,12 @@
 // This header is now a shortcut to Base::StopWatch
 #include <Base/Utils/StopWatch.hh>
 
+namespace COMISO {
+
+  typedef Base::StopWatch StopWatch;
+
+}
+
 // We can expose Base::StopWatch as COMISO::StopWatch if needed
 
 #endif//COMISO_STOPWATCH_HH_INCLUDED

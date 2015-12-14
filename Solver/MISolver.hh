@@ -107,7 +107,7 @@ public:
    *  @param _to_round vector with variable indices to round to integers
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
-         *  */
+	 *  */
   void solve(
     CSCMatrix& _A, 
     Vecd&      _x, 
@@ -126,7 +126,7 @@ public:
    *  @param _to_round vector with variable indices to round to integers
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
-         *  */
+	 *  */
   //template<class CMatrixT>
   //void solve( 
   //  CMatrixT& _B,

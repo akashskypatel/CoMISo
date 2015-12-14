@@ -578,7 +578,7 @@ MISolver::update_solution(
     converged = siter_.conjugate_gradient(_A, _x,_rhs, max_cg_iters, tolerance);
 
     DEB_out_if( noisy_ > 3, 3,  "( converged " << converged << " "
-                  << " iters " << max_cg_iters   << " "
+		<< " iters " << max_cg_iters   << " "
                 << " res_norm " << tolerance << "\n")
     ++n_cg_;
   }
@@ -609,40 +609,40 @@ MISolver::update_solution(
 
 
 void MISolver::solve_multiple_rounding( 
-        CSCMatrix& _A, 
-        Vecd&      _x, 
-        Vecd&      _rhs, 
+    CSCMatrix& _A, 
+    Vecd&      _x, 
+    Vecd&      _rhs, 
         Veci&      _to_round 
         )
 {
   DEB_enter_func
-        // StopWatch
-        Base::StopWatch sw;
-        double time_search_next_integer = 0;
+  // StopWatch
+  Base::StopWatch sw;
+  double time_search_next_integer = 0;
 
-        // some statistics
-	n_local_ = 0;
-	n_cg_    = 0;
-	n_full_  = 0;
+  // some statistics
+  n_local_ = 0;
+  n_cg_    = 0;
+  n_full_  = 0;
 
-	// reset cholmod step flag
-	cholmod_step_done_ = false;
+  // reset cholmod step flag
+  cholmod_step_done_ = false;
 
-	Veci to_round(_to_round);
-	// copy to round vector and make it unique
-	std::sort(to_round.begin(), to_round.end());
-	Veci::iterator last_unique;
-	last_unique = std::unique(to_round.begin(), to_round.end());
-        int r = last_unique - to_round.begin();
-        to_round.resize( r);
+  Veci to_round(_to_round);
+  // copy to round vector and make it unique
+  std::sort(to_round.begin(), to_round.end());
+  Veci::iterator last_unique;
+  last_unique = std::unique(to_round.begin(), to_round.end());
+  int r = last_unique - to_round.begin();
+  to_round.resize( r);
 
         // initialize old indices
-        Veci old_idx(_rhs.size());
-        for(unsigned int i=0; i<old_idx.size(); ++i)
-                old_idx[i] = i;
+  Veci old_idx(_rhs.size());
+  for(unsigned int i=0; i<old_idx.size(); ++i)
+    old_idx[i] = i;
 
-        if(initial_full_solution_)
-        {
+  if( initial_full_solution_)
+  {
                 DEB_out_if( noisy_ > 2, 2, "initial full solution\n") 
     // TODO: we can throw more specific outcomes in the body of the fucntions below
     COMISO_THROW_if(!direct_solver_.calc_system_gmm(_A), 
@@ -650,107 +650,107 @@ void MISolver::solve_multiple_rounding(
     COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), 
       UNSPECIFIED_EIGEN_FAILURE);
 
-                cholmod_step_done_ = true;
+    cholmod_step_done_ = true;
 
-		++n_full_;
-	}
+    ++n_full_;
+  }
 
-	// neighbors for local optimization
-	Vecui neigh_i;
+  // neighbors for local optimization
+  Vecui neigh_i;
 
-	// Vector for reduced solution
-	Vecd xr(_x);
+  // Vector for reduced solution
+  Vecd xr(_x);
 
-        // loop until solution computed
-        for(unsigned int i=0; i<to_round.size(); ++i)
-        {
+  // loop until solution computed
+  for(unsigned int i=0; i<to_round.size(); ++i)
+  {
     DEB_out_if(noisy_ > 0, 1, "Integer DOF's left: " << to_round.size()-(i+1) << " ")
         DEB_out_if(noisy_ > 1, 1, "residuum_norm: " << COMISO_GMM::residuum_norm( _A, xr, _rhs) << "\n")
 
-                // position in round vector
-                std::vector<int> tr_best;
+    // position in round vector
+    std::vector<int> tr_best;
 
-		sw.start();
+    sw.start();
 
-		RoundingSet rset;
-		rset.set_threshold(multiple_rounding_threshold_);
+    RoundingSet rset;
+    rset.set_threshold(multiple_rounding_threshold_);
 
-		// find index yielding smallest rounding error
-		for(unsigned int j=0; j<to_round.size(); ++j)
-		{
-			if( to_round[j] != -1)
-			{
-				int cur_idx = to_round[j];
-				double rnd_error = fabs( ROUND(xr[cur_idx]) - xr[cur_idx]);
+    // find index yielding smallest rounding error
+    for(unsigned int j=0; j<to_round.size(); ++j)
+    {
+      if( to_round[j] != -1)
+      {
+	int cur_idx = to_round[j];
+	double rnd_error = fabs( ROUND(xr[cur_idx]) - xr[cur_idx]);
 
-				rset.add(j, rnd_error);
-			}
-		}
+	rset.add(j, rnd_error);
+      }
+    }
 
-		rset.get_ids( tr_best);
+    rset.get_ids( tr_best);
 
-		time_search_next_integer += sw.stop();
-
-		// nothing more to do?
-                if( tr_best.empty() )
-                        break;
+    time_search_next_integer += sw.stop();
+  
+    // nothing more to do?
+    if( tr_best.empty() )
+      break;
 
                 DEB_out_if( noisy_ > 5, 5, 
       "round " << tr_best.size() << " variables simultaneously\n")
 
-                // clear neigh for local update
-                neigh_i.clear();
+    // clear neigh for local update
+    neigh_i.clear();
 
-		for(unsigned int j = 0; j<tr_best.size(); ++j)
-		{
-			int i_cur = to_round[tr_best[j]];
+    for(unsigned int j = 0; j<tr_best.size(); ++j)
+    {
+      int i_cur = to_round[tr_best[j]];
 
-			// store rounded value
-			double rnd_x = ROUND(xr[i_cur]);
-			_x[ old_idx[i_cur] ] = rnd_x;
+      // store rounded value
+      double rnd_x = ROUND(xr[i_cur]);
+      _x[ old_idx[i_cur] ] = rnd_x;
 
-			// compute neighbors
-			Col col = gmm::mat_const_col(_A, i_cur);
-			ColIter it  = gmm::vect_const_begin( col);
-			ColIter ite = gmm::vect_const_end  ( col);
-			for(; it!=ite; ++it)
-				if(it.index() != (unsigned int)i_cur)
-					neigh_i.push_back(it.index());
+      // compute neighbors
+      Col col = gmm::mat_const_col(_A, i_cur);
+      ColIter it  = gmm::vect_const_begin( col);
+      ColIter ite = gmm::vect_const_end  ( col);
+      for(; it!=ite; ++it)
+	if(it.index() != (unsigned int)i_cur)
+	  neigh_i.push_back(it.index());
 
-			// eliminate var
-			COMISO_GMM::fix_var_csc_symmetric( i_cur, rnd_x, _A, xr, _rhs);
-			to_round[tr_best[j]] = -1;
-		}
+      // eliminate var
+      COMISO_GMM::fix_var_csc_symmetric( i_cur, rnd_x, _A, xr, _rhs);
+      to_round[tr_best[j]] = -1;
+    }
 
-		// 3-stage update of solution w.r.t. roundings
-		// local GS / CG / SparseCholesky
-		update_solution( _A, xr, _rhs, neigh_i);
-	}
+    // 3-stage update of solution w.r.t. roundings
+    // local GS / CG / SparseCholesky
+    update_solution( _A, xr, _rhs, neigh_i);
+  }
 
-        // final full solution?
-        if( final_full_solution_)
-        {
+  // final full solution?
+  if( final_full_solution_)
+  {
                 DEB_out_if( noisy_ > 2, 2, "final full solution\n")
 
-                if( gmm::mat_ncols( _A) > 0)
-                {
-			if(cholmod_step_done_)
-				direct_solver_.update_system_gmm(_A);
-			else
-				direct_solver_.calc_system_gmm(_A);
+    if( gmm::mat_ncols( _A) > 0)
+    {
+      if(cholmod_step_done_)
+	direct_solver_.update_system_gmm(_A);
+      else
+	direct_solver_.calc_system_gmm(_A);
 
-			direct_solver_.solve( xr, _rhs);
-			++n_full_;
-		}
-	}
+      direct_solver_.solve( xr, _rhs);
+      ++n_full_;
+    }
+  }
 
-	// store solution values to result vector
-	for(unsigned int i=0; i<old_idx.size(); ++i)
-	{
-		_x[ old_idx[i] ] = xr[i];
-        }
+  // store solution values to result vector
+  for(unsigned int i=0; i<old_idx.size(); ++i)
+  {
+    _x[ old_idx[i] ] = xr[i];
+  }
 
-        // output statistics
+  // output statistics
         DEB_out_if( stats_, 2, " *** Statistics of MiSo Solver ***"
                 << "\n Number of CG    iterations  = " << n_cg_ 
         << "\n Number of LOCAL iterations  = " << n_local_ 

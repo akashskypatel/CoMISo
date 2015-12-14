@@ -17,6 +17,7 @@
 #include "GurobiHelper.hh"
 #endif//COMISO_QT_AVAILABLE
 #include <CoMISo/Utils/CoMISoError.hh>
+#include <CoMISo/Utils/StopWatch.hh>
 
 
 #include <Base/Debug/DebTime.hh>
@@ -302,6 +303,7 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
            const double                        _gap1,       // MIP gap phase 2
            double&                             _final_gap)  //return final gap
 {
+
   try
   {
     //----------------------------------------------
@@ -514,6 +516,8 @@ solve(NProblemInterface*                        _problem,
 //  std::copy(_lazy_constraints.begin(),_lazy_constraints.end(),std::back_inserter(all_constraints));
 //
 //  return solve(_problem, all_constraints, _discrete_constraints, _time_limit);
+
+  StopWatch sw; sw.start();
 
   bool feasible_point_found = false;
   int  cur_pass = 0;

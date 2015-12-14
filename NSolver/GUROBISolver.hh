@@ -31,12 +31,12 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-
+	      
 
 /** \class NewtonSolver GUROBISolver.hh
 
     Brief Description.
-
+  
     A more elaborate description follows.
 */
 class COMISODLLEXPORT GUROBISolver
@@ -45,19 +45,19 @@ public:
 
   /// Default constructor
   GUROBISolver();
-
+ 
   /// Destructor
   ~GUROBISolver() {}
 
   // ********** SOLVE **************** //
   bool solve(NProblemInterface*                  _problem,                // problem instance
-    std::vector<NConstraintInterface*>& _constraints, // linear constraints
-    std::vector<PairIndexVtype>& _discrete_constraints, // discrete constraints
-    const double _time_limit = 60); // time limit in seconds
+             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+             std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+             const double                        _time_limit = 60     ); // time limit in seconds
 
   bool solve(NProblemInterface*                  _problem,                // problem instance
-    std::vector<NConstraintInterface*>& _constraints, // linear constraints
-    const double _time_limit = 60) // time limit in seconds
+             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+             const double                        _time_limit = 60     ) // time limit in seconds
   {
     std::vector<PairIndexVtype> dc;
     return solve(_problem, _constraints, dc, _time_limit);
@@ -69,51 +69,51 @@ public:
   // phase 2) starts only if in phase 1 no solution with a MIP gap lower than _gap1 was found and
   //          uses _gap1 and _time_limit2 as parameters
   bool solve_two_phase(NProblemInterface*                  _problem,                // problem instance
-    std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-    std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
-    const double                        _time_limit0 = 60, // time limit phase 1 in seconds
-    const double                        _gap0 = 0.001,     // MIP gap phase 1
-    const double                        _time_limit1 = 120, // time limit phase 2 in seconds
-    const double                        _gap1 = 0.2);        // MIP gap phase 2
-
+             std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+             std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+             const double                        _time_limit0 = 60, // time limit phase 1 in seconds
+             const double                        _gap0 = 0.001,     // MIP gap phase 1
+             const double                        _time_limit1 = 120, // time limit phase 2 in seconds
+             const double                        _gap1 = 0.2 );       // MIP gap phase 2
+  
   bool solve_two_phase(NProblemInterface*                  _problem,                // problem instance
-    std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-    std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
-    const double                        _time_limit0, // time limit phase 1 in seconds
-    const double                        _gap0 ,     // MIP gap phase 1
-    const double                        _time_limit1, // time limit phase 2 in seconds
-    const double                        _gap1,  // MIP gap phase 2
-    double&                             _final_gap);  //return final gap
+                       std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+                       std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+                       const double                        _time_limit0, // time limit phase 1 in seconds
+                       const double                        _gap0 ,     // MIP gap phase 1
+                       const double                        _time_limit1, // time limit phase 2 in seconds
+                       const double                        _gap1,  // MIP gap phase 2
+                       double&                             _final_gap);  //return final gap
 
 
   // optimization with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
-             const std::vector<NConstraintInterface*>& _constraints,
-             const std::vector<NConstraintInterface*>& _lazy_constraints,
-             std::vector<PairIndexVtype>& _discrete_constraints,   // discrete constraints
-             const double _almost_infeasible = 0.5,
-             const int _max_passes = 5,
-             const double _time_limit = 60,
-             const bool _silent = false);
+                    const std::vector<NConstraintInterface*>& _constraints,
+                    const std::vector<NConstraintInterface*>& _lazy_constraints,
+                    std::vector<PairIndexVtype>&              _discrete_constraints,   // discrete constraints
+                    const double                              _almost_infeasible = 0.5,
+                    const int                                 _max_passes        = 5,
+                    const double                              _time_limit = 60,
+                    const bool                                _silent = false);
 
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
-             const std::vector<NConstraintInterface*>& _constraints,
-             const std::vector<NConstraintInterface*>& _lazy_constraints,
-             const double _almost_infeasible = 0.5,
-             const int _max_passes = 5,
-             const double _time_limit = 60,
-             const bool _silent = false)
+                    const std::vector<NConstraintInterface*>& _constraints,
+                    const std::vector<NConstraintInterface*>& _lazy_constraints,
+                    const double                              _almost_infeasible = 0.5,
+                    const int                                 _max_passes        = 5,
+                    const double                              _time_limit = 60,
+                    const bool                                _silent = false)
   {
     std::vector<PairIndexVtype> dc;
     return solve(_problem, _constraints, _lazy_constraints, dc, _almost_infeasible, _max_passes, _time_limit, _silent);
   }
 
 
-  void set_problem_output_path(const std::string& _problem_output_path);
-  void set_problem_env_output_path(const std::string& _problem_env_output_path);
-  void set_solution_input_path(const std::string& _solution_input_path);
+  void set_problem_output_path    ( const std::string &_problem_output_path);
+  void set_problem_env_output_path( const std::string &_problem_env_output_path);
+  void set_solution_input_path    ( const std::string &_solution_input_path);
 
 protected:
   double* P(std::vector<double>& _v)

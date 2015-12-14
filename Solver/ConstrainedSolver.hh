@@ -401,7 +401,7 @@ private:
       std::sort( evar.begin(), evar.end() );
       evar.push_back( std::numeric_limits<int>::max() );
 
-      int cur_evar_idx = 0;
+      int cur_evar_idx=0;
       size_t nc = _rhs.size();
       for (size_t i = 0; i < nc; ++i)
       {
