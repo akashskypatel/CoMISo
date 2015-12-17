@@ -503,6 +503,9 @@ install(DIRECTORY .
         PATTERN "*.hh"
         PATTERN "CVS" EXCLUDE
         PATTERN ".svn" EXCLUDE
+        PATTERN ".git" EXCLUDE
+        PATTERN "Examples" EXCLUDE
+        PATTERN "CI" EXCLUDE
         PATTERN "tmp" EXCLUDE
         PATTERN "Templates" EXCLUDE
         PATTERN "Debian*" EXCLUDE)
