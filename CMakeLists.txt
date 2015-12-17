@@ -510,4 +510,8 @@ install(DIRECTORY .
         PATTERN "Templates" EXCLUDE
         PATTERN "Debian*" EXCLUDE)
 
+# Install Config File
+install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
+        DESTINATION include/CoMISo/Config
+        PATTERN "*.hh" )
 
