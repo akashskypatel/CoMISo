@@ -496,4 +496,15 @@ if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_finite_element/CMakeLists.txt" )
 	add_subdirectory (Examples/small_finite_element)
 endif()
 
+# Install Header Files
+install(DIRECTORY . 
+        DESTINATION include/CoMISo
+        FILES_MATCHING 
+        PATTERN "*.hh"
+        PATTERN "CVS" EXCLUDE
+        PATTERN ".svn" EXCLUDE
+        PATTERN "tmp" EXCLUDE
+        PATTERN "Templates" EXCLUDE
+        PATTERN "Debian*" EXCLUDE)
+
 
