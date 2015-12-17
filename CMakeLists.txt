@@ -501,6 +501,7 @@ install(DIRECTORY .
         DESTINATION include/CoMISo
         FILES_MATCHING 
         PATTERN "*.hh"
+        PATTERN "*T.cc"
         PATTERN "CVS" EXCLUDE
         PATTERN ".svn" EXCLUDE
         PATTERN ".git" EXCLUDE
