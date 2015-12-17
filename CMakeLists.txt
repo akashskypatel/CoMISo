@@ -353,9 +353,6 @@ link_directories (
 # enable debug stuff
 add_definitions(-DDEB_ON)
 
-# enable c++11
-add_definitions(-std=c++11)
-
 # source code directories
 set (directories 
   .
