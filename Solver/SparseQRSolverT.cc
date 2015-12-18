@@ -136,10 +136,10 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
   cholmod_print_sparse(AC, "AC", mp_cholmodCommon);
 
   // 2. factorize A -> Q,R,P
-  UF_long econ = m;
+  SuiteSparse_long econ = m;
   cholmod_sparse *Q, *R;
 //  UF_long *P = new UF_long[n];
-  UF_long *P;
+  SuiteSparse_long *P;
   double rank = SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
   std::cerr << "factorization finished" << std::endl;
   std::cerr << "rank: " << rank << std::endl;
@@ -160,7 +160,7 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
   std::cerr << "free1 finished" << std::endl;
 
   // TODO: alloc or free P ???
-  cholmod_free(n, sizeof(UF_long), P, mp_cholmodCommon);
+  cholmod_free(n, sizeof(SuiteSparse_long), P, mp_cholmodCommon);
   std::cerr << "free2 finished" << std::endl;
 
 
@@ -207,10 +207,10 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
   cholmod_print_sparse(AC, "AC", mp_cholmodCommon);
 
   // 2. factorize A -> Q,R,P
-  UF_long econ = m;
+  SuiteSparse_long econ = m;
   cholmod_sparse *Q, *R;
 //  UF_long *P = new UF_long[n];
-  UF_long *P;
+  SuiteSparse_long *P;
   double rank = SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
   std::cerr << "factorization finished" << std::endl;
   std::cerr << "rank: " << rank << std::endl;
@@ -232,7 +232,7 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
   std::cerr << "free1 finished" << std::endl;
 
   // TODO: alloc or free P ???
-  cholmod_free(n, sizeof(UF_long), P, mp_cholmodCommon);
+  cholmod_free(n, sizeof(SuiteSparse_long), P, mp_cholmodCommon);
   std::cerr << "free2 finished" << std::endl;
 
 
