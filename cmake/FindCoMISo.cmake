@@ -12,18 +12,33 @@ IF (COMISO_INCLUDE_DIRS)
   SET(COMISO_FIND_QUIETLY TRUE)
 ENDIF (COMISO_INCLUDE_DIRS)
 
+# search all lib directories in packages for OpenFlipper
+file (
+  GLOB _libdirs
+           "${CMAKE_SOURCE_DIR}/libs"
+           "${CMAKE_SOURCE_DIR}/Package-*/libs"
+           "${CMAKE_BINARY_DIR}/libs"
+           "${CMAKE_BINARY_DIR}/Package-*/libs"
+           "${CMAKE_BINARY_DIR}/libs/CoMISo"
+           "${CMAKE_BINARY_DIR}/Package-*/libs/CoMISo"
+)
+
+
 # Find CoMISo config file
 FIND_PATH( COMISO_CONFIG_INCLUDE_DIR CoMISo/Config/config.hh
-           PATHS "${CMAKE_BINARY_DIR}"
-                 "${CMAKE_BINARY_DIR}/libs/"
-                 "${CMAKE_BINARY_DIR}/../" )
+           PATHS ${_libdirs}
+                 "${CMAKE_BINARY_DIR}/../"
+                 "${CMAKE_BINARY_DIR}/../CoMISo/" )
 
 FIND_PATH( COMISO_INCLUDE_DIR CoMISo/Solver/MISolver.hh
-           PATHS "${CMAKE_SOURCE_DIR}"
-                 "${CMAKE_SOURCE_DIR}/libs/" 
+           PATHS ${_libdirs}
+                 "${CMAKE_SOURCE_DIR}"
                  "${CMAKE_SOURCE_DIR}/../" )
 
 if ( COMISO_INCLUDE_DIR AND COMISO_CONFIG_INCLUDE_DIR )
+
+  # add COMISO_INCLUDE_DIR/CoMISo so stuff in CoMISo/Base can be included by <Base/...>
+  set(COMISO_INCLUDE_DIR "${COMISO_INCLUDE_DIR};${COMISO_INCLUDE_DIR}/CoMISo")
 
   FILE(READ ${COMISO_CONFIG_INCLUDE_DIR}/CoMISo/Config/config.hh CURRENT_COMISO_CONFIG)
 
@@ -227,7 +242,7 @@ if ( COMISO_INCLUDE_DIR AND COMISO_CONFIG_INCLUDE_DIR )
                                                                           
   endif()
 
-  add_definitions (-DCOMISODLL -DUSECOMISO )
+  add_definitions (-DCOMISODLL -DUSECOMISO -DBASEDLL -DUSEBASE )
 
   include(FindPackageHandleStandardArgs)
   SET(COMISO_FOUND TRUE)

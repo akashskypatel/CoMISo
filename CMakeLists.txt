@@ -342,6 +342,7 @@ include_directories (
 # generate dllexport macros on windows
 if (WIN32)
   add_definitions(-DCOMISODLL)
+  add_definitions(-DBASEDLL)
   add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
 endif ()
 
