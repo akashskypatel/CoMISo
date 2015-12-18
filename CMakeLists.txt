@@ -1,6 +1,11 @@
 cmake_minimum_required (VERSION 2.6)
 
-project(CoMISo)
+
+#Only set project name if CoMISo is built as stand-alone library
+if("${PROJECT_NAME}" STREQUAL "")
+    project(CoMISo)
+endif()
+
 
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
@@ -504,22 +509,27 @@ if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_finite_element/CMakeLists.txt" )
 	add_subdirectory (Examples/small_finite_element)
 endif()
 
-# Install Header Files
-install(DIRECTORY . 
-        DESTINATION include/CoMISo
-        FILES_MATCHING 
-        PATTERN "*.hh"
-        PATTERN "*T.cc"
-        PATTERN "CVS" EXCLUDE
-        PATTERN ".svn" EXCLUDE
-        PATTERN ".git" EXCLUDE
-        PATTERN "Examples" EXCLUDE
-        PATTERN "CI" EXCLUDE
-        PATTERN "tmp" EXCLUDE
-        PATTERN "Templates" EXCLUDE
-        PATTERN "Debian*" EXCLUDE)
+# Only create install target, when we are building CoMISo standalone
+if(${PROJECT_NAME} MATCHES "CoMISo")
 
-# Install Config File
-install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
-         DESTINATION include/CoMISo/Config )
+  # Install Header Files
+  install(DIRECTORY . 
+          DESTINATION include/CoMISo
+          FILES_MATCHING 
+          PATTERN "*.hh"
+          PATTERN "*T.cc"
+          PATTERN "CVS" EXCLUDE
+          PATTERN ".svn" EXCLUDE
+          PATTERN ".git" EXCLUDE
+          PATTERN "Examples" EXCLUDE
+          PATTERN "CI" EXCLUDE
+          PATTERN "tmp" EXCLUDE
+          PATTERN "Templates" EXCLUDE
+          PATTERN "Debian*" EXCLUDE)
+
+  # Install Config File
+  install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
+           DESTINATION include/CoMISo/Config )
+
+endif()
 
