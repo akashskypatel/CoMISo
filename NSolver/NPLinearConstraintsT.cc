@@ -14,7 +14,7 @@
 #include "LinearConstraintHandlerElimination.hh"
 #include "LinearConstraintHandlerPenalty.hh"
 //#include "LinearConstraintHandlerLagrange.hh"
-
+#include "NPLinearConstraints.hh"
 
 //== FORWARDDECLARATIONS ======================================================
 

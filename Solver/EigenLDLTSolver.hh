@@ -40,7 +40,6 @@
 
 
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <CoMISo/Utils/StopWatch.hh>
 
 #include <iostream>
 #include <vector>
@@ -104,7 +103,6 @@ private:
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldlt_;
 
     bool show_timings_;
-    StopWatch sw_;
 };
 
 //=============================================================================

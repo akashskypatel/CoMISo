@@ -21,11 +21,9 @@
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 #include "VariableType.hh"
-#include "GurobiHelper.hh"
-
-#include <gurobi_c++.h>
 
 //== FORWARDDECLARATIONS ======================================================
+
 
 //== NAMESPACES ===============================================================
 
@@ -61,7 +59,8 @@ public:
              std::vector<NConstraintInterface*>& _constraints,            // linear constraints
              const double                        _time_limit = 60     ) // time limit in seconds
   {
-    std::vector<PairIndexVtype> dc; return solve(_problem, _constraints, dc, _time_limit);
+    std::vector<PairIndexVtype> dc;
+    return solve(_problem, _constraints, dc, _time_limit);
   }
 
   // same as previous but more control over stopping criteria
@@ -107,7 +106,8 @@ public:
                     const double                              _time_limit = 60,
                     const bool                                _silent = false)
   {
-    std::vector<PairIndexVtype> dc; return solve(_problem, _constraints, _lazy_constraints, dc, _almost_infeasible, _max_passes, _time_limit, _silent);
+    std::vector<PairIndexVtype> dc;
+    return solve(_problem, _constraints, _lazy_constraints, dc, _almost_infeasible, _max_passes, _time_limit, _silent);
   }
 
 
@@ -123,9 +123,6 @@ protected:
     else
       return 0;
   }
-
-private:
-  void add_constraint_to_model(COMISO::NConstraintInterface* _constraint, GRBModel& _model, std::vector<GRBVar>& _vars, double * _x);
 
 private:
 

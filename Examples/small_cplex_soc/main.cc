@@ -31,6 +31,7 @@
 #include <CoMISo/NSolver/NPDerivativeChecker.hh>
 #include <CoMISo/NSolver/CPLEXSolver.hh>
 #include <CoMISo/NSolver/IPOPTSolver.hh>
+#include <CoMISo/NSolver/ConeConstraint.hh>
 
 // solve least squares problem for x=1, y=2 and x-2y+z = 1
 // with hard constraints x =-3, z>=3, z^2 >= x^2+y^2

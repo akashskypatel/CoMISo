@@ -40,7 +40,7 @@
 
 
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <CoMISo/Utils/StopWatch.hh>
+#include <Base/Utils/StopWatch.hh>
 
 #include <iostream>
 #include <vector>
@@ -107,7 +107,7 @@ private:
     std::vector<int>    rowind_;
 
     bool show_timings_;
-    StopWatch sw_;
+    Base::StopWatch sw_;
 };
 
 //=============================================================================

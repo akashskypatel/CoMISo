@@ -29,6 +29,7 @@
 #include "SparseQRSolver.hh"
 #include <CoMISo/Solver/Eigen_Tools.hh>
 
+#if(COMISO_SUITESPARSE_SPQR_AVAILABLE)
 
 namespace COMISO {
 
@@ -366,3 +367,4 @@ solve_system_eigen_min2norm( const Eigen_MatrixT& _A, const Eigen_MatrixT& _b, E
 
 
 }
+#endif//COMISO_SUITESPARSE_SPQR_AVAILABLE

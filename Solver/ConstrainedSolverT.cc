@@ -36,8 +36,11 @@
 #include <gmm/gmm.h>
 #include "GMM_Tools.hh"
 #include <float.h>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/MutablePriorityQueueT.hh>
+
+#include <Base/Utils/StopWatch.hh>
+#include <Base/Debug/DebOut.hh>
+
 
 //== NAMESPACES ===============================================================
 
@@ -149,7 +152,7 @@ solve(
 //   if( _show_timings) std::cerr << __FUNCTION__ << "\n Initial dimension: " << nrows << " x " << ncols << ", number of constraints: " << ncons << std::endl;
  
 //   // StopWatch for Timings
-//   COMISO::StopWatch sw, sw2; sw.start(); sw2.start();
+//   Base::StopWatch sw, sw2; sw.start(); sw2.start();
 
 //   // c_elim[i] = index of variable which is eliminated in condition i
 //   // or -1 if condition is invalid
@@ -209,6 +212,7 @@ solve(
     bool      _show_miso_settings, 
     bool      _show_timings )
 {
+  DEB_enter_func;
   // show options dialog
   if( _show_miso_settings)
     miso_.show_options_dialog();
@@ -218,11 +222,12 @@ solve(
   int ncols = gmm::mat_ncols(_A);
   int ncons = gmm::mat_nrows(_constraints);
 
-  if( _show_timings) std::cerr << __FUNCTION__ << "\n Initital dimension: " << nrows << " x " << ncols 
-			       << ", number of constraints: " << ncons << " use reordering: " << use_constraint_reordering() << std::endl;
+  DEB_out_if( _show_timings, 1, "Initital dimension: " << nrows << " x " << ncols 
+                               << ", number of constraints: " << ncons
+             << " use reordering: " << use_constraint_reordering() << "\n")
 
   // StopWatch for Timings
-  COMISO::StopWatch sw, sw2; sw.start(); sw2.start();
+  Base::StopWatch sw, sw2; sw.start(); sw2.start();
 
   // c_elim[i] = index of variable which is eliminated in condition i
   // or -1 if condition is invalid
@@ -243,11 +248,10 @@ solve(
   eliminate_constraints( _constraints, _A, _x, _rhs, _idx_to_round, c_elim, new_idx, Acsc);
   double time_eliminate = sw.stop()/1000.0;
 
-  if( _show_timings)
-  {
-    std::cerr << "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc << std::endl;
-    std::cerr << "#nonzeros: " << gmm::nnz(Acsc) << std::endl;
-  }
+  /// TODO: temporary disable this since it was causing performance issues
+  //DEB_out_if( _show_timings, 2,
+  //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc 
+  //  << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
 
   sw.start();
   miso_.solve( Acsc, _x, _rhs, _idx_to_round);
@@ -259,12 +263,12 @@ solve(
 
   double time_resubstitute = sw.stop()/1000.0; sw.start();
   double time_total = time_gauss + time_eliminate + time_miso + time_resubstitute;
-  if( _show_timings) std::cerr << "Timings: \n\t" <<
+  DEB_out_if( _show_timings, 1,"Timings: \n\t" <<
     "\tGauss Elimination  " << time_gauss          << " s\n\t" <<
     "\tSystem Elimination " << time_eliminate      << " s\n\t" <<
     "\tMi-Solver          " << time_miso           << " s\n\t" <<
     "\tResubstitution     " << time_resubstitute   << " s\n\t" << 
-    "\tTotal              " << time_total          << std::endl << std::endl;
+    "\tTotal              " << time_total          << "\n\n");
 }
 
 
@@ -332,8 +336,9 @@ resolve(
      VectorT*  _rhs           ,
      bool      _show_timings   )
 {
+  DEB_enter_func;
   // StopWatch for Timings
-  COMISO::StopWatch sw;
+  Base::StopWatch sw;
 
   sw.start();
   // apply stored updates and eliminations to exchanged rhs
@@ -372,10 +377,10 @@ resolve(
 
   double time_resubstitute = sw.stop()/1000.0; sw.start();
   double time_total = time_miso + time_resubstitute;
-  if( _show_timings) std::cerr << "Timings: \n\t" <<
+  DEB_out_if( _show_timings, 1, "Timings: \n\t" <<
     "\tMi-Solver          " << time_miso           << " s\n\t" <<
     "\tResubstitution     " << time_resubstitute   << " s\n\t" <<
-    "\tTotal              " << time_total          << std::endl << std::endl;
+    "\tTotal              " << time_total          << "\n\n");
 }
 
 
@@ -390,13 +395,14 @@ make_constraints_independent(
 		VectorIT&         _idx_to_round,
 		std::vector<int>& _c_elim)
 {
+  DEB_enter_func;
   // setup linear transformation for rhs, start with identity
   unsigned int nr = gmm::mat_nrows(_constraints);
   gmm::resize(rhs_update_table_.D_, nr, nr);
   gmm::clear(rhs_update_table_.D_);
   for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
-  //  COMISO::StopWatch sw;
+  //  Base::StopWatch sw;
   // number of variables
   int n_vars = gmm::mat_ncols(_constraints);
 
@@ -506,9 +512,8 @@ make_constraints_independent(
     {
       // redundant or incompatible?
       if( noisy_ > 0)
-        if( fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) > epsilon_ )
-          std::cerr << "Warning: incompatible condition: "
-		    << fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) << std::endl;
+        DEB_warning_if( (fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) > epsilon_ ), 1,
+          "incompatible condition: " << fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) )
       //         else
       //           std::cerr << "Warning: redundant condition:\n";
     }
@@ -519,20 +524,17 @@ make_constraints_independent(
         {
           // perform gcd update
           bool gcd_ok = update_constraint_gcd( _constraints, i, elim_j, v_gcd, n_ints);
-          if( !gcd_ok)
-            if( noisy_ > 0)
-              std::cerr << __FUNCTION__ << " Warning: GCD update failed! " << gmm::mat_const_row(_constraints, i) << std::endl;
+          DEB_warning_if( (noisy_ > 0) && !gcd_ok, 1," GCD update failed! " 
+            << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
         }
         else
         {
-          if( noisy_ > 0)
-	  {
-	    if( !do_gcd_)
-	      std::cerr << __FUNCTION__ << " Warning: NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! " << gmm::mat_const_row(_constraints, i) << std::endl;
-	    else
-	      std::cerr << __FUNCTION__ << " Warning: GCD of non-integer cannot be computed! " << gmm::mat_const_row(_constraints, i) << std::endl;
-
-	  }
+                 DEB_warning_if( ( noisy_ > 0) && !do_gcd_, 1,
+             "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! "
+             << DEB_os_str( gmm::mat_const_row(_constraints, i)) )
+            DEB_warning_if(  ( noisy_ > 0) && do_gcd_, 1, 
+             "GCD of non-integer cannot be computed! " 
+             << DEB_os_str( gmm::mat_const_row(_constraints, i)) )
         }
       }
 
@@ -582,13 +584,14 @@ make_constraints_independent_reordering(
 		VectorIT&         _idx_to_round,
 		std::vector<int>& _c_elim)
 {
+  DEB_enter_func;
   // setup linear transformation for rhs, start with identity
   unsigned int nr = gmm::mat_nrows(_constraints);
   gmm::resize(rhs_update_table_.D_, nr, nr);
   gmm::clear(rhs_update_table_.D_);
   for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
-  //  COMISO::StopWatch sw;
+  //  Base::StopWatch sw;
   // number of variables
   int n_vars = gmm::mat_ncols(_constraints);
 
@@ -719,9 +722,9 @@ make_constraints_independent_reordering(
     {
       // redundant or incompatible?
       if( noisy_ > 0)
-        if( fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) > epsilon_ )
-          std::cerr << "Warning: incompatible condition: "
-		    << fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) << std::endl;
+        DEB_warning_if( (fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) > epsilon_ ), 1,
+          "incompatible condition: "
+          << fabs(gmm::mat_const_row(_constraints, i)[n_vars-1]) )
       //         else
       //           std::cerr << "Warning: redundant condition:\n";
     }
@@ -732,18 +735,19 @@ make_constraints_independent_reordering(
         {
           // perform gcd update
           bool gcd_ok = update_constraint_gcd( _constraints, i, elim_j, v_gcd, n_ints);
-          if( !gcd_ok)
-            if( noisy_ > 0)
-              std::cerr << __FUNCTION__ << " Warning: GCD update failed! " << gmm::mat_const_row(_constraints, i) << std::endl;
+          DEB_warning_if( !gcd_ok && (noisy_ > 0), 1, " GCD update failed! "
+              << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
         }
         else
         {
           if( noisy_ > 0)
 	  {
 	    if( !do_gcd_)
-	      std::cerr << __FUNCTION__ << " Warning: NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! " << gmm::mat_const_row(_constraints, i) << std::endl;
+              DEB_warning(1, "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! " 
+          << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
 	    else
-	      std::cerr << __FUNCTION__ << " Warning: GCD of non-integer cannot be computed! " << gmm::mat_const_row(_constraints, i) << std::endl;
+              DEB_warning(1, "GCD of non-integer cannot be computed! "
+          << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
 
 	  }
         }
@@ -836,6 +840,7 @@ update_constraint_gcd( RMatrixT& _constraints,
                        std::vector<int>& _v_gcd,
                        int& _n_ints)
 {
+  DEB_enter_func;
   // find gcd
   double i_gcd = find_gcd(_v_gcd, _n_ints);
 
@@ -856,8 +861,8 @@ update_constraint_gcd( RMatrixT& _constraints,
     _constraints(_row_i, cur_j) = (*row_it)/i_gcd;
   }
   int elim_coeff = abs(_constraints(_row_i, _elim_j));
-  if( elim_coeff != 1)
-    std::cerr << __FUNCTION__ << " Error: elimination coefficient " << elim_coeff << " will (most probably) NOT lead to an integer solution!" << std::endl;
+  DEB_error_if( elim_coeff != 1, "elimination coefficient " << elim_coeff 
+    << " will (most probably) NOT lead to an integer solution!")
   return true;
 }
 
@@ -874,6 +879,7 @@ eliminate_constraints(
     std::vector<int>&           _new_idx,
     gmm::col_matrix<SVector3T>& _Bcol)
 {
+  DEB_enter_func;
   // copy into column matrix
   gmm::resize(_Bcol, gmm::mat_nrows(_B), gmm::mat_ncols(_B));
   gmm::copy( _B, _Bcol);
@@ -936,12 +942,8 @@ eliminate_constraints(
   _idx_to_round.resize( std::unique(_idx_to_round.begin(), _idx_to_round.end()) -_idx_to_round.begin());
 
 
-  if( noisy_ > 2 )
-  {
-    std::cerr << __FUNCTION__ << "remaining         variables: " << gmm::mat_ncols(_Bcol) << std::endl;
-    std::cerr << __FUNCTION__ << "remaining integer variables: " << _idx_to_round.size() << std::endl;
-    std::cerr << __FUNCTION__ << std::endl;
-  }
+  DEB_out_if((noisy_ >2), 2, "remaining         variables: " << gmm::mat_ncols(_Bcol) << "\n");
+  DEB_out_if((noisy_ >2), 2,  "remaining integer variables: " << _idx_to_round.size() << "\n");
 }
 
 
@@ -961,7 +963,8 @@ eliminate_constraints(
     std::vector<int>&           _new_idx,
     CSCMatrixT&                 _Acsc)
 {
-  COMISO::StopWatch sw;
+  DEB_enter_func;
+  Base::StopWatch sw;
   sw.start();
   // define iterator on matrix A and on constraints C
   typedef typename gmm::linalg_traits<SVector2T>::const_iterator  AIter;
@@ -1059,8 +1062,7 @@ eliminate_constraints(
   // apply transformation due to elimination
   rhs_update_table_.apply(constraint_rhs_vec, _rhs);
 
-  if( noisy_ > 2)
-    std::cerr << __FUNCTION__ << " Constraints integrated " << sw.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 2, 2, " Constraints integrated " << sw.stop()/1000.0 << "\n");
 
   // eliminate vars
   _Acsc.init_with_good_format(_A);
@@ -1068,8 +1070,7 @@ eliminate_constraints(
   std::vector< double > elim_varvals( elim_varids.size(), 0);
   COMISO_GMM::eliminate_csc_vars2( elim_varids, elim_varvals, _Acsc, _x, _rhs);
 
-  if( noisy_ > 2)
-    std::cerr << __FUNCTION__ << " Constraints eliminated " << sw.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 2, 2, " Constraints eliminated " << sw.stop()/1000.0 << "\n");
   sw.start();
   // init _new_idx vector
 //  _new_idx.resize( gmm::mat_ncols(_constraints));
@@ -1097,8 +1098,7 @@ eliminate_constraints(
   std::sort(_idx_to_round.begin(), _idx_to_round.end());
   _idx_to_round.resize( std::unique(_idx_to_round.begin(), _idx_to_round.end()) -_idx_to_round.begin());
 
-  if( noisy_ > 2)
-    std::cerr << __FUNCTION__ << "Indices reindexed " << sw.stop()/1000.0 << std::endl << std::endl;
+  DEB_out_if( noisy_ > 2, 2, "Indices reindexed " << sw.stop()/1000.0 << "\n\n")
 }
 
 
@@ -1164,12 +1164,13 @@ setup_and_solve_system( CMatrixT& _B,
 			double    _reg_factor,
 			bool      _show_miso_settings)
 {
+  DEB_enter_func;
   // show options dialog
   if( _show_miso_settings)
     miso_.show_options_dialog();
 
-  COMISO::StopWatch s1;
-  COMISO::StopWatch sw; sw.start();
+  Base::StopWatch s1;
+  Base::StopWatch sw; sw.start();
   unsigned int m = gmm::mat_nrows(_B);
   unsigned int n = gmm::mat_ncols(_B);
 
@@ -1178,16 +1179,17 @@ setup_and_solve_system( CMatrixT& _B,
   CMatrixT Bt;
   gmm::resize( Bt, n, m);
   gmm::copy( gmm::transposed( _B), Bt);
-  if( noisy_ > 1 )
-    std::cerr << __FUNCTION__ << " Bt took " << s1.stop()/1000.0 << std::endl;
+
+  // ICGB: SHould these be RLS_out_if() or similar? Or co-opy noisy_ into
+  // the DEB level mechanism.
+  DEB_out_if( noisy_ > 1 , 1, " Bt took " << s1.stop()/1000.0 << "\n")
   s1.start();
 
   // setup BtB
   CMatrixT BtB;
   gmm::resize( BtB, n, n);
   gmm::mult( Bt, _B, BtB);
-  if( noisy_ > 1 )
-    std::cerr << __FUNCTION__ << " BtB took " << s1.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 1 , 1, " BtB took " << s1.stop()/1000.0 << "\n");
   s1.start();
 
   // extract rhs
@@ -1195,19 +1197,16 @@ setup_and_solve_system( CMatrixT& _B,
   gmm::copy( gmm::scaled(gmm::mat_const_col( BtB, n - 1),-1.0), rhs);
   rhs.resize( n - 1);
 
-  if( noisy_ > 1)
-    std::cerr << __FUNCTION__ << " rhs extract resize " << s1.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 1, 1, " rhs extract resize " << s1.stop()/1000.0 << "\n");
   s1.start();
 
   // resize BtB to only contain the actual system matrix (and not the rhs)
   gmm::resize( BtB, n - 1, n - 1);
 
-  if( noisy_ > 1)
-    std::cerr << __FUNCTION__ << " BtB resize took " << s1.stop()/1000.0 << std::endl;
+  DEB_out_if(noisy_ > 1, 1, " BtB resize took " << s1.stop()/1000.0 << "\n");
   s1.start();
   _x.resize( n - 1);
-  if( noisy_ > 1)
-    std::cerr << __FUNCTION__ << " x resize took " << s1.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 1, 1, " x resize took " << s1.stop()/1000.0 << "\n");
 
   // regularize if necessary
   if(_reg_factor != 0.0)
@@ -1218,17 +1217,15 @@ setup_and_solve_system( CMatrixT& _B,
   CSCMatrix BtBCSC;
   BtBCSC.init_with_good_format( BtB);
 
-  if( noisy_ > 1)
-    std::cerr << __FUNCTION__ << " CSC init " << s1.stop()/1000.0 << std::endl;
+  DEB_out_if( noisy_ > 1, 1, " CSC init " << s1.stop()/1000.0 << "\n");
   double setup_time = sw.stop()/1000.0;
   
 
-  COMISO::StopWatch misw;
+  Base::StopWatch misw;
   misw.start();
   // miso solve
   miso_.solve( BtBCSC, _x, rhs, _idx_to_round);
-  if( noisy_ > 1)
-  std::cerr << __FUNCTION__ << " Miso Time " << misw.stop()/1000.0 << "s." << std::endl << std::endl;
+  DEB_out_if( noisy_ > 1, 1, " Miso Time " << misw.stop()/1000.0 << "s.\n\n");
   return setup_time;
 }
 
@@ -1244,6 +1241,7 @@ restore_eliminated_vars( RMatrixT&         _constraints,
 			 std::vector<int>& _c_elim,
 			 std::vector<int>& _new_idx)
 {
+  DEB_enter_func;
   // restore original ordering of _x
   _x.resize(_new_idx.size());
   // last variable is the constant term 1.0
@@ -1255,8 +1253,7 @@ restore_eliminated_vars( RMatrixT&         _constraints,
     if( _new_idx[i] != -1)
     {
       // error handling
-      if( i < _new_idx[i] && noisy_ > 0) std::cerr << "Warning: UNSAFE Ordering!!!\n";
-
+      DEB_warning_if( (i < _new_idx[i]) && (noisy_ > 0), 1, "UNSAFE Ordering!!!")
       _x[i] = _x[_new_idx[i]];
     }
   }
@@ -1295,7 +1292,8 @@ verify_mi_factored( const RMatrixT& _conditions,
 		    const VectorT&  _x,
 		    const VectorIT& _idx_to_round )
 {
-  std::cerr << "######### Verify Constrained Solver Result ############\n";
+  DEB_enter_func;
+  DEB_out(2, "######### Verify Constrained Solver Result ############\n");
 
   // create extended x vector
   std::vector<double> x(_x);
@@ -1314,12 +1312,8 @@ verify_mi_factored( const RMatrixT& _conditions,
       ++conditions_not_ok;
     }
 
-  if( conditions_not_ok == 0)
-    std::cerr << "all conditions are ok!\n";
-  else
-    std::cerr << conditions_not_ok 
-	      << " conditions are not fullfilled: " 
-	      << std::endl;
+  DEB_out_if( conditions_not_ok == 0, 2, "all conditions are ok!\n")
+  DEB_out_if( conditions_not_ok != 0, 1," conditions are not fullfilled:\n ") 
 
   // verify rounding
   int roundings_not_ok = 0;
@@ -1330,17 +1324,14 @@ verify_mi_factored( const RMatrixT& _conditions,
       ++roundings_not_ok;
   }
   
-  if( roundings_not_ok)
-    std::cerr << roundings_not_ok << " Integer variables are not rounded\n";
-  else
-    std::cerr << "all Integer roundings are ok\n";
+  DEB_out_if( roundings_not_ok, 1, roundings_not_ok << " Integer variables are not rounded\n")
+  DEB_out_if(!roundings_not_ok, 2, "all Integer roundings are ok\n")
 
   // evaluate energy
   VectorT Bx(x);
   gmm::mult(_B, x, Bx);
-  std::cerr << "Total energy: " << gmm::vect_sp(Bx, Bx) << std::endl;
-
-  std::cerr << "######### FINISHED ############\n";
+  DEB_out(1, "Total energy: " << gmm::vect_sp(Bx, Bx) << "\n");
+  DEB_out(2, "######### FINISHED ############\n");
 }
 
 
@@ -1357,6 +1348,7 @@ ConstrainedSolver::verify_constrained_system(
     const VectorT&  _rhs,
     double          _eps)
 {
+  DEB_enter_func;
   typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type RowT;
   typedef typename gmm::linalg_traits<RowT>::const_iterator RIter;
 
@@ -1367,7 +1359,7 @@ ConstrainedSolver::verify_constrained_system(
   double norm = gmm::vect_norm2(Ax);
   //std::cerr << __FUNCTION__ << ": Error residual: " << norm << " vector : " << Ax << std::endl;
 
-  std::cerr << __FUNCTION__ << ": Checking constraints..." << std::endl;
+  DEB_out(2,": Checking constraints...\n");
 
   unsigned int row_cond = gmm::mat_nrows( _conditions);
   unsigned int col_cond = gmm::mat_ncols( _conditions);
@@ -1391,11 +1383,13 @@ ConstrainedSolver::verify_constrained_system(
     //std::cerr << "--- --- --- --- ---\n";
     if( fabs(cond_value) > _eps)
     {
-      std::cerr << "\t Error on row " << r << " with vector " << row << " and condition value " << cond_value << std::endl;
+      DEB_out(1, "\t Error on row " << r << " with vector " << row 
+        << " and condition value " << cond_value << "\n");
       all_conditions_ok = false;
     }
   }
-  std::cerr << __FUNCTION__ << (all_conditions_ok? ": All conditions ok!" : ": Some conditions not ok!") << std::endl;
+  DEB_out(1, 
+    (all_conditions_ok? ": All conditions ok!" : ": Some conditions not ok!") << "\n")
   return norm;
 }
 
@@ -1413,17 +1407,19 @@ verify_constrained_system_round(
               const VectorIT& _idx_to_round,
 	      double          _eps)
 {
+  DEB_enter_func;
   // test integer roundings
-  std::cerr << __FUNCTION__ << ": Testing integer roundings..." << std::endl;
+  DEB_out(2,": Testing integer roundings...\n");
   bool all_roundings_ok = true;
 
   for( unsigned int i = 0; i < _idx_to_round.size(); ++i)
     if(fabs(ROUND(_x[_idx_to_round[i]])-_x[_idx_to_round[i]]) != 0.0)
     {
-      std::cerr << "\t Warning: variable " << _idx_to_round[i] << " was not rounded!" << " Value is = " << _x[_idx_to_round[i]] << std::endl;
+      DEB_out(1, "\t Warning: variable " << _idx_to_round[i] << " was not rounded!" 
+        << " Value is = " << _x[_idx_to_round[i]] << "\n")
       all_roundings_ok = false;
     }
-  std::cerr << __FUNCTION__ << (all_roundings_ok? ": All roundings ok!" : ": Some roundings not ok!") << std::endl;
+  DEB_out(1, (all_roundings_ok? ": All roundings ok!" : ": Some roundings not ok!") << "\n")
 
   // also test other stuff
   return verify_constrained_system(_conditions, _A, _x, _rhs, _eps);

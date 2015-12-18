@@ -41,10 +41,8 @@
 
 #include "Eigen_Tools.hh"
 #include <queue>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/Utils/VSToolsT.hh>
 #include <gmm/gmm.h>
-
 
 //== NAMESPACES ===============================================================
 
@@ -644,7 +642,7 @@ void eigen_to_cholmod_dense( const MatrixT& _A, cholmod_dense* &_AC, cholmod_com
 
 }*/
 
-	/*
+        /*
 // convert a gmm col-sparse matrix into an eigen sparse matrix
 template<class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E)
@@ -779,7 +777,7 @@ void gmm_to_eigen( const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
 }
 
 //=============================================================================
-} // namespace COMISO
+} // namespace COMISO_EIGEN
 //=============================================================================
 
 //=============================================================================

@@ -1,0 +1,3 @@
+[submodule "Base"]
+	path = Base
+	url = https://www.graphics.rwth-aachen.de:9000/CoMISo/Base.git

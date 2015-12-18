@@ -31,6 +31,10 @@ echo "============================="
 echo "Starting Build: "
 echo "============================="
 
+#########################################
+# Base Submodule init
+git submodule init
+git submodule update
 
 
 #########################################

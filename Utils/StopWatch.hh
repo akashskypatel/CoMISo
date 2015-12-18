@@ -29,8 +29,15 @@
 //
 //=============================================================================
 
-
-
+// (C) Copyright 2015 by Autodesk, Inc.
+//
+// The information contained herein is confidential, proprietary
+// to Autodesk,  Inc.,  and considered a trade secret as defined
+// in section 499C of the penal code of the State of California.
+// Use of  this information  by  anyone  other  than  authorized
+// employees of Autodesk, Inc.  is granted  only under a written
+// non-disclosure agreement,  expressly  prescribing  the  scope
+// and manner of such use.
 
 //=============================================================================
 //
@@ -38,127 +45,19 @@
 //
 //=============================================================================
 
-
-#ifndef COMISO_STOPWATCH_HH
-#define COMISO_STOPWATCH_HH
-
-
-//== INCLUDES =================================================================
-
-
-#ifdef _WIN32
-
-#include <windows.h>
-
-#else // Linux
-
-#include <sys/time.h>
-
-#endif
-
-#include <CoMISo/Config/CoMISoDefines.hh>
-
-
-//== NAMESPACES ===============================================================
-
+#ifndef COMISO_STOPWATCH_HH_INCLUDED
+#define COMISO_STOPWATCH_HH_INCLUDED
+//=============================================================================
+// This header is now a shortcut to Base::StopWatch
+#include <Base/Utils/StopWatch.hh>
 
 namespace COMISO {
 
+  typedef Base::StopWatch StopWatch;
 
-//== CLASS DEFINITION =========================================================
+}
 
+// We can expose Base::StopWatch as COMISO::StopWatch if needed
 
-
-/** \class StopWatch StopWatch.hh <COMISO/Utils/StopWatch.hh>
-
-    This class can be used for measuring time, providing milli-second
-    precision by using the gettimeofday() funtion.  It is e.g. used in
-    the class COMISO::TimedTracing.
-**/
-
-class COMISODLLEXPORT StopWatch
-{
-public:
-
-  /// Constructor
-  StopWatch() {
-    #ifdef _WIN32
-      QueryPerformanceFrequency(&freq_);
-    #else
-      starttime_.tv_sec = starttime_.tv_usec = 0;
-      endtime_.tv_sec   = endtime_.tv_usec = 0;
-    #endif
-  }
-
-  /// Destructor
-  ~StopWatch() {}
-
-  /// Start time measurement
-  void start() {
-    #ifdef _WIN32
-      QueryPerformanceCounter(&starttime_);
-    #else
-      starttime_ = current_time();
-    #endif
-  }
-
-  /// Restart, return time elapsed until now.
-  double restart() {
-    #ifdef _WIN32
-      QueryPerformanceCounter(&endtime_);
-    #else
-      endtime_ = current_time();
-    #endif
-
-    double t = elapsed();
-    start();
-    return t;
-  }
-
-  /// Stop time measurement, return time.
-  double stop() {
-    #ifdef _WIN32
-      QueryPerformanceCounter(&endtime_);
-    #else
-      endtime_ = current_time();
-    #endif
-
-    return elapsed();
-  }
-
-  /// Get the total time in milli-seconds (watch has to be stopped).
-  double elapsed() const {
-    #ifdef _WIN32
-      return (double)(endtime_.QuadPart - starttime_.QuadPart)
-	   / (double)freq_.QuadPart * 1000.0f;
-    #else
-      return ((endtime_.tv_sec  - starttime_.tv_sec )*1000.0 +
-	      (endtime_.tv_usec - starttime_.tv_usec)*0.001);
-    #endif
-  }
-
-
-private:
-
-  #ifdef _WIN32
-    LARGE_INTEGER starttime_, endtime_;
-    LARGE_INTEGER freq_;
-  #else // Linux
-    timeval current_time() const {
-      struct timeval tv;
-      gettimeofday(&tv, 0);
-      return tv;
-    }
-
-    timeval starttime_, endtime_;
-  #endif
-
-};
-
-
+#endif//COMISO_STOPWATCH_HH_INCLUDED
 //=============================================================================
-} // namespace COMISO
-//=============================================================================
-#endif // COMISO_STOPWATCH_HH defined
-//=============================================================================
-

@@ -12,6 +12,9 @@
 
 //=============================================================================
 #include "CBCSolver.hh"
+#include <CoMISo/Utils/CoMISoError.hh>
+
+#include <Base/Debug/DebTime.hh>
 
 // For Branch and bound
 #include "OsiSolverInterface.hpp"
@@ -49,6 +52,8 @@
 namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
+
+namespace {
 
 // These are some "tweaks" for the CbcModel, copied from some sample Cbc code
 // I have no idea what any of these do!
@@ -127,6 +132,7 @@ void model_tweak(CbcModel& model)
   //model.addHeuristic(&heuristic2);
 }
 
+#define TRACE_CBT(DESCR, EXPR) DEB_line(7, DESCR << ": " << EXPR)
 #define P(X) ((X).data())
 
 bool solve_impl(
@@ -136,10 +142,11 @@ bool solve_impl(
   const double                              _time_limit
 )
 {
-  if(!_problem->constant_hessian())
-    std::cerr << "Warning: CBCSolver received a problem with non-constant hessian!" << std::endl;
-  if(!_problem->constant_gradient())
-    std::cerr <<  "Warning: CBCSolver received a problem with non-constant gradient!" << std::endl;
+  DEB_enter_func;
+  DEB_warning_if(!_problem->constant_hessian(), 1,
+                 "CBCSolver received a problem with non-constant hessian!");
+  DEB_warning_if(!_problem->constant_gradient(), 1,
+                 "CBCSolver received a problem with non-constant gradient!");
 
   const int n_rows = _constraints.size(); // Constraints #
   const int n_cols = _problem->n_unknowns(); // Unknowns #
@@ -162,8 +169,8 @@ bool solve_impl(
 
   for (size_t i = 0; i < _constraints.size();  ++i)
   {
-    if(!_constraints[i]->is_linear())
-      std::cerr << "Warning: constraint " << i << " is non-linear" << std::endl;
+    DEB_error_if(!_constraints[i]->is_linear(), "constraint " << i <<
+                 " is non-linear");
 
     NConstraintInterface::SVectorNC gc;
     _constraints[i]->eval_gradient(P(x), gc);
@@ -189,8 +196,8 @@ bool solve_impl(
       break;
     }
 
-//    TRACE_CBT("Constraint " << i << " is of type " <<
-//              _constraints[i]->constraint_type() << "; RHS val", b);
+    TRACE_CBT("Constraint " << i << " is of type " <<
+              _constraints[i]->constraint_type() << "; RHS val", b);
   }
 
   //----------------------------------------------
@@ -199,15 +206,15 @@ bool solve_impl(
 
   std::vector<double> objective(n_cols);
   _problem->eval_gradient(P(x), P(objective));
-//  TRACE_CBT("Objective linear term", objective);
+  TRACE_CBT("Objective linear term", objective);
 
   const double c = _problem->eval_f(P(x));
   // ICGB: Where does objective constant term go in CBC?
   // MCM: I could not find this either: It is possible that the entire model
   // can be translated to accomodate the constant (if != 0). Ask DB!
-//  DEB_error_if(c > FLT_EPSILON, "Ignoring a non-zero constant objective term: "
-//               << c);
-//  TRACE_CBT("Objective constant term", c);
+  DEB_error_if(c > FLT_EPSILON, "Ignoring a non-zero constant objective term: "
+               << c);
+  TRACE_CBT("Objective constant term", c);
 
   // CBC Problem initialize
   OsiClpSolverInterface si;
@@ -257,7 +264,7 @@ bool solve_impl(
   model.branchAndBound();
 
   const double* solution = model.bestSolution();
-//  THROW_OUTCOME_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
+  //COMISO_THROW_if(solution == nullptr, UNSPECIFIED_CBC_EXCEPTION);
 
   // store if solution available
   if(solution != 0)
@@ -271,6 +278,8 @@ bool solve_impl(
 
 #undef P
 
+}//namespace 
+
 bool CBCSolver::solve(
   NProblemInterface*                        _problem,
   const std::vector<NConstraintInterface*>& _constraints,
@@ -278,6 +287,7 @@ bool CBCSolver::solve(
   const double                              _time_limit
 )
 {
+  DEB_enter_func;
   bool valid_solution = false;
   try
   {
@@ -285,8 +295,8 @@ bool CBCSolver::solve(
   }
   catch (CoinError& ce)
   {
-    std::cerr << "CoinError code = " << ce.message() << std::endl;
-//    THROW_OUTCOME(UNSPECIFIED_CBC_EXCEPTION);
+    DEB_warning(1, "CoinError code = " << ce.message() << "]\n");
+    //COMISO_THROW(UNSPECIFIED_CBC_EXCEPTION);
   }
   return valid_solution;
 }

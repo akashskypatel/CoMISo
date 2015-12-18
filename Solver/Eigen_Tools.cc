@@ -22,64 +22,40 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-#ifndef VSTOOLS_HH
-#define VSTOOLS_HH
 
 
-//== FORWARDDECLARATIONS ======================================================
+//=============================================================================
+//
+//  CLASS Eigen_Tools - IMPLEMENTATION
+//
+//=============================================================================
+
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include "Eigen_ToolsT.cc"
+#if COMISO_EIGEN3_AVAILABLE
 
 //== NAMESPACES ===============================================================
 
-//== DEFINITION =========================================================
+namespace COMISO_EIGEN {
 
-/** These functions are required for Visual Studio to work around missing 
-    functions. Basic equivalent functions for double exist in the float 
-    header but are named different. So this wrapper makes them standard compatible.
-    */
-#ifdef WIN32
-#include <math.h>
-#include <float.h>
+// this explicit instantiation does not match the call signature due to the 
+// partial specializations above
+//template void gmm_to_eigen(const gmm::csc_matrix<double>&,
+//  Eigen::SparseMatrix<double>& );
 
-namespace std {
-
-inline int isnan(double x)
+// hence make a partial specialization that matches the main template signature
+void gmm_to_eigen(const gmm::csc_matrix<double>& _G, 
+  Eigen::SparseMatrix<double>& _E)
 {
-  return _isnan(x);
-} 
-
-// Which idiot defines isinf as a macro somewhere?
-#ifdef isinf 
-#undef isinf
-#endif
-
-inline int isinf(double x)
-{
-  return !_finite(x);
-} 
-
-inline int isfinite(double x)
-{
-  return _finite(x);
+  // and redirect to the above partial specialization 
+  gmm_to_eigen< double, Eigen::SparseMatrix<double> > (_G, _E);
 }
 
-}// namespace std
-
-inline double nearbyint(double x) 
-{
-   if( x >= 0.0 )
-     return int( x + 0.5 );
-   else
-     return int( x - 0.5 );
-}
-
-inline double round ( double _value ) 
-{
-   return nearbyint(_value);
-}
-
-#endif //WIN32
 
 //=============================================================================
-#endif // VSTOOLS_HH defined
+} // namespace COMISO_EIGEN
 //=============================================================================
 
+//=============================================================================
+#endif // COMISO_EIGEN3_AVAILABLE
+//=============================================================================

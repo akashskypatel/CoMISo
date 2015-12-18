@@ -29,7 +29,12 @@ elif [ "$LANGUAGE" == "C++11" ]; then
 fi  
 
 #########################################
+# Base Submodule init
+git submodule init
+git submodule update
 
+
+#########################################
 # Make release build folder
 if [ ! -d build-release-$BUILDPATH ]; then
   mkdir build-release-$BUILDPATH

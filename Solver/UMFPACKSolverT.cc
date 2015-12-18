@@ -28,6 +28,7 @@
 
 #include "UMFPACKSolver.hh"
 
+#if COMISO_SUITESPARSE_AVAILABLE
 
 namespace COMISO {
 
@@ -78,3 +79,4 @@ bool UMFPACKSolver::update_system_gmm( const GMM_MatrixT& _mat)
 
 
 }
+#endif//COMISO_SUITESPARSE_AVAILABLE

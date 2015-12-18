@@ -108,7 +108,7 @@ public:
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
 	 *  */
-  inline void solve(
+  void solve(
     CSCMatrix& _A, 
     Vecd&      _x, 
     Vecd&      _rhs, 
@@ -127,13 +127,12 @@ public:
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
 	 *  */
-  template<class CMatrixT>
-  void solve( 
-    CMatrixT& _B,
-    Vecd&     _x,
-    Veci&     _to_round,
-    bool      _fixed_order = false );
-
+  //template<class CMatrixT>
+  //void solve( 
+  //  CMatrixT& _B,
+  //  Vecd&     _x,
+  //  Veci&     _to_round,
+  //  bool      _fixed_order = false );
 
   /// show Qt-Options-Dialog for setting algorithm parameters
   /** Requires a Qt Application running and COMISO_GUI to be defined */
