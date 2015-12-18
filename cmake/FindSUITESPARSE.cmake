@@ -18,8 +18,23 @@ ENDIF (SUITESPARSE_INCLUDE_DIRS)
 if( WIN32 )
    # Find cholmod part of the suitesparse library collection
 
+  if ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*Win64" )
+    SET(VS_SEARCH_PATH "c:/libs/vs2012/x64/")
+  elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*" )
+    SET(VS_SEARCH_PATH "c:/libs/vs2012/x32/")
+  elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*Win64" )
+    SET(VS_SEARCH_PATH "c:/libs/vs2013/x64/")
+  elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*" )
+    SET(VS_SEARCH_PATH "c:/libs/vs2013/x32/")
+  endif()
+ 
+
    FIND_PATH( CHOLMOD_INCLUDE_DIR cholmod.h
-              PATHS "C:\\libs\\win32\\SuiteSparse\\Include"  )
+              PATHS "C:\\libs\\win32\\SuiteSparse\\Include"
+         	    "${VS_SEARCH_PATH}"
+	      PATH_SUFFIXES suitesparse-4.2.1/include/suitesparse
+		                suitesparse-metis-for-windows-1.2.2-install/include/suitesparse
+		      )
 
    # Add cholmod include directory to collection include directories
    IF ( CHOLMOD_INCLUDE_DIR )
@@ -29,12 +44,36 @@ if( WIN32 )
 
    # find path suitesparse library
    FIND_PATH( SUITESPARSE_LIBRARY_DIRS 
-	         amd.lib
-               PATHS "C:\\libs\\win32\\SuiteSparse\\libs" )
-
+	       NAMES amd.lib libamd.lib
+               PATHS "C:\\libs\\win32\\SuiteSparse\\libs" 
+                     "${VS_SEARCH_PATH}"
+               PATH_SUFFIXES suitesparse-4.2.1/lib64
+                             suitesparse-metis-for-windows-1.2.2-install/lib64			   )
+				
    # if we found the library, add it to the defined libraries
    IF ( SUITESPARSE_LIBRARY_DIRS )
-	list ( APPEND SUITESPARSE_LIBRARIES optimized;amd;optimized;camd;optimized;ccolamd;optimized;cholmod;optimized;colamd;optimized;metis;optimized;spqr;optimized;umfpack;debug;amdd;debug;camdd;debug;ccolamdd;debug;cholmodd;debug;spqrd;debug;umfpackd;debug;colamdd;debug;metisd;optimized;blas;optimized;libf2c;optimized;lapack;debug;blasd;debug;libf2cd;debug;lapackd )
+     if ( EXISTS "${SUITESPARSE_LIBRARY_DIRS}/libamd.lib" )
+	   list ( APPEND SUITESPARSE_LIBRARIES optimized;libamd;optimized;libcamd;optimized;libccolamd;optimized;libcholmod;optimized;libcolamd;optimized;metis;optimized;libspqr;optimized;libumfpack;debug;libamdd;debug;libcamdd;debug;libccolamdd;debug;libcholmodd;debug;libspqrd;debug;libumfpackd;debug;libcolamdd;debug;metisd;optimized;liblapack;debug;liblapackd;optimized;suitesparseconfig;debug;suitesparseconfigd )
+     else()   
+	   list ( APPEND SUITESPARSE_LIBRARIES optimized;amd;optimized;camd;optimized;ccolamd;optimized;cholmod;optimized;colamd;optimized;metis;optimized;spqr;optimized;umfpack;debug;amdd;debug;camdd;debug;ccolamdd;debug;cholmodd;debug;spqrd;debug;umfpackd;debug;colamdd;debug;metisd;optimized;blas;optimized;libf2c;optimized;lapack;debug;blasd;debug;libf2cd;debug;lapackd )
+	 endif()  
+	 
+     if(EXISTS  "${CHOLMOD_INCLUDE_DIR}/SuiteSparseQR.hpp")
+	   SET(SUITESPARSE_SPQR_VALID TRUE CACHE BOOL "SuiteSparseSPQR valid")
+     else()
+	   SET(SUITESPARSE_SPQR_VALID FALSE CACHE BOOL "SuiteSparseSPQR valid")
+     endif()
+
+     if(SUITESPARSE_SPQR_VALID)
+	   FIND_LIBRARY( SUITESPARSE_SPQR_LIBRARY
+		             NAMES libspqr
+		             PATHS ${SUITESPARSE_LIBRARY_DIRS} )
+	   IF (SUITESPARSE_SPQR_LIBRARY)			
+	     list ( APPEND SUITESPARSE_LIBRARIES optimized;libspqr;debug;libspqrd)
+	   ENDIF (SUITESPARSE_SPQR_LIBRARY)
+     endif()
+	 
+	 
    ENDIF( SUITESPARSE_LIBRARY_DIRS )  
 
 else( WIN32 )
@@ -63,7 +102,8 @@ else( WIN32 )
                       NAMES libcholmod.so 
                       PATHS /usr/lib 
                             /usr/lib64 
-                            /usr/local/lib )
+                            /usr/local/lib
+			    /usr/lib/x86_64-linux-gnu )
 
 
    ENDIF(APPLE)
@@ -78,7 +118,7 @@ else( WIN32 )
    IF ( SUITESPARSE_LIBRARY_DIR )
 
        # Skipped, as this is set for apple in the block above
-       if (NOT APPLE)
+#       if (NOT APPLE)
          list ( APPEND SUITESPARSE_LIBRARIES amd)
          list ( APPEND SUITESPARSE_LIBRARIES btf)
          list ( APPEND SUITESPARSE_LIBRARIES camd)
@@ -90,7 +130,7 @@ else( WIN32 )
          list ( APPEND SUITESPARSE_LIBRARIES klu)
  #       list ( APPEND SUITESPARSE_LIBRARIES spqr)
          list ( APPEND SUITESPARSE_LIBRARIES umfpack)
-       endif()
+ #      endif()
    
        # Metis and spqr are optional
        FIND_LIBRARY( SUITESPARSE_METIS_LIBRARY
