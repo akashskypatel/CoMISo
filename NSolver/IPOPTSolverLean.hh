@@ -11,7 +11,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_IPOPTLEAN_AVAILABLE
+#if COMISO_IPOPT_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -87,7 +87,7 @@ private:
 } // namespace COMISO
 
 //=============================================================================
-#endif // COMISO_IPOPTLEAN_AVAILABLE
+#endif // COMISO_IPOPT_AVAILABLE
 //=============================================================================
 #endif // ACG_IPOPTSOLVER_HH defined
 //=============================================================================
