@@ -138,7 +138,7 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
   // 2. factorize A -> Q,R,P
   SuiteSparse_long econ = m;
   cholmod_sparse *Q, *R;
-//  UF_long *P = new UF_long[n];
+//  SuiteSparse_long *P = new SuiteSparse_long[n];
   SuiteSparse_long *P;
   double rank = SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
   std::cerr << "factorization finished" << std::endl;
@@ -165,16 +165,16 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
 
 
   //// [Q,R,E] = qr(A), returning Q as a sparse matrix
-//template <typename Entry> UF_long SuiteSparseQR     // returns rank(A) estimate
+//template <typename Entry> SuiteSparse_long SuiteSparseQR     // returns rank(A) estimate
 //(
 //    int ordering,           // all, except 3:given treated as 0:fixed
 //    double tol,
-//    UF_long econ,
+//    SuiteSparse_long econ,
 //    cholmod_sparse *A,      // m-by-n sparse matrix
 //    // outputs
 //    cholmod_sparse **Q,     // m-by-e sparse matrix where e=max(econ,rank(A))
 //    cholmod_sparse **R,     // e-by-n sparse matrix
-//    UF_long **E,            // permutation of 0:n-1, NULL if identity
+//    SuiteSparse_long **E,            // permutation of 0:n-1, NULL if identity
 //    cholmod_common *cc      // workspace and parameters
 //) ;
 
@@ -209,7 +209,7 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
   // 2. factorize A -> Q,R,P
   SuiteSparse_long econ = m;
   cholmod_sparse *Q, *R;
-//  UF_long *P = new UF_long[n];
+//  SuiteSparse_long *P = new SuiteSparse_long[n];
   SuiteSparse_long *P;
   double rank = SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
   std::cerr << "factorization finished" << std::endl;
@@ -237,16 +237,16 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
 
 
   //// [Q,R,E] = qr(A), returning Q as a sparse matrix
-//template <typename Entry> UF_long SuiteSparseQR     // returns rank(A) estimate
+//template <typename Entry> SuiteSparse_long SuiteSparseQR     // returns rank(A) estimate
 //(
 //    int ordering,           // all, except 3:given treated as 0:fixed
 //    double tol,
-//    UF_long econ,
+//    SuiteSparse_long econ,
 //    cholmod_sparse *A,      // m-by-n sparse matrix
 //    // outputs
 //    cholmod_sparse **Q,     // m-by-e sparse matrix where e=max(econ,rank(A))
 //    cholmod_sparse **R,     // e-by-n sparse matrix
-//    UF_long **E,            // permutation of 0:n-1, NULL if identity
+//    SuiteSparse_long **E,            // permutation of 0:n-1, NULL if identity
 //    cholmod_common *cc      // workspace and parameters
 //) ;
 
