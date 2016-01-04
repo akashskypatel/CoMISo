@@ -65,7 +65,7 @@ public:
   virtual void   store_result ( const double* _x               );
 
   // advanced properties
-  virtual bool   constant_hessian();
+  virtual bool   constant_hessian() const;
 
   // advanced usage
   void add_to_gradient   ( const double* _x, double* _g, const double _c);
