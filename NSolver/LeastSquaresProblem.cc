@@ -199,7 +199,7 @@ store_result ( const double* _x               )
 
 bool
 LeastSquaresProblem::
-constant_hessian()
+constant_hessian() const
 {
   for(unsigned int i=0; i<terms_.size(); ++i)
   {
