@@ -478,22 +478,34 @@ void NProblemIPOPT::finalize_solution(SolverReturn status,
                               IpoptCalculatedQuantities* ip_cq)
 {
   DEB_enter_func;
-  DEB_out(1, "Quantanizing the IPOPT solution\n");
-  std::vector<double> x_qnt(n);
-    for( Index i=0; i<n; ++i)
-      x_qnt[i] = _QNT(x[i]);
-
-
 
   // problem knows what to do
-  problem_->store_result(&x_qnt[0]);
+  problem_->store_result(x);
 
   if(store_solution_)
   {
     x_.resize(n);
     for( Index i=0; i<n; ++i)
-      x_[i] = x_qnt[i];
+      x_[i] = x[i];
   }
+
+
+//  DEB_out(1, "Quantanizing the IPOPT solution\n");
+//  std::vector<double> x_qnt(n);
+//    for( Index i=0; i<n; ++i)
+//      x_qnt[i] = _QNT(x[i]);
+//
+//
+//
+//  // problem knows what to do
+//  problem_->store_result(&x_qnt[0]);
+//
+//  if(store_solution_)
+//  {
+//    x_.resize(n);
+//    for( Index i=0; i<n; ++i)
+//      x_[i] = x_qnt[i];
+//  }
 }
 
 
