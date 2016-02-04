@@ -49,7 +49,7 @@ if (WIN32)
       find_library( IPOPT_LIBRARY_DEBUG
                     Ipopt ipoptd libipoptd IpOpt-vc10d
                     PATHS "C:\\libs\\Ipopt-3.8.2\\lib\\win32\\debug" 
-			  "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
+			  "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
 			  "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
 		   )
 
