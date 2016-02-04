@@ -40,8 +40,9 @@ find_library( COINUTILS_LIBRARY_DEBUG
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\coinutils\\lib"
+                    "C:\\libs\\cbc\\lib"
                     "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
-                    "C:\\libs\\cbc\\lib""${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/lib"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/lib"
               )
               
 find_library( COINUTILS_LIBRARY_RELEASE
@@ -51,8 +52,9 @@ find_library( COINUTILS_LIBRARY_RELEASE
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\coinutils\\lib"
+                    "C:\\libs\\cbc\\lib"
                     "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
-                    "C:\\libs\\cbc\\lib""${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/lib"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/CoinUtils/lib"
               )    
               
 include(SelectLibraryConfigurations)
