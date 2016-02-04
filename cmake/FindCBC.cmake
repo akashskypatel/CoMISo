@@ -31,8 +31,8 @@ find_path(CBC_INCLUDE_DIR
           PATHS "$ENV{CBC_DIR}/include/coin"
                  "/usr/include/coin"
                  "C:\\libs\\cbc\\include"
-				 "${VS_SEARCH_PATH}CBC-2.9.7/Cbc/include"
-				 "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/include"
+		 "${VS_SEARCH_PATH}CBC-2.9.7/Cbc/include"
+		 "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/include"
           )
 
 find_library( CBC_LIBRARY_DEBUG
@@ -41,7 +41,7 @@ find_library( CBC_LIBRARY_DEBUG
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Debug"
+		    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
                     "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
@@ -51,7 +51,7 @@ find_library( CBC_SOLVER_LIBRARY_DEBUG
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Debug"
+	            "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
                     "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
@@ -61,7 +61,7 @@ find_library( CBC_LIBRARY_RELEASE
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Release"
+ 		    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
                     "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
@@ -72,7 +72,7 @@ find_library( CBC_SOLVER_LIBRARY_RELEASE
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Release"
+	  	    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
                     "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
