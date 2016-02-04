@@ -29,7 +29,7 @@ find_path(METIS_INCLUDE_DIR NAMES metis.h
            "/usr/include/metis"
            "/opt/local/include"
            "/opt/local/include/metis"
-           "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/include/metis"
+           "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/metis"
    )
    
 find_library( METIS_LIBRARY_RELEASE
