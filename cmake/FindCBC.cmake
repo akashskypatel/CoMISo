@@ -11,9 +11,12 @@ elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*" )
   SET(VS_SEARCH_PATH "c:/libs/vs2012/x32/")
 elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*Win64" )
   SET(VS_SEARCH_PATH "c:/libs/vs2013/x64/")
+  SET(VS_SUBDIR "x64-v120-")
 elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*" )
   SET(VS_SEARCH_PATH "c:/libs/vs2013/x32/")
 endif()
+
+
 
 if (CBC_INCLUDE_DIR)
   # in cache already
@@ -28,6 +31,7 @@ find_path(CBC_INCLUDE_DIR
           PATHS "$ENV{CBC_DIR}/include/coin"
                  "/usr/include/coin"
                  "C:\\libs\\cbc\\include"
+				 "${VS_SEARCH_PATH}CBC-2.9.7/Cbc/include"
 				 "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/include"
           )
 
@@ -37,17 +41,18 @@ find_library( CBC_LIBRARY_DEBUG
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-                                        "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
+					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Debug"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 find_library( CBC_SOLVER_LIBRARY_DEBUG
               NAMES CbcSolverd libCbcSolverd
-
               PATHS "$ENV{CBC_DIR}/lib"
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-                                        "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
+					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Debug"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 find_library( CBC_LIBRARY_RELEASE
@@ -56,7 +61,8 @@ find_library( CBC_LIBRARY_RELEASE
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-                                        "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
+					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Release"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 find_library( CBC_SOLVER_LIBRARY_RELEASE
@@ -66,7 +72,8 @@ find_library( CBC_SOLVER_LIBRARY_RELEASE
                     "/usr/lib"
                     "/usr/lib/coin"
                     "C:\\libs\\cbc\\lib"
-                                        "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
+					"${VS_SEARCH_PATH}CBC-2.9.7/Cbc/lib/${VS_SUBDIR}Release"
+                    "${VS_SEARCH_PATH}CBC-2.9.4/Cbc/lib"
               )
 
 
