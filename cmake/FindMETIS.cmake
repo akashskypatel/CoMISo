@@ -10,21 +10,46 @@ if (METIS_INCLUDE_DIR)
   SET(METIS_FIND_QUIETLY TRUE)
 endif (METIS_INCLUDE_DIR)
 
+# I8 Search paths for windows libraries
+if ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*Win64" )
+  SET(VS_SEARCH_PATH "c:/libs/vs2012/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*" )
+  SET(VS_SEARCH_PATH "c:/libs/vs2012/x32/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*Win64" )
+  SET(VS_SEARCH_PATH "c:/libs/vs2013/x64/")
+  SET(VS_SUBDIR "x64-v120-")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*" )
+  SET(VS_SEARCH_PATH "c:/libs/vs2013/x32/")
+endif()
+
+
 find_path(METIS_INCLUDE_DIR NAMES metis.h
      PATHS "$ENV{IPOPT_HOME}/ThirdParty/Metis/metis-4.0/Lib/"
            "/usr/include/"
            "/usr/include/metis"
            "/opt/local/include"
            "/opt/local/include/metis"
-           
-           
+           "${VS_SEARCH_PATH}CBC-2.9.7/Metis/include"
    )
    
-find_library( METIS_LIBRARY 
+find_library( METIS_LIBRARY_RELEASE
               metis coinmetis
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
-                    "/opt/local/lib" )
+                    "/opt/local/lib"
+                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
+                    )
+                    
+find_library( METIS_LIBRARY_DEBUG
+              metisd coinmetisd
+              PATHS "$ENV{IPOPT_HOME}/lib/"
+                    "/usr/lib"
+                    "/opt/local/lib" 
+                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
+                    )      
+                    
+include(SelectLibraryConfigurations)
+select_library_configurations( METIS )                   
 
 set(METIS_INCLUDE_DIRS "${METIS_INCLUDE_DIR}" )
 set(METIS_LIBRARIES "${METIS_LIBRARY}" )
