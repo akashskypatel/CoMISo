@@ -78,8 +78,8 @@ find_library( CBC_SOLVER_LIBRARY_RELEASE
 
 
   include(SelectLibraryConfigurations)
-  select_library_configurations( CBC_LIBRARY )
-  select_library_configurations( CBC_SOLVER_LIBRARY )
+  select_library_configurations( CBC )
+  select_library_configurations( CBC_SOLVER )
 
 set(CBC_INCLUDE_DIRS "${CBC_INCLUDE_DIR}" )
 set(CBC_LIBRARIES "${CBC_LIBRARY};${CBC_SOLVER_LIBRARY}" )
