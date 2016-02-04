@@ -29,7 +29,7 @@ find_path(METIS_INCLUDE_DIR NAMES metis.h
            "/usr/include/metis"
            "/opt/local/include"
            "/opt/local/include/metis"
-           "${VS_SEARCH_PATH}CBC-2.9.7/Metis/include"
+           "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/include/metis"
    )
    
 find_library( METIS_LIBRARY_RELEASE
@@ -37,7 +37,7 @@ find_library( METIS_LIBRARY_RELEASE
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
                     "/opt/local/lib"
-                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )
                     
 find_library( METIS_LIBRARY_DEBUG
@@ -45,7 +45,7 @@ find_library( METIS_LIBRARY_DEBUG
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
                     "/opt/local/lib" 
-                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )      
                     
 include(SelectLibraryConfigurations)

@@ -25,21 +25,21 @@ endif()
 find_path(MUMPS_INCLUDE_DIR NAMES dmumps_c.h
      PATHS "$ENV{IPOPT_HOME}/ThirdParty/Mumps/MUMPS/include/"
            "/usr/include/"
-           "${VS_SEARCH_PATH}CBC-2.9.7/Metis/include"   
+           "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/mumps/include/"
    )
    
 find_library( MUMPS_LIBRARY_DEBUG
               dmumpsd coinmumpsd coinmumpscd
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
-                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Debug"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )
                     
 find_library( MUMPS_LIBRARY_RELEASE
               dmumps coinmumps coinmumpsc
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
-                    "${VS_SEARCH_PATH}CBC-2.9.7/lib/${VS_SUBDIR}Release"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )                    
 
 include(SelectLibraryConfigurations)
