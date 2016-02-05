@@ -23,7 +23,7 @@
 \*===========================================================================*/ 
 
 #ifndef COMISODLLEXPORT
-	#ifdef WIN32
+	#if defined(WIN32) || defined(_WIN32)
 		#ifdef COMISODLL
 			#ifdef USECOMISO
 				#define COMISODLLEXPORT __declspec(dllimport)
