@@ -126,4 +126,4 @@ find_package_handle_standard_args(OSI  DEFAULT_MSG
 
 mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY OSI_CBC_LIBRARY OSI_CLP_LIBRARY OSI_LIBRARIES)
 
-endif(OSI_FOUND)
+endif(NOT OSI_FOUND)
