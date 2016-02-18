@@ -159,7 +159,7 @@ private:
   PTree ptree_;
 };
 
-Debug::Stream& operator<<(Debug::Stream& _ds, const JsonTokens::PTree& _ptree)
+Base::IOutputStream& operator<<(Base::IOutputStream& _ds, const JsonTokens::PTree& _ptree)
 {
   std::stringstream os;
   boost::property_tree::json_parser::write_json(os, _ptree);
@@ -167,7 +167,7 @@ Debug::Stream& operator<<(Debug::Stream& _ds, const JsonTokens::PTree& _ptree)
   return _ds;
 }
 
-Debug::Stream& operator<<(Debug::Stream& _ds, const JsonTokens& _json_tkns)
+Base::IOutputStream& operator<<(Base::IOutputStream& _ds, const JsonTokens& _json_tkns)
 {
   return _ds << _json_tkns.ptree();
 }
