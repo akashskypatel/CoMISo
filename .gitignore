@@ -1,0 +1,11 @@
+#
+# Windows
+#
+$RECYCLE.BIN/
+*.lnk
+Desktop.ini
+ehthumbs.db
+Thumbs.db
+
+### OSX ###
+.DS_Store
