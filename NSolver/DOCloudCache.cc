@@ -18,9 +18,14 @@
 
 #include <boost/filesystem.hpp>
 
-#include <windows.h>
+// include windows.h without some of the excess
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h> 
 
-DEB_module("DOCloudCache")
+// ... and undefine ERROR 
+#ifdef ERROR 
+#undef ERROR
+#endif//ERROR
 
 //== NAMESPACES ===============================================================
 namespace COMISO {
