@@ -12,6 +12,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolverLean.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LeastSquaresProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraint.hh
@@ -58,6 +59,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolverLean.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LeastSquaresProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraint.cc

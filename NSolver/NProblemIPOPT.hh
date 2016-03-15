@@ -21,7 +21,6 @@
 #include "IPOPTSolverLean.hh"
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
-#include "NProblemIPOPT.hh"
 #include "NConstraintInterface.hh"
 #include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
@@ -321,6 +320,6 @@ private:
 //=============================================================================
 #endif // COMISO_IPOPTLEAN_AVAILABLE
 //=============================================================================
-#endif // ACG_IPOPTSOLVER_HH defined
+#endif // COMISO_NPROBLEMIPOPT_HH
 //=============================================================================
 
