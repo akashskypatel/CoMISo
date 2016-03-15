@@ -362,11 +362,11 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
     // which integer type?
     if(_AC.itype == CHOLMOD_LONG)
     {
-      UF_long* P((UF_long*)_AC.p);
-      UF_long* I((UF_long*)_AC.i);
+      SuiteSparse_long* P((SuiteSparse_long*)_AC.p);
+      SuiteSparse_long* I((SuiteSparse_long*)_AC.i);
 
-      for(UF_long i=0; i<(UF_long)_AC.ncol; ++i)
-        for(UF_long j= P[i]; j< P[i+1]; ++j)
+      for(SuiteSparse_long i=0; i<(SuiteSparse_long)_AC.ncol; ++i)
+        for(SuiteSparse_long j= P[i]; j< P[i+1]; ++j)
           //_A( I[j], i) += X[j]; // += really needed?
           triplets.push_back( Triplet( I[j], i, X[j]));
     }
@@ -387,11 +387,11 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
     // which integer type?
     if(_AC.itype == CHOLMOD_LONG)
     {
-      UF_long* P((UF_long*)_AC.p);
-      UF_long* I((UF_long*)_AC.i);
+      SuiteSparse_long* P((SuiteSparse_long*)_AC.p);
+      SuiteSparse_long* I((SuiteSparse_long*)_AC.i);
 
-      for(UF_long i=0; i<(UF_long)_AC.ncol; ++i)
-        for(UF_long j=P[i]; j<P[i+1]; ++j)
+      for(SuiteSparse_long i=0; i<(SuiteSparse_long)_AC.ncol; ++i)
+        for(SuiteSparse_long j=P[i]; j<P[i+1]; ++j)
         {
           //_A(I[j], i) += X[j];
           triplets.push_back( Triplet( I[j], i, X[j]));
@@ -451,8 +451,8 @@ void eigen_to_cholmod( const MatrixT& _A, cholmod_sparse* &_AC, cholmod_common* 
   if( _long_int) // long int version
   {
     std::vector<double> values;
-    std::vector<UF_long> rowind;
-    std::vector<UF_long> colptr;
+    std::vector<SuiteSparse_long> rowind;
+    std::vector<SuiteSparse_long> colptr;
 
     // get data of gmm matrix
     COMISO_EIGEN::get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
@@ -461,14 +461,14 @@ void eigen_to_cholmod( const MatrixT& _A, cholmod_sparse* &_AC, cholmod_common* 
     _AC = cholmod_l_allocate_sparse(m,n,values.size(),true,true,_sparsity_type,CHOLMOD_REAL, _common);
 
     // copy data to cholmod matrix
-    for(UF_long i=0; i<(UF_long)values.size(); ++i)
+    for(SuiteSparse_long i=0; i<(SuiteSparse_long)values.size(); ++i)
     {
       ((double*) (_AC->x))[i] = values[i];
-      ((UF_long*)(_AC->i))[i] = rowind[i];
+      ((SuiteSparse_long*)(_AC->i))[i] = rowind[i];
     }
 
-    for(UF_long i=0; i<(UF_long)colptr.size(); ++i)
-      ((UF_long*)(_AC->p))[i] = colptr[i];
+    for(SuiteSparse_long i=0; i<(SuiteSparse_long)colptr.size(); ++i)
+      ((SuiteSparse_long*)(_AC->p))[i] = colptr[i];
   }
   else // int version
   {
@@ -523,11 +523,11 @@ void cholmod_to_eigen_dense( const cholmod_dense& _AC, MatrixT& _A)
     // which integer type?
     if(_AC.itype == CHOLMOD_LONG)
     {
-      UF_long* P((UF_long*)_AC.p);
-      UF_long* I((UF_long*)_AC.i);
+      SuiteSparse_long* P((SuiteSparse_long*)_AC.p);
+      SuiteSparse_long* I((SuiteSparse_long*)_AC.i);
 
-      for(UF_long i=0; i<(UF_long)_AC.ncol; ++i)
-        for(UF_long j= P[i]; j< P[i+1]; ++j)
+      for(SuiteSparse_long i=0; i<(SuiteSparse_long)_AC.ncol; ++i)
+        for(SuiteSparse_long j= P[i]; j< P[i+1]; ++j)
           //_A( I[j], i) += X[j]; // += really needed?
           triplets.push_back( Triplet( I[j], i, X[j]));
     }
@@ -548,11 +548,11 @@ void cholmod_to_eigen_dense( const cholmod_dense& _AC, MatrixT& _A)
     // which integer type?
     if(_AC.itype == CHOLMOD_LONG)
     {
-      UF_long* P((UF_long*)_AC.p);
-      UF_long* I((UF_long*)_AC.i);
+      SuiteSparse_long* P((SuiteSparse_long*)_AC.p);
+      SuiteSparse_long* I((SuiteSparse_long*)_AC.i);
 
-      for(UF_long i=0; i<(UF_long)_AC.ncol; ++i)
-        for(UF_long j=P[i]; j<P[i+1]; ++j)
+      for(SuiteSparse_long i=0; i<(SuiteSparse_long)_AC.ncol; ++i)
+        for(SuiteSparse_long j=P[i]; j<P[i+1]; ++j)
         {
           //_A(I[j], i) += X[j];
           triplets.push_back( Triplet( I[j], i, X[j]));
@@ -599,8 +599,8 @@ void eigen_to_cholmod_dense( const MatrixT& _A, cholmod_dense* &_AC, cholmod_com
   if( _long_int) // long int version
   {
     std::vector<double> values;
-    std::vector<UF_long> rowind;
-    std::vector<UF_long> colptr;
+    std::vector<SuiteSparse_long> rowind;
+    std::vector<SuiteSparse_long> colptr;
 
     // get data of gmm matrix
     COMISO_EIGEN::get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
@@ -609,14 +609,14 @@ void eigen_to_cholmod_dense( const MatrixT& _A, cholmod_dense* &_AC, cholmod_com
     _AC = cholmod_l_allocate_sparse(m,n,values.size(),true,true,_sparsity_type,CHOLMOD_REAL, _common);
 
     // copy data to cholmod matrix
-    for(UF_long i=0; i<(UF_long)values.size(); ++i)
+    for(SuiteSparse_long i=0; i<(SuiteSparse_long)values.size(); ++i)
     {
       ((double*) (_AC->x))[i] = values[i];
-      ((UF_long*)(_AC->i))[i] = rowind[i];
+      ((SuiteSparse_long*)(_AC->i))[i] = rowind[i];
     }
 
-    for(UF_long i=0; i<(UF_long)colptr.size(); ++i)
-      ((UF_long*)(_AC->p))[i] = colptr[i];
+    for(SuiteSparse_long i=0; i<(SuiteSparse_long)colptr.size(); ++i)
+      ((SuiteSparse_long*)(_AC->p))[i] = colptr[i];
   }
   else // int version
   {

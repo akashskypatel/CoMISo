@@ -203,7 +203,7 @@ MISolver::solve_cplex(
   }
   catch (IloException& e)
   {
-    DEB_warning(2, "CPLEX Concert exception caught: " << e )
+    DEB_warning(2, "CPLEX Concert exception caught: " << e.getMessage() )
   }
   catch (...)
   {

@@ -118,7 +118,7 @@ public:
 protected:
   double* P(std::vector<double>& _v)
   {
-    if (!_v.empty())
+    if( !_v.empty())
       return ((double*)&_v[0]);
     else
       return 0;

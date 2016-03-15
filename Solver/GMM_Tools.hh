@@ -270,7 +270,7 @@ void gmm_to_cholmod( const MatrixT&  _A,
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_GMM_TOOLS_C)
 #define COMISO_GMM_TOOLS_TEMPLATES
-#include "GMM_Tools.cc"
+#include "GMM_ToolsT.cc"
 #endif
 //=============================================================================
 #endif // GMM_GMM_TOOLS_HH defined
