@@ -1281,34 +1281,3 @@ void gmm_to_cholmod( const MatrixT& _A, cholmod_sparse* &_AC, cholmod_common* _c
 //=============================================================================
 } // namespace COMISO_GMM
 //=============================================================================
-
-#include <CoMISo/Config/GmmTypes.hh>
-#include <CoMISo/Config/StdTypes.hh>
-
-// explicit instantiation
-
-namespace COMISO_GMM
-{
-using namespace COMISO_STD;
-
-template void factored_to_quadratic(WSRowMatrix&, WSColMatrix&, DoubleVector&);
-template void factored_to_quadratic(WSRowMatrix&, RSColMatrix&, DoubleVector&);
-template void factored_to_quadratic(RSRowMatrix&, RSColMatrix&, DoubleVector&);
-
-template void eliminate_csc_vars(const IntVector&, const DoubleVector&,
-  CSCMatrix&, DoubleVector&, DoubleVector&);
-
-template void eliminate_csc_vars2(const IntVector&, const DoubleVector&,
-  CSCMatrix&, DoubleVector&, DoubleVector&);
-
-template void eliminate_csc_vars2(const UIntVector&, const DoubleVector&,
-  CSCMatrix&, DoubleVector&, DoubleVector&);
-
-template double residuum_norm(CSCMatrix& , DoubleVector&, DoubleVector&);
-
-template void fix_var_csc_symmetric(const unsigned int, const double,
-  CSCMatrix&, DoubleVector&, DoubleVector&);
-
-template void eliminate_vars_idx(const IntVector&, IntVector&, int, int);
-
-}//namespace COMISO_GMM

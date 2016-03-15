@@ -26,6 +26,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterface.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceADOLC.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceDCO.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/NProblemIPOPT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/QuadraticProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT.hh
@@ -67,6 +68,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/NPDerivativeChecker.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraints.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterface.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/NProblemIPOPTc.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TAOSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TapeIDSingleton.cc
