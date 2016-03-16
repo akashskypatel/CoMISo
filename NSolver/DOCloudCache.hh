@@ -1,3 +1,5 @@
+// (C) Copyright 2015 by Autodesk, Inc.
+
 #ifndef COMISO_DOCloudCache_HH
 #define COMISO_DOCloudCache_HH
 
