@@ -1,3 +1,5 @@
+// (C) Copyright 2015 by Autodesk, Inc.
+
 //== INCLUDES =================================================================
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================

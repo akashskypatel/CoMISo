@@ -1,3 +1,5 @@
+// (C) Copyright 2015 by Autodesk, Inc.
+
 //=============================================================================
 //
 //  namespace COMISO::DOcloud IMPLEMENTATION
