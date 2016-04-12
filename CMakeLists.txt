@@ -65,6 +65,17 @@ if(Boost_FOUND)
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES    ${Boost_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${Boost_LIBRARIES} )
+
+  option(Boost_USE_STATIC_LIBS "Link with static Boost libraries" ON)
+  mark_as_advanced(Boost_USE_STATIC_LIBS)
+  if(Boost_USE_STATIC_LIBS)
+    set(Boost_USE_STATIC_LIBS ON)
+  else()
+      # One must add -DBOOST_ALL_DYN_LINK to DEFINITIONS to use Boost
+      # auto-link with shared libraries.
+    add_definitions( -DBOOST_ALL_DYN_LINK )
+  endif()
+
 else()
   set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 0" )
   message (STATUS "Boost not found!")
