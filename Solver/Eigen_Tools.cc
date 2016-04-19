@@ -34,27 +34,8 @@
 #include "Eigen_ToolsT.cc"
 #if COMISO_EIGEN3_AVAILABLE
 
-//== NAMESPACES ===============================================================
-
-namespace COMISO_EIGEN {
-
-// this explicit instantiation does not match the call signature due to the 
-// partial specializations above
-//template void gmm_to_eigen(const gmm::csc_matrix<double>&,
-//  Eigen::SparseMatrix<double>& );
-
-// hence make a partial specialization that matches the main template signature
-void gmm_to_eigen(const gmm::csc_matrix<double>& _G, 
-  Eigen::SparseMatrix<double>& _E)
-{
-  // and redirect to the above partial specialization 
-  gmm_to_eigen< double, Eigen::SparseMatrix<double> > (_G, _E);
-}
-
-
-//=============================================================================
-} // namespace COMISO_EIGEN
-//=============================================================================
+template void COMISO_EIGEN::gmm_to_eigen(const gmm::csc_matrix<double>&,
+  Eigen::SparseMatrix<double>& );
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE

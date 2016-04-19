@@ -11,10 +11,21 @@
 #include "DOCloudConfig.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
 
+#include <Base/Code/Quality.hh>
 #include <Base/Debug/DebUtils.hh>
 
-#include <boost/property_tree/ptree.hpp>
+// Suppress warning: "decorated name length exceeded, name was truncated".
+// This can not happen inside a LOW_CODE_QUALITY_SECTION because the warning is
+// issued at the end of the unit module compilation.
+// The problem is caused by boost property tree.
+#pragma warning (disable: 4503)
+
+LOW_CODE_QUALITY_SECTION_BEGIN
+// Suppress warning:not all control paths return a value in
+// property_tree::..standard_callbacks<..>::new_tree
+#pragma warning (disable: 4715)
 #include <boost/property_tree/json_parser.hpp>
+LOW_CODE_QUALITY_SECTION_END
 
 #include <iostream>
 #include <thread>         
@@ -529,5 +540,6 @@ double Job::solution(std::vector<double>& _x) const
 
 } // namespace DOcloud 
 } // namespace COMISO 
+
 
 #endif // COMISO_DOCLOUD_AVAILABLE
