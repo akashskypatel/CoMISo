@@ -51,14 +51,6 @@
 
 //== FORWARDDECLARATIONS ======================================================
 
-namespace gmm
-{
-template <typename VECT> class row_matrix;
-template <typename VECT> class col_matrix;
-template <typename T, int shift> struct csc_matrix;
-
-}
-
 //== NAMESPACES ===============================================================
 
 namespace COMISO_EIGEN
@@ -116,17 +108,10 @@ void eigen_to_cholmod( const MatrixT&  _A,
                      bool            _long_int      = false);
 #endif
 
-// convert a gmm col-sparse matrix of into an eigen sparse matrix
-template<class GMM_VectorT, class EIGEN_MatrixT>
-void gmm_to_eigen(const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E);
+// convert a gmm column-sparse matrix into an Eigen sparse matrix
+template <class GMM_MatrixT, class EIGEN_MatrixT>
+void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 
-// convert a gmm row-sparse matrix into an eigen sparse matrix
-template<class GMM_VectorT, class EIGEN_MatrixT>
-void gmm_to_eigen(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E);
-
-// convert a gmm col-sparse matrix into an eigen sparse matrix
-template<class GMM_RealT, class EIGEN_MatrixT>
-void gmm_to_eigen(const gmm::csc_matrix<GMM_RealT, 0>& _G, EIGEN_MatrixT& _E);
 
 //=============================================================================
 } // namespace COMISO_Eigen

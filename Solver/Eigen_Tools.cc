@@ -34,8 +34,16 @@
 #include "Eigen_ToolsT.cc"
 #if COMISO_EIGEN3_AVAILABLE
 
-template void COMISO_EIGEN::gmm_to_eigen(const gmm::csc_matrix<double>&,
-  Eigen::SparseMatrix<double>& );
+//== NAMESPACES ===============================================================
+
+namespace COMISO_EIGEN {
+
+template void gmm_to_eigen(const gmm::csc_matrix<double>&,
+  Eigen::SparseMatrix<double>&);
+
+//=============================================================================
+} // namespace COMISO_EIGEN
+//=============================================================================
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
