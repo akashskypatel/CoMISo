@@ -218,9 +218,9 @@ solve(
     miso_.show_options_dialog();
 
 
-  int nrows = gmm::mat_nrows(_A);
-  int ncols = gmm::mat_ncols(_A);
-  int ncons = gmm::mat_nrows(_constraints);
+  gmm::size_type nrows = gmm::mat_nrows(_A);
+  gmm::size_type ncols = gmm::mat_ncols(_A);
+  gmm::size_type ncons = gmm::mat_nrows(_constraints);
 
   DEB_out_if( _show_timings, 1, "Initital dimension: " << nrows << " x " << ncols 
                                << ", number of constraints: " << ncons
