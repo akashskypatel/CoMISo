@@ -43,9 +43,9 @@ int LinearConstraint::n_unknowns()
   return coeffs_.innerSize();
 }
 
-void LinearConstraint::resize(const unsigned int _n)
+  void LinearConstraint::resize(const std::size_t _n)
 {
-  if(coeffs_.innerSize() != (int)_n)
+  if(coeffs_.innerSize() != static_cast<std::ptrdiff_t>(_n))
   {
     // resize while maintaining all values in range
     SVectorNC coeffs_new(_n);

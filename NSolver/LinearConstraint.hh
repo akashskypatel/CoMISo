@@ -55,7 +55,7 @@ public:
 
   // resize coefficient vector = #unknowns
   // maintain all values in range
-  void  resize(const unsigned int _n);
+  void  resize(const std::size_t _n);
 
   // clear to zero constraint 0 =_type 0
   void  clear();

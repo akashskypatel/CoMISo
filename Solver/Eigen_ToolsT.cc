@@ -771,7 +771,8 @@ void gmm_to_eigen( const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
   }
 
   // generate eigen matrix
-  _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
+  _E = EIGEN_MatrixT( static_cast<int>(gmm::mat_nrows(_G)),
+                      static_cast<int>( gmm::mat_ncols(_G)));
   _E.setFromTriplets( triplets.begin(), triplets.end());
 #endif
 }
