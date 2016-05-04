@@ -589,7 +589,7 @@ make_constraints_independent_reordering(
   gmm::size_type nr = gmm::mat_nrows(_constraints);
   gmm::resize(rhs_update_table_.D_, nr, nr);
   gmm::clear(rhs_update_table_.D_);
-  for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
+  for(gmm::size_type i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
   //  Base::StopWatch sw;
   // number of variables

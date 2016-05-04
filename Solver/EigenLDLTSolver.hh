@@ -55,18 +55,18 @@
 namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
-class COMISODLLEXPORT EigenLDLTSolver
+class  EigenLDLTSolver
 {
 public:
 
     // _size is maximal size this instance can handle (smaller problems are possible!!!)
-  EigenLDLTSolver();
-  ~EigenLDLTSolver();
-    
+  COMISODLLEXPORT EigenLDLTSolver();
+  COMISODLLEXPORT ~EigenLDLTSolver();
+
+    COMISODLLEXPORT
     bool calc_system( const std::vector<int>&    _colptr,
 		      const std::vector<int>&    _rowind,
 		      const std::vector<double>& _values );
-
 
     template< class GMM_MatrixT>
     bool calc_system_gmm( const GMM_MatrixT& _mat);
@@ -74,11 +74,10 @@ public:
     template< class Eigen_MatrixT>
     bool calc_system_eigen( const Eigen_MatrixT& _mat);
 
-
+    COMISODLLEXPORT
     bool update_system( const std::vector<int>&    _colptr,
  			const std::vector<int>&    _rowind,
  			const std::vector<double>& _values );
-
 
     template< class GMM_MatrixT>
     bool update_system_gmm( const GMM_MatrixT& _mat);
@@ -86,13 +85,16 @@ public:
     template< class Eigen_MatrixT>
     bool update_system_eigen( const Eigen_MatrixT& _mat);
 
-
+    COMISODLLEXPORT
     bool solve ( double *             _x0, double *             _b);
 
+    COMISODLLEXPORT
     bool solve ( std::vector<double>& _x0, std::vector<double>& _b);
 
+    COMISODLLEXPORT
     bool& show_timings();
     
+    COMISODLLEXPORT
     int dimension();
     
 private:
