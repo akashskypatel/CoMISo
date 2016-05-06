@@ -108,9 +108,9 @@ void eigen_to_cholmod( const MatrixT&  _A,
                      bool            _long_int      = false);
 #endif
 
-// convert a gmm column-sparse matrix into an eigen sparse matrix
-template<class GMM_MatrixT, class EIGEN_MatrixT>
-void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
+// convert a gmm column-sparse matrix into an Eigen sparse matrix
+template <class GMM_MatrixT, class EIGEN_MatrixT>
+void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 
 
 //=============================================================================
