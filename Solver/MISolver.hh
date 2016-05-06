@@ -97,7 +97,7 @@ public:
   MISolver();
 
   /// Destructor
-  ~MISolver() {}
+  ~MISolver();
 
 
   /// Compute greedy approximation to a mixed integer problem.
