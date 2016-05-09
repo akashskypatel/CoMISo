@@ -766,7 +766,7 @@ void gmm_to_eigen( const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
      CIter it  = gmm::vect_const_begin( col );
      CIter ite = gmm::vect_const_end( col );
      for ( ; it!=ite; ++it )
-       triplets.push_back( Triplet( it.index(), i, *it));
+       triplets.push_back( Triplet( static_cast<int>(it.index()), i, *it));
 
   }
 

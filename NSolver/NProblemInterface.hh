@@ -59,7 +59,7 @@ public:
   virtual ~NProblemInterface();
 
   // problem definition
-  virtual int    n_unknowns   (                                ) = 0;
+  virtual std::size_t n_unknowns   (                                ) = 0;
   virtual void   initial_x    (       double* _x               ) = 0;
   virtual double eval_f       ( const double* _x               ) = 0;
   virtual void   eval_gradient( const double* _x, double*    _g) = 0;

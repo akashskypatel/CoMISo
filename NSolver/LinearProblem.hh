@@ -43,13 +43,13 @@ class COMISODLLEXPORT LinearProblem : public NProblemInterface
 public:
   
   /// Default constructor
-  LinearProblem (unsigned int _dimension = 0);
+  LinearProblem (std::size_t _dimension = 0);
  
   /// Destructor
   virtual ~LinearProblem();
 
   // problem definition
-  virtual int    n_unknowns();
+  virtual std::size_t    n_unknowns();
 
   virtual void   initial_x(double* _x);
 

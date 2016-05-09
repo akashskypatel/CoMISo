@@ -50,7 +50,7 @@ solve(NProblemInterface*                  _problem,
   //----------------------------------------------
   // 2. setup constraints
   //----------------------------------------------
-  int n = _problem->n_unknowns();
+  std::size_t n = _problem->n_unknowns();
   gmm::row_matrix< gmm::wsvector< double > > C(_constraints.size(), n+1);
   int n_constraints = 0;
 

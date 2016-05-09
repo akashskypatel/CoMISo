@@ -34,7 +34,7 @@ std::vector<double>& FiniteElementProblem::x()
 }
 
 
-int    FiniteElementProblem::n_unknowns()
+std::size_t    FiniteElementProblem::n_unknowns()
 {
   return n_;
 }

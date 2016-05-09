@@ -66,7 +66,7 @@ eval_term(const unsigned int _i)
 //-----------------------------------------------------------------------------
 
 
-int
+std::size_t
 LeastSquaresProblem::
 n_unknowns   (                                )
 {

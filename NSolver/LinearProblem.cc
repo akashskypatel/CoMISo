@@ -8,7 +8,7 @@
 
 namespace COMISO {
 
-LinearProblem::LinearProblem (unsigned int _dimension)
+  LinearProblem::LinearProblem (std::size_t _dimension)
 {
   // resize and zero elements
   coeffs_.resize(_dimension,0.0);
@@ -19,7 +19,7 @@ LinearProblem::~LinearProblem()
 {
 }
 
-int  LinearProblem::n_unknowns()
+std::size_t  LinearProblem::n_unknowns()
 {
   return coeffs_.size();
 }

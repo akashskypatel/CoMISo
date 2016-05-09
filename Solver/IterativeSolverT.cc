@@ -60,7 +60,7 @@ gauss_seidel_local( typename gmm::csc_matrix<Real>&  _A,
       res_i   += ( *it ) * _x[it.index()];
       x_i_new -= ( *it ) * _x[it.index()];
       if( it.index() != cur_i)
-  	i_temp.push_back( it.index() );
+  	i_temp.push_back( static_cast<int>(it.index()) );
       else
   	diag = *it;
     }
@@ -135,7 +135,7 @@ gauss_seidel_local2( typename gmm::csc_matrix<Real>&  _A,
 	res_i   += ( *it ) * _x[it.index()];
 	x_i_new -= ( *it ) * _x[it.index()];
 	if( it.index() != cur_i)
-	  i_temp.push_back( it.index() );
+	  i_temp.push_back( static_cast<int>(it.index()) );
 	else
 	  diag = *it;
       }

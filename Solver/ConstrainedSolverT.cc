@@ -593,6 +593,7 @@ make_constraints_independent_reordering(
 
   //  Base::StopWatch sw;
   // number of variables
+  // AF: Why is n_vars signed? Can it be zero? Later we subtract 1
   int n_vars = gmm::mat_ncols(_constraints);
 
   // TODO Check: HZ added 14.08.09 
@@ -857,10 +858,10 @@ update_constraint_gcd( RMatrixT& _constraints,
 
   for( ; row_it!=row_end; ++row_it)
   {
-    int cur_j = row_it.index();
+    gmm::size_type cur_j = row_it.index();
     _constraints(_row_i, cur_j) = (*row_it)/i_gcd;
   }
-  int elim_coeff = abs(_constraints(_row_i, _elim_j));
+  gmm::size_type elim_coeff = abs(_constraints(_row_i, _elim_j));
   DEB_error_if( elim_coeff != 1, "elimination coefficient " << elim_coeff 
     << " will (most probably) NOT lead to an integer solution!")
   return true;
