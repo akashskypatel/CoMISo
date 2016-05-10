@@ -226,7 +226,7 @@ public:
   std::vector<double>& x();
 
   // problem definition
-  virtual std::size_t    n_unknowns   (                                );
+  virtual int    n_unknowns   (                                );
 
   virtual void   initial_x    (       double* _x               );
 

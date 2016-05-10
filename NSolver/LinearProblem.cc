@@ -19,9 +19,9 @@ LinearProblem::~LinearProblem()
 {
 }
 
-std::size_t  LinearProblem::n_unknowns()
+int LinearProblem::n_unknowns()
 {
-  return coeffs_.size();
+  return static_cast<int>(coeffs_.size());
 }
 
 void LinearProblem::initial_x(double* _x)

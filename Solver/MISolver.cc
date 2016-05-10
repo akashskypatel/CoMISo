@@ -496,7 +496,7 @@ MISolver::solve_iterative(
     ColIter ite = gmm::vect_const_end  ( col);
     for(; it!=ite; ++it)
       if(it.index() != i_best)
-        neigh_i.push_back(it.index());
+        neigh_i.push_back(static_cast<int>(it.index()));
 
     // eliminate var
     COMISO_GMM::fix_var_csc_symmetric(i_best, rnd_x, _A, xr, _rhs);
@@ -715,7 +715,7 @@ void MISolver::solve_multiple_rounding(
       ColIter ite = gmm::vect_const_end  ( col);
       for(; it!=ite; ++it)
 	if(it.index() != (unsigned int)i_cur)
-	  neigh_i.push_back(it.index());
+	  neigh_i.push_back(static_cast<int>(it.index()));
 
       // eliminate var
       COMISO_GMM::fix_var_csc_symmetric( i_cur, rnd_x, _A, xr, _rhs);

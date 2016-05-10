@@ -34,7 +34,7 @@ std::vector<double>& FiniteElementProblem::x()
 }
 
 
-std::size_t    FiniteElementProblem::n_unknowns()
+int    FiniteElementProblem::n_unknowns()
 {
   return n_;
 }
@@ -72,7 +72,7 @@ void FiniteElementProblem::eval_hessian ( const double* _x, SMatrixNP& _H)
     fe_sets_[i]->accumulate_hessian(_x, triplets_);
 
   // set data
-  _H.resize(n_unknowns(), n_unknowns());
+  _H.resize(static_cast<int>(n_unknowns()), static_cast<int>(n_unknowns()));
   _H.setFromTriplets(triplets_.begin(), triplets_.end());
 }
 

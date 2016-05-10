@@ -754,7 +754,7 @@ void eliminate_vars_idx( const std::vector<IntegerT >&     _evar,
    // precompute update
    IntegerT2 range = _range;
    if( range == -1 )
-     range = _idx.size();
+     range = static_cast<int>(_idx.size()); // AF: what can an IntegerT2 be?
    std::vector<int> update_map( range );
 
    typename std::vector<IntegerT>::iterator cur_var = evar.begin();
