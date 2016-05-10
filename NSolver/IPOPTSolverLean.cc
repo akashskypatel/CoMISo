@@ -322,7 +322,7 @@ void IPOPTSolverLean::solve(
     ++cur_pass;
 
     DEB_warning(2, "*************** could not find feasible point after "
-      << _max_passes-1 << " -> solving with all lazy constraints...\n");
+      << _max_passes-1 << " -> solving with all lazy constraints...");
     for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
       if(!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
