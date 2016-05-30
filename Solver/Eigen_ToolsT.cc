@@ -286,7 +286,6 @@ bool is_symmetric( const MatrixT& _A)
 template< class Eigen_MatrixT, class IntT >
 void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_MatrixT& _A)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   typedef typename Eigen_MatrixT::Scalar Scalar;
 
   int m = _QR.innerSize();
@@ -326,7 +325,6 @@ void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_M
     }
   }
   _A.setFromTriplets( triplets.begin(), triplets.end());
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -337,7 +335,6 @@ void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_M
 template<class MatrixT>
 void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   // initialize dimensions
   typedef typename MatrixT::Scalar Scalar;
   typedef Eigen::Triplet< Scalar > Triplet;
@@ -421,7 +418,6 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
     }
   }
   _A.setFromTriplets( triplets.begin(), triplets.end());
-#endif
 }
 
 
@@ -642,12 +638,11 @@ void eigen_to_cholmod_dense( const MatrixT& _A, cholmod_dense* &_AC, cholmod_com
 
 }*/
 
-        /*
+/*
 // convert a gmm col-sparse matrix into an eigen sparse matrix
 template<class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
   typedef typename gmm::linalg_traits<GMM_MatrixT>::const_sub_col_type ColT;
@@ -672,15 +667,28 @@ void gmm_to_eigen( const GMM_MatrixT& _G, EIGEN_MatrixT& _E)
   // generate eigen matrix
   _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
   _E.setFromTriplets( triplets.begin(), triplets.end());
-#endif
 }
 */
 
+/*!
+This unusual approach to implement the different partial specializations for the
+template gmm_to_eigen() function was forced by the MS VC2015 migration: The VC
+linker is unable to match the explicitly instantiated template partial
+specializations. In previous versions (VS2012, VS2013) we were able to work 
+around this by partially specializing the function for the template arguments 
+we needed. This no longer works.
+
+Using a separate function name (gmm_to_eigen_impl::f()) for the partial 
+specializations we work around the MSVC linker limitations. Now the interface 
+function gmm_to_eigen no longer has any partial specializations, instead the 
+partial specializations are confined to gmm_to_eigen_impl::f().
+*/
+namespace gmm_to_eigen_impl {
+
 // convert a gmm col-sparse matrix into an eigen sparse matrix
-template<class GMM_VectorT, class EIGEN_MatrixT>
-void gmm_to_eigen( const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
+template <class GMM_VectorT, class EIGEN_MatrixT>
+void f(const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
   typedef typename gmm::col_matrix<GMM_VectorT> GMM_MatrixT;
@@ -706,15 +714,12 @@ void gmm_to_eigen( const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
   // generate eigen matrix
   _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
   _E.setFromTriplets( triplets.begin(), triplets.end());
-#endif
 }
 
-
 // convert a gmm row-sparse matrix into an eigen sparse matrix
-template<class GMM_VectorT, class EIGEN_MatrixT>
-void gmm_to_eigen( const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
+template <class GMM_VectorT, class EIGEN_MatrixT>
+void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
   typedef typename gmm::row_matrix<GMM_VectorT> GMM_MatrixT;
@@ -740,14 +745,12 @@ void gmm_to_eigen( const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
   // generate eigen matrix
   _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
   _E.setFromTriplets( triplets.begin(), triplets.end());
-#endif
 }
 
 // convert a gmm col-sparse matrix into an eigen sparse matrix
-template<class GMM_RealT, class EIGEN_MatrixT>
-void gmm_to_eigen( const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
+template <class GMM_RealT, class EIGEN_MatrixT>
+void f(const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
 {
-#ifdef COMISO_EIGEN3_AVAILABLE
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
   typedef typename gmm::csc_matrix<GMM_RealT,0> GMM_MatrixT;
@@ -767,14 +770,20 @@ void gmm_to_eigen( const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
      CIter ite = gmm::vect_const_end( col );
      for ( ; it!=ite; ++it )
        triplets.push_back( Triplet( static_cast<int>(it.index()), i, *it));
-
   }
 
   // generate eigen matrix
   _E = EIGEN_MatrixT( static_cast<int>(gmm::mat_nrows(_G)),
                       static_cast<int>( gmm::mat_ncols(_G)));
   _E.setFromTriplets( triplets.begin(), triplets.end());
-#endif
+}
+
+}//namespace gmm_to_eigen_impl
+
+template<class GMM_MatrixT, class EIGEN_MatrixT>
+void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E)
+{
+  gmm_to_eigen_impl::f(_G, _E);
 }
 
 //=============================================================================
