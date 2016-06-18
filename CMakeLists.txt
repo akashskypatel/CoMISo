@@ -12,7 +12,6 @@ include_directories(${PROJECT_SOURCE_DIR}/..)
 inc_3p_dir(Eigen)
 inc_3p_dir(Gmm)
 inc_3p_dir(IPOPT)
-inc_3p_dir(libcurl)
 inc_3p_dir(Boost)
 
 # message(STATUS "${SOURCES}" "${HEADES}")
