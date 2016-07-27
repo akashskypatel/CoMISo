@@ -528,6 +528,9 @@ endif (COMISO_BUILD_EXAMPLES )
 # Only create install target, when we are building CoMISo standalone
 if(${PROJECT_NAME} MATCHES "CoMISo")
 
+  # Install library
+  install (TARGETS CoMISo RUNTIME DESTINATION lib )
+
   # Install Header Files
   install(DIRECTORY . 
           DESTINATION include/CoMISo
