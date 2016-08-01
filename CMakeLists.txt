@@ -522,7 +522,10 @@ if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_finite_element/CMakeLists.txt" )
 	add_subdirectory (Examples/small_finite_element)
   endif()
-
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_AQP/CMakeLists.txt" )
+	add_subdirectory (Examples/small_AQP)
+  endif()
+  
 endif (COMISO_BUILD_EXAMPLES )
 
 # Only create install target, when we are building CoMISo standalone
