@@ -67,7 +67,7 @@ public:
   {
     double d = 1.0/((-_x[0]+_x[2])*(-_x[1]+_x[5])-(-_x[0]+_x[4])*(-_x[1]+_x[3]));
 
-    const VecV g;
+    VecV g;
     g[0] = d*(-_x[5]+_x[3]);
     g[1] = d*(-_x[2]+_x[4]);
     g[2] = d*(-_x[1]+_x[5]);
@@ -161,21 +161,37 @@ int main(void)
 
   TriangleOrientationLogBarrierElement::VecI tidx;
   tidx << 0,1,2,3,4,5;
-  fe_set.instances().add_element(tidx, SimpleElement::VecC(1.0));
+  const TriangleOrientationLogBarrierElement::VecC c(1.0);
+  fe_set.instances().add_element(tidx, c);
 
   // second set for boundary conditions
   COMISO::FiniteElementSet<SimpleElement2> fe_set2;
-  fe_set2.instances().add_element(SimpleElement2::VecI(0), SimpleElement2VecV(0));
-  fe_set2.instances().add_element(SimpleElement2::VecI(1), SimpleElement2VecV(0));
-  fe_set2.instances().add_element(SimpleElement2::VecI(2), SimpleElement2VecV(2));
-  fe_set2.instances().add_element(SimpleElement2::VecI(3), SimpleElement2VecV(0));
-  fe_set2.instances().add_element(SimpleElement2::VecI(4), SimpleElement2VecV(1));
-  fe_set2.instances().add_element(SimpleElement2::VecI(5), SimpleElement2VecV(1));
+  SimpleElement2::VecI idx;
+  SimpleElement2::VecV c2;
+  idx[0] = 0; c2[0] =  0.0; fe_set2.instances().add_element(idx, c2);
+  idx[0] = 1; c2[0] =  0.0; fe_set2.instances().add_element(idx, c2);
+  idx[0] = 2; c2[0] =  2.0; fe_set2.instances().add_element(idx, c2);
+  idx[0] = 3; c2[0] =  0.0; fe_set2.instances().add_element(idx, c2);
+  idx[0] = 4; c2[0] =  1.0; fe_set2.instances().add_element(idx, c2);
+  idx[0] = 5; c2[0] = -2.0; fe_set2.instances().add_element(idx, c2);
+//  fe_set2.instances().add_element(SimpleElement2::VecI(1), SimpleElement2::VecV(0));
+//  fe_set2.instances().add_element(SimpleElement2::VecI(2), SimpleElement2::VecV(2));
+//  fe_set2.instances().add_element(SimpleElement2::VecI(3), SimpleElement2::VecV(0));
+//  fe_set2.instances().add_element(SimpleElement2::VecI(4), SimpleElement2::VecV(1));
+//  fe_set2.instances().add_element(SimpleElement2::VecI(5), SimpleElement2::VecV(1));
 
   // then create finite element problem and add sets
   COMISO::FiniteElementProblem fe_problem(3);
   fe_problem.add_set(&fe_set );
   fe_problem.add_set(&fe_set2);
+
+  // set initial values
+  fe_problem.x()[0] = 0.0;
+  fe_problem.x()[1] = 0.0;
+  fe_problem.x()[2] = 2.0;
+  fe_problem.x()[3] = 0.0;
+  fe_problem.x()[4] = 1.0;
+  fe_problem.x()[5] = 1.0;
 
   std::cout << "---------- 2) (optional for debugging) Check derivatives of problem..." << std::endl;
   COMISO::NPDerivativeChecker npd;
