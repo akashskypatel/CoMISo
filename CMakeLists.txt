@@ -532,7 +532,10 @@ endif (COMISO_BUILD_EXAMPLES )
 if(${PROJECT_NAME} MATCHES "CoMISo")
 
   # Install library
-  install (TARGETS CoMISo RUNTIME DESTINATION lib )
+  install (TARGETS CoMISo 
+                   RUNTIME DESTINATION lib 
+                   LIBRARY DESTINATION lib
+                   ARCHIVE DESTINATION lib)
 
   # Install Header Files
   install(DIRECTORY . 
