@@ -45,6 +45,8 @@ public:
   virtual void accumulate_gradient( const double* _x , double* _g) = 0;
 
   virtual void accumulate_hessian ( const double* _x , std::vector<Triplet>& _triplets) = 0;
+
+  virtual double max_feasible_step( const double* _x, const double* _v) { return DBL_MAX;}
 };
 
 
@@ -192,6 +194,25 @@ public:
     }
   }
 
+  virtual double max_feasible_step( const double* _x, const double* _v)
+  {
+    double t = DBL_MAX;
+
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // get local x vector and v vector
+      for(unsigned int j=0; j<NV; ++j)
+      {
+        x_[j] = _x[instances_.index(i,j)];
+        g_[j] = _v[instances_.index(i,j)];
+      }
+      t = std::min(t, element_.max_feasible_step(x_, g_, instances_.c(i)));
+    }
+
+    return t;
+  }
+
+
 private:
 
   FiniteElementType element_;
@@ -235,6 +256,9 @@ public:
   virtual void   eval_gradient( const double* _x, double*    _g);
 
   virtual void   eval_hessian ( const double* _x, SMatrixNP& _H);
+
+  // return largest value t such that _x+t*_v is feasible
+  virtual double max_feasible_step( const double* _x, const double* _v);
 
 
   virtual void   store_result ( const double* _x );

@@ -62,6 +62,7 @@ public:
 
     // storage of acceleration vector and update vector dx and rhs of KKT system
     VectorD dx(n+m), rhs(n+m), g(n);
+    VectorD dx2(n);
     rhs.setZero();
 
     // resize temp vector for line search (and set to x1 to approx Hessian correctly if _quadratic problem is non-quadratic!)
@@ -81,7 +82,7 @@ public:
       double t_max  = std::min(theta, 0.5*_nonlinear_problem->max_feasible_step(x1.data(), dx.data()));
 
       // accelerate and update x1 and x2 (x1 will be accelerated point and x2 the previous x1)
-      x2 = x1 + dx.head(n)*t_max);
+      x2 = x1 + dx.head(n)*t_max;
       x2.swap(x1);
 
       // solve KKT
@@ -94,14 +95,25 @@ public:
 
       t_max  = std::min(1.0, 0.5*_nonlinear_problem->max_feasible_step(x1.data(), dx.data()));
       double rel_df(0.0);
-      double t = backtracking_line_search(_quadratic_problem, _nonlinear_problem, x1, g, dx, rel_df, t_max);
+      dx2 = dx.head(n);
+      double t = backtracking_line_search(_quadratic_problem, _nonlinear_problem, x1, g, dx2, rel_df, t_max);
 
       x1 += dx.head(n)*t;
 
+      std::cerr << "iter: " << iter << " eps = [f(x_old)-f(x_new)]/f(x_old) = " << rel_df << std::endl;
+
       // converged?
-      if(rel_df < _eps)
+      if(rel_df < eps_)
         break;
+
+      ++iter;
     }
+
+    // store result
+    _quadratic_problem->store_result(x1.data());
+
+    // return success
+    return 1;
   }
 
 protected:
@@ -150,7 +162,7 @@ protected:
 //      DEB_line(2, "-> re-try with regularized constraints...");
       std::cerr << "Eigen::SparseLU reported problem while factoring KKT system: " << lu_solver_.lastErrorMessage() << std::endl;
 
-      for(unsigned int i=0; i<m; ++i)
+      for( int i=0; i<m; ++i)
         trips.push_back(Triplet(n+i,n+i,1e-9));
 
       // create KKT matrix
