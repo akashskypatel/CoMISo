@@ -59,6 +59,8 @@ public:
     // number of constraints
     int m = _b.size();
 
+    std::cerr << "optmize via AQP with " << n << " unknowns and " << m << " linear constraints" << std::endl;
+
     // initialize vectors of unknowns (cache last two steps)
     VectorD x1(n);
     _quadratic_problem->initial_x(x1.data());
@@ -66,7 +68,6 @@ public:
 
     // storage of acceleration vector and update vector dx and rhs of KKT system
     VectorD dx(n+m), rhs(n+m), g(n);
-    VectorD dx2(n);
     rhs.setZero();
 
     // resize temp vector for line search (and set to x1 to approx Hessian correctly if _quadratic problem is non-quadratic!)
@@ -99,8 +100,7 @@ public:
 
       t_max  = std::min(1.0, 0.5*_nonlinear_problem->max_feasible_step(x1.data(), dx.data()));
       double rel_df(0.0);
-      dx2 = dx.head(n);
-      double t = backtracking_line_search(_quadratic_problem, _nonlinear_problem, x1, g, dx2, rel_df, t_max);
+      double t = backtracking_line_search(_quadratic_problem, _nonlinear_problem, x1, g, dx, rel_df, t_max);
 
       x1 += dx.head(n)*t;
 
@@ -128,7 +128,7 @@ protected:
   void pre_factorize(NProblemInterface* _quadratic_problem, const SMatrixD& _A, const VectorD& _b)
   {
     const int n  = _quadratic_problem->n_unknowns();
-    const int m  = _b.size();
+    const int m  = _A.rows();
     const int nf = n+m;
 
     // get hessian of quadratic problem
@@ -184,11 +184,15 @@ protected:
 
   double backtracking_line_search(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, VectorD& _x, VectorD& _g, VectorD& _dx, double& _rel_df, double _t_start = 1.0)
   {
+    int n = _x.size();
+
     // pre-compute objective
     double fx = _quadratic_problem->eval_f(_x.data()) + _nonlinear_problem->eval_f(_x.data());
 
     // pre-compute dot product
-    double gtdx = _g.transpose()*_dx;
+    double gtdx = _g.transpose()*_dx.head(n);
+
+    std::cerr << "Newton decrement: " << gtdx << std::endl;
 
     // current step size
     double t = _t_start;
@@ -197,7 +201,7 @@ protected:
     for(int i=0; i<100; ++i)
     {
       // current update
-      x_ls_ = _x + _dx*t;
+      x_ls_ = _x + _dx.head(n)*t;
       double fx_ls = _quadratic_problem->eval_f(x_ls_.data()) + _nonlinear_problem->eval_f(x_ls_.data());
 
       if( fx_ls <= fx + alpha_ls_*t*gtdx )
