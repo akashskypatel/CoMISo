@@ -14,6 +14,7 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Utils/StopWatch.hh>
 #include "NProblemInterface.hh"
 
 //== FORWARDDECLARATIONS ======================================================
@@ -50,6 +51,9 @@ public:
   // solve
   int solve(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, const SMatrixD& _A, const VectorD& _b)
   {
+    // time solution procedure
+    COMISO::StopWatch sw; sw.start();
+
     // number of unknowns
     int n = _quadratic_problem->n_unknowns();
     // number of constraints
@@ -111,6 +115,9 @@ public:
 
     // store result
     _quadratic_problem->store_result(x1.data());
+
+    double solution_time = sw.stop();
+    std::cerr << "Accelerated Quadratic Proxy finished in " << solution_time/1000.0 << "s" << std::endl;
 
     // return success
     return 1;
