@@ -1,4 +1,5 @@
 SET(my_headers
+   ${CMAKE_CURRENT_SOURCE_DIR}/AcceleratedQuadraticProxy.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/BoundConstraint.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.hh
