@@ -20,6 +20,7 @@
 #include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
 
+#include <Base/Debug/DebFile.hh>
 #include <Base/Debug/DebTime.hh>
 
 #include <gmm/gmm.h>
@@ -57,8 +58,16 @@ IPOPTSolverLean::IPOPTSolverLean()
   impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
 
-  // Block any output on cout and cerr from ipopt.
-  impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
+#if DEB_ON
+  const bool sprss_cnsl_out = !::Debug::File::File::modify().console_output_on();
+#else
+  const bool sprss_cnsl_out = true;
+#endif
+  if (sprss_cnsl_out)
+  {
+    // Block any output on cout and cerr from ipopt.
+    impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
+  }
 
 #ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
