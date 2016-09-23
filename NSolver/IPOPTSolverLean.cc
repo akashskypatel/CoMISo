@@ -57,6 +57,9 @@ IPOPTSolverLean::IPOPTSolverLean()
   impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
 
+  // Block any output on cout and cerr from ipopt.
+  impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
+
 #ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
   // with the default mumps solver
