@@ -59,11 +59,8 @@ IPOPTSolverLean::IPOPTSolverLean()
 #endif
 
 #if DEB_ON
-  const bool sprss_cnsl_out = !::Debug::File::File::modify().console_output_on();
-#else
-  const bool sprss_cnsl_out = true;
+  if (!::Debug::File::File::modify().console_output())
 #endif
-  if (sprss_cnsl_out)
   {
     // Block any output on cout and cerr from ipopt.
     impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
