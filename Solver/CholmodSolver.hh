@@ -46,6 +46,7 @@
 #include <vector>
 
 #include "cholmod.h"
+//#include "cholmod_matrixops.h"
 
 // typedef struct cholmod_common_struct cholmod_common;
 // typedef struct cholmod_factor_struct cholmod_factor;
@@ -68,12 +69,23 @@ public:
 		      const std::vector<int>&    _rowind, 
 		      const std::vector<double>& _values );
 
+    bool calc_system_prepare_pattern( const std::vector<int>&    _colptr,
+                                      const std::vector<int>&    _rowind,
+                                      const std::vector<double>& _values,
+                                      const std::vector<int>&    _colptr2,
+                                      const std::vector<int>&    _rowind2,
+                                      const std::vector<double>& _values2 );
+
 
     template< class GMM_MatrixT>
     bool calc_system_gmm( const GMM_MatrixT& _mat);
 
     template< class Eigen_MatrixT>
     bool calc_system_eigen( const Eigen_MatrixT& _mat);
+
+    // factorize matrix _mat by optimizing the permutation for the pattern of _mat_pattern
+    template< class Eigen_MatrixT>
+    bool calc_system_eigen_prepare_pattern( const Eigen_MatrixT& _mat, const Eigen_MatrixT& _mat_pattern);
 
 
     bool update_system( const std::vector<int>&    _colptr, 
@@ -86,6 +98,15 @@ public:
 
     template< class Eigen_MatrixT>
     bool update_system_eigen( const Eigen_MatrixT& _mat);
+
+
+    bool update_downdate_factor( const std::vector<int>&    _colptr,
+                                 const std::vector<int>&    _rowind,
+                                 const std::vector<double>& _values,
+                                 const bool                 _upd);
+
+    template< class Eigen_MatrixT>
+    bool update_downdate_factor_eigen( const Eigen_MatrixT& _mat, const bool _upd = true);
 
 
     bool solve ( double *             _x0, double *             _b);
