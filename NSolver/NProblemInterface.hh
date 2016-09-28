@@ -16,6 +16,7 @@
 //== INCLUDES =================================================================
 
 #include <iostream>
+#include <cfloat>
 
 #include <Eigen/Eigen>
 #if !(EIGEN_VERSION_AT_LEAST(3,1,0))
@@ -67,9 +68,9 @@ public:
   virtual void   store_result ( const double* _x               ) = 0;
 
   // advanced properties
-  virtual bool   constant_gradient() const { return false; }
-  virtual bool   constant_hessian()  const { return false; }
-
+  virtual bool   constant_gradient ()                                    const { return false; }
+  virtual bool   constant_hessian  ()                                    const { return false; }
+  virtual double max_feasible_step ( const double* _x, const double* _v)       { return DBL_MAX; }
 };
 
 
