@@ -20,7 +20,7 @@
 #include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
 
-#include <Base/Debug/DebFile.hh>
+#include <Base/Debug/DebConfig.hh>
 #include <Base/Debug/DebTime.hh>
 
 #include <gmm/gmm.h>
@@ -51,18 +51,17 @@ IPOPTSolverLean::IPOPTSolverLean()
   : impl_(new Impl)
 {
 
-  // Switch to HSL if available in Comiso
+  // Switch to HSL if available
 #if COMISO_HSL_AVAILABLE
   impl_->app_->Options()->SetStringValue("linear_solver", "ma57");
 #else
   impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
 
-#if DEB_ON
-  if (!::Debug::File::File::modify().console_output())
+#ifdef DEB_ON
+  if (!Debug::Config::query().console())
 #endif
-  {
-    // Block any output on cout and cerr from ipopt.
+  {// Block any output on cout and cerr from Ipopt.
     impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
   }
 
