@@ -48,8 +48,16 @@ public:
   /// Destructor
   ~AcceleratedQuadraticProxy() {}
 
-  // solve
-  int solve(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, const SMatrixD& _A, const VectorD& _b)
+  // solve without linear constraints
+  int solve(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, bool _update_factorization = true)
+  {
+    SMatrixD A(0,_quadratic_problem->n_unknowns());
+    VectorD b(VectorD::Index(0));
+    return solve(_quadratic_problem, _nonlinear_problem, A, b, _update_factorization);
+  }
+
+  // solve with linear constraints
+  int solve(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, const SMatrixD& _A, const VectorD& _b, bool _update_factorization = true)
   {
     // time solution procedure
     COMISO::StopWatch sw; sw.start();
@@ -78,7 +86,8 @@ public:
     const double theta = (1.0-std::sqrt(1.0/accelerate_))/(1.0+std::sqrt(1.0/accelerate_));
 
     // pre-factorize linear system
-    pre_factorize(_quadratic_problem, _A, _b);
+    if(_update_factorization)
+      pre_factorize(_quadratic_problem, _A, _b);
 
     int iter=0;
     while( iter < max_iters_)
@@ -206,7 +215,10 @@ protected:
 
       if( fx_ls <= fx + alpha_ls_*t*gtdx )
       {
-        _rel_df = 1.0-fx_ls/fx;
+        _rel_df = std::abs(1.0-fx_ls/fx);
+
+        std::cerr << "LS improved objective function " << fx << " -> " << fx_ls << std::endl;
+
         return t;
       }
       else
