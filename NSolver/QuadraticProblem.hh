@@ -47,7 +47,7 @@ public:
   // initial value where the optimization should start from
   virtual void initial_x(double* _x)
   {
-        for(unsigned int i=0; i<this->n_unknowns(); ++i)
+        for( int i=0; i<this->n_unknowns(); ++i)
             _x[i] = x_[i];
   }
 
@@ -85,7 +85,7 @@ public:
   Eigen::VectorXd& x() { return x_;}
 
   // advanced properties
-  virtual bool   constant_hessian() { return true; }
+  virtual bool   constant_hessian() const { return true; }
 
   void set_A(const SMatrixNP& _A)
   {
