@@ -20,6 +20,7 @@
 #include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
 
+#include <Base/Debug/DebConfig.hh>
 #include <Base/Debug/DebTime.hh>
 
 #include <gmm/gmm.h>
@@ -50,12 +51,19 @@ IPOPTSolverLean::IPOPTSolverLean()
   : impl_(new Impl)
 {
 
-  // Switch to HSL if available in Comiso
+  // Switch to HSL if available
 #if COMISO_HSL_AVAILABLE
   impl_->app_->Options()->SetStringValue("linear_solver", "ma57");
 #else
   impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
+
+#ifdef DEB_ON
+  if (!Debug::Config::query().console())
+#endif
+  {// Block any output on cout and cerr from Ipopt.
+    impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
+  }
 
 #ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
@@ -322,7 +330,7 @@ void IPOPTSolverLean::solve(
     ++cur_pass;
 
     DEB_warning(2, "*************** could not find feasible point after "
-      << _max_passes-1 << " -> solving with all lazy constraints...\n");
+      << _max_passes-1 << " -> solving with all lazy constraints...");
     for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
       if(!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
