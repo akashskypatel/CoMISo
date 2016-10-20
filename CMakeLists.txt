@@ -19,29 +19,9 @@ set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
 
 if( WANT_COMISO_QT )
 
-  # try to use QT5 if possible otherwise stick to QT4
-  set (FORCE_QT4 ON CACHE BOOL "Use Qt4 even if Qt5 was found")
+  acg_qt5 ()
 
-  # Qt5 or Qt4?
-  if (NOT FORCE_QT4)
-    acg_qt5 ()
-  else()
-    set (QT5_FOUND false)
-  endif()
-
-  # Fallback to qt4 if not found or forced
-  if (NOT QT5_FOUND)
-    message(STATUS "Using QT4 for CoMISo")
-    acg_qt4 (4.7.0)
-  else ()
-    message(STATUS "Using QT5 for CoMISo")
-  endif ()
-
-  # QT settings in CoMISo
-  if( QT4_FOUND)
-    add_definitions (-DQT4_FOUND)
-    set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 1" )
-  elseif( QT5_FOUND)
+  if( QT5_FOUND)
     add_definitions (-DQT5_FOUND)
     set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 1" )
   else()
@@ -418,16 +398,11 @@ of_list_filter  ( sources )
 # remove template cc files from source file list
 acg_drop_templates (sources)
 
-if( QT4_FOUND )
-# genereate uic and moc targets
-acg_qt4_autouic (uic_targets ${ui})
-acg_qt4_automoc (moc_targets ${headers})
-list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
-elseif ( QT5_FOUND )
-# genereate uic and moc targets
-acg_qt5_autouic (uic_targets ${ui})
-acg_qt5_automoc (moc_targets ${headers})
-list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
+if ( QT5_FOUND )
+  # genereate uic and moc targets
+  acg_qt5_autouic (uic_targets ${ui})
+  acg_qt5_automoc (moc_targets ${headers})
+  list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
 endif()
 
 acg_add_library (CoMISo SHARED ${uic_targets} ${sources} ${headers} ${moc_targets})
