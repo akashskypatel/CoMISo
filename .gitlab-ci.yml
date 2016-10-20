@@ -29,7 +29,7 @@ macos-c++98:
     - Apple
 
 
-Everest-VS2013-Qt-5.5.1-x64:
+CoMISo-VS2013-Qt-5.5.1-x64:
   variables:
     BUILD_PLATFORM: "VS2013"
     ARCHITECTURE:   "x64"
