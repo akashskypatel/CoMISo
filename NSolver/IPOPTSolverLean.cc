@@ -128,6 +128,13 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
   } // endswicth
 }
 
+static void check_ipopt_status(Ipopt::ApplicationReturnStatus const _stat)
+{
+  if (_stat != Ipopt::Solve_Succeeded && _stat != Ipopt::Solved_To_Acceptable_Level)
+    throw_ipopt_solve_failure(_stat);
+}
+
+
 void IPOPTSolverLean::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
 {
@@ -176,9 +183,7 @@ void IPOPTSolverLean::solve(NProblemInterface* _problem,
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || 
-        status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -262,6 +267,8 @@ void IPOPTSolverLean::solve(
     // 3. solve problem
     //----------------------------------------------------------------------------
     status = impl_->app_->OptimizeTNLP( np);
+
+    check_ipopt_status(status);
 
     // check lazy constraints
     n_inf.push_back(0);
@@ -376,9 +383,7 @@ void IPOPTSolverLean::solve(
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || 
-        status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -437,8 +442,7 @@ void IPOPTSolverLean::solve(NProblemGmmInterface* _problem, std::vector<NConstra
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
