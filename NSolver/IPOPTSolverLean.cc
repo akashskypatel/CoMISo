@@ -42,7 +42,7 @@ class IPOPTSolverLean::Impl
 public:
   Impl() 
     : app_(IpoptApplicationFactory()), alm_infsb_thrsh_(0.5), 
-    incr_lazy_cnstr_max_iter_nmbr_(5), enbl_all_lzy_cnstr_(false) 
+    incr_lazy_cnstr_max_iter_nmbr_(5), enbl_all_lzy_cnstr_(true) 
   {}
 
 public:

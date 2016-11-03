@@ -59,6 +59,7 @@ public:
   /*!
   Set the max number of incremental lazy constraint iterations before switching 
   to the fully constrained problem.
+  \note The default value is 5.
   */
   void set_incremental_lazy_constraint_max_iteration_number(const int 
     _incr_lazy_cnstr_max_iter_nmbr);
@@ -68,13 +69,7 @@ public:
   Turn on/off solving the fully constraint problem after exhausting the 
   incremental lazy constraint iterations. 
 
-  \note The default value of this is *false*: We have experimentally found that 
-  solving with the full set of lazy constraints is useless. In 200+ tests, the 
-  solve process finds a feasible solution (when it exists) within the first N 
-  (== \ref incremental_lazy_constraint_max_iteration_number(), default N == 5) 
-  incremental lazy constraint iterations. 
-  Solving with all lazy constraints never found a solution when these first 5 
-  iterations failed to find one, and just wasted (a considerable amount of) time. 
+  \note The default value of this is true.
   */
   void set_enable_all_lazy_contraints(const bool _enbl_all_lzy_cnstr);
   bool enable_all_lazy_contraints() const;
