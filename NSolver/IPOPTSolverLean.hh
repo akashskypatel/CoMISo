@@ -47,6 +47,17 @@ public:
   /// Destructor
   ~IPOPTSolverLean();
 
+  // *********** OPTIONS **************//
+
+  double almost_infeasible_threshold() const;
+  void set_almost_infeasible_threshold(const double _alm_infsb_thrsh);
+
+  int max_lazy_iterations() const;
+  void set_max_lazy_iterations(const int _max_lzy_iters);
+
+  bool allow_enable_all_lazy_contraints() const;
+  void set_allow_enable_all_lazy_contraints(const bool _allw_en_all_cnstr);
+
   // ********** SOLVE **************** //
   
   //! \throws Outcome
@@ -57,9 +68,7 @@ public:
   //! \throws Outcome
   void solve(NProblemInterface* _problem,
     const std::vector<NConstraintInterface*>& _constraints,
-    const std::vector<NConstraintInterface*>& _lazy_constraints,
-    const double _almost_infeasible = 0.5,
-    const int _max_passes = 5   );
+    const std::vector<NConstraintInterface*>& _lazy_constraints);
 
   // for convenience, if no constraints are given
   //! \throws Outcome

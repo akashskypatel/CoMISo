@@ -40,10 +40,22 @@ namespace COMISO {
 class IPOPTSolverLean::Impl 
 {// Create an instance of the IpoptApplication
 public:
-  Impl() : app_(IpoptApplicationFactory()) {}
+  Impl() : app_(IpoptApplicationFactory()), 
+    alm_infsb_thrsh_(0.5), max_lzy_iters_(5), allw_en_all_lzy_cnstr_(true) {}
 
 public:
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
+
+  // A threshold on the lazy inequality constraint to decide 
+  // if we are near the constraint boundary
+  double alm_infsb_thrsh_; 
+
+  // Max number of lazy iterations before switching to  the fully
+  // constrained problem.
+  int    max_lzy_iters_;
+
+  // If false the full constrained problem is not solved.
+  bool   allw_en_all_lzy_cnstr_;
 };
 
 // Constructor
@@ -89,6 +101,37 @@ double IPOPTSolverLean::energy()
 
 //-----------------------------------------------------------------------------
 
+double IPOPTSolverLean::almost_infeasible_threshold() const
+{
+  return impl_->alm_infsb_thrsh_;
+}
+
+void IPOPTSolverLean::set_almost_infeasible_threshold(const double _alm_infsb_thrsh)
+{
+  impl_->alm_infsb_thrsh_ = _alm_infsb_thrsh;
+}
+
+int IPOPTSolverLean::max_lazy_iterations() const
+{
+  return impl_->max_lzy_iters_;
+}
+
+void IPOPTSolverLean::set_max_lazy_iterations(const int _max_lzy_iters)
+{
+  impl_->max_lzy_iters_ = _max_lzy_iters;
+}
+
+bool IPOPTSolverLean::allow_enable_all_lazy_contraints() const
+{
+  return impl_->allw_en_all_lzy_cnstr_;
+}
+
+void IPOPTSolverLean::set_allow_enable_all_lazy_contraints(const bool _allw_en_all_cnstr)
+{
+  impl_->allw_en_all_lzy_cnstr_ = _allw_en_all_cnstr;
+}
+
+//-----------------------------------------------------------------------------
 
 static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const status)
 {
@@ -202,9 +245,7 @@ void IPOPTSolverLean::solve(NProblemInterface* _problem,
 void IPOPTSolverLean::solve(
       NProblemInterface*                        _problem,
       const std::vector<NConstraintInterface*>& _constraints,
-      const std::vector<NConstraintInterface*>& _lazy_constraints,
-      const double                              _almost_infeasible,
-      const int                                 _max_passes        )
+      const std::vector<NConstraintInterface*>& _lazy_constraints)
 {
   DEB_time_func_def;
   //----------------------------------------------------------------------------
@@ -218,7 +259,9 @@ void IPOPTSolverLean::solve(
     COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
-  int  cur_pass = 0;
+  int  cur_pass = impl_->allw_en_all_lzy_cnstr_ ? 1 : 0;
+  const int max_passes = impl_->max_lzy_iters_;
+
   double acceptable_tolerance = 0.01; // hack: read out from ipopt!!!
   // copy default constraints
   std::vector<NConstraintInterface*> constraints = _constraints;
@@ -228,7 +271,8 @@ void IPOPTSolverLean::solve(
   std::vector<int> n_inf;
   std::vector<int> n_almost_inf;
 
-  while(!feasible_point_found && cur_pass <(_max_passes-1))
+
+  while(!feasible_point_found && cur_pass < max_passes)
   {
     ++cur_pass;
     //----------------------------------------------------------------------------
@@ -290,7 +334,7 @@ void IPOPTSolverLean::solve(
           if(v>acceptable_tolerance)
             inf = true;
           else
-            if(v>_almost_infeasible)
+            if(v > impl_->alm_infsb_thrsh_)
               almost_inf = true;
         }
         else
@@ -299,7 +343,7 @@ void IPOPTSolverLean::solve(
             if(v<-acceptable_tolerance)
               inf = true;
             else
-              if(v<_almost_infeasible)
+              if(v < impl_->alm_infsb_thrsh_)
                 almost_inf = true;
           }
           else
@@ -308,7 +352,7 @@ void IPOPTSolverLean::solve(
               if(v>acceptable_tolerance)
                 inf = true;
               else
-                if(v>-_almost_infeasible)
+                if(v > -impl_->alm_infsb_thrsh_)
                   almost_inf = true;
             }
 
@@ -334,10 +378,21 @@ void IPOPTSolverLean::solve(
   // no termination after max number of passes?
   if(!feasible_point_found)
   {
+    if (!impl_->allw_en_all_lzy_cnstr_)
+    {
+      // Fail with Maximum_Iterations_Exceeded.
+      // To fail without trying the full set of lazy constraints can be convenient
+      // to avoid to spend useless time. Some lazy constraints are expected to
+      // be satisfied even without setting them explicitly. In such cases and
+      // if we are here (n iterations already computed), the fully constrained
+      // problem has zero chance to succeed.
+      throw_ipopt_solve_failure(Ipopt::Maximum_Iterations_Exceeded);
+    }
+
     ++cur_pass;
 
     DEB_warning(2, "*************** could not find feasible point after "
-      << _max_passes-1 << " -> solving with all lazy constraints...");
+      << max_passes-1 << " -> solving with all lazy constraints...");
     for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
       if(!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
@@ -395,7 +450,7 @@ void IPOPTSolverLean::solve(
     << final_obj << "\n");
 
   DEB_out(2, "############# IPOPT with lazy constraints statistics ###############\n");
-  DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
+  DEB_out(2, "#passes     : " << cur_pass << "( of " << max_passes << ")\n");
   for(unsigned int i=0; i<n_inf.size(); ++i)
     DEB_out(3, "pass " << i << " induced " << n_inf[i] 
       << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
