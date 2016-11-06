@@ -73,6 +73,12 @@ bool CombinedProblem::constant_hessian()  const
   return (p1_->constant_hessian() && p2_->constant_hessian());
 }
 
+double CombinedProblem::max_feasible_step ( const double* _x, const double* _v)
+{
+  return std::min(p1_->max_feasible_step(_x,_v), p2_->max_feasible_step(_x,_v));
+}
+
+
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
