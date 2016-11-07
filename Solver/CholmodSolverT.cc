@@ -107,7 +107,46 @@ bool CholmodSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 
     return calc_system( colptr_, rowind_, values_);
 }
-  
+
+
+//-----------------------------------------------------------------------------
+
+
+template< class Eigen_MatrixT>
+bool CholmodSolver::calc_system_eigen_prepare_pattern( const Eigen_MatrixT& _mat, const Eigen_MatrixT& _mat_pattern)
+{
+    if(show_timings_) sw_.start();
+
+#if COMISO_EIGEN3_AVAILABLE
+    COMISO_EIGEN::get_ccs_symmetric_data( _mat,
+                                         'u',
+                                         values_,
+                                         rowind_,
+                                         colptr_ );
+#endif
+
+    std::vector<double> values2;
+    std::vector<int>    colptr2;
+    std::vector<int>    rowind2;
+
+#if COMISO_EIGEN3_AVAILABLE
+    COMISO_EIGEN::get_ccs_symmetric_data( _mat_pattern,
+                                         'u',
+                                         values2,
+                                         rowind2,
+                                         colptr2 );
+#endif
+
+    if(show_timings_)
+    {
+      std::cerr << "Cholmod Timing EIGEN convert: " << sw_.stop()/1000.0 << "s\n";
+      std::cerr << "#nnz: " << values_.size() << std::endl;
+    }
+
+    return calc_system_prepare_pattern( colptr_, rowind_, values_, colptr2, rowind2, values2);
+}
+
+
 //-----------------------------------------------------------------------------
 
 template< class Eigen_MatrixT>
@@ -121,6 +160,30 @@ bool CholmodSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 				       colptr_ );
 #endif
   return update_system( colptr_, rowind_, values_);
+}
+
+//-----------------------------------------------------------------------------
+
+template< class Eigen_MatrixT>
+bool CholmodSolver::update_downdate_factor_eigen( const Eigen_MatrixT& _mat, const bool _upd)
+{
+    if(show_timings_) sw_.start();
+
+#if COMISO_EIGEN3_AVAILABLE
+    COMISO_EIGEN::get_ccs_symmetric_data( _mat,
+                                         'c',
+                                         values_,
+                                         rowind_,
+                                         colptr_ );
+#endif
+
+    if(show_timings_)
+    {
+      std::cerr << "Cholmod Timing EIGEN convert: " << sw_.stop()/1000.0 << "s\n";
+      std::cerr << "#nnz: " << values_.size() << std::endl;
+    }
+
+    return update_downdate_factor( colptr_, rowind_, values_, _upd);
 }
 
 

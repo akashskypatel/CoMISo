@@ -38,11 +38,11 @@ solve(NProblemGmmInterface* _problem)
   double reg = 1e-3;
   COMISO::CholmodSolver chol;
 
-  for(int i=0; i<max_iter_; ++i)
+  for(int i=0; i<max_iters_; ++i)
   {
     _problem->eval_gradient(P(x), P(g));
     // check for convergence
-    if( gmm::vect_norm2(g) < convergence_eps_)
+    if( gmm::vect_norm2(g) < eps_)
     {
       std::cerr << "Newton Solver converged after "
                 << i << " iterations" << std::endl;
@@ -103,7 +103,7 @@ solve(NProblemGmmInterface* _problem)
   }
   _problem->store_result(P(x));
   std::cerr << "Newton Solver did not converge!!! after "
-            << max_iter_ << " iterations." << std::endl;
+            << max_iters_ << " iterations." << std::endl;
   return false;
 
 #else
