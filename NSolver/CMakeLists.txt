@@ -1,6 +1,7 @@
 SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/AcceleratedQuadraticProxy.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/BoundConstraint.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/CombinedProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.hh
@@ -17,6 +18,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolverLean.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LeastSquaresProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraint.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintConverter.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerElimination.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerPenalty.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearProblem.hh
@@ -49,6 +51,7 @@ set(my_t_impls
 
 SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/BoundConstraint.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/CombinedProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.cc
