@@ -49,6 +49,12 @@ public:
 
   // *********** OPTIONS **************//
 
+  /*!
+  Set the maximum number of iterations
+  */
+  void set_max_iterations(const int _max_iterations);
+  int max_iterations() const;
+
   /*! 
   Set the threshold on the lazy inequality constraint to decide if we are near 
   the  constraint boundary.

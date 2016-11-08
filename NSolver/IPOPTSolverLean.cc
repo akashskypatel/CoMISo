@@ -41,13 +41,14 @@ class IPOPTSolverLean::Impl
 {// Create an instance of the IpoptApplication
 public:
   Impl() 
-    : app_(IpoptApplicationFactory()), alm_infsb_thrsh_(0.5), 
+    : app_(IpoptApplicationFactory()), max_iter_(200), alm_infsb_thrsh_(0.5),
     incr_lazy_cnstr_max_iter_nmbr_(5), enbl_all_lzy_cnstr_(true) 
   {}
 
 public:
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
 
+  int max_iter_;
   double alm_infsb_thrsh_; 
   int incr_lazy_cnstr_max_iter_nmbr_;
   bool enbl_all_lzy_cnstr_;
@@ -95,6 +96,16 @@ double IPOPTSolverLean::energy()
 }
 
 //-----------------------------------------------------------------------------
+
+void IPOPTSolverLean::set_max_iterations(const int _max_iterations)
+{
+	impl_->max_iter_ = _max_iterations;
+}
+
+int IPOPTSolverLean::max_iterations() const
+{
+	return impl_->max_iter_;
+}
 
 double IPOPTSolverLean::almost_infeasible_threshold() const
 {
@@ -268,6 +279,8 @@ void IPOPTSolverLean::solve(
   std::vector<int> n_inf;
   std::vector<int> n_almost_inf;
 
+  // set max iterations
+  impl_->app_->Options()->SetIntegerValue("max_iter", impl_->max_iter_);
 
   while(!feasible_point_found && cur_pass < max_passes)
   {
