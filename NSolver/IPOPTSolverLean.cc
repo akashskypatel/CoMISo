@@ -40,10 +40,18 @@ namespace COMISO {
 class IPOPTSolverLean::Impl 
 {// Create an instance of the IpoptApplication
 public:
-  Impl() : app_(IpoptApplicationFactory()) {}
+  Impl() 
+    : app_(IpoptApplicationFactory()), max_iter_(200), alm_infsb_thrsh_(0.5),
+    incr_lazy_cnstr_max_iter_nmbr_(5), enbl_all_lzy_cnstr_(true) 
+  {}
 
 public:
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
+
+  int max_iter_;
+  double alm_infsb_thrsh_; 
+  int incr_lazy_cnstr_max_iter_nmbr_;
+  bool enbl_all_lzy_cnstr_;
 };
 
 // Constructor
@@ -89,6 +97,49 @@ double IPOPTSolverLean::energy()
 
 //-----------------------------------------------------------------------------
 
+void IPOPTSolverLean::set_max_iterations(const int _max_iterations)
+{
+	impl_->max_iter_ = _max_iterations;
+}
+
+int IPOPTSolverLean::max_iterations() const
+{
+	return impl_->max_iter_;
+}
+
+double IPOPTSolverLean::almost_infeasible_threshold() const
+{
+  return impl_->alm_infsb_thrsh_;
+}
+
+void IPOPTSolverLean::set_almost_infeasible_threshold(const double _alm_infsb_thrsh)
+{
+  impl_->alm_infsb_thrsh_ = _alm_infsb_thrsh;
+}
+
+int IPOPTSolverLean::incremental_lazy_constraint_max_iteration_number() const
+{
+  return impl_->incr_lazy_cnstr_max_iter_nmbr_;
+}
+
+void IPOPTSolverLean::set_incremental_lazy_constraint_max_iteration_number(
+  const int _incr_lazy_cnstr_max_iter_nmbr)
+{
+  impl_->incr_lazy_cnstr_max_iter_nmbr_ = _incr_lazy_cnstr_max_iter_nmbr;
+}
+
+bool IPOPTSolverLean::enable_all_lazy_contraints() const
+{
+  return impl_->enbl_all_lzy_cnstr_;
+}
+
+void IPOPTSolverLean::set_enable_all_lazy_contraints(const bool 
+  _enbl_all_lzy_cnstr)
+{
+  impl_->enbl_all_lzy_cnstr_ = _enbl_all_lzy_cnstr;
+}
+
+//-----------------------------------------------------------------------------
 
 static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const status)
 {
@@ -127,6 +178,13 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
     COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
   } // endswicth
 }
+
+static void check_ipopt_status(Ipopt::ApplicationReturnStatus const _stat)
+{
+  if (_stat != Ipopt::Solve_Succeeded && _stat != Ipopt::Solved_To_Acceptable_Level)
+    throw_ipopt_solve_failure(_stat);
+}
+
 
 void IPOPTSolverLean::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
@@ -176,9 +234,7 @@ void IPOPTSolverLean::solve(NProblemInterface* _problem,
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || 
-        status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
   
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -197,9 +253,7 @@ void IPOPTSolverLean::solve(NProblemInterface* _problem,
 void IPOPTSolverLean::solve(
       NProblemInterface*                        _problem,
       const std::vector<NConstraintInterface*>& _constraints,
-      const std::vector<NConstraintInterface*>& _lazy_constraints,
-      const double                              _almost_infeasible,
-      const int                                 _max_passes        )
+      const std::vector<NConstraintInterface*>& _lazy_constraints)
 {
   DEB_time_func_def;
   //----------------------------------------------------------------------------
@@ -213,7 +267,9 @@ void IPOPTSolverLean::solve(
     COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
-  int  cur_pass = 0;
+  int  cur_pass = impl_->enbl_all_lzy_cnstr_ ? 1 : 0;
+  const int max_passes = impl_->incr_lazy_cnstr_max_iter_nmbr_;
+
   double acceptable_tolerance = 0.01; // hack: read out from ipopt!!!
   // copy default constraints
   std::vector<NConstraintInterface*> constraints = _constraints;
@@ -223,7 +279,10 @@ void IPOPTSolverLean::solve(
   std::vector<int> n_inf;
   std::vector<int> n_almost_inf;
 
-  while(!feasible_point_found && cur_pass <(_max_passes-1))
+  // set max iterations
+  impl_->app_->Options()->SetIntegerValue("max_iter", impl_->max_iter_);
+
+  while(!feasible_point_found && cur_pass < max_passes)
   {
     ++cur_pass;
     //----------------------------------------------------------------------------
@@ -261,80 +320,87 @@ void IPOPTSolverLean::solve(
     //----------------------------------------------------------------------------
     // 3. solve problem
     //----------------------------------------------------------------------------
-    status = impl_->app_->OptimizeTNLP( np);
+    status = impl_->app_->OptimizeTNLP(np);
+
+    check_ipopt_status(status);
 
     // check lazy constraints
     n_inf.push_back(0);
     n_almost_inf.push_back(0);
     feasible_point_found = true;
-    for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
-      if(!lazy_added[i])
+    for (unsigned int i = 0; i < _lazy_constraints.size(); ++i)
+    {
+      if (lazy_added[i])
+        continue;
+      NConstraintInterface* lc = _lazy_constraints[i];
+
+      double v = lc->eval_constraint(&(np2->solution()[0]));
+
+      bool inf = false;
+      bool almost_inf = false;
+
+      if (lc->constraint_type() == NConstraintInterface::NC_EQUAL)
       {
-        NConstraintInterface* lc = _lazy_constraints[i];
-
-        double v = lc->eval_constraint(&(np2->solution()[0]));
-
-        bool inf        = false;
-        bool almost_inf = false;
-
-        if(lc->constraint_type() == NConstraintInterface::NC_EQUAL)
+        v = std::abs(v);
+        if (v > acceptable_tolerance)
+          inf = true;
+        else
+          if (v > impl_->alm_infsb_thrsh_)
+            almost_inf = true;
+      }
+      else
+        if (lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
         {
-          v = std::abs(v);
-          if(v>acceptable_tolerance)
+          if (v < -acceptable_tolerance)
             inf = true;
           else
-            if(v>_almost_infeasible)
+            if (v < impl_->alm_infsb_thrsh_)
               almost_inf = true;
         }
         else
-          if(lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
+          if (lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
           {
-            if(v<-acceptable_tolerance)
+            if (v > acceptable_tolerance)
               inf = true;
             else
-              if(v<_almost_infeasible)
+              if (v > -impl_->alm_infsb_thrsh_)
                 almost_inf = true;
           }
-          else
-            if(lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
-            {
-              if(v>acceptable_tolerance)
-                inf = true;
-              else
-                if(v>-_almost_infeasible)
-                  almost_inf = true;
-            }
 
-        // infeasible?
-        if(inf)
-        {
-          constraints.push_back(lc);
-          lazy_added[i] = true;
-          feasible_point_found = false;
-          ++n_inf.back();
-        }
-
-        // almost violated or violated? -> add to constraints
-        if(almost_inf)
-        {
-          constraints.push_back(lc);
-          lazy_added[i] = true;
-          ++n_almost_inf.back();
-        }
+      // infeasible?
+      if (inf)
+      {
+        constraints.push_back(lc);
+        lazy_added[i] = true;
+        feasible_point_found = false;
+        ++n_inf.back();
       }
+
+      // almost violated or violated? -> add to constraints
+      if (almost_inf)
+      {
+        constraints.push_back(lc);
+        lazy_added[i] = true;
+        ++n_almost_inf.back();
+      }
+    }
   }
 
   // no termination after max number of passes?
   if(!feasible_point_found)
   {
+    DEB_warning(2, "Could not find a feasible point after " << max_passes - 1 << 
+      " incremental lazy constraint iterations");
+    if (!impl_->enbl_all_lzy_cnstr_)
+      throw_ipopt_solve_failure(Ipopt::Maximum_Iterations_Exceeded);
+
+    DEB_line(2, "Solving with ALL lazy constraints...");
     ++cur_pass;
-
-    DEB_warning(2, "*************** could not find feasible point after "
-      << _max_passes-1 << " -> solving with all lazy constraints...");
-    for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
-      if(!lazy_added[i])
+    for (unsigned int i = 0; i < _lazy_constraints.size(); ++i)
+    {
+      if (!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
-
+    }
     //----------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
     //----------------------------------------------------------------------------
@@ -376,9 +442,7 @@ void IPOPTSolverLean::solve(
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || 
-        status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
@@ -390,7 +454,7 @@ void IPOPTSolverLean::solve(
     << final_obj << "\n");
 
   DEB_out(2, "############# IPOPT with lazy constraints statistics ###############\n");
-  DEB_out(2, "#passes     : " << cur_pass << "( of " << _max_passes << ")\n");
+  DEB_out(2, "#passes     : " << cur_pass << "( of " << max_passes << ")\n");
   for(unsigned int i=0; i<n_inf.size(); ++i)
     DEB_out(3, "pass " << i << " induced " << n_inf[i] 
       << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
@@ -437,8 +501,7 @@ void IPOPTSolverLean::solve(NProblemGmmInterface* _problem, std::vector<NConstra
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (!(status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level))
-    throw_ipopt_solve_failure(status);
+  check_ipopt_status(status);
 
   // Retrieve some statistics about the solve
   Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
