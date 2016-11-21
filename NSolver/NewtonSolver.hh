@@ -47,8 +47,8 @@ public:
   typedef Eigen::Triplet<double>      Triplet;
 
   /// Default constructor
-  NewtonSolver(const double _eps = 1e-6, const int _max_iters = 200, const double _alpha_ls=0.2, const double _beta_ls = 0.6)
-    : eps_(_eps), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), constant_hessian_structure_(false) {}
+  NewtonSolver(const double _eps = 1e-6, const double _eps_line_search = 1e-9, const int _max_iters = 200, const double _alpha_ls=0.2, const double _beta_ls = 0.6)
+    : eps_(_eps), eps_ls_(_eps_line_search), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), constant_hessian_structure_(false) {}
 
   /// Destructor
   ~NewtonSolver() {}
@@ -121,7 +121,7 @@ public:
                 << std::endl;
 
       // converged?
-      if(newton_decrement < eps_ || t == 0.0)
+      if(newton_decrement < eps_ || std::abs(t) <= eps_ls_)
         break;
 
       ++iter;
@@ -276,6 +276,7 @@ protected:
 private:
 
   double eps_;
+  double eps_ls_;
   int    max_iters_;
 //  double accelerate_;
   double alpha_ls_;
