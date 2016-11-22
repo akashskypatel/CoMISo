@@ -113,22 +113,27 @@ remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstrain
     double aij = A(i,j);
     if(std::abs(aij) <= _eps)
     {
-      // constraint is linear dependent
+//      std::cerr << "drop " << aij << "in row " << i << "and column " << j << std::endl;
+      // constraint is linearly dependent
       row_status[i] = 0;
-//      remove.push_back(i);
+      if(std::abs(A(i,n)) > _eps)
+        std::cerr << "Warning: found dependent constraint with nonzero rhs " << A(i,n) << std::endl;
     }
     else
     {
+//      std::cerr << "keep " << aij << "in row " << i << "and column " << j << std::endl;
+
       // constraint is linearly independent
       row_status[i] = 1;
       keep.push_back(i);
 
-      // normalize
-      gmm::scale(A.row(i), 1.0/aij);
-
       // update undecided constraints
       // copy col
       SVectorGMM col = Ac.col(j);
+
+      // copy row
+      SVectorGMM row;
+      gmm::copy( A.row(i), row);
 
       // iterate over column
       typename gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(col);
@@ -141,8 +146,6 @@ remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstrain
           int k = c_it.index();
 
           double s = -(*c_it)/aij;
-          SVectorGMM row;
-          gmm::copy( A.row(i), row);
           add_row_simultaneously( k, s, row, A, Ac, _eps);
           // make sure the eliminated entry is 0 on all other rows
           A( k, j) = 0;
