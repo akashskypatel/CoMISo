@@ -18,9 +18,17 @@
 #include "NProblemInterface.hh"
 #include "NProblemGmmInterface.hh"
 
+//#include <Base/Debug/DebTime.hh>
+
 #if COMISO_SUITESPARSE_AVAILABLE
   #include <Eigen/UmfPackSupport>
+  #include <Eigen/CholmodSupport>
 #endif
+
+// ToDo: why is Metis not working yet?
+//#if COMISO_METIS_AVAILABLE
+//  #include <Eigen/MetisSupport>
+//#endif
 
 //== FORWARDDECLARATIONS ======================================================
 
@@ -42,13 +50,20 @@ class COMISODLLEXPORT NewtonSolver
 {
 public:
 
+  enum LinearSolver {LS_EigenLU, LS_Umfpack, LS_MUMPS};
+
   typedef Eigen::VectorXd             VectorD;
   typedef Eigen::SparseMatrix<double> SMatrixD;
   typedef Eigen::Triplet<double>      Triplet;
 
   /// Default constructor
   NewtonSolver(const double _eps = 1e-6, const double _eps_line_search = 1e-9, const int _max_iters = 200, const double _alpha_ls=0.2, const double _beta_ls = 0.6)
-    : eps_(_eps), eps_ls_(_eps_line_search), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), constant_hessian_structure_(false) {}
+    : eps_(_eps), eps_ls_(_eps_line_search), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), solver_type_(LS_EigenLU), constant_hessian_structure_(false)
+  {
+//#if COMISO_SUITESPARSE_AVAILABLE
+//    solver_type_ = LS_Umfpack;
+//#endif
+  }
 
   /// Destructor
   ~NewtonSolver() {}
@@ -87,13 +102,17 @@ public:
     // resize temp vector for line search (and set to x1 to approx Hessian correctly if problem is non-quadratic!)
     x_ls_ = x;
 
+    // indicate that system matrix is symmetric
+    lu_solver_.isSymmetric(true);
+
     // start with no regularization
     double regularize(0.0);
     int iter=0;
     while( iter < max_iters_)
     {
       // get Newton search direction by solving LSE
-      factorize(_problem, _A, _b, x, regularize);
+      bool first_factorization = (iter ==0);
+      factorize(_problem, _A, _b, x, regularize, first_factorization);
 
       // get rhs
       _problem->eval_gradient(x.data(), g.data());
@@ -101,7 +120,7 @@ public:
       rhs.tail(m) = _b - _A*x;
 
       // solve KKT system
-      dx = lu_solver_.solve(rhs);
+      solve_kkt_system(rhs, dx);
 
       // get maximal reasonable step
       double t_max  = std::min(1.0, 0.5*_problem->max_feasible_step(x.data(), dx.data()));
@@ -137,9 +156,15 @@ public:
     return 1;
   }
 
+  // select internal linear solver
+  void set_linearsolver(LinearSolver _st)
+  {
+    solver_type_ = _st;
+  }
+
 protected:
 
-  void factorize(NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b, const VectorD& _x, double& _regularize)
+  void factorize(NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b, const VectorD& _x, double& _regularize, const bool _first_factorization)
   {
     const int n  = _problem->n_unknowns();
     const int m  = _A.rows();
@@ -179,35 +204,42 @@ protected:
     KKT.setFromTriplets(trips.begin(), trips.end());
 
     // compute LU factorization
-    lu_solver_.compute(KKT);
+    if(_first_factorization)
+      analyze_pattern(KKT);
 
-    if(lu_solver_.info() != Eigen::Success)
+    bool success = numerical_factorization(KKT);
+
+    if(!success)
     {
-//      DEB_line(2, "Eigen::SparseLU reported problem: " << lu_solver_.lastErrorMessage());
-//      DEB_line(2, "-> re-try with regularized constraints...");
-
-      std::cerr << "Eigen::SparseLU reported problem while factoring KKT system: " << lu_solver_.lastErrorMessage() << std::endl;
-
-//#if COMISO_SUITESPARSE_AVAILABLE
-//      std::cerr << "Eigen::SparseLU reported problem while factoring KKT system. " << std::endl;
-//#else
-//      std::cerr << "Eigen::SparseLU reported problem while factoring KKT system: " << lu_solver_.lastErrorMessage() << std::endl;
-//#endif
-
       // add more regularization
       if(_regularize == 0.0)
         _regularize = 1e-8;
       else
         _regularize *= 2.0;
 
-      for( int i=0; i<m; ++i)
-        trips.push_back(Triplet(n+i,n+i,_regularize));
+      // print information
+      std::cerr << "Linear Solver reported problem while factoring KKT system: ";
+      if(solver_type_ == LS_EigenLU)
+        std::cerr << lu_solver_.lastErrorMessage();
+      std::cerr << std::endl;
+
+//      DEB_line(2, "Linear Solver reported problem while factoring KKT system: ");
+//      if(solver_type_ == LS_EigenLU)
+//        DEB_line(2, lu_solver_.lastErrorMessage());
+
+//      for( int i=0; i<m; ++i)
+//        trips.push_back(Triplet(n+i,n+i,_regularize));
+
+      // regularize full system
+      for( int i=0; i<n+m; ++i)
+        trips.push_back(Triplet(i,i,_regularize));
 
       // create KKT matrix
       KKT.setFromTriplets(trips.begin(), trips.end());
 
       // compute LU factorization
-      lu_solver_.compute(KKT);
+      analyze_pattern(KKT);
+      numerical_factorization(KKT);
 
 //      IGM_THROW_if(lu_solver_.info() != Eigen::Success, QGP_BOUNDED_DISTORTION_FAILURE);
     }
@@ -248,6 +280,42 @@ protected:
     return 0.0;
   }
 
+  void analyze_pattern(SMatrixD& _KKT)
+  {
+    switch(solver_type_)
+    {
+      case LS_EigenLU:      lu_solver_.analyzePattern(_KKT); break;
+#if COMISO_SUITESPARSE_AVAILABLE
+      case LS_Umfpack: umfpack_solver_.analyzePattern(_KKT); break;
+#endif
+      default: std::cerr <<"Warning: selected linear solver not availble!"; break;
+    }
+  }
+
+  bool numerical_factorization(SMatrixD& _KKT)
+  {
+    switch(solver_type_)
+    {
+      case LS_EigenLU:      lu_solver_.factorize(_KKT); return (lu_solver_.info() == Eigen::Success);
+#if COMISO_SUITESPARSE_AVAILABLE
+      case LS_Umfpack: umfpack_solver_.factorize(_KKT); return (umfpack_solver_.info() == Eigen::Success);
+#endif
+      default: std::cerr <<"Warning: selected linear solver not availble!"; break;
+    }
+  }
+
+  void solve_kkt_system( VectorD& _rhs, VectorD& _dx)
+  {
+    switch(solver_type_)
+    {
+      case LS_EigenLU: _dx =      lu_solver_.solve(_rhs); break;
+#if COMISO_SUITESPARSE_AVAILABLE
+      case LS_Umfpack: _dx = umfpack_solver_.solve(_rhs); break;
+#endif
+      default: std::cerr <<"Warning: selected linear solver not availble!"; break;
+    }
+  }
+
 
   // deprecated function!
   // solve
@@ -285,14 +353,14 @@ private:
 
   VectorD x_ls_;
 
+  LinearSolver solver_type_;
+
   // Sparse LU decomposition
   Eigen::SparseLU<SMatrixD> lu_solver_;
-// ToDo: Check why UmfPack is not working!
-//#if COMISO_SUITESPARSE_AVAILABLE
-//  Eigen::UmfPackLU<SMatrixD> lu_solver_;
-//#else
-//  Eigen::SparseLU<SMatrixD> lu_solver_;
-//#endif
+
+#if COMISO_SUITESPARSE_AVAILABLE
+  Eigen::UmfPackLU<SMatrixD> umfpack_solver_;
+#endif
 
   // deprecated
   bool   constant_hessian_structure_;
