@@ -132,12 +132,11 @@ remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstrain
       SVectorGMM col = Ac.col(j);
 
       // copy row
-      SVectorGMM row;
-      gmm::copy( A.row(i), row);
+      SVectorGMM row = A.row(i);
 
       // iterate over column
-      typename gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(col);
-      typename gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(col);
+      gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(col);
+      gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(col);
 
       for(; c_it != c_end; ++c_it)
         if( row_status[c_it.index()] == -1) // only process unvisited rows
@@ -182,8 +181,8 @@ find_max_abs_coeff(SVectorGMM& _v)
   unsigned int imax(0);
   double       vmax(0.0);
 
-  typename gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(_v);
-  typename gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(_v);
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(_v);
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(_v);
 
   for(; c_it != c_end; ++c_it)
     if(c_it.index() != n-1)
@@ -209,7 +208,7 @@ add_row_simultaneously( int         _row_i,
                         CMatrixGMM& _cmat,
                         const double _eps )
 {
-  typedef typename gmm::linalg_traits<SVectorGMM>::const_iterator RIter;
+  typedef gmm::linalg_traits<SVectorGMM>::const_iterator RIter;
   RIter r_it  = gmm::vect_const_begin(_row);
   RIter r_end = gmm::vect_const_end(_row);
 
