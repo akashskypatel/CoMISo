@@ -7,6 +7,8 @@
 
 #include <CoMISo/Utils/MutablePriorityQueueT.hh>
 
+#include <Base/Debug/DebOut.hh>
+
 
 
 namespace COMISO {
@@ -55,6 +57,7 @@ void
 ConstraintTools::
 remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstraintInterface*>& _constraints, const double _eps)
 {
+  DEB_enter_func;
   // make sure that constraints are available
   if(_constraints.empty()) return;
 
@@ -158,7 +161,8 @@ remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstrain
     }
   }
 
-  std::cerr << "removed " << _constraints.size()-keep.size() << " dependent linear constraints out of " << _constraints.size() << std::endl;
+  DEB_line(2, "removed " << _constraints.size()-keep.size() << 
+    " dependent linear constraints out of " << _constraints.size());
 
   // 4. store result
   std::vector<NConstraintInterface*> new_constraints;
