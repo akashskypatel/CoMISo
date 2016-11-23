@@ -4,6 +4,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/CombinedProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintTools.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/CPLEXSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/cURLpp.hh
@@ -54,6 +55,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/CombinedProblem.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintTools.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/CPLEXSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/cURLpp.cc

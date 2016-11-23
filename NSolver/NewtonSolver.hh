@@ -187,6 +187,7 @@ protected:
 //      DEB_line(2, "-> re-try with regularized constraints...");
 
       std::cerr << "Eigen::SparseLU reported problem while factoring KKT system: " << lu_solver_.lastErrorMessage() << std::endl;
+
 //#if COMISO_SUITESPARSE_AVAILABLE
 //      std::cerr << "Eigen::SparseLU reported problem while factoring KKT system. " << std::endl;
 //#else
