@@ -132,8 +132,7 @@ remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstrain
       SVectorGMM col = Ac.col(j);
 
       // copy row
-      SVectorGMM row;
-      gmm::copy( A.row(i), row);
+      SVectorGMM row = A.row(i);
 
       // iterate over column
       gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(col);
