@@ -300,7 +300,7 @@ protected:
 #if COMISO_SUITESPARSE_AVAILABLE
       case LS_Umfpack: umfpack_solver_.factorize(_KKT); return (umfpack_solver_.info() == Eigen::Success);
 #endif
-      default: std::cerr <<"Warning: selected linear solver not availble!"; break;
+      default: std::cerr <<"Warning: selected linear solver not availble!"; return false;
     }
   }
 
