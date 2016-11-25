@@ -167,10 +167,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     double newton_decrement(0.0);
     double fx(0.0);
     //double t = backtracking_line_search(_problem, x, g, dx, newton_decrement, fx, t_max);
-    const auto x0 = x;
-    const auto fx0 = _problem->eval_f(x0.data());
+    const VectorD x0 = x;
+    const double fx0 = _problem->eval_f(x0.data());
     
-    const auto cnstr_vltn = 0;
     double t = t_max;
     bool x_ok = false;
     for (int i = 0; !x_ok && i < 10; ++i, t /= 2)
@@ -182,8 +181,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       newton_decrement = fx0 - fx;
 
       //check constraint violation
-      const auto r = _b - _A*x;
-      const auto cnstr_vltn = r.norm();
+      const VectorD r = _b - _A*x;
+      const double cnstr_vltn = r.norm();
       if (cnstr_vltn > 1e-8)
         continue;
       x_ok = true;
