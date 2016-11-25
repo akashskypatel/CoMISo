@@ -160,23 +160,52 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     solve_kkt_system(rhs, dx);
 
     // get maximal reasonable step
-    double t_max  = std::min(1.0, 0.5*_problem->max_feasible_step(x.data(), dx.data()));
+    double t_max  = std::min(1.0, 
+      0.5 * _problem->max_feasible_step(x.data(), dx.data()));
 
     // perform line-search
     double newton_decrement(0.0);
     double fx(0.0);
-    double t = backtracking_line_search(_problem, x, g, dx, newton_decrement, fx, t_max);
+    //double t = backtracking_line_search(_problem, x, g, dx, newton_decrement, fx, t_max);
+    const auto x0 = x;
+    const auto fx0 = _problem->eval_f(x0.data());
+    
+    const auto cnstr_vltn = 0;
+    double t = t_max;
+    bool x_ok = false;
+    for (int i = 0; !x_ok && i < 10; ++i, t /= 2)
+    {
+      x = x0 + dx.head(n) * t;
+      fx = _problem->eval_f(x.data());
+      if (fx > fx0) // function value is larger
+        continue;
+      newton_decrement = fx0 - fx;
 
-    x += dx.head(n)*t;
+      //check constraint violation
+      const auto r = _b - _A*x;
+      const auto cnstr_vltn = r.norm();
+      if (cnstr_vltn > 1e-8)
+        continue;
+      x_ok = true;
+    }
+
+    if (!x_ok)
+    {
+      DEB_line(2, "Line search failed, pulling back to the intial solution");
+      t = 0;
+      x = x0;
+      fx = fx0;
+    }
 
     DEB_line(2, "iter: " << iter
                 << ", f(x) = " << fx
                 << ", t = " << t << " (tmax=" << t_max << ")"
                 << ", eps = [Newton decrement] = " << newton_decrement
-                << ", constraint violation  = " << rhs.tail(m).norm());
+                << ", constraint violation prior = " << rhs.tail(m).norm()
+                << ", constraint violation after = " << (_b - _A*x).norm());
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) <= eps_ls_)
+    if(newton_decrement < eps_ || std::abs(t) < 1e-10)
       break;
 
     ++iter;
