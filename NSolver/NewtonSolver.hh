@@ -101,7 +101,7 @@ protected:
 
   bool numerical_factorization(SMatrixD& _KKT);
 
-  void solve_kkt_system(VectorD& _rhs, VectorD& _dx);
+  void solve_kkt_system(const VectorD& _rhs, VectorD& _dx);
 
   // deprecated function!
   // solve

@@ -122,11 +122,12 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   DEB_time_func_def;
 
   // number of unknowns
-  int n = _problem->n_unknowns();
+  const int n = _problem->n_unknowns();
   // number of constraints
-  int m = _b.size();
+  const int m = _b.size();
 
-  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << " linear constraints");
+  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << 
+    " linear constraints");
 
   // initialize vectors of unknowns
   VectorD x(n);
@@ -386,7 +387,7 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
 //-----------------------------------------------------------------------------
 
 
-void NewtonSolver::solve_kkt_system( VectorD& _rhs, VectorD& _dx)
+void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
 {
   DEB_enter_func;
   switch(solver_type_)
