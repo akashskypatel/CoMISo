@@ -173,8 +173,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     
     double t = t_max;
     bool x_ok = false;
-    for (int i = 0; !x_ok && i < 10; ++i, t /= 2)
-    {
+    
+    for (int i = 0; i < 10; ++i < 3 ? t *= 0.95 : t /= 2)
+    {// clamp back t very mildly the first 3 steps and then aggressively (/ 2)
       x = x0 + dx.head(n) * t;
       fx = _problem->eval_f(x.data());
       if (fx > fx0) // function value is larger
@@ -187,6 +188,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       if (cnstr_vltn > 1e-8)
         continue;
       x_ok = true;
+      break; // exit here to avoid changing t
     }
 
     if (!x_ok)
@@ -198,11 +200,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     }
 
     DEB_line(2, "iter: " << iter
-                << ", f(x) = " << fx
-                << ", t = " << t << " (tmax=" << t_max << ")"
-                << ", eps = [Newton decrement] = " << newton_decrement
-                << ", constraint violation prior = " << rhs.tail(m).norm()
-                << ", constraint violation after = " << (_b - _A*x).norm());
+      << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
+      << (t < t_max ? " _clamped_" : "")
+      << ", eps = [Newton decrement] = " << newton_decrement
+      << ", constraint violation prior = " << rhs.tail(m).norm()
+      << ", after = " << (_b - _A*x).norm());
 
     // converged?
     if(newton_decrement < eps_ || std::abs(t) < eps_ls_)
