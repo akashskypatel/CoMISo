@@ -204,7 +204,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
                 << ", constraint violation after = " << (_b - _A*x).norm());
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) < 1e-10)
+    if(newton_decrement < eps_ || std::abs(t) < eps_ls_)
       break;
 
     ++iter;
