@@ -86,7 +86,7 @@ int main(void)
   std::cout << "---------- 2) Sparse QR " << std::endl;
   COMISO::SparseQRSolver spqr;
   SpMatrix Q,R;
-  std::vector< int > P;
+  std::vector< size_t > P;
   int rank = spqr.factorize_system_eigen( A, Q, R, P);
   int nullity(dimc-rank);
   // setup permutation matrix
@@ -95,7 +95,7 @@ int main(void)
   {
     for( size_t i = 0; i < P.size(); ++i)
     {
-      Pm.coeffRef( i, P[i]) = 1;
+      Pm.coeffRef( i, (int)P[i]) = 1;
     }
   }
 

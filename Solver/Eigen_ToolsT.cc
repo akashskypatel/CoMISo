@@ -365,7 +365,7 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
       for(SuiteSparse_long i=0; i<(SuiteSparse_long)_AC.ncol; ++i)
         for(SuiteSparse_long j= P[i]; j< P[i+1]; ++j)
           //_A( I[j], i) += X[j]; // += really needed?
-          triplets.push_back( Triplet( I[j], i, X[j]));
+          triplets.push_back(Triplet((int)I[j], (int)i, X[j]));
     }
     else
     {
@@ -374,7 +374,7 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
 
       for(int i=0; i<(int)_AC.ncol; ++i)
         for(int j= P[i]; j< P[i+1]; ++j)
-          triplets.push_back( Triplet( I[j], i, X[j]));
+          triplets.push_back(Triplet((int)I[j], (int)i, X[j]));
       //_A( I[j], i) += X[j];
     }
 
@@ -391,11 +391,11 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
         for(SuiteSparse_long j=P[i]; j<P[i+1]; ++j)
         {
           //_A(I[j], i) += X[j];
-          triplets.push_back( Triplet( I[j], i, X[j]));
+          triplets.push_back(Triplet((int)I[j], (int)i, X[j]));
 
           // add up symmetric part
           if( I[j] != i)
-            triplets.push_back( Triplet( i, I[j], X[j]));
+            triplets.push_back(Triplet((int)i, (int)I[j], X[j]));
           //_A(i,I[j]) += X[j];
         }
     }
