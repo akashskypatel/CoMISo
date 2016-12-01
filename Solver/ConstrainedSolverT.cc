@@ -634,7 +634,7 @@ make_constraints_independent_reordering(
   while(!queue.empty())
   {
     // get next row
-    auto i = queue.get_next();
+    unsigned int i = queue.get_next();
     row_ordering.push_back(i);
     row_visited[i] = true;
 
