@@ -193,7 +193,7 @@ protected:
 
   double backtracking_line_search(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, VectorD& _x, VectorD& _g, VectorD& _dx, double& _rel_df, double _t_start = 1.0)
   {
-    auto n = _x.size();
+    size_t n = _x.size();
 
     // pre-compute objective
     double fx = _quadratic_problem->eval_f(_x.data()) + _nonlinear_problem->eval_f(_x.data());
