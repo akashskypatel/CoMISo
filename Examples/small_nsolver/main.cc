@@ -96,7 +96,7 @@ public:
   }
 
   // advanced properties
-  virtual bool   constant_hessian() { return false; }
+  virtual bool   constant_hessian() const { return false; }
 };
 
 

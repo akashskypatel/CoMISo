@@ -77,6 +77,17 @@ void FiniteElementProblem::eval_hessian ( const double* _x, SMatrixNP& _H)
 }
 
 
+double FiniteElementProblem::max_feasible_step( const double* _x, const double* _v)
+{
+  double t = DBL_MAX;
+
+  for(unsigned int i=0; i<fe_sets_.size(); ++i)
+    t = std::min(t, fe_sets_[i]->max_feasible_step(_x, _v));
+
+  return t;
+}
+
+
 void FiniteElementProblem::store_result ( const double* _x )
 {
   if(n_ > 0)

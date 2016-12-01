@@ -10,6 +10,10 @@
 #include <Eigen/Sparse>
 
 
+//== NAMESPACES ===============================================================
+
+namespace COMISO {
+
 // this problem optimizes the quadratic functional 0.5*x^T A x -x^t b + c
 class QuadraticProblem : public COMISO::NProblemInterface
 {
@@ -18,14 +22,20 @@ public:
   // Sparse Matrix Type
   //  typedef Eigen::DynamicSparseMatrix<double,Eigen::ColMajor> SMatrixNP;
 
-    QuadraticProblem(SMatrixNP& _A, Eigen::VectorXd _b, const double _c)
-        : A_(_A), c_(_c)
-    {
-       if(A_.rows() != A_.cols())
-           std::cerr << "Warning: matrix not square in QuadraticProblem" << std::endl;
-       b_ = _b;
-       x_ = Eigen::VectorXd::Zero(A_.cols());
-    }
+  QuadraticProblem()
+  : A_(0,0), b_(Eigen::VectorXd::Index(0)), c_(0.0)
+  {
+
+  }
+
+  QuadraticProblem(SMatrixNP& _A, Eigen::VectorXd& _b, const double _c)
+  : A_(_A), c_(_c)
+  {
+    if(A_.rows() != A_.cols())
+      std::cerr << "Warning: matrix not square in QuadraticProblem" << std::endl;
+    b_ = _b;
+    x_ = Eigen::VectorXd::Zero(A_.cols());
+  }
 
 
   // number of unknowns
@@ -37,7 +47,7 @@ public:
   // initial value where the optimization should start from
   virtual void initial_x(double* _x)
   {
-        for(unsigned int i=0; i<this->n_unknowns(); ++i)
+        for( int i=0; i<this->n_unknowns(); ++i)
             _x[i] = x_[i];
   }
 
@@ -75,7 +85,25 @@ public:
   Eigen::VectorXd& x() { return x_;}
 
   // advanced properties
-  virtual bool   constant_hessian() { return true; }
+  virtual bool   constant_hessian() const { return true; }
+
+  void set_A(const SMatrixNP& _A)
+  {
+    A_ = _A;
+    if(A_.rows() != A_.cols())
+        std::cerr << "Warning: matrix not square in QuadraticProblem" << std::endl;
+    x_ = Eigen::VectorXd::Zero(A_.cols());
+  }
+
+  void set_b(const Eigen::VectorXd& _b)
+  {
+    b_ = _b;
+  }
+
+  void set_c( const double _c)
+  {
+    c_ = _c;
+  }
 
 private:
 
@@ -87,5 +115,8 @@ private:
  Eigen::VectorXd x_;
 };
 
+//=============================================================================
+} // namespace COMISO
+//=============================================================================
 
 #endif // QUADRATICPROBLEM_H

@@ -27,3 +27,14 @@ macos-c++98:
   script: "CI/ci-mac.sh C++98"
   tags:
     - Apple
+
+
+CoMISo-VS2013-Qt-5.5.1-x64:
+  variables:
+    BUILD_PLATFORM: "VS2013"
+    ARCHITECTURE:   "x64"
+    QT_VERSION:     "Qt5.5.1"
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2013
+    - Qt551

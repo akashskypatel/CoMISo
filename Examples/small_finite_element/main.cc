@@ -63,6 +63,12 @@ public:
     _triplets.push_back(Triplet(0,1,-2));
     _triplets.push_back(Triplet(1,0,-2));
   }
+
+  inline double max_feasible_step(const VecV& _x, const VecV& _v, const VecC& _c)
+  {
+    return DBL_MAX;
+  }
+
 };
 
 // create a simple finite element (x-c)^2
@@ -94,6 +100,12 @@ public:
     _triplets.clear();
     _triplets.push_back(Triplet(0,0,2));
   }
+
+  inline double max_feasible_step(const VecV& _x, const VecV& _v, const VecC& _c)
+  {
+    return DBL_MAX;
+  }
+
 };
 
 
