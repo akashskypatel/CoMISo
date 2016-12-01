@@ -211,7 +211,7 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
   cholmod_sparse *Q, *R;
 //  SuiteSparse_long *P = new SuiteSparse_long[n];
   SuiteSparse_long *P;
-  double rank = SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
+  int rank = (int)SuiteSparseQR<double>(ordering_, tolerance_, econ, AC, &Q, &R, &P, mp_cholmodCommon);
   std::cerr << "factorization finished" << std::endl;
   std::cerr << "rank: " << rank << std::endl;
   cholmod_print_sparse(Q, "Q", mp_cholmodCommon);

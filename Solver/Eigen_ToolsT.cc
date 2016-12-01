@@ -340,7 +340,7 @@ void cholmod_to_eigen( const cholmod_sparse& _AC, MatrixT& _A)
   typedef Eigen::Triplet< Scalar > Triplet;
   size_t nzmax( _AC.nzmax);
   std::cerr << __FUNCTION__ << " row " << _AC.nrow << " col " << _AC.ncol << " stype " << _AC.stype << std::endl;
-  _A = MatrixT(_AC.nrow, _AC.ncol);
+  _A = MatrixT((int)_AC.nrow, (int)_AC.ncol);
   std::vector< Triplet > triplets;
   triplets.reserve(nzmax);
 

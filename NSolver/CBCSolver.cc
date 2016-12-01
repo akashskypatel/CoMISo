@@ -150,8 +150,8 @@ bool solve_impl(
   DEB_warning_if(!_problem->constant_gradient(), 1,
                  "CBCSolver received a problem with non-constant gradient!");
 
-  const int n_rows = _constraints.size(); // Constraints #
-  const int n_cols = _problem->n_unknowns(); // Unknowns #
+  const size_t n_rows = _constraints.size(); // Constraints #
+  const size_t n_cols = _problem->n_unknowns(); // Unknowns #
 
   // expand the variable types from discrete mtrx array
   std::vector<VariableType> var_type(n_cols, Real);
