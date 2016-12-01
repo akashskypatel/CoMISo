@@ -28,7 +28,7 @@ if (MSVC)
 	add_definitions(-DNOMINMAX)
 	# add_definitions(-DIL_STD) #set CPLEX to use its STL interface, change this?!
 
-	add_definitions(/W1) #add appropriate warnings flags for this project, the compilation raises to too may warnings
+	add_definitions(/W3) #add appropriate warnings flags for this project, the compilation raises to too may warnings
 	add_definitions(/MP) #build on all cores 
 	
 endif (MSVC)
