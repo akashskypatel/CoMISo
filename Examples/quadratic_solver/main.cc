@@ -46,8 +46,8 @@ void random_sparse_row_matrix( MatrixT& _B, int _m, int _n, double _density = 0.
 template<class RMatrixT, class CMatrixT>
 void extract_Axb( const RMatrixT& _B, CMatrixT& _A, std::vector< double >& _b)
 {
-  int dimm = gmm::mat_nrows(_B);
-  int dimn = gmm::mat_ncols(_B);
+  size_t dimm = gmm::mat_nrows(_B);
+  size_t dimn = gmm::mat_ncols(_B);
   gmm::col_matrix< gmm::wsvector< double > > Btcol;
   gmm::col_matrix< gmm::wsvector< double > > Bcol;
   gmm::resize( Btcol, dimn, dimm);
@@ -86,11 +86,11 @@ void simple_constraint_row_matrix( MatrixT& _C, int _c, int _n, double _distribu
 template<class MatrixT>
 void print_equations( const MatrixT& _B)
 {
-  int m = gmm::mat_nrows( _B);
-  int n = gmm::mat_ncols( _B);
-  for( int i = 0; i < m; ++i)
+  size_t m = gmm::mat_nrows( _B);
+  size_t n = gmm::mat_ncols( _B);
+  for( size_t i = 0; i < m; ++i)
   {
-    for( int j = 0; j < n-1; ++j)
+    for( size_t j = 0; j < n-1; ++j)
     {
       if( _B(i,j) != 0.0)
         std::cout << _B(i,j) << "*x" << j;

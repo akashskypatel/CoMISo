@@ -67,11 +67,11 @@ void simple_constraint_row_matrix( MatrixT& _C, int _c, int _n, double _distribu
 template<class MatrixT>
 void print_equations( const MatrixT& _B)
 {
-  int m = gmm::mat_nrows( _B);
-  int n = gmm::mat_ncols( _B);
-  for( int i = 0; i < m; ++i)
+  size_t m = gmm::mat_nrows( _B);
+  size_t n = gmm::mat_ncols( _B);
+  for( size_t i = 0; i < m; ++i)
   {
-    for( int j = 0; j < n-1; ++j)
+    for( size_t j = 0; j < n-1; ++j)
     {
       if( _B(i,j) != 0.0)
         std::cout << _B(i,j) << "*x" << j;
@@ -147,7 +147,7 @@ int main(void)
   // this is the solution vector x
   std::vector< double > x;
 
-  int new_n = gmm::mat_ncols( Bcol);
+  size_t new_n = gmm::mat_ncols( Bcol);
   // set up B transposed
   gmm::col_matrix< gmm::wsvector< double > > Bt( new_n, m);
   gmm::copy( gmm::transposed( Bcol), Bt);
