@@ -266,7 +266,7 @@ MISolver::solve_direct_rounding(
   std::sort(to_round.begin(), to_round.end());
   Veci::iterator last_unique;
   last_unique = std::unique(to_round.begin(), to_round.end());
-  int r = last_unique - to_round.begin();
+  size_t r = (size_t)(last_unique - to_round.begin());
   to_round.resize( r);
 
   // initalize old indices
@@ -425,7 +425,7 @@ MISolver::solve_iterative(
     std::sort(to_round.begin(), to_round.end());
     Veci::iterator last_unique;
     last_unique = std::unique(to_round.begin(), to_round.end());
-    int r = last_unique - to_round.begin();
+    size_t r = (size_t)(last_unique - to_round.begin());
     to_round.resize( r);
   }
 
@@ -641,7 +641,7 @@ void MISolver::solve_multiple_rounding(
   std::sort(to_round.begin(), to_round.end());
   Veci::iterator last_unique;
   last_unique = std::unique(to_round.begin(), to_round.end());
-  int r = last_unique - to_round.begin();
+  size_t r = (size_t)(last_unique - to_round.begin());
   to_round.resize( r);
 
         // initialize old indices
