@@ -58,13 +58,13 @@ public:
   static void remove_dependent_linear_constraints(std::vector<NConstraintInterface*>& _constraints, const double _eps = 1e-8);
 
   // same as above but assumes already that all constraints are linear equality constraints
-  static void remove_dependent_linear_constraints_only_linear_equality( std::vector<NConstraintInterface*>& _constraints, const double _eps = 1e-8);
+  static void remove_dependent_linear_constraints_only_linear_equality(std::vector<NConstraintInterface*>& _constraints, const double _eps = 1e-8);
 
 private:
 
-  static unsigned int find_max_abs_coeff(SVectorGMM& _v);
+  static gmm::size_type find_max_abs_coeff(SVectorGMM& _v);
 
-  static void add_row_simultaneously( int         _row_i,
+  static void add_row_simultaneously( gmm::size_type _row_i,
                                       double      _coeff,
                                       SVectorGMM& _row,
                                       RMatrixGMM& _rmat,

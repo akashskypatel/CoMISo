@@ -187,8 +187,8 @@ public:
       for(unsigned int j=0; j<triplets_.size(); ++j)
       {
         // add re-indexed Triplet
-        _triplets.push_back(Triplet( instances_.index(i,triplets_[j].row()),
-                                     instances_.index(i,triplets_[j].col()),
+        _triplets.push_back(Triplet( (int)instances_.index(i,triplets_[j].row()),
+                                     (int)instances_.index(i,triplets_[j].col()),
                                      triplets_[j].value()                   ));
       }
     }

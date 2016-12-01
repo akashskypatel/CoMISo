@@ -82,7 +82,7 @@ bool CholmodSolver::calc_system( const std::vector<int>&    _colptr,
     rowind_ = _rowind;
     values_ = _values;
 
-    int n   = colptr_.size()-1;
+    size_t n   = colptr_.size()-1;
 
     cholmod_sparse matA;
 
@@ -167,7 +167,7 @@ bool CholmodSolver::calc_system_prepare_pattern( const std::vector<int>&    _col
     rowind_ = _rowind;
     values_ = _values;
 
-    int n   = colptr_.size()-1;
+    size_t n = colptr_.size() - 1;
 
     // setup matrix matA
     cholmod_sparse matA;
@@ -282,7 +282,7 @@ bool CholmodSolver::update_system( const std::vector<int>& _colptr,
     colptr_ = _colptr;
     rowind_ = _rowind;
     values_ = _values;
-    int n   = colptr_.size()-1;
+    size_t n = colptr_.size() - 1;
 
     cholmod_sparse matA;
 
@@ -329,7 +329,7 @@ bool CholmodSolver::update_downdate_factor( const std::vector<int>&    _colptr,
     rowind_ = _rowind;
     values_ = _values;
 
-    int n   = colptr_.size()-1;
+    size_t n = colptr_.size() - 1;
 
     cholmod_sparse matA;
 
@@ -387,7 +387,7 @@ bool CholmodSolver::update_downdate_factor( const std::vector<int>&    _colptr,
 
 bool CholmodSolver::solve( double * _x, double * _b)
 {
-    const unsigned int n = mp_L->n;
+    const size_t n = mp_L->n;
 
     cholmod_dense *x, b;
 

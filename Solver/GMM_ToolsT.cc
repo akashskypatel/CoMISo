@@ -289,8 +289,8 @@ void get_ccs_symmetric_data( const MatrixT&      _mat,
                              std::vector<INTT>&  _rowind,
                              std::vector<INTT>&  _colptr )
 {
-   unsigned int m = gmm::mat_nrows( _mat );
-   unsigned int n = gmm::mat_ncols( _mat );
+   gmm::size_type m = gmm::mat_nrows( _mat );
+   gmm::size_type n = gmm::mat_ncols( _mat );
 
    gmm::csc_matrix<REALT> csc_mat( m,n );
    gmm::copy( _mat, csc_mat );

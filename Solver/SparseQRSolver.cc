@@ -77,7 +77,7 @@ bool SparseQRSolver::calc_system( const std::vector<Int>&    _colptr,
     rowind_ = _rowind;
     values_ = _values;
 
-    int n   = colptr_.size()-1;
+    size_t n = colptr_.size() - 1;
 
     cholmod_sparse matA;
 
@@ -162,7 +162,7 @@ bool SparseQRSolver::update_system( const std::vector<Int>& _colptr,
     colptr_ = _colptr;
     rowind_ = _rowind;
     values_ = _values;
-    int n   = colptr_.size()-1;
+    size_t n = colptr_.size() - 1;
 
     cholmod_sparse matA;
 
@@ -199,7 +199,7 @@ bool SparseQRSolver::update_system( const std::vector<Int>& _colptr,
 
 bool SparseQRSolver::solve( double * _x, double * _b)
 {
-    const unsigned int n = colptr_.size() - 1;
+    const size_t n = colptr_.size() - 1;
 
     cholmod_dense *x, *Qtb, b;
 
