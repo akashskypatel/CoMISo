@@ -63,9 +63,9 @@ public:
     COMISO::StopWatch sw; sw.start();
 
     // number of unknowns
-    auto n = _quadratic_problem->n_unknowns();
+    size_t n = _quadratic_problem->n_unknowns();
     // number of constraints
-    auto m = _b.size();
+    size_t m = _b.size();
 
     std::cerr << "optmize via AQP with " << n << " unknowns and " << m << " linear constraints" << std::endl;
 
