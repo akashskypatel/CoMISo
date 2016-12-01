@@ -43,7 +43,7 @@ class COMISODLLEXPORT LinearProblem : public NProblemInterface
 public:
   
   /// Default constructor
-  LinearProblem (unsigned int _dimension = 0);
+  LinearProblem (std::size_t _dimension = 0);
  
   /// Destructor
   virtual ~LinearProblem();

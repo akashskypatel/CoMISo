@@ -122,9 +122,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   DEB_time_func_def;
 
   // number of unknowns
-  const int n = _problem->n_unknowns();
+  size_t n = _problem->n_unknowns();
   // number of constraints
-  const int m = _b.size();
+  size_t m = _b.size();
 
   DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << 
     " linear constraints");
@@ -311,7 +311,7 @@ double NewtonSolver::backtracking_line_search(NProblemInterface* _problem,
   double& _fx, const double _t_start)
 {
   DEB_enter_func;
-  int n = _x.size();
+  size_t n = _x.size();
 
   // pre-compute objective
   double fx = _problem->eval_f(_x.data());

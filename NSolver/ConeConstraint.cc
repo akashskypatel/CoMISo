@@ -26,11 +26,10 @@ namespace COMISO {
       
 /// Default constructor
 ConeConstraint::ConeConstraint()
-: NConstraintInterface(NConstraintInterface::NC_GREATER_EQUAL)
+  : NConstraintInterface(NConstraintInterface::NC_GREATER_EQUAL),
+    i_(1), c_(1.0)
 {
   Q_.clear();
-  i_ = 1.0;
-  c_ = 1.0;
 }
 
 // cone constraint of the form -> 0.5*(c_ * x(i_)^2 - x^T Q_ x) >= 0

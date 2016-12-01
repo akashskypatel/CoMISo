@@ -67,7 +67,7 @@ public:
   ~MutablePriorityQueueT() {}
 
   // reset timestamps
-  void clear(int _n)
+  void clear(size_t _n)
   {
     timestamp_.clear();
     timestamp_.resize(_n,0);

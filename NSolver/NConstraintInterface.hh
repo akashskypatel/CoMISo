@@ -18,8 +18,11 @@
 #include "SuperSparseMatrixT.hh"
 
 
+#include <Base/Code/Quality.hh>
+LOW_CODE_QUALITY_SECTION_BEGIN
 #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 
 //== FORWARDDECLARATIONS ======================================================

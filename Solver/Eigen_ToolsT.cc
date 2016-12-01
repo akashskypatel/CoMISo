@@ -731,19 +731,21 @@ void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
   std::vector< Triplet > triplets;
   triplets.reserve(gmm::nnz(_G));
 
-  for(unsigned int i=0; i<gmm::mat_nrows(_G); ++i)
+  for(gmm::size_type i=0; i<gmm::mat_nrows(_G); ++i)
   {
      RowT row = mat_const_row( _G, i );
 
      CIter it  = gmm::vect_const_begin( row );
      CIter ite = gmm::vect_const_end( row );
      for ( ; it!=ite; ++it )
-       triplets.push_back( Triplet( i, it.index(), *it));
+       triplets.push_back(
+         Triplet( static_cast<int>(i), static_cast<int>(it.index()), *it));
 
   }
 
   // generate eigen matrix
-  _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
+  _E = EIGEN_MatrixT( static_cast<int>(gmm::mat_nrows(_G)),
+                      static_cast<int>(gmm::mat_ncols(_G)));
   _E.setFromTriplets( triplets.begin(), triplets.end());
 }
 
@@ -769,11 +771,12 @@ void f(const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
      CIter it  = gmm::vect_const_begin( col );
      CIter ite = gmm::vect_const_end( col );
      for ( ; it!=ite; ++it )
-       triplets.push_back( Triplet( it.index(), i, *it));
+       triplets.push_back( Triplet( static_cast<int>(it.index()), i, *it));
   }
 
   // generate eigen matrix
-  _E = EIGEN_MatrixT( gmm::mat_nrows(_G), gmm::mat_ncols(_G));
+  _E = EIGEN_MatrixT( static_cast<int>(gmm::mat_nrows(_G)),
+                      static_cast<int>( gmm::mat_ncols(_G)));
   _E.setFromTriplets( triplets.begin(), triplets.end());
 }
 

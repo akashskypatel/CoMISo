@@ -217,10 +217,9 @@ solve(
   if( _show_miso_settings)
     miso_.show_options_dialog();
 
-
-  int nrows = gmm::mat_nrows(_A);
-  int ncols = gmm::mat_ncols(_A);
-  int ncons = gmm::mat_nrows(_constraints);
+  gmm::size_type nrows = gmm::mat_nrows(_A);
+  gmm::size_type ncols = gmm::mat_ncols(_A);
+  gmm::size_type ncons = gmm::mat_nrows(_constraints);
 
   DEB_out_if( _show_timings, 1, "Initital dimension: " << nrows << " x " << ncols 
                                << ", number of constraints: " << ncons
@@ -290,8 +289,8 @@ resolve(
  // COMISO_GMM::factored_to_quadratic(_B, A, rhs);
   //TODO only compute rhs, not complete A for efficiency
 
-  unsigned int m = gmm::mat_nrows(_B);
-  unsigned int n = gmm::mat_ncols(_B);
+  gmm::size_type m = gmm::mat_nrows(_B);
+  gmm::size_type n = gmm::mat_ncols(_B);
 
   typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type CRowT;
   typedef typename gmm::linalg_traits<RMatrixT>::sub_row_type       RowT;
@@ -349,8 +348,8 @@ resolve(
     gmm::mult(rhs_update_table_.D_, *_constraint_rhs, rhs_update_table_.cur_constraint_rhs_);
 
     // update rhs of stored constraints
-    unsigned int nc = gmm::mat_ncols(rhs_update_table_.constraints_p_);
-    for(unsigned int i=0; i<rhs_update_table_.cur_constraint_rhs_.size(); ++i)
+    gmm::size_type nc = gmm::mat_ncols(rhs_update_table_.constraints_p_);
+    for(gmm::size_type i=0; i<rhs_update_table_.cur_constraint_rhs_.size(); ++i)
       rhs_update_table_.constraints_p_(i,nc-1) = -rhs_update_table_.cur_constraint_rhs_[i];
   }
   if(_rhs)
@@ -397,14 +396,14 @@ make_constraints_independent(
 {
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
-  unsigned int nr = gmm::mat_nrows(_constraints);
+  gmm::size_type nr = gmm::mat_nrows(_constraints);
   gmm::resize(rhs_update_table_.D_, nr, nr);
   gmm::clear(rhs_update_table_.D_);
-  for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
+  for(gmm::size_type i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
 
   //  Base::StopWatch sw;
   // number of variables
-  int n_vars = gmm::mat_ncols(_constraints);
+  const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
 
   // TODO Check: HZ added 14.08.09 
   _c_elim.clear();
@@ -453,7 +452,7 @@ make_constraints_independent(
 
     for(; row_it != row_end; ++row_it)
     {
-      int cur_j = row_it.index();
+      int cur_j = static_cast<int>(row_it.index());
       // do not use the constant part
       if(  cur_j != n_vars - 1 )
       {
@@ -462,7 +461,7 @@ make_constraints_independent(
         {
           if( fabs(*row_it) > max_elim_val)
           {
-            elim_j = cur_j;
+            elim_j = (int)cur_j;
             max_elim_val = fabs(*row_it);
           }
           //break;
@@ -473,19 +472,18 @@ make_constraints_independent(
           // gcd
           // if the coefficient of an integer variable is not an integer, then
           // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
-          if( (double(int(cur_row_val))- cur_row_val) != 0.0)
-	  {
-// 	    std::cerr << __FUNCTION__ << " Warning: coefficient of integer variable is NOT integer: " 
-// 		      << cur_row_val << std::endl;
-	    gcd_update_valid = false;
-	  }
+          if ((double(int(cur_row_val))- cur_row_val) != 0.0)
+          {
+            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val)
+            gcd_update_valid = false;
+          }
 
-          v_gcd[n_ints] = cur_row_val;
+          v_gcd[n_ints] = static_cast<int>(cur_row_val);
           ++n_ints;
 
           // store integer closest to 1, must be greater than epsilon_
           if( fabs(cur_row_val-1.0) < elim_val && cur_row_val > epsilon_)
-          {
+            {
             elim_int_j   = cur_j;
             elim_val     = fabs(cur_row_val-1.0);
           }
@@ -558,7 +556,7 @@ make_constraints_independent(
 	  //          sw.start();
           double val = -(*c_it)/elim_val_cur;
 
-          add_row_simultaneously( c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
+          add_row_simultaneously((int)c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
           // make sure the eliminated entry is 0 on all other rows and not 1e-17
           _constraints( c_it.index(), elim_j) = 0;
           constraints_c(c_it.index(), elim_j) = 0;
@@ -586,14 +584,17 @@ make_constraints_independent_reordering(
 {
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
-  unsigned int nr = gmm::mat_nrows(_constraints);
+  gmm::size_type nr = gmm::mat_nrows(_constraints);
   gmm::resize(rhs_update_table_.D_, nr, nr);
   gmm::clear(rhs_update_table_.D_);
-  for(unsigned int i=0; i<nr; ++i) rhs_update_table_.D_(i,i) = 1.0;
+
+  for(gmm::size_type i=0; i<nr; ++i)
+    rhs_update_table_.D_(i,i) = 1.0;
 
   //  Base::StopWatch sw;
   // number of variables
-  int n_vars = gmm::mat_ncols(_constraints);
+  // AF: Why was n_vars signed? Can it be zero? Later we subtract 1
+  const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
 
   // TODO Check: HZ added 14.08.09 
   _c_elim.clear();
@@ -601,7 +602,7 @@ make_constraints_independent_reordering(
 
   // build round map
   std::vector<bool> roundmap( n_vars, false);
-  for(unsigned int i=0; i<_idx_to_round.size(); ++i)
+  for(size_t i=0; i<_idx_to_round.size(); ++i)
     roundmap[_idx_to_round[i]] = true;
 
   // copy constraints into column matrix (for faster update via iterators)
@@ -613,17 +614,19 @@ make_constraints_independent_reordering(
 
   // init priority queue
   MutablePriorityQueueT<unsigned int, unsigned int> queue;
-  queue.clear( nr );
+  queue.clear( static_cast<int>(nr) );
   for(unsigned int i=0; i<nr; ++i)
   {
-    int cur_nnz = gmm::nnz( gmm::mat_row(_constraints,i));
-    if( _constraints(i,n_vars-1) != 0.0) --cur_nnz;
+    gmm::size_type cur_nnz = gmm::nnz( gmm::mat_row(_constraints,i));
+    if( _constraints(i,n_vars-1) != 0.0)
+      --cur_nnz;
 
-    queue.update(i, cur_nnz);
+    queue.update(i, static_cast<int>(cur_nnz));
   }
   
   std::vector<bool> row_visited(nr, false);
-  std::vector<unsigned int> row_ordering; row_ordering.reserve(nr);
+  std::vector<gmm::size_type> row_ordering;
+  row_ordering.reserve(nr);
 
 
   // for all conditions
@@ -631,7 +634,7 @@ make_constraints_independent_reordering(
   while(!queue.empty())
   {
     // get next row
-    unsigned int i = queue.get_next();
+    auto i = queue.get_next();
     row_ordering.push_back(i);
     row_visited[i] = true;
 
@@ -663,16 +666,16 @@ make_constraints_independent_reordering(
 
     for(; row_it != row_end; ++row_it)
     {
-      int cur_j = row_it.index();
+      int cur_j = static_cast<int>(row_it.index());
       // do not use the constant part
-      if(  cur_j != n_vars - 1 )
+      if (cur_j != n_vars - 1)
       {
         // found real valued var? -> finished (UPDATE: no not any more, find biggest real value to avoid x/1e-13)
-        if( !roundmap[ cur_j ])
+        if (!roundmap[ cur_j ])
         {
-          if( fabs(*row_it) > max_elim_val)
+          if (fabs(*row_it) > max_elim_val)
           {
-            elim_j = cur_j;
+            elim_j = (int)cur_j;
             max_elim_val = fabs(*row_it);
           }
           //break;
@@ -683,20 +686,19 @@ make_constraints_independent_reordering(
           // gcd
           // if the coefficient of an integer variable is not an integer, then
           // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
-          if( (double(int(cur_row_val))- cur_row_val) != 0.0)
-	  {
-// 	    std::cerr << __FUNCTION__ << " Warning: coefficient of integer variable is NOT integer: " 
-// 		      << cur_row_val << std::endl;
-	    gcd_update_valid = false;
-	  }
+          if ((double(int(cur_row_val))- cur_row_val) != 0.0)
+          {
+            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val);
+            gcd_update_valid = false;
+          }
 
-          v_gcd[n_ints] = cur_row_val;
+          v_gcd[n_ints] = static_cast<int>(cur_row_val);
           ++n_ints;
 
           // store integer closest to 1, must be greater than epsilon_
           if( fabs(cur_row_val-1.0) < elim_val && cur_row_val > epsilon_)
           {
-            elim_int_j   = cur_j;
+            elim_int_j   = (int)cur_j;
             elim_val     = fabs(cur_row_val-1.0);
           }
         }
@@ -734,7 +736,7 @@ make_constraints_independent_reordering(
         if( do_gcd_ && gcd_update_valid)
         {
           // perform gcd update
-          bool gcd_ok = update_constraint_gcd( _constraints, i, elim_j, v_gcd, n_ints);
+          bool gcd_ok = update_constraint_gcd( _constraints, (int)i, elim_j, v_gcd, n_ints);
           DEB_warning_if( !gcd_ok && (noisy_ > 0), 1, " GCD update failed! "
               << DEB_os_str(gmm::mat_const_row(_constraints, i)) )
         }
@@ -755,7 +757,7 @@ make_constraints_independent_reordering(
 
 
     // is this condition dependent?
-    if( elim_j != -1 )
+    if (elim_j != -1)
     {
       // get elim variable value
       double elim_val_cur = _constraints(i, elim_j);
@@ -764,30 +766,34 @@ make_constraints_independent_reordering(
       CVector col = constraints_c.col(elim_j);
 
       // iterate over column
-      typename gmm::linalg_traits<CVector>::const_iterator c_it   = gmm::vect_const_begin(col);
-      typename gmm::linalg_traits<CVector>::const_iterator c_end  = gmm::vect_const_end(col);
+      typename gmm::linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
+      typename gmm::linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
 
-      for(; c_it != c_end; ++c_it)
-	//        if( c_it.index() > i)
-	if( !row_visited[c_it.index()])
+      for (; c_it != c_end; ++c_it)
+      {
+//        if( c_it.index() > i)
+        if (!row_visited[c_it.index()])
         {
-	  //          sw.start();
-          double val = -(*c_it)/elim_val_cur;
-          add_row_simultaneously( c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
+//          sw.start();
+          double val = -(*c_it) / elim_val_cur;
+          add_row_simultaneously((int)c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
           // make sure the eliminated entry is 0 on all other rows and not 1e-17
-          _constraints( c_it.index(), elim_j) = 0;
+          _constraints(c_it.index(), elim_j) = 0;
           constraints_c(c_it.index(), elim_j) = 0;
 
-	  int cur_idx = c_it.index();
-	  int cur_nnz = gmm::nnz( gmm::mat_row(_constraints,cur_idx));
-	  if( _constraints(cur_idx,n_vars-1) != 0.0) --cur_nnz;
+          gmm::size_type cur_idx = c_it.index();
+          gmm::size_type cur_nnz = gmm::nnz( gmm::mat_row(_constraints,cur_idx));
+          if( _constraints(cur_idx,n_vars-1) != 0.0)
+            --cur_nnz;
 
-	  queue.update(cur_idx, cur_nnz);
+          queue.update(static_cast<int>(cur_idx),
+                       static_cast<int>(cur_nnz));
 
           // update linear transition of rhs
           gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
-                   gmm::mat_row(rhs_update_table_.D_, c_it.index()));
+            gmm::mat_row(rhs_update_table_.D_, c_it.index()));
         }
+      }
     }
   }
   // // check result
@@ -857,10 +863,10 @@ update_constraint_gcd( RMatrixT& _constraints,
 
   for( ; row_it!=row_end; ++row_it)
   {
-    int cur_j = row_it.index();
+    gmm::size_type cur_j = row_it.index();
     _constraints(_row_i, cur_j) = (*row_it)/i_gcd;
   }
-  int elim_coeff = abs(_constraints(_row_i, _elim_j));
+  gmm::size_type elim_coeff = static_cast<gmm::size_type>(std::abs(_constraints(_row_i, _elim_j)));
   DEB_error_if( elim_coeff != 1, "elimination coefficient " << elim_coeff 
     << " will (most probably) NOT lead to an integer solution!")
   return true;
@@ -1026,7 +1032,7 @@ eliminate_constraints(
 
         //_rhs[con_it.index()] -= cur_rhs * (( *con_it )/cur_val);
 //        rhs_update_table_.append(con_it.index(), -1.0 * (( *con_it )/cur_val), cur_j);
-        rhs_update_table_.append(con_it.index(), -1.0 * (( *con_it )/cur_val), cur_j, false);
+        rhs_update_table_.append(static_cast<int>(con_it.index()), -1.0 * (( *con_it )/cur_val), static_cast<int>(cur_j), false);
         //std::cerr << con_it.index() << " += " << -1.0*(( *con_it )/cur_val) << " * " << cur_rhs << " (["<<cur_j<<"] = "<<_rhs[cur_j]<<") " << std::endl;
       }
 
@@ -1047,7 +1053,7 @@ eliminate_constraints(
           _A( col_it.index(), con_it.index() ) -= ( *col_it )*(( *con_it )/cur_val);
         //_rhs[col_it.index()] += constraint_rhs*( *col_it )/cur_val;
 //        rhs_update_table_.append(col_it.index(), constraint_rhs*( *col_it )/cur_val);
-        rhs_update_table_.append(col_it.index(), -( *col_it )/cur_val, i, true);
+        rhs_update_table_.append(static_cast<int>(col_it.index()), -( *col_it )/cur_val, i, true);
         //std::cerr << col_it.index() << " += " << constraint_rhs*( *col_it )/cur_val << std::endl;
       }
 
@@ -1108,7 +1114,7 @@ eliminate_constraints(
 template<class RowT, class MatrixT>
 void 
 ConstrainedSolver::
-add_row( int       _row_i,
+add_row( gmm::size_type       _row_i,
 	 double    _coeff,
 	 RowT      _row, 
 	 MatrixT&  _mat )
@@ -1128,11 +1134,11 @@ add_row( int       _row_i,
 template<class RowT, class RMatrixT, class CMatrixT>
 void 
 ConstrainedSolver::
-add_row_simultaneously(	int       _row_i,
-			double    _coeff,
-			RowT      _row, 
-			RMatrixT& _rmat,
-			CMatrixT& _cmat )
+add_row_simultaneously(	gmm::size_type _row_i,
+			double         _coeff,
+			RowT           _row, 
+			RMatrixT&      _rmat,
+			CMatrixT&      _cmat )
 {
   typedef typename gmm::linalg_traits<RowT>::const_iterator RIter;
   RIter r_it  = gmm::vect_const_begin(_row);
@@ -1248,7 +1254,7 @@ restore_eliminated_vars( RMatrixT&         _constraints,
   _x.back() = 1.0;
 
   // reverse iterate from prelast element
-  for(int i=_new_idx.size()-2; i>= 0; --i)
+  for(int i= static_cast<int>(_new_idx.size())-2; i>= 0; --i) // AF: Can this be negative?
   {
     if( _new_idx[i] != -1)
     {
@@ -1259,7 +1265,7 @@ restore_eliminated_vars( RMatrixT&         _constraints,
   }
 
   // reverse iterate
-  for(int i=_c_elim.size()-1; i>=0; --i)
+  for(int i = static_cast<int>(_c_elim.size())-1; i>=0; --i) // AF: Can this be negative?
   {
     int cur_var = _c_elim[i];
 
