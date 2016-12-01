@@ -33,16 +33,18 @@
 
 //== INCLUDES =================================================================
 
+#include <Base/Code/Quality.hh>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <limits>
 #include <cmath>
 
-
+LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Dense>
 #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 #if COMISO_SUITESPARSE_AVAILABLE
 #include <cholmod.h>

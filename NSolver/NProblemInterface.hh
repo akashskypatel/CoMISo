@@ -15,14 +15,17 @@
 
 //== INCLUDES =================================================================
 
+#include <Base/Code/Quality.hh>
 #include <iostream>
 #include <cfloat>
 
+LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Eigen>
 #if !(EIGEN_VERSION_AT_LEAST(3,1,0))
   #define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #endif
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 

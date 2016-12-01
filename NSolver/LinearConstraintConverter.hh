@@ -14,9 +14,13 @@
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include "NConstraintInterface.hh"
 #include "LinearConstraint.hh"
+
+#include <Base/Code/Quality.hh>
+LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/StdVector>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 
 //== FORWARDDECLARATIONS ======================================================

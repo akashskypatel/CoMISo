@@ -5,9 +5,12 @@
 #include <CoMISo/Utils/StopWatch.hh>
 #include <vector>
 #include <CoMISo/NSolver/NProblemInterface.hh>
+#include <Base/Code/Quality.hh>
+LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Eigen>
 #include <Eigen/Core>
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 
 //== NAMESPACES ===============================================================

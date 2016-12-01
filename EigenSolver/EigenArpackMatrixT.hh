@@ -17,6 +17,9 @@
 //== INCLUDES =================================================================
 
 #include <iostream>
+#include <Base/Code/Quality.hh>
+
+LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Eigen>
 
 #if EIGEN_VERSION_AT_LEAST(3,1,0)
@@ -26,6 +29,7 @@
   #include <unsupported/Eigen/CholmodSupport>
 #endif
 #include <Eigen/Sparse>
+LOW_CODE_QUALITY_SECTION_END
 
 //== FORWARDDECLARATIONS ======================================================
 
