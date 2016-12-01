@@ -95,7 +95,7 @@ int main(void)
   {
     for( size_t i = 0; i < P.size(); ++i)
     {
-      Pm.coeffRef( i, (int)P[i]) = 1;
+      Pm.coeffRef( (int)i, (int)P[i]) = 1;
     }
   }
 
