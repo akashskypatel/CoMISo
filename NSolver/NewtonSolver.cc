@@ -126,7 +126,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   // number of constraints
   size_t m = _b.size();
 
-  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << " linear constraints");
+  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << 
+    " linear constraints");
 
   // initialize vectors of unknowns
   VectorD x(n);
@@ -160,23 +161,53 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     solve_kkt_system(rhs, dx);
 
     // get maximal reasonable step
-    double t_max  = std::min(1.0, 0.5*_problem->max_feasible_step(x.data(), dx.data()));
+    double t_max  = std::min(1.0, 
+      0.5 * _problem->max_feasible_step(x.data(), dx.data()));
 
     // perform line-search
     double newton_decrement(0.0);
     double fx(0.0);
-    double t = backtracking_line_search(_problem, x, g, dx, newton_decrement, fx, t_max);
+    //double t = backtracking_line_search(_problem, x, g, dx, newton_decrement, fx, t_max);
+    const VectorD x0 = x;
+    const double fx0 = _problem->eval_f(x0.data());
+    
+    double t = t_max;
+    bool x_ok = false;
+    
+    for (int i = 0; i < 10; ++i < 3 ? t *= 0.95 : t /= 2)
+    {// clamp back t very mildly the first 3 steps and then aggressively (/ 2)
+      x = x0 + dx.head(n) * t;
+      fx = _problem->eval_f(x.data());
+      if (fx > fx0) // function value is larger
+        continue;
+      newton_decrement = fx0 - fx;
 
-    x += dx.head(n)*t;
+      //check constraint violation
+      const VectorD r = _b - _A*x;
+      const double cnstr_vltn = r.norm();
+      if (cnstr_vltn > 1e-8)
+        continue;
+      x_ok = true;
+      break; // exit here to avoid changing t
+    }
+
+    if (!x_ok)
+    {
+      DEB_line(2, "Line search failed, pulling back to the intial solution");
+      t = 0;
+      x = x0;
+      fx = fx0;
+    }
 
     DEB_line(2, "iter: " << iter
-                << ", f(x) = " << fx
-                << ", t = " << t << " (tmax=" << t_max << ")"
-                << ", eps = [Newton decrement] = " << newton_decrement
-                << ", constraint violation  = " << rhs.tail(m).norm());
+      << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
+      << (t < t_max ? " _clamped_" : "")
+      << ", eps = [Newton decrement] = " << newton_decrement
+      << ", constraint violation prior = " << rhs.tail(m).norm()
+      << ", after = " << (_b - _A*x).norm());
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) <= eps_ls_)
+    if(newton_decrement < eps_ || std::abs(t) < eps_ls_)
       break;
 
     ++iter;
@@ -358,7 +389,7 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
 //-----------------------------------------------------------------------------
 
 
-void NewtonSolver::solve_kkt_system( VectorD& _rhs, VectorD& _dx)
+void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
 {
   DEB_enter_func;
   switch(solver_type_)
