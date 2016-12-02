@@ -454,7 +454,7 @@ make_constraints_independent(
     {
       int cur_j = static_cast<int>(row_it.index());
       // do not use the constant part
-      if(  cur_j != n_vars - 1 )
+      if (cur_j != (int)n_vars - 1 )
       {
         // found real valued var? -> finished (UPDATE: no not any more, find biggest real value to avoid x/1e-13)
         if( !roundmap[ cur_j ])
@@ -668,7 +668,7 @@ make_constraints_independent_reordering(
     {
       int cur_j = static_cast<int>(row_it.index());
       // do not use the constant part
-      if (cur_j != n_vars - 1)
+      if (cur_j != (int)n_vars - 1)
       {
         // found real valued var? -> finished (UPDATE: no not any more, find biggest real value to avoid x/1e-13)
         if (!roundmap[ cur_j ])

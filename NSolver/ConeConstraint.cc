@@ -27,7 +27,7 @@ namespace COMISO {
 /// Default constructor
 ConeConstraint::ConeConstraint()
   : NConstraintInterface(NConstraintInterface::NC_GREATER_EQUAL),
-    i_(1), c_(1.0)
+    c_(1.0), i_(1)
 {
   Q_.clear();
 }
