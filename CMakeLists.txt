@@ -374,7 +374,7 @@ endif ()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # disable unused parameter warning
-  add_definitions(-DWno-unused-parameter)
+  add_definitions(-Wno-unused-parameter)
 endif()
 
 # collect all header,source and ui files
