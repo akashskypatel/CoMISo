@@ -372,6 +372,11 @@ if (WIN32)
   )
 endif ()
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # disable unused parameter warning
+  add_definitions(-DWno-unused-parameter)
+endif()
+
 # collect all header,source and ui files
 acg_append_files (headers "*.hh" ${directories})
 acg_append_files (sources "*.cc" ${directories})
