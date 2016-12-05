@@ -372,9 +372,9 @@ if (WIN32)
   )
 endif ()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
   # disable unused parameter warning
-  add_definitions(-Wno-unused-parameter)
+  add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
 endif()
 
 # collect all header,source and ui files
