@@ -41,9 +41,11 @@ ENDIF( NOT APPLE )
 MARK_AS_ADVANCED(CGAL_INCLUDE_DIR)
 
 if ("${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}" MATCHES ".*clang.*")
-    SET(CXX_IS_CLANG true)
+  SET(CXX_IS_CLANG true)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
+  SET(CXX_IS_CLANG true)
 else()
-    SET(CXX_IS_CLANG false)
+  SET(CXX_IS_CLANG false)
 endif()
 
 # Copy the results to the output variables.
