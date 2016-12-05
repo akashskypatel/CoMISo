@@ -17,7 +17,9 @@
 #include <CoMISo/Utils/CoMISoError.hh>
 
 #include <Base/Debug/DebTime.hh>
+#include <Base/Code/Quality.hh>
 
+LOW_CODE_QUALITY_SECTION_BEGIN
 // For Branch and bound
 #include "OsiSolverInterface.hpp"
 #include "CbcModel.hpp"
@@ -44,6 +46,7 @@
 // Heuristics
 #include "CbcHeuristic.hpp"
 #include "CbcCompareDepth.hpp"
+LOW_CODE_QUALITY_SECTION_END
 
 #include <stdexcept>
 
