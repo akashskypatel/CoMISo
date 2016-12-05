@@ -341,6 +341,8 @@ if (WIN32)
   add_definitions(-DCOMISODLL)
   add_definitions(-DBASEDLL)
   add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
+  # ignore "... needs to have dll-interface to be used by clients"
+  add_definitions(/wd4251)
 endif ()
 
 
