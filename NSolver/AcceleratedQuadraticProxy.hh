@@ -33,7 +33,7 @@ namespace COMISO {
   
     A more elaborate description follows.
 */
-class COMISODLLEXPORT AcceleratedQuadraticProxy
+class AcceleratedQuadraticProxy
 {
 public:
 
