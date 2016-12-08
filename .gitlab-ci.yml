@@ -38,3 +38,8 @@ CoMISo-VS2013-Qt-5.5.1-x64:
   tags:
     - VS2013
     - Qt551
+
+trigger_build:
+  stage: deploy
+  script:
+    - "curl -X POST -F token=e32246977fc2f0983bd1994162b407 -F ref=master https://www.graphics.rwth-aachen.de:9000/api/v3/projects/682/trigger/builds"
