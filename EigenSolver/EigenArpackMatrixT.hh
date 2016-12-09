@@ -66,7 +66,7 @@ public:
       sllt_.compute(mat_);
 
 #if EIGEN_VERSION_AT_LEAST(3,1,0)      
-      if ( !sllt_.info() != Eigen::Success )
+      if ( sllt_.info() != Eigen::Success )
 #else
       if ( !sllt_.succeeded() )
 #endif      
