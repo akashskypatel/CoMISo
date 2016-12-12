@@ -78,7 +78,7 @@ bool UMFPACKSolver::calc_system( const std::vector<int>&    _colptr,
   rowind_ = _rowind;
   values_ = _values;
 
-  int n   = colptr_.size()-1;
+  int n = (int)colptr_.size() - 1;
 
   // clean up
   if( symbolic_ )

@@ -101,10 +101,10 @@ bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
   // number of variables
-  n = problem_->n_unknowns();
+  n = static_cast<Index>(problem_->n_unknowns());
 
   // number of constraints
-  m = constraints_.size();
+  m = static_cast<Index>(constraints_.size());
 
   // get non-zeros of hessian of lagrangian and jacobi of constraints
   nnz_jac_g = 0;
@@ -546,7 +546,7 @@ bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   n = problem_->n_unknowns();
 
   // number of constraints
-  m = constraints_.size();
+  m = static_cast<Index>(constraints_.size());
 
   // get nonzero structure
   std::vector<double> x(n);
@@ -582,7 +582,7 @@ bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
       if( i >= (int)v_it.index())
       {
         h_lag_iRow_.push_back(i);
-        h_lag_jCol_.push_back(v_it.index());
+        h_lag_jCol_.push_back(static_cast<int>(v_it.index()));
         ++nnz_h_lag;
       }
     }

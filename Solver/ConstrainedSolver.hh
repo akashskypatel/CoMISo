@@ -303,13 +303,13 @@ public:
 private:
 
   template<class RowT, class MatrixT>
-  void add_row( int       _row_i,
-		double    _coeff,
-		RowT      _row, 
-		MatrixT&  _mat );
+    void add_row( gmm::size_type _row_i,
+		double         _coeff,
+		RowT           _row, 
+		MatrixT&       _mat );
 
   template<class RowT, class RMatrixT, class CMatrixT>
-  void add_row_simultaneously( int       _row_i,
+    void add_row_simultaneously( gmm::size_type       _row_i,
 			       double    _coeff,
 			       RowT      _row, 
 			       RMatrixT& _rmat,

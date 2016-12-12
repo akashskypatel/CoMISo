@@ -65,13 +65,13 @@ void eliminate_csc_vars(
   typedef unsigned int uint;
   typedef typename gmm::csc_matrix<RealT> MatrixT;
 
-  unsigned int nc = _A.nc;
-  unsigned int nr = _A.nr;
+  gmm::size_type nc = _A.nc;
+  gmm::size_type nr = _A.nr;
 
-  unsigned int n_new = nc - _evar.size();
+  gmm::size_type n_new = nc - _evar.size();
 
   // modify rhs
-  for ( unsigned int k=0; k<_evar.size(); ++k )
+  for ( gmm::size_type k=0; k<_evar.size(); ++k )
   {
     IntegerT i = _evar[k];
 
@@ -95,7 +95,7 @@ void eliminate_csc_vars(
   // build subindex set and update rhs
   std::vector<size_t> si( n_new );
   int cur_evar_idx=0;
-  for ( unsigned int i=0; i<nc; ++i )
+  for ( gmm::size_type i=0; i<nc; ++i )
   {
     unsigned int next_i = evar[cur_evar_idx];
     if ( i != next_i )
@@ -119,7 +119,7 @@ void eliminate_csc_vars(
   uint last_jc = _A.jc[0];
   uint col_offset(0);
   uint offset_update(0);
-  uint last_evar_idx=evar.size()-2;
+  uint last_evar_idx= static_cast<uint>(evar.size())-2;
 
   for( uint c = 0; c < nc; ++c)
   {
@@ -173,13 +173,13 @@ void eliminate_csc_vars2(
   typedef unsigned int uint;
   typedef typename gmm::csc_matrix<RealT> MatrixT;
 
-  unsigned int nc = _A.nc;
-  unsigned int nr = _A.nr;
+  gmm::size_type nc = _A.nc;
+  gmm::size_type nr = _A.nr;
 
-  unsigned int n_new = nc - _evar.size();
+  gmm::size_type n_new = nc - _evar.size();
 
   // modify rhs
-  for ( unsigned int k=0; k<_evar.size(); ++k )
+  for ( std::size_t k=0; k<_evar.size(); ++k )
   {
     IntegerT i = _evar[k];
 
@@ -289,8 +289,8 @@ void get_ccs_symmetric_data( const MatrixT&      _mat,
                              std::vector<INTT>&  _rowind,
                              std::vector<INTT>&  _colptr )
 {
-   unsigned int m = gmm::mat_nrows( _mat );
-   unsigned int n = gmm::mat_ncols( _mat );
+   gmm::size_type m = gmm::mat_nrows( _mat );
+   gmm::size_type n = gmm::mat_ncols( _mat );
 
    gmm::csc_matrix<REALT> csc_mat( m,n );
    gmm::copy( _mat, csc_mat );
@@ -754,7 +754,7 @@ void eliminate_vars_idx( const std::vector<IntegerT >&     _evar,
    // precompute update
    IntegerT2 range = _range;
    if( range == -1 )
-     range = _idx.size();
+     range = static_cast<int>(_idx.size()); // AF: what can an IntegerT2 be?
    std::vector<int> update_map( range );
 
    typename std::vector<IntegerT>::iterator cur_var = evar.begin();
@@ -826,7 +826,7 @@ void fix_var_csc_symmetric( const unsigned int                _i,
 //     IND_TYPE *ir; // row indices.
 //     IND_TYPE *jc; // column repartition on pr and ir.
 
-  unsigned int n = _A.nc;
+  gmm::size_type n = _A.nc;
 
   // update x
   _x[_i]   = _xi;
@@ -853,7 +853,7 @@ void fix_var_csc_symmetric( const unsigned int                _i,
 
   }
 
-  for(unsigned int i=0; i<idx.size(); ++i)
+  for(std::size_t i=0; i<idx.size(); ++i)
   {
     unsigned int col = idx[i];
 
@@ -983,8 +983,8 @@ double residuum_norm( MatrixT& _A, VectorT& _x, VectorT& _rhs )
 template<class MatrixT, class MatrixT2, class VectorT>
 void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs)
 {
-  unsigned int m = gmm::mat_nrows(_F);
-  unsigned int n = gmm::mat_ncols(_F);
+  gmm::size_type m = gmm::mat_nrows(_F);
+  gmm::size_type n = gmm::mat_ncols(_F);
 
   // resize result matrix and vector
   gmm::resize(_Q, n-1, n-1);
