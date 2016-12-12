@@ -474,7 +474,7 @@ make_constraints_independent(
           // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
           if ((double(int(cur_row_val))- cur_row_val) != 0.0)
           {
-            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val)
+            //DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val)
             gcd_update_valid = false;
           }
 
@@ -688,7 +688,7 @@ make_constraints_independent_reordering(
           // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
           if ((double(int(cur_row_val))- cur_row_val) != 0.0)
           {
-            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val);
+            //DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val);
             gcd_update_valid = false;
           }
 
