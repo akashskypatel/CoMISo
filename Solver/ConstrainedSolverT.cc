@@ -470,11 +470,15 @@ make_constraints_independent(
         {
           double cur_row_val(fabs(*row_it));
           // gcd
-          // if the coefficient of an integer variable is not an integer, then
-          // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
-          if ((double(int(cur_row_val))- cur_row_val) != 0.0)
+          // If the coefficient of an integer variable is not an integer, then
+          // the variable most probably will not be. This is expected if all 
+          // coeffs are the same, e.g. 0.5). 
+          // This happens quite often in some ReForm test cases, so downgrading
+          // the warning below to DEB_line at high verbosity.
+          if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
           {
-            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val)
+            DEB_line(11, "coefficient of integer variable is NOT integer : " << 
+              cur_row_val);
             gcd_update_valid = false;
           }
 
@@ -684,11 +688,15 @@ make_constraints_independent_reordering(
         {
           double cur_row_val(fabs(*row_it));
           // gcd
-          // if the coefficient of an integer variable is not an integer, then
-          // the variable most problably will not be (expect if all coeffs are the same, e.g. 0.5)
-          if ((double(int(cur_row_val))- cur_row_val) != 0.0)
+          // If the coefficient of an integer variable is not an integer, then
+          // the variable most probably will not be. This is expected if all 
+          // coeffs are the same, e.g. 0.5). 
+          // This happens quite often in some ReForm test cases, so downgrading
+          // the warning below to DEB_line at high verbosity.
+          if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
           {
-            DEB_warning(2, "coefficient of integer variable is NOT integer : " << cur_row_val);
+            DEB_line(11, "coefficient of integer variable is NOT integer : " << 
+              cur_row_val);
             gcd_update_valid = false;
           }
 
