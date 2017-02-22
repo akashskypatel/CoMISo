@@ -30,6 +30,8 @@
 #include <CoMISo/NSolver/LinearConstraint.hh>
 #include <CoMISo/NSolver/NPDerivativeChecker.hh>
 #include <CoMISo/NSolver/IPOPTSolver.hh>
+#include <CoMISo/NSolver/GUROBISolver.hh>
+#include <CoMISo/NSolver/CPLEXSolver.hh>
 
 
 // solve least squares problem for x=1, y=2 and x-2y = 1
@@ -65,20 +67,64 @@ int main(void)
   COMISO::NPDerivativeChecker npd;
   npd.check_all(&lsqp);
 
+  {
 // check if IPOPT solver available in current configuration
 #if( COMISO_IPOPT_AVAILABLE)
-  std::cout << "---------- 3) Get IPOPT solver... " << std::endl;
-  COMISO::IPOPTSolver ipsol;
+    std::cout << "---------- 3) Get IPOPT solver... " << std::endl;
+    COMISO::IPOPTSolver solver;
 
-  std::cout << "---------- 4) Solve..." << std::endl;
-  // there are no constraints -> provide an empty vector
-  std::vector<COMISO::NConstraintInterface*> constraints;
-  ipsol.solve(&lsqp, constraints);
+    std::cout << "---------- 4) Solve with IPOPT solver..." << std::endl;
+    // there are no constraints -> provide an empty vector
+    std::vector<COMISO::NConstraintInterface*> constraints;
+    solver.solve(&lsqp, constraints);
+
+    std::cout << "---------- 5) Print IPOPT solution..." << std::endl;
+    for( int i=0; i<n; ++i)
+      std::cerr << "x_" << i << " = " << lsqp.x()[i] << std::endl;
+#else
+    std::cout << "---------- IPOPT not available..." << std::endl;
 #endif
+  }
 
-  std::cout << "---------- 5) Print solution..." << std::endl;
-  for( int i=0; i<n; ++i)
-    std::cerr << "x_" << i << " = " << lsqp.x()[i] << std::endl;
+  {
+// check if GUROBI solver available in current configuration
+#if( COMISO_GUROBI_AVAILABLE)
+    std::cout << "---------- 3) Get GUROBI solver... " << std::endl;
+    COMISO::GUROBISolver solver;
+
+    std::cout << "---------- 4) Solve with GUROBI solver..." << std::endl;
+    // there are no constraints -> provide an empty vector
+    std::vector<COMISO::NConstraintInterface*> constraints;
+    solver.solve(&lsqp, constraints);
+
+    std::cout << "---------- 5) Print GUROBI solution..." << std::endl;
+    for( int i=0; i<n; ++i)
+      std::cerr << "x_" << i << " = " << lsqp.x()[i] << std::endl;
+#else
+  std::cout << "---------- GUROBI not available..." << std::endl;
+#endif
+  }
+
+  {
+// check if CPLEX solver available in current configuration
+#if( COMISO_CPLEX_AVAILABLE)
+    std::cout << "---------- 3) Get CPLEX solver... " << std::endl;
+    COMISO::CPLEXSolver solver;
+
+    std::cout << "---------- 4) Solve with CPLEX solver..." << std::endl;
+    // there are no constraints -> provide an empty vector
+    std::vector<COMISO::NConstraintInterface*> constraints;
+    solver.solve(&lsqp, constraints);
+
+    std::cout << "---------- 5) Print CPLEX solution..." << std::endl;
+    for( int i=0; i<n; ++i)
+      std::cerr << "x_" << i << " = " << lsqp.x()[i] << std::endl;
+#else
+  std::cout << "---------- CPLEX not available..." << std::endl;
+#endif
+  }
+
+
   
   return 0;
 }
