@@ -122,7 +122,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   DEB_time_func_def;
 
   const double KKT_res_eps = 1e-6;
-  const int    max_KKT_regularization_iters = 20;
+  const int    max_KKT_regularization_iters = 40;
 
   // number of unknowns
   size_t n = _problem->n_unknowns();
