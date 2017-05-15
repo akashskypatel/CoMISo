@@ -122,6 +122,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   DEB_time_func_def;
 
   const double KKT_res_eps = 1e-6;
+  const int    max_KKT_regularization_iters = 20;
 
   // number of unknowns
   size_t n = _problem->n_unknowns();
@@ -196,10 +197,10 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       }
       ++reg_iters;
     }
-    while(kkt_res2 > KKT_res_eps && reg_iters < 10);
+    while(kkt_res2 > KKT_res_eps && reg_iters < max_KKT_regularization_iters);
 
     // no valid step could be found?
-    if(kkt_res2 > KKT_res_eps || reg_iters >= 10)
+    if(kkt_res2 > KKT_res_eps || reg_iters >= max_KKT_regularization_iters)
     {
       DEB_line(2, "numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
       _problem->store_result(x.data());
