@@ -89,7 +89,7 @@ public:
 
 protected:
 
-  void factorize(NProblemInterface* _problem, const SMatrixD& _A, 
+  bool factorize(NProblemInterface* _problem, const SMatrixD& _A,
     const VectorD& _b, const VectorD& _x, double& _regularize_hessian,
     double& _regularize_constraints, const bool _first_factorization);
 
