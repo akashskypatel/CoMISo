@@ -123,6 +123,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
   const double KKT_res_eps = 1e-6;
   const int    max_KKT_regularization_iters = 40;
+        double regularize_constraints_limit = 1e-5;
+  const double max_allowed_constraint_violation2 = 1e-8;
 
   // number of unknowns
   size_t n = _problem->n_unknowns();
@@ -135,6 +137,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   // initialize vectors of unknowns
   VectorD x(n);
   _problem->initial_x(x.data());
+
+  double initial_constraint_violation2 = (_A*x-_b).squaredNorm();
 
   // storage of update vector dx and rhs of KKT system
   VectorD dx(n+m), rhs(n+m), g(n);
@@ -178,9 +182,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       if(!fact_ok || kkt_res2 > KKT_res_eps)
       {
         // alternatingly regularize hessian and constraints
-        if(reg_iters % 2 == 0)
+        if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
-          DEB_line(2, "numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize hessian");
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize hessian");
           if(regularize_hessian == 0.0)
             regularize_hessian = 1e-6;
           else
@@ -188,7 +192,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         }
         else
         {
-          DEB_line(2, "numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize constraints");
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize constraints");
           if(regularize_constraints == 0.0)
             regularize_constraints = 1e-8;
           else
@@ -202,7 +206,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     // no valid step could be found?
     if(kkt_res2 > KKT_res_eps || reg_iters >= max_KKT_regularization_iters)
     {
-      DEB_line(2, "numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
+      DEB_line(2, "Warning: numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
       _problem->store_result(x.data());
       return 0;
     }
@@ -218,6 +222,19 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
     // perform update
     x += dx.head(n)*t;
+
+    double constraint_violation2 = (_A*x-_b).squaredNorm();
+
+    if(constraint_violation2 > 2*initial_constraint_violation2 && constraint_violation2 > max_allowed_constraint_violation2)
+    {
+      DEB_line(2, "Warning: numerical issues in KKT system leads to constraint violation -> recovery phase");
+      // restore old solution
+      x -= dx.head(n)*t;
+
+      regularize_constraints *= 0.5;
+      regularize_constraints_limit = regularize_constraints;
+    }
+
 
     DEB_line(2, "iter: " << iter
       << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
