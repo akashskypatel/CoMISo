@@ -123,8 +123,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
   const double KKT_res_eps = 1e-6;
   const int    max_KKT_regularization_iters = 40;
-        double regularize_constraints_limit = 1e-5;
-  const double max_allowed_constraint_violation2 = 1e-8;
+        double regularize_constraints_limit = 2*1e-6;
+  const double max_allowed_constraint_violation2 = 1e-10;
 
   // number of unknowns
   size_t n = _problem->n_unknowns();
