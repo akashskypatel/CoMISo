@@ -9,10 +9,10 @@ my_add_subdir(Solver)
 my_add_subdir(Utils)
 
 include_directories(${PROJECT_SOURCE_DIR}/..)
+inc_3p_dir(Boost)
 inc_3p_dir(Eigen)
 inc_3p_dir(Gmm)
-inc_3p_nuget_dir(IPOPT)
-inc_3p_dir(Boost)
+nuget_inc_3p_dir(IPOPT)
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
