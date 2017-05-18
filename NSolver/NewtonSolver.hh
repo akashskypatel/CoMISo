@@ -89,9 +89,9 @@ public:
 
 protected:
 
-  void factorize(NProblemInterface* _problem, const SMatrixD& _A, 
-    const VectorD& _b, const VectorD& _x, double& _regularize, 
-    const bool _first_factorization);
+  bool factorize(NProblemInterface* _problem, const SMatrixD& _A,
+    const VectorD& _b, const VectorD& _x, double& _regularize_hessian,
+    double& _regularize_constraints, const bool _first_factorization);
 
   double backtracking_line_search(NProblemInterface* _problem, VectorD& _x, 
     VectorD& _g, VectorD& _dx, double& _newton_decrement, double& _fx, 
@@ -133,13 +133,15 @@ private:
   double eps_;
   double eps_ls_;
   int    max_iters_;
-//  double accelerate_;
   double alpha_ls_;
   double beta_ls_;
 
   VectorD x_ls_;
 
   LinearSolver solver_type_;
+
+  // cache KKT Matrix
+  SMatrixD KKT_;
 
   // Sparse LU decomposition
   Eigen::SparseLU<SMatrixD> lu_solver_;
