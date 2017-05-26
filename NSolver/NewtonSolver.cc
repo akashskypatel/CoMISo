@@ -122,6 +122,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   DEB_time_func_def;
 
   const double KKT_res_eps = 1e-6;
+  const int    max_KKT_regularization_iters = 40;
+        double regularize_constraints_limit = 1e-6;
+  const double max_allowed_constraint_violation2 = 1e-12;
 
   // number of unknowns
   size_t n = _problem->n_unknowns();
@@ -134,6 +137,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   // initialize vectors of unknowns
   VectorD x(n);
   _problem->initial_x(x.data());
+
+  double initial_constraint_violation2 = (_A*x-_b).squaredNorm();
 
   // storage of update vector dx and rhs of KKT system
   VectorD dx(n+m), rhs(n+m), g(n);
@@ -153,32 +158,58 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   while( iter < max_iters_)
   {
     double kkt_res2(0.0);
+    int    reg_iters(0);
     do
     {
       // get Newton search direction by solving LSE
-      factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
+      bool fact_ok = factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
       first_factorization = false;
 
-      // get rhs
-      _problem->eval_gradient(x.data(), g.data());
-      rhs.head(n) = -g;
-      rhs.tail(m) = _b - _A*x;
-
-      // solve KKT system
-      solve_kkt_system(rhs, dx);
-
-      // check numerical stability of KKT system and regularize if necessary
-      kkt_res2 = (KKT_*dx-rhs).squaredNorm();
-      if(kkt_res2 > KKT_res_eps)
+      if(fact_ok)
       {
-        DEB_line(2, "numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize hessian");
-        if(regularize_hessian == 0.0)
-          regularize_hessian = 1e-5;
-        else
-          regularize_hessian *= 2.0;
+        // get rhs
+        _problem->eval_gradient(x.data(), g.data());
+        rhs.head(n) = -g;
+        rhs.tail(m) = _b - _A*x;
+
+        // solve KKT system
+        solve_kkt_system(rhs, dx);
+
+        // check numerical stability of KKT system and regularize if necessary
+        kkt_res2 = (KKT_*dx-rhs).squaredNorm();
       }
+
+      if(!fact_ok || kkt_res2 > KKT_res_eps)
+      {
+        // alternatingly regularize hessian and constraints
+        if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
+        {
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize hessian");
+          if(regularize_hessian == 0.0)
+            regularize_hessian = 1e-6;
+          else
+            regularize_hessian *= 2.0;
+        }
+        else
+        {
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize constraints");
+          if(regularize_constraints == 0.0)
+            regularize_constraints = 1e-8;
+          else
+            regularize_constraints *= 2.0;
+        }
+      }
+      ++reg_iters;
     }
-    while(kkt_res2 > KKT_res_eps && regularize_hessian < 1.0);
+    while(kkt_res2 > KKT_res_eps && reg_iters < max_KKT_regularization_iters);
+
+    // no valid step could be found?
+    if(kkt_res2 > KKT_res_eps || reg_iters >= max_KKT_regularization_iters)
+    {
+      DEB_line(2, "Warning: numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
+      _problem->store_result(x.data());
+      return 0;
+    }
 
     // get maximal reasonable step
     double t_max  = std::min(1.0, 
@@ -191,6 +222,19 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
     // perform update
     x += dx.head(n)*t;
+
+    double constraint_violation2 = (_A*x-_b).squaredNorm();
+
+    if(constraint_violation2 > 2*initial_constraint_violation2 && constraint_violation2 > max_allowed_constraint_violation2)
+    {
+      DEB_line(2, "Warning: numerical issues in KKT system leads to constraint violation -> recovery phase");
+      // restore old solution
+      x -= dx.head(n)*t;
+
+      regularize_constraints *= 0.5;
+      regularize_constraints_limit = regularize_constraints;
+    }
+
 
     DEB_line(2, "iter: " << iter
       << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
@@ -218,7 +262,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 //-----------------------------------------------------------------------------
 
 
-void NewtonSolver::factorize(NProblemInterface* _problem, 
+bool NewtonSolver::factorize(NProblemInterface* _problem,
   const SMatrixD& _A, const VectorD& _b, const VectorD& _x, double& _regularize_hessian, double& _regularize_constraints,
   const bool _first_factorization)
 {
@@ -253,12 +297,12 @@ void NewtonSolver::factorize(NProblemInterface* _problem,
     }
 
   // regularize constraints
-  if(_regularize_constraints != 0.0)
+//  if(_regularize_constraints != 0.0)
     for( int i=0; i<m; ++i)
       trips.push_back(Triplet(n+i,n+i,_regularize_constraints));
 
   // regularize Hessian
-  if(_regularize_hessian != 0.0)
+//  if(_regularize_hessian != 0.0)
   {
     double ad(0.0);
     for( int i=0; i<n; ++i)
@@ -276,46 +320,7 @@ void NewtonSolver::factorize(NProblemInterface* _problem,
   if(_first_factorization)
     analyze_pattern(KKT_);
 
-  bool success = numerical_factorization(KKT_);
-
-  if(!success)
-  {
-    // ToDo: one round of regularization always sufficient?
-
-    double reg_h_old = _regularize_hessian;
-    double reg_c_old = _regularize_constraints;
-
-    // add more regularization
-    if(_regularize_hessian == 0.0)
-      _regularize_hessian = 1e-5;
-    else
-      _regularize_hessian *= 2.0;
-
-    if(_regularize_constraints == 0.0)
-      _regularize_constraints = 1e-8;
-    else
-      _regularize_constraints *= 2.0;
-
-
-    // print information
-    DEB_line(2, "Linear Solver reported problem while factoring KKT system: ");
-    DEB_line_if(solver_type_ == LS_EigenLU, 2, lu_solver_.lastErrorMessage());
-
-    // regularize full system
-    for( int i=0; i<n; ++i)
-      trips.push_back(Triplet(i,i,_regularize_hessian-reg_h_old));
-    for( int i=0; i<m; ++i)
-      trips.push_back(Triplet(n+i,n+i,_regularize_constraints-reg_c_old));
-
-    // create KKT matrix
-    KKT_.setFromTriplets(trips.begin(), trips.end());
-
-    // compute LU factorization
-    analyze_pattern(KKT_);
-    numerical_factorization(KKT_);
-
-//      IGM_THROW_if(lu_solver_.info() != Eigen::Success, QGP_BOUNDED_DISTORTION_FAILURE);
-  }
+  return numerical_factorization(KKT_);
 }
 
 
