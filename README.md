@@ -1,5 +1,7 @@
-## Update! Version 1.1
-For the CoMISo to work only Eigen3 and GMM++ are needed.
+![CoMISo](Logo.png)
+
+# CoMISo -- Constrained Mixed-Integer Solver
+A handy solver for optimizing discrete quadratic energies subject to linear and integer constraints, performing proper elimination of the constraints, while relieving the user of cumbersome re-indexing. The solver has been successfully deployed in high-end geometry processing tasks such as the *Mixed-Integer Quadrangulation* project.
 
 ## Requirements
 Here is an example of what packages were needed to compile CoMISo on a freshly installed Ubuntu 9.04 system
