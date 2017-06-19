@@ -174,6 +174,9 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
   switch(status) {
   case Ipopt::Maximum_Iterations_Exceeded:
     COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+  case Ipopt::NonIpopt_Exception_Thrown:
+    if (Progress::actv_node != nullptr && Progress::actv_node->aborting())
+      COMISO_THROW(PROGRESS_ABORTED);
   default:
     COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
   } // endswicth
