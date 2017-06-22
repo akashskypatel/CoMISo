@@ -171,15 +171,16 @@ static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const statu
   //      Internal_Error=-199
   //    };
   //------------------------------------------------------
-  switch(status) {
+  switch (status) 
+  {
   case Ipopt::Maximum_Iterations_Exceeded:
     COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
-  case Ipopt::NonIpopt_Exception_Thrown:
-    if (Progress::actv_node != nullptr && Progress::actv_node->aborting())
-      COMISO_THROW(PROGRESS_ABORTED);
+  case Ipopt::NonIpopt_Exception_Thrown:  
+    // this could be due to a thrown PROGRESS_ABORTED exception, ...
+    PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
   default:
     COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
-  } // endswicth
+  }
 }
 
 static void check_ipopt_status(Ipopt::ApplicationReturnStatus const _stat)
@@ -187,7 +188,6 @@ static void check_ipopt_status(Ipopt::ApplicationReturnStatus const _stat)
   if (_stat != Ipopt::Solve_Succeeded && _stat != Ipopt::Solved_To_Acceptable_Level)
     throw_ipopt_solve_failure(_stat);
 }
-
 
 void IPOPTSolverLean::solve(NProblemInterface* _problem, 
   const std::vector<NConstraintInterface*>& _constraints)
