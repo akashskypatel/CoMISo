@@ -158,6 +158,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   while( iter < max_iters_)
   {
     double kkt_res2(0.0);
+    double constraint_res2(0.0);
     int    reg_iters(0);
     do
     {
@@ -177,14 +178,15 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
         // check numerical stability of KKT system and regularize if necessary
         kkt_res2 = (KKT_*dx-rhs).squaredNorm();
+        constraint_res2 = (_A*dx.head(n)-rhs.tail(m)).squaredNorm();
       }
 
-      if(!fact_ok || kkt_res2 > KKT_res_eps)
+      if(!fact_ok || kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2)
       {
         // alternatingly regularize hessian and constraints
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
-          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize hessian");
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " (" << constraint_res2 << ") -> regularize hessian");
           if(regularize_hessian == 0.0)
             regularize_hessian = 1e-6;
           else
@@ -192,7 +194,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         }
         else
         {
-          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " -> regularize constraints");
+          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " (" << constraint_res2 << ") -> regularize constraints");
           if(regularize_constraints == 0.0)
             regularize_constraints = 1e-8;
           else
@@ -201,10 +203,10 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       }
       ++reg_iters;
     }
-    while(kkt_res2 > KKT_res_eps && reg_iters < max_KKT_regularization_iters);
+    while( (kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2) && reg_iters < max_KKT_regularization_iters);
 
     // no valid step could be found?
-    if(kkt_res2 > KKT_res_eps || reg_iters >= max_KKT_regularization_iters)
+    if(kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2 || reg_iters >= max_KKT_regularization_iters)
     {
       DEB_line(2, "Warning: numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
       _problem->store_result(x.data());
