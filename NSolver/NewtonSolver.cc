@@ -183,8 +183,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
       if(!fact_ok || kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2)
       {
-        DEB_warning(2, "Warning: numerical issues in KKT system"); 
-        // alternatingly regularize hessian and constraints
+        DEB_warning(2, "Numerical issues in KKT system"); 
+        // alternate hessian and constraints regularization
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
           DEB_line(2, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
@@ -231,7 +231,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
     if(constraint_violation2 > 2*initial_constraint_violation2 && constraint_violation2 > max_allowed_constraint_violation2)
     {
-      DEB_warning(2, "Numerical issues in KKT system leads to constraint violation -> recovery phase");
+      DEB_warning(2, "Numerical issues in KKT system lead to "
+        "constraint violation -> recovery phase");
       // restore old solution
       x -= dx.head(n)*t;
 
