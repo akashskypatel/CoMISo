@@ -242,8 +242,6 @@ private:
 
 Job::~Job()
 {
-  DEB_enter_func;
-
   delete stts_;
 
   if (url_.empty()) // not setup

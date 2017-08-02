@@ -45,9 +45,6 @@ public:
   /// Default constructor
   LinearProblem (std::size_t _dimension = 0);
  
-  /// Destructor
-  virtual ~LinearProblem();
-
   // problem definition
   virtual int    n_unknowns();
 

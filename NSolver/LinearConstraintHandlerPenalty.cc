@@ -20,13 +20,6 @@ namespace COMISO {
 /// Constructor
 LinearConstraintHandlerPenalty::LinearConstraintHandlerPenalty() : penalty_(10000) {}
 
-
-//-----------------------------------------------------------------------------
-
-/// Destructor
-LinearConstraintHandlerPenalty::~LinearConstraintHandlerPenalty()
-{}
-
 //-----------------------------------------------------------------------------
 
 // penalty weight

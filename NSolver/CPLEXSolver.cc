@@ -1300,14 +1300,6 @@ add_constraint_to_model( NConstraintInterface* _constraint, std::vector<IloNumVa
 }
 
 
-
-
-CPLEXSolver::
-CPLEXSolver()
-{
-}
-
-
 //-----------------------------------------------------------------------------
 
 

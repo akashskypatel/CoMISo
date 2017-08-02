@@ -32,14 +32,6 @@ BoundConstraint(const unsigned int  _var_idx,   // index of variable for bound c
 
 //-----------------------------------------------------------------------------
 
-BoundConstraint::
-~BoundConstraint()
-{
-}
-
-
-//-----------------------------------------------------------------------------
-
 
 int
 BoundConstraint::

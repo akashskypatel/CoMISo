@@ -60,12 +60,6 @@ public:
     double relativeEps;
   };
   
-  /// Default constructor
-  NPDerivativeChecker();
-
-  /// Destructor
-  ~NPDerivativeChecker();
-
   template<class ProblemInterface>
   bool check_all(ProblemInterface* _np, double _dx, double _eps)
   {

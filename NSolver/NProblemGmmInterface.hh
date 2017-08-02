@@ -14,6 +14,7 @@
 #include <gmm/gmm.h>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
+#include <Base/Debug/DebOut.hh>
 
 //== FORWARDDECLARATIONS ======================================================
 
@@ -42,11 +43,11 @@ public:
 
   /// Default constructor
   NProblemGmmInterface()
-  {std::cerr << "Warning: NProblemGmmInterface is deprecated -> use NProblemInterface instead!!!" << std::endl;}
+  {
+    DEB_error(
+      "NProblemGmmInterface is deprecated -> use NProblemInterface instead");
+  }
  
-  /// Destructor
-  ~NProblemGmmInterface() {}
-
   virtual int    n_unknowns   (                                ) = 0;
   virtual void   initial_x    (       double* _x               ) = 0;
   virtual double eval_f       ( const double* _x               ) = 0;

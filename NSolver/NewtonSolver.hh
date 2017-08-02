@@ -65,9 +65,6 @@ public:
 //#endif
   }
 
-  /// Destructor
-  ~NewtonSolver() {}
-
   // solve without linear constraints
   int solve(NProblemInterface* _problem)
   {

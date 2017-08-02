@@ -52,9 +52,6 @@ public:
   /// Default constructor -> set up IpOptApplication
   IPOPTSolver();
  
-  /// Destructor
-  ~IPOPTSolver() {}
-
   // ********** SOLVE **************** //
   // solve -> returns ipopt status code
 //------------------------------------------------------

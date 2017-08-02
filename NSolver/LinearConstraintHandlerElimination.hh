@@ -52,10 +52,6 @@ public:
   LinearConstraintHandlerElimination( const MatrixT& _C, const VectorT& _c)
   {initialize(_C, _c); }
 
- 
-  /// Destructor
-  ~LinearConstraintHandlerElimination() {}
-
   // number of variables
   int n() {return n_;}
   // number of reduced variables (after elimination)

@@ -5,20 +5,18 @@
 //== INCLUDES =================================================================
 #include "CombinedProblem.hh"
 
+#include <Base/Debug/DebOut.hh>
 
 namespace COMISO {
 
 CombinedProblem::CombinedProblem (NProblemInterface* _p1, NProblemInterface* _p2, const double _c1, const double _c2)
   : p1_(_p1) , p2_(_p2), c1_(_c1), c2_(_c2)
 {
-  if(p1_->n_unknowns() != p2_->n_unknowns())
-    std::cerr << "Warning: CombinedProblem received two problems with different #unknowns!!!" << std::endl;
+  DEB_enter_func;
+  DEB_warning_if(p1_->n_unknowns() != p2_->n_unknowns(), 1,
+    "CombinedProblem received two problems with different unknowns #");
 
   g_temp_.resize(p1_->n_unknowns());
-}
-
-CombinedProblem::~CombinedProblem()
-{
 }
 
 int  CombinedProblem::n_unknowns()

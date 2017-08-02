@@ -96,10 +96,6 @@ public:
   /// default Constructor
   MISolver();
 
-  /// Destructor
-  ~MISolver();
-
-
   /// Compute greedy approximation to a mixed integer problem.
 	/** @param _A symmetric positive semi-definite CSC matrix (Will be \b destroyed!)
 	 *  @param _x vector holding solution at the end
