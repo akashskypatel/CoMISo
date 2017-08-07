@@ -203,10 +203,12 @@ MISolver::solve_cplex(
   }
   catch (IloException& e)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(2, "CPLEX Concert exception caught: " << e.getMessage() )
   }
   catch (...)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(1, "CPLEX Unknown exception caught" )
   }
 
@@ -836,10 +838,12 @@ MISolver::solve_gurobi(
   }
   catch(GRBException& e)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(2, "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "]\n")
   }
   catch(...)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(1, "Exception during optimization")
   }
 
