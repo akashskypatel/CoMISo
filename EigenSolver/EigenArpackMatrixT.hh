@@ -74,9 +74,6 @@ public:
     }
   }
  
-  /// Destructor
-  ~EigenArpackMatrixT() {}
-  
   // get reference on matrix
   Matrix& matrix() { return mat_; }
 

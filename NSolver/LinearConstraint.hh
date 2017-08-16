@@ -48,9 +48,6 @@ public:
   // linear equation of the form -> coeffs_^T *x  + b_=_type= 0
   LinearConstraint(const SVectorNC& _coeffs, const double _b, const ConstraintType _type = NC_EQUAL);
 
-  /// Destructor
-  virtual ~LinearConstraint();
-
   virtual int n_unknowns();
 
   // resize coefficient vector = #unknowns

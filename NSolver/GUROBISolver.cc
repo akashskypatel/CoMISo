@@ -59,13 +59,6 @@ void add_constraint_to_model(COMISO::NConstraintInterface* _constraint,
 //-----------------------------------------------------------------------------
 
 
-GUROBISolver::
-GUROBISolver()
-{
-}
-
-//-----------------------------------------------------------------------------
-
 static void process_gurobi_exception(const GRBException& _exc)
 {
   DEB_enter_func;

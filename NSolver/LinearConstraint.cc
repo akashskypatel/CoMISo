@@ -35,9 +35,6 @@ LinearConstraint::LinearConstraint(const SVectorNC& _coeffs, const double _b, co
   b_ = _b;
 }
 
-/// Destructor
-LinearConstraint::~LinearConstraint() {}
-
 int LinearConstraint::n_unknowns()
 {
   return coeffs_.innerSize();

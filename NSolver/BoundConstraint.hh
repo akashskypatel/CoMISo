@@ -47,10 +47,6 @@ public:
                   const unsigned int   _n      = 0,   // number of unknowns in problem
                   const ConstraintType _type   = NC_LESS_EQUAL); // type of bound upper, lower or both (equal)
 
- 
-  /// Destructor
-  virtual ~BoundConstraint();
-
   virtual int    n_unknowns      (                                      );
   virtual double eval_constraint ( const double* _x                     );
   virtual void   eval_gradient   ( const double* _x, SVectorNC& _g      );

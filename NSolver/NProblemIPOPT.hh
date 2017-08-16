@@ -72,9 +72,6 @@ public:
     analyze_special_properties(_problem, _constraints);
   }
 
-  /** default destructor */
-  virtual ~NProblemIPOPT() {};
-
   /**@name Overloaded from TNLP */
   //@{
   /** Method to return some info about the nlp */
@@ -217,9 +214,6 @@ public:
   NProblemGmmIPOPT(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
    : problem_(_problem), constraints_(_constraints), nnz_jac_g_(0), nnz_h_lag_(0)
    {}
-
-  /** default destructor */
-  virtual ~NProblemGmmIPOPT() {};
 
   /**@name Overloaded from TNLP */
   //@{

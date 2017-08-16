@@ -47,9 +47,6 @@ public:
   /// Default constructor having a pointer to the main problem
   NPLinearConstraintsElimination( NProblemGmmInterface* _np);
  
-  /// Destructor
-  ~NPLinearConstraintsElimination();
-
   // initialize constraints
   template<class MatrixT, class VectorT>
   void initialize_constraints( const MatrixT& _C, const VectorT& _c);
@@ -99,9 +96,6 @@ public:
 
   /// Default constructor having a pointer to the main problem
   NPLinearConstraintsPenalty( NProblemGmmInterface* _np);
-
-  /// Destructor
-  ~NPLinearConstraintsPenalty();
 
   // initialize constraints
   template<class MatrixT, class VectorT>

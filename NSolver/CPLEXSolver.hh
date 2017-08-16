@@ -45,12 +45,6 @@ class COMISODLLEXPORT CPLEXSolver
 {
 public:
 
-  /// Default constructor
-  CPLEXSolver();
- 
-  /// Destructor
-  ~CPLEXSolver() { /*env_.end();*/}
-
   // ********** SOLVE **************** //
   // this function has to be inline due to static linking issues
   bool solve(NProblemInterface*                  _problem,                // problem instance

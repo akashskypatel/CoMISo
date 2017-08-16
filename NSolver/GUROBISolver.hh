@@ -42,13 +42,6 @@ namespace COMISO {
 class COMISODLLEXPORT GUROBISolver
 {
 public:
-
-  /// Default constructor
-  GUROBISolver();
- 
-  /// Destructor
-  ~GUROBISolver() {}
-
   // ********** SOLVE **************** //
   bool solve(NProblemInterface*                  _problem,                // problem instance
              std::vector<NConstraintInterface*>& _constraints,            // linear constraints

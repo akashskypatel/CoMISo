@@ -31,9 +31,6 @@ NPLinearConstraintsElimination::NPLinearConstraintsElimination(NProblemGmmInterf
   this->initialize_identity(base_->n_unknowns());
 }
 
-/// Destructor
-NPLinearConstraintsElimination::~NPLinearConstraintsElimination() {}
-
 // NSolverInterface
 int NPLinearConstraintsElimination::n_unknowns   ()
 { return this->n_reduced(); }
@@ -125,10 +122,6 @@ double* NPLinearConstraintsElimination::P(const std::vector<double>& _v)
   /// Default constructor having a pointer to the main problem
 NPLinearConstraintsPenalty::NPLinearConstraintsPenalty( NProblemGmmInterface* _np) : base_(_np)
 { if( !base_) std::cerr << "Warning: initialized NPLinearConstraints with zero pointer...\n"; }
-
-  /// Destructor
-NPLinearConstraintsPenalty::~NPLinearConstraintsPenalty()
-{}
 
 // NSolverInterface
 int    NPLinearConstraintsPenalty::n_unknowns   ()

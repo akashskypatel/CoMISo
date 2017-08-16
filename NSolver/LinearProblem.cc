@@ -15,10 +15,6 @@ namespace COMISO {
   x_.resize(_dimension, 0.0);
 }
 
-LinearProblem::~LinearProblem()
-{
-}
-
 int LinearProblem::n_unknowns()
 {
   return static_cast<int>(coeffs_.size());

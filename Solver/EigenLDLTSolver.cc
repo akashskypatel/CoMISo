@@ -30,20 +30,6 @@
 
 namespace COMISO {
 
-  EigenLDLTSolver::EigenLDLTSolver() : n_(0)
-{
-
-}
-
-
-  //-----------------------------------------------------------------------------
-  
-
-  EigenLDLTSolver::~EigenLDLTSolver()
-{
-}
-  
-
 //-----------------------------------------------------------------------------
 
 
@@ -56,7 +42,7 @@ bool EigenLDLTSolver::calc_system( const std::vector<int>&    _colptr,
 }
 
 
-  //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
     
 bool EigenLDLTSolver::update_system( const std::vector<int>& _colptr,

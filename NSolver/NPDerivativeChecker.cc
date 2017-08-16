@@ -2,10 +2,4 @@
 
 namespace COMISO {
 
-NPDerivativeChecker::NPDerivativeChecker() 
-{}
-
-NPDerivativeChecker::~NPDerivativeChecker() 
-{}
-
 }

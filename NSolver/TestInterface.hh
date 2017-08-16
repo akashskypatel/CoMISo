@@ -36,13 +36,6 @@ namespace COMISO {
 class COMISODLLEXPORT TestInterface : public NProblemGmmInterface
 {
 public:
-  
-  /// Default constructor
-  TestInterface() {}
- 
-  /// Destructor
-  ~TestInterface() {}
-
   // minimize (x-2.4)^2
 
   virtual int    n_unknowns  (                              )

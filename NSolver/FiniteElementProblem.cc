@@ -13,11 +13,6 @@ FiniteElementProblem::FiniteElementProblem(const unsigned int _n)
 {
 }
 
-/// Destructor
-FiniteElementProblem::~FiniteElementProblem()
-{
-}
-
 void FiniteElementProblem::add_set(FiniteElementSetBase* _fe_set)
 {
   fe_sets_.push_back(_fe_set);

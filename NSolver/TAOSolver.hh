@@ -42,14 +42,6 @@ namespace COMISO {
 class COMISODLLEXPORT TAOSolver
 {
 public:
-   
-  /// Default constructor
-  TAOSolver() {}
-
-
-  /// Destructor
-  ~TAOSolver() {}
-
   // solve problem
   static int solve( NProblemInterface*    _base);
   static int solve( NProblemGmmInterface* _base);

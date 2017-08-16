@@ -81,9 +81,6 @@ public:
   : n_rows_(_n_rows), n_cols_(_n_cols)
   {}
  
-  /// Destructor
-  ~SuperSparseMatrixT() {}
-
   // iterate over non-zeros
   iterator begin() { return iterator(data_.begin()); }
   iterator end()   { return iterator(data_.end());   }

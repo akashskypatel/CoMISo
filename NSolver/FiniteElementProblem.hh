@@ -237,9 +237,6 @@ public:
   /// Default constructor
   FiniteElementProblem(const unsigned int _n);
 
-  /// Destructor
-  virtual ~FiniteElementProblem();
-
   void add_set(FiniteElementSetBase* _fe_set);
 
   void clear_sets();
