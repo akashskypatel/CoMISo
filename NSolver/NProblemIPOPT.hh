@@ -127,6 +127,21 @@ public:
                                  IpoptCalculatedQuantities* ip_cq);
   //@}
 
+  /** Intermediate Callback method for the user.  Providing dummy
+    *  default implementation.  For details see IntermediateCallBack
+    *  in IpNLP.hpp. */
+  virtual bool intermediate_callback(
+    Ipopt::AlgorithmMode mode,
+    Index iter, Number obj_value,
+    Number inf_pr, Number inf_du,
+    Number mu, Number d_norm,
+    Number regularization_size,
+    Number alpha_du, Number alpha_pr,
+    Index ls_trials,
+    const IpoptData* ip_data,
+    IpoptCalculatedQuantities* ip_cq
+  ) override;
+
   // special properties of problem
   bool hessian_constant() const;
   bool jac_c_constant() const;
@@ -269,6 +284,22 @@ public:
                                  const IpoptData* ip_data,
                                  IpoptCalculatedQuantities* ip_cq);
   //@}
+
+  /** Intermediate Callback method for the user.  Providing dummy
+    *  default implementation.  For details see IntermediateCallBack
+    *  in IpNLP.hpp. */
+  virtual bool intermediate_callback(
+    Ipopt::AlgorithmMode mode,
+    Index iter, Number obj_value,
+    Number inf_pr, Number inf_du,
+    Number mu, Number d_norm,
+    Number regularization_size,
+    Number alpha_du, Number alpha_pr,
+    Index ls_trials,
+    const IpoptData* ip_data,
+    IpoptCalculatedQuantities* ip_cq
+  ) override;
+
 
 private:
   /**@name Methods to block default compiler methods.
