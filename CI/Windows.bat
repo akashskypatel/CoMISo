@@ -3,8 +3,8 @@ git submodule update --remote
 
 
 :: set up Libraty Paths
-set LIBPATH_BASE=E:\libs\%COMPILER%
-set CMAKE_WINDOWS_LIBS_DIR=E:\libs
+set LIBPATH_BASE=E:/libs/%COMPILER%
+set CMAKE_WINDOWS_LIBS_DIR=E:/libs
 
 
 mkdir rel
