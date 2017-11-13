@@ -35,11 +35,13 @@
 //== INCLUDES =================================================================
 
 #include "GMM_Tools.hh"
+
 #define GMM_USES_LAPACK
 #include <gmm/gmm_lapack_interface.h>
-#include <queue>
-#include <CoMISo/Utils/VSToolsT.hh>
 
+#include <CoMISo/Utils/VSToolsT.hh>
+#include <Base/Debug/DebOut.hh>
+#include <queue>
 
 //== NAMESPACES ===============================================================
 
@@ -961,19 +963,19 @@ int gauss_seidel_local( MatrixT& _A, VectorT& _x, VectorT& _rhs, std::vector<uns
 template<class MatrixT, class VectorT>
 double residuum_norm( MatrixT& _A, VectorT& _x, VectorT& _rhs )
 {
-   if ( gmm::mat_ncols( _A ) != _x.size() )
-      std::cerr << "DIM ERROR (residuum_norm): " << gmm::mat_ncols( _A ) << " vs " << _x.size() << std::endl;
-   if ( gmm::mat_nrows( _A) !=_rhs.size() )
-      std::cerr << "DIM ERROR 2 (residuum_norm): " << gmm::mat_nrows( _A) << " vs " << _rhs.size() << std::endl;
+  if (gmm::mat_ncols(_A) != _x.size())
+    std::cerr << "DIM ERROR (residuum_norm): " << gmm::mat_ncols(_A) << " vs " << _x.size() << std::endl;
+  if (gmm::mat_nrows(_A) != _rhs.size())
+    std::cerr << "DIM ERROR 2 (residuum_norm): " << gmm::mat_nrows(_A) << " vs " << _rhs.size() << std::endl;
 
-   // temp vectors
-   VectorT Ax( _rhs.size());
-   VectorT res( _rhs.size() );
+  // temp vectors
+  VectorT Ax(_rhs.size());
+  VectorT res(_rhs.size());
 
-   gmm::mult( _A,_x, Ax );
-   gmm::add( Ax, gmm::scaled( _rhs, -1.0 ), res );
+  gmm::mult(_A, _x, Ax);
+  gmm::add(Ax, gmm::scaled(_rhs, -1.0), res);
 
-   return gmm::vect_norm2( res );
+  return gmm::vect_norm2(res);
 }
 
 
@@ -983,29 +985,31 @@ double residuum_norm( MatrixT& _A, VectorT& _x, VectorT& _rhs )
 template<class MatrixT, class MatrixT2, class VectorT>
 void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs)
 {
+  DEB_enter_func;
   gmm::size_type m = gmm::mat_nrows(_F);
   gmm::size_type n = gmm::mat_ncols(_F);
 
   // resize result matrix and vector
-  gmm::resize(_Q, n-1, n-1);
+  gmm::resize(_Q, n - 1, n - 1);
   gmm::resize(_rhs, n);
 
-//  // set up transposed
-//  MatrixT Ft(n,m);
-//  gmm::copy(gmm::transposed(_F), Ft);
+  //  // set up transposed
+  //  MatrixT Ft(n,m);
+  //  gmm::copy(gmm::transposed(_F), Ft);
 
   // compute quadratic matrix
-  MatrixT Q(n,n);
-//  gmm::mult(Ft,_F,Q);
-  gmm::mult(gmm::transposed(_F),_F,Q);
-
+  MatrixT Q(n, n);
+  //  gmm::mult(Ft,_F,Q);
+  gmm::mult(gmm::transposed(_F), _F, Q);
+  PROGRESS_TICK;
   // extract rhs
-  gmm::copy( gmm::scaled(gmm::mat_const_row( Q, n - 1),-1.0), _rhs);
+  gmm::copy(gmm::scaled(gmm::mat_const_row(Q, n - 1), -1.0), _rhs);
 
   // resize and copy output
-  gmm::resize( Q, n-1, n-1);
-  _rhs.resize( n - 1);
-  gmm::copy  ( Q, _Q);
+  gmm::resize(Q, n - 1, n - 1);
+  _rhs.resize(n - 1);
+  PROGRESS_TICK;
+  gmm::copy(Q, _Q); 
 }
   
   
