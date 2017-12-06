@@ -125,6 +125,12 @@ solve(NProblemInterface*                  _problem,
         case 2 : vars.push_back( model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_BINARY    ) ); break;
       }
 
+    // set start
+    std::vector<double> start(vars.size());
+    _problem->initial_x(start.data());
+
+    for (int i = 0; i < _problem->n_unknowns(); ++i)
+      vars[i].set(GRB_DoubleAttr_Start, start[i]);
 
     // Integrate new variables
     model.update();
