@@ -132,8 +132,15 @@ solve(NProblemInterface*                  _problem,
     for (int i = 0; i < _problem->n_unknowns(); ++i)
       vars[i].set(GRB_DoubleAttr_Start, start[i]);
 
+
     // Integrate new variables
     model.update();
+
+    if (!start_solution_output_path_.empty())
+    {
+      std::cout << "Writing problem's start solution into file \"" << start_solution_output_path_ << "\"." << std::endl;
+      model.write(start_solution_output_path_);
+    }
 
     //----------------------------------------------
     // 2. setup constraints
@@ -923,6 +930,19 @@ GUROBISolver::
 set_problem_output_path( const std::string &_problem_output_path)
 {
   problem_output_path_ = _problem_output_path;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void
+GUROBISolver::
+set_start_solution_output_path(const std::string& _start_solution_output_path)
+{
+  std::stringstream ss;
+  ss << _start_solution_output_path << ".mst";
+  start_solution_output_path_ = ss.str();
 }
 
 
