@@ -37,8 +37,8 @@
 			#define COMISODLLEXPORTONLY
 		#endif
 	#else
-		#define COMISODLLEXPORT
-		#define COMISODLLEXPORTONLY
+		#define COMISODLLEXPORT __attribute__((visibility("default")))
+		#define COMISODLLEXPORTONLY COMISODLLEXPORT
 	#endif
 #endif
 
