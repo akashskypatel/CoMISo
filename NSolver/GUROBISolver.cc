@@ -31,7 +31,7 @@ namespace COMISO {
 
 
 void add_constraint_to_model(COMISO::NConstraintInterface* _constraint, 
-  GRBModel& _model, std::vector<GRBVar>& _vars, const double* _x)
+  GRBModel& _model, std::vector<GRBVar>& _vars, const double* _x, int _lazy = 0)
 {
   DEB_enter_func;
   DEB_warning_if(!_constraint->is_linear(), 1,
@@ -47,11 +47,23 @@ void add_constraint_to_model(COMISO::NConstraintInterface* _constraint,
 
   double b = _constraint->eval_constraint(_x);
 
-  switch(_constraint->constraint_type())
+  if (_constraint->constraint_type() == NConstraintInterface::NC_EQUAL)
   {
-    case NConstraintInterface::NC_EQUAL         : _model.addConstr(lin_expr + b == 0); break;
-    case NConstraintInterface::NC_LESS_EQUAL    : _model.addConstr(lin_expr + b <= 0); break;
-    case NConstraintInterface::NC_GREATER_EQUAL : _model.addConstr(lin_expr + b >= 0); break;
+    auto constr = _model.addConstr(lin_expr + b == 0);
+    if (_lazy)
+      constr.set(GRB_IntAttr_Lazy, _lazy);
+  }
+  else if (_constraint->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
+  {
+    auto constr = _model.addConstr(lin_expr + b <= 0);
+    if (_lazy)
+      constr.set(GRB_IntAttr_Lazy, _lazy);
+  }
+  else if (_constraint->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
+  {
+    auto constr = _model.addConstr(lin_expr + b >= 0);
+    if (_lazy)
+      constr.set(GRB_IntAttr_Lazy, _lazy);
   }
 }
 
@@ -664,40 +676,37 @@ solve(NProblemInterface*                        _problem,
               if(v>_almost_infeasible)
                 almost_inf = true;
           }
-          else
-            if(lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
-            {
-              if(v<-acceptable_tolerance)
-                inf = true;
-              else
-                if(v<_almost_infeasible)
-                  almost_inf = true;
-            }
+          else if(lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
+          {
+            if(v<-acceptable_tolerance)
+              inf = true;
             else
-              if(lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
-              {
-                if(v>acceptable_tolerance)
-                  inf = true;
-                else
-                  if(v>-_almost_infeasible)
-                    almost_inf = true;
-              }
+              if(v<_almost_infeasible)
+                almost_inf = true;
+          }
+          else if(lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
+          {
+            if(v>acceptable_tolerance)
+              inf = true;
+            else
+              if(v>-_almost_infeasible)
+                almost_inf = true;
+          }
 
           // infeasible?
-              if(inf)
-              {
-                add_constraint_to_model( lc, model, vars, P(x));
-                lazy_added[i] = true;
-                feasible_point_found = false;
-                ++n_inf.back();
-              }
-              else // almost violated or violated? -> add to constraints
-                if(almost_inf)
-                {
-                  add_constraint_to_model( lc, model, vars, P(x));
-                  lazy_added[i] = true;
-                  ++n_almost_inf.back();
-                }
+          if(inf)
+          {
+            add_constraint_to_model( lc, model, vars, P(x));
+            lazy_added[i] = true;
+            feasible_point_found = false;
+            ++n_inf.back();
+          }
+          else if(almost_inf) // almost violated or violated? -> add to constraints
+          {
+            add_constraint_to_model( lc, model, vars, P(x));
+            lazy_added[i] = true;
+            ++n_almost_inf.back();
+          }
         }
     }
 
@@ -918,7 +927,202 @@ solve(NProblemInterface*                        _problem,
 //    for(unsigned int i=0; i<n_inf.size(); ++i)
 //      std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;
 //
-//    return (solution_found != IloFalse);
+  //    return (solution_found != IloFalse);
+}
+
+bool
+GUROBISolver::
+solve(NProblemInterface* _problem,
+      const std::vector<NConstraintInterface*>& _constraints,
+      const std::vector<NConstraintInterface*>& _lazy_constraints,
+      const std::vector<PairIndexVtype>& _discrete_constraints,
+      const double _time_limit,
+      const bool _silent)
+{
+  DEB_enter_func;
+  try
+  {
+    //----------------------------------------------
+    // 0. set up environment
+    //----------------------------------------------
+
+    GRBEnv   env   = GRBEnv();
+    GRBModel model = GRBModel(env);
+
+    model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit);
+
+
+    //----------------------------------------------
+    // 1. allocate variables
+    //----------------------------------------------
+
+    // determine variable types: 0->real, 1->integer, 2->bool
+    std::vector<char> vtypes(_problem->n_unknowns(),0);
+    for(unsigned int i=0; i<_discrete_constraints.size(); ++i)
+      switch(_discrete_constraints[i].second)
+      {
+        case Integer: vtypes[_discrete_constraints[i].first] = 1; break;
+        case Binary : vtypes[_discrete_constraints[i].first] = 2; break;
+        default     : break;
+      }
+
+    // GUROBI variables
+    std::vector<GRBVar> vars;
+    // first all
+    for( int i=0; i<_problem->n_unknowns(); ++i)
+      switch(vtypes[i])
+      {
+        case 0 : vars.push_back( model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS) ); break;
+        case 1 : vars.push_back( model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_INTEGER   ) ); break;
+        case 2 : vars.push_back( model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_BINARY    ) ); break;
+      }
+
+    // set start
+    std::vector<double> start(vars.size());
+    _problem->initial_x(start.data());
+
+    for (int i = 0; i < _problem->n_unknowns(); ++i)
+      vars[i].set(GRB_DoubleAttr_Start, start[i]);
+
+
+    // Integrate new variables
+    model.update();
+
+    if (!start_solution_output_path_.empty())
+    {
+      std::cout << "Writing problem's start solution into file \"" << start_solution_output_path_ << "\"." << std::endl;
+      model.write(start_solution_output_path_);
+    }
+
+    //----------------------------------------------
+    // 2. setup constraints
+    //----------------------------------------------
+
+    // get zero vector
+    std::vector<double> x(_problem->n_unknowns(), 0.0);
+
+    for(unsigned int i=0; i<_constraints.size();  ++i)
+    {
+      add_constraint_to_model(_constraints[i], model, vars, P(x));
+    }
+    model.update();
+
+    static int lazy_level = 0;
+    lazy_level = (lazy_level + 1) % 4;
+
+    std::cout << "Lazy Level: " << lazy_level << std::endl;
+
+    for(unsigned int i=0; i<_lazy_constraints.size();  ++i)
+    {
+      add_constraint_to_model(_lazy_constraints[i], model, vars, P(x), lazy_level);
+    }
+    model.update();
+
+    //----------------------------------------------
+    // 3. setup energy
+    //----------------------------------------------
+
+    DEB_warning_if(!_problem->constant_hessian(), 1,
+      "GUROBISolver received a problem with non-constant hessian!!!");
+
+    GRBQuadExpr objective;
+
+    // add quadratic part
+    NProblemInterface::SMatrixNP H;
+    _problem->eval_hessian(P(x), H);
+    for( int i=0; i<H.outerSize(); ++i)
+    {
+      for (NProblemInterface::SMatrixNP::InnerIterator it(H,i); it; ++it)
+        objective += 0.5*it.value()*vars[it.row()]*vars[it.col()];
+    }
+
+    // add linear part
+    std::vector<double> g(_problem->n_unknowns());
+    _problem->eval_gradient(P(x), P(g));
+    for(unsigned int i=0; i<g.size(); ++i)
+      objective += g[i]*vars[i];
+
+    // add constant part
+    objective += _problem->eval_f(P(x));
+
+    model.set(GRB_IntAttr_ModelSense, 1);
+    model.setObjective(objective);
+    model.update();
+
+
+    //----------------------------------------------
+    // 4. solve problem
+    //----------------------------------------------
+
+
+    if (solution_input_path_.empty())
+    {
+      if (!problem_env_output_path_.empty())
+      {
+        std::cout << "Writing problem's environment into file \"" << problem_env_output_path_ << "\"." << std::endl;
+        model.getEnv().writeParams(problem_env_output_path_);
+      }
+
+#if (COMISO_QT_AVAILABLE)
+      if (!problem_output_path_.empty())
+      {
+        std::cout << "Writing problem into file \"" << problem_output_path_ << "\"." << std::endl;
+        GurobiHelper::outputModelToMpsGz(model, problem_output_path_);
+      }
+#endif//COMISO_QT_AVAILABLE
+      model.optimize();
+    }
+    else
+    {
+      DEB_line(2, "Reading solution from file \"" << solution_input_path_)
+    }
+
+    //----------------------------------------------
+    // 5. store result
+    //----------------------------------------------
+
+    if (solution_input_path_.empty())
+    {
+      // store computed result
+      for(unsigned int i=0; i<vars.size(); ++i)
+        x[i] = vars[i].get(GRB_DoubleAttr_X);
+    }
+    else
+    {
+#if (COMISO_QT_AVAILABLE)
+        std::cout << "Loading stored solution from \"" << solution_input_path_ << "\"." << std::endl;
+        // store loaded result
+        const size_t oldSize = x.size();
+        x.clear();
+        GurobiHelper::readSolutionVectorFromSOL(x, solution_input_path_);
+        if (oldSize != x.size()) {
+            std::cerr << "oldSize != x.size() <=> " << oldSize << " != " << x.size() << std::endl;
+            throw std::runtime_error("Loaded solution vector doesn't have expected dimension.");
+        }
+#endif//COMISO_QT_AVAILABLE
+    }
+
+    _problem->store_result(P(x));
+
+    // ObjVal is only available if the optimize was called.
+    DEB_out_if(solution_input_path_.empty(), 2,
+        "GUROBI Objective: " << model.get(GRB_DoubleAttr_ObjVal) << "\n");
+    return true;
+  }
+  catch(GRBException& e)
+  {
+    //process_gurobi_exception(e);
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+    return false;
+  }
+  catch(...)
+  {
+    std::cout << "Exception during optimization" << std::endl;
+    return false;
+  }
+
+  return false;
 }
 
 

@@ -89,6 +89,13 @@ public:
                     const double                              _time_limit = 60,
                     const bool                                _silent = false);
 
+  bool solve(       NProblemInterface*                        _problem,
+                    const std::vector<NConstraintInterface*>& _constraints,
+                    const std::vector<NConstraintInterface*>& _lazy_constraints,
+                    const std::vector<PairIndexVtype>&              _discrete_constraints,   // discrete constraints
+                    const double                              _time_limit = 60,
+                    const bool                                _silent = false);
+
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
   bool solve(NProblemInterface*                        _problem,
