@@ -44,12 +44,6 @@ public:
    
   typedef std::pair<unsigned int, VariableType> PairUiV;
 
-  /// Default constructor
-  COMISOSolver() {}
- 
-  /// Destructor
-  ~COMISOSolver() {}
-
   // ********** SOLVE **************** //
   void solve(NProblemInterface*                  _problem,                      // problem instance
              std::vector<NConstraintInterface*>& _constraints,                  // linear constraints

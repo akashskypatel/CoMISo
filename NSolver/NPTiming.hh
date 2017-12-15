@@ -39,9 +39,6 @@ public:
   /// Default constructor
   NPTiming(NProblemInterface* _base);
  
-  /// Destructor
-  ~NPTiming();
-
   virtual int    n_unknowns   ();
 
   virtual void   initial_x( double* _x );

@@ -56,16 +56,8 @@ template<class VType, class IType>
 class MutablePriorityQueueT
 {
 public:
-
-
   typedef Triple<VType,IType,unsigned int> TripleVII;
    
-  /// Default constructor
-  MutablePriorityQueueT() {}
- 
-  /// Destructor
-  ~MutablePriorityQueueT() {}
-
   // reset timestamps
   void clear(size_t _n)
   {

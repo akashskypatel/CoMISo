@@ -51,9 +51,6 @@ public:
   template<class MatrixT, class VectorT>
   LinearConstraintHandlerPenalty( const MatrixT& _C, const VectorT& _c);
  
-  /// Destructor
-  ~LinearConstraintHandlerPenalty();
-
   // penalty weight
   double& penalty();
 

@@ -127,6 +127,9 @@ using namespace COMISO_STD;
 template void ConstrainedSolver::solve(WSRowMatrix&, WSColMatrix&, 
   DoubleVector&, DoubleVector&, IntVector&, double, bool, bool);
 
+template void ConstrainedSolver::solve(WSRowMatrix&, WSRowMatrix&, 
+  DoubleVector&, IntVector&, double, bool, bool);
+
 template void ConstrainedSolver::solve_const(const WSRowMatrix&, 
   const WSColMatrix&, DoubleVector&, const DoubleVector&, const IntVector&, 
   double, bool, bool);

@@ -23,10 +23,7 @@ namespace COMISO {
 /// Default constructor
 NPTiming::NPTiming(NProblemInterface* _base) : base_(_base) {start_timing();}
 
-/// Destructor
-NPTiming::~NPTiming() {}
-
-int NPTiming::n_unknowns   ()
+int NPTiming::n_unknowns()
 {
   return base_->n_unknowns();
 }

@@ -72,9 +72,6 @@ public:
     analyze_special_properties(_problem, _constraints);
   }
 
-  /** default destructor */
-  virtual ~NProblemIPOPT() {};
-
   /**@name Overloaded from TNLP */
   //@{
   /** Method to return some info about the nlp */
@@ -129,6 +126,21 @@ public:
                                  const IpoptData* ip_data,
                                  IpoptCalculatedQuantities* ip_cq);
   //@}
+
+  /** Intermediate Callback method for the user.  Providing dummy
+    *  default implementation.  For details see IntermediateCallBack
+    *  in IpNLP.hpp. */
+  virtual bool intermediate_callback(
+    Ipopt::AlgorithmMode mode,
+    Index iter, Number obj_value,
+    Number inf_pr, Number inf_du,
+    Number mu, Number d_norm,
+    Number regularization_size,
+    Number alpha_du, Number alpha_pr,
+    Index ls_trials,
+    const IpoptData* ip_data,
+    IpoptCalculatedQuantities* ip_cq
+  ) override;
 
   // special properties of problem
   bool hessian_constant() const;
@@ -218,9 +230,6 @@ public:
    : problem_(_problem), constraints_(_constraints), nnz_jac_g_(0), nnz_h_lag_(0)
    {}
 
-  /** default destructor */
-  virtual ~NProblemGmmIPOPT() {};
-
   /**@name Overloaded from TNLP */
   //@{
   /** Method to return some info about the nlp */
@@ -275,6 +284,22 @@ public:
                                  const IpoptData* ip_data,
                                  IpoptCalculatedQuantities* ip_cq);
   //@}
+
+  /** Intermediate Callback method for the user.  Providing dummy
+    *  default implementation.  For details see IntermediateCallBack
+    *  in IpNLP.hpp. */
+  virtual bool intermediate_callback(
+    Ipopt::AlgorithmMode mode,
+    Index iter, Number obj_value,
+    Number inf_pr, Number inf_du,
+    Number mu, Number d_norm,
+    Number regularization_size,
+    Number alpha_du, Number alpha_pr,
+    Index ls_trials,
+    const IpoptData* ip_data,
+    IpoptCalculatedQuantities* ip_cq
+  ) override;
+
 
 private:
   /**@name Methods to block default compiler methods.

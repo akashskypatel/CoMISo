@@ -84,14 +84,6 @@ MISolver::MISolver()
 
 //-----------------------------------------------------------------------------
 
-
-MISolver::~MISolver()
-{
-}
-
-
-//-----------------------------------------------------------------------------
-
 void
 MISolver::solve(
     CSCMatrix& _A,
@@ -105,22 +97,22 @@ MISolver::solve(
   DEB_out(2, "# integer    variables: " << _to_round.size() 
     << "\n# continuous variables: " << _x.size()-_to_round.size() << "\n")
 
-        // nothing to solve?
-        if( gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
-                return;
+  // nothing to solve?
+  if( gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
+          return;
 
-        if( gurobi_rounding_)
-                solve_gurobi(_A, _x, _rhs, _to_round);
-        else if( cplex_rounding_)
-                solve_cplex(_A, _x, _rhs, _to_round);
-        else if( no_rounding_ || _to_round.size() == 0)
-                solve_no_rounding( _A, _x, _rhs);
-        else if( direct_rounding_)
-                solve_direct_rounding( _A, _x, _rhs, _to_round);
-        else if( multiple_rounding_)
-                solve_multiple_rounding( _A, _x, _rhs, _to_round);
-        else
-                solve_iterative( _A, _x, _rhs, _to_round, _fixed_order);
+  if( gurobi_rounding_)
+    solve_gurobi(_A, _x, _rhs, _to_round);
+  else if( cplex_rounding_)
+    solve_cplex(_A, _x, _rhs, _to_round);
+  else if( no_rounding_ || _to_round.size() == 0)
+    solve_no_rounding( _A, _x, _rhs);
+  else if( direct_rounding_)
+    solve_direct_rounding( _A, _x, _rhs, _to_round);
+  else if( multiple_rounding_)
+    solve_multiple_rounding( _A, _x, _rhs, _to_round);
+  else
+    solve_iterative( _A, _x, _rhs, _to_round, _fixed_order);
 }
 
 
@@ -211,10 +203,12 @@ MISolver::solve_cplex(
   }
   catch (IloException& e)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(2, "CPLEX Concert exception caught: " << e.getMessage() )
   }
   catch (...)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(1, "CPLEX Unknown exception caught" )
   }
 
@@ -844,10 +838,12 @@ MISolver::solve_gurobi(
   }
   catch(GRBException& e)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(2, "Error code = " << e.getErrorCode() << "[" << e.getMessage() << "]\n")
   }
   catch(...)
   {
+    PROGRESS_RESUME_ABORT; // resume a processed abort request
     DEB_warning(1, "Exception during optimization")
   }
 

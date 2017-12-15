@@ -45,9 +45,6 @@ public:
   AcceleratedQuadraticProxy(const double _eps = 1e-6, const int _max_iters = 1000, const double _accelerate = 100.0, const double _alpha_ls=0.2, const double _beta_ls = 0.6)
     : eps_(_eps), max_iters_(_max_iters), accelerate_(_accelerate), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls) {}
  
-  /// Destructor
-  ~AcceleratedQuadraticProxy() {}
-
   // solve without linear constraints
   int solve(NProblemInterface* _quadratic_problem, NProblemInterface* _nonlinear_problem, bool _update_factorization = true)
   {

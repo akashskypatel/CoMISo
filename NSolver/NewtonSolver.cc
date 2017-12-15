@@ -183,10 +183,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
       if(!fact_ok || kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2)
       {
-        // alternatingly regularize hessian and constraints
+        DEB_warning(2, "Numerical issues in KKT system"); 
+        // alternate hessian and constraints regularization
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
-          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " (" << constraint_res2 << ") -> regularize hessian");
+          DEB_line(2, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
           if(regularize_hessian == 0.0)
             regularize_hessian = 1e-6;
           else
@@ -194,7 +195,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         }
         else
         {
-          DEB_line(2, "Warning: numerical issues in KKT system with residual^2 " << kkt_res2 << " (" << constraint_res2 << ") -> regularize constraints");
+          DEB_line(2, "residual^2 " << kkt_res2 << " -> regularize constraints");
           if(regularize_constraints == 0.0)
             regularize_constraints = 1e-8;
           else
@@ -208,7 +209,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     // no valid step could be found?
     if(kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2 || reg_iters >= max_KKT_regularization_iters)
     {
-      DEB_line(2, "Warning: numerical issues in KKT system could not be resolved -> terminating NewtonSolver with current solution");
+      DEB_error("numerical issues in KKT system could not be resolved "
+        "-> terminating NewtonSolver with current solution");
       _problem->store_result(x.data());
       return 0;
     }
@@ -229,7 +231,8 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
 
     if(constraint_violation2 > 2*initial_constraint_violation2 && constraint_violation2 > max_allowed_constraint_violation2)
     {
-      DEB_line(2, "Warning: numerical issues in KKT system leads to constraint violation -> recovery phase");
+      DEB_warning(2, "Numerical issues in KKT system lead to "
+        "constraint violation -> recovery phase");
       // restore old solution
       x -= dx.head(n)*t;
 

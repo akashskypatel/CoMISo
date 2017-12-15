@@ -42,16 +42,8 @@ namespace COMISO {
 class COMISODLLEXPORT ArpackSolver
 {
 public:
-
   // sparse matrix type
   typedef EigenArpackMatrixT<double,Eigen::SparseMatrix<double,Eigen::ColMajor> > Matrix;
-
-
-  /// Constructor
-  ArpackSolver() {}
- 
-  /// Destructor
-  ~ArpackSolver() {}
 
   // solve eigenproblem
   // number of desired eigenvalues -> _n_eigenvalues
@@ -77,9 +69,6 @@ public:
   // check resulting eigenvalues/eigenvectors
   template<class MatrixT,class MatrixT2>
   void check_result(const MatrixT& _A, std::vector<double>& _eigenvalues, MatrixT2& _eigenvectors);
-
-private:
-  
 };
 
 

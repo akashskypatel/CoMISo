@@ -39,12 +39,6 @@ namespace COMISO {
 class COMISODLLEXPORT CBCSolver
 {
 public:
-  /// Default constructor
-  CBCSolver() {}
-
-  /// Destructor
-  ~CBCSolver() {}
-
   // ********** SOLVE **************** //
   //! \throws Outcome
   bool solve(

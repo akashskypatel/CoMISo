@@ -38,16 +38,8 @@ template <class RealT>
 class IterativeSolverT
 {
 public:
-  
   typedef RealT Real;
  
-  /// Constructor
-  IterativeSolverT() {}
- 
-  /// Destructor
-  ~IterativeSolverT() {}
-
-
   // local gauss_seidel
   bool gauss_seidel_local( typename gmm::csc_matrix<Real>&  _A,
    			   std::vector<Real>&               _x, 

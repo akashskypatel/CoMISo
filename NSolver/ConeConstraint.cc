@@ -39,9 +39,6 @@ ConeConstraint::ConeConstraint(const double _c, const int _i, const SMatrixNC& _
 {
 }
 
-/// Destructor
-ConeConstraint::~ConeConstraint() {}
-
 int ConeConstraint::n_unknowns()
 {
   return Q_.cols();

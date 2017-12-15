@@ -39,9 +39,6 @@ public:
   // cone constraint of the form -> 0.5*(c_ * x(i_)^2 - x^T Q_ x) >= 0
   ConeConstraint(const double _c, const int _i, const SMatrixNC& _Q);
 
-  /// Destructor
-  virtual ~ConeConstraint();
-
   virtual int n_unknowns();
 
   // resize coefficient vector = #unknowns

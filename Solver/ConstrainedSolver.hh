@@ -67,9 +67,6 @@ public:
   ConstrainedSolver( bool _do_gcd = true): do_gcd_(_do_gcd)
   { epsilon_ = 1e-8; noisy_ = 1; }
 
-  /// Destructor
-  ~ConstrainedSolver() { }
-
 /** @name Contrained solvers
  * Functions to solve constrained linear systems of the form Ax=b (stemming from quadratic energies). 
  * The constraints can be linear constraints of the form \f$ x_1*c_1+ \cdots +x_n*c_n=c \f$ as well as integer constraints \f$x_i\in \mathbf{Z}\f$. 

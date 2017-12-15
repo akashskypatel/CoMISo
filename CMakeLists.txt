@@ -352,7 +352,10 @@ link_directories (
 )
 
 # enable debug stuff
-add_definitions(-DDEB_ON)
+set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
+if (COMISO_ENABLE_DEBUG_OUTPUT)
+  add_definitions(-DDEB_ON)
+endif ()
 
 # source code directories
 set (directories 

@@ -47,12 +47,6 @@ public:
   typedef gmm::row_matrix< SVectorGMM > RMatrixGMM;
   typedef gmm::col_matrix< SVectorGMM > CMatrixGMM;
 
-  /// Default constructor
-  ConstraintTools();
- 
-  /// Destructor
-  ~ConstraintTools();
-
   // remove all linear dependent linear equality constraints. the remaining constraints are a subset of the original ones
   // nonlinear or equality constraints are preserved.
   static void remove_dependent_linear_constraints(std::vector<NConstraintInterface*>& _constraints, const double _eps = 1e-8);

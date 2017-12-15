@@ -59,13 +59,6 @@ void add_constraint_to_model(COMISO::NConstraintInterface* _constraint,
 //-----------------------------------------------------------------------------
 
 
-GUROBISolver::
-GUROBISolver()
-{
-}
-
-//-----------------------------------------------------------------------------
-
 static void process_gurobi_exception(const GRBException& _exc)
 {
   DEB_enter_func;
@@ -90,8 +83,8 @@ static void process_gurobi_exception(const GRBException& _exc)
 bool
 GUROBISolver::
 solve(NProblemInterface*                  _problem,
-      std::vector<NConstraintInterface*>& _constraints,
-      std::vector<PairIndexVtype>&        _discrete_constraints,
+      const std::vector<NConstraintInterface *> &_constraints,
+      const std::vector<PairIndexVtype> &_discrete_constraints,
       const double                        _time_limit)
 {
   DEB_enter_func;
@@ -280,8 +273,8 @@ solve(NProblemInterface*                  _problem,
 bool
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
-            std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-            std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+            const std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+            const std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
             const double                        _time_limit0, // time limit phase 1 in seconds
             const double                        _gap0,     // MIP gap phase 1
             const double                        _time_limit1, // time limit phase 2 in seconds
@@ -295,8 +288,8 @@ solve_two_phase(NProblemInterface*                  _problem,                // 
 bool
 GUROBISolver::
 solve_two_phase(NProblemInterface*                  _problem,                // problem instance
-           std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-           std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
+           const std::vector<NConstraintInterface *> &_constraints,            // linear constraints
+           const std::vector<PairIndexVtype> &_discrete_constraints,   // discrete constraints
            const double                        _time_limit0, // time limit phase 1 in seconds
            const double                        _gap0,     // MIP gap phase 1
            const double                        _time_limit1, // time limit phase 2 in seconds

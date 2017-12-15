@@ -48,9 +48,6 @@ public:
   /// Default constructor
   CombinedProblem (NProblemInterface* _p1, NProblemInterface* _p2, const double _c1 = 1.0, const double _c2 = 1.0);
  
-  /// Destructor
-  virtual ~CombinedProblem();
-
   // problem definition
   virtual int    n_unknowns();
 
