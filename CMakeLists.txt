@@ -508,6 +508,9 @@ if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_AQP/CMakeLists.txt" )
 	add_subdirectory (Examples/small_AQP)
   endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/finite_element_integrability_problem/CMakeLists.txt" )
+	add_subdirectory (Examples/finite_element_integrability_problem)
+  endif()
   
 endif (COMISO_BUILD_EXAMPLES )
 
