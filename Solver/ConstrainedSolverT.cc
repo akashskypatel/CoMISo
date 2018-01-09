@@ -41,12 +41,18 @@
 #include <Base/Utils/StopWatch.hh>
 #include <Base/Debug/DebOut.hh>
 
+#include <type_traits>
 
 //== NAMESPACES ===============================================================
 
 namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
+
+// cf. issue #3 - gmm5.2 compat
+template <typename T>
+using linalg_traits = typename gmm::linalg_traits<typename std::remove_const<typename std::remove_reference<T>::type>::type>;
+
 
 template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
 void 
@@ -286,10 +292,10 @@ ConstrainedSolver::resolve(
   gmm::size_type m = gmm::mat_nrows(_B);
   gmm::size_type n = gmm::mat_ncols(_B);
 
-  typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-  typedef typename gmm::linalg_traits<RMatrixT>::sub_row_type       RowT;
-  typedef typename gmm::linalg_traits<CRowT>::const_iterator        RIter;
-  typedef typename gmm::linalg_traits<CRowT>::value_type            VecValT;
+  typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
+  typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
+  typedef typename linalg_traits<CRowT>::const_iterator        RIter;
+  typedef typename linalg_traits<CRowT>::value_type            VecValT;
 
   gmm::resize(rhs, n - 1);
   gmm::clear(rhs);
@@ -425,9 +431,9 @@ ConstrainedSolver::make_constraints_independent(
     // if not found for integers with value +-1
     // and finally take the smallest integer variable
 
-    typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-    typedef typename gmm::linalg_traits<RMatrixT>::sub_row_type       RowT;
-    typedef typename gmm::linalg_traits<CRowT>::const_iterator        RIter;
+    typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
+    typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
+    typedef typename linalg_traits<CRowT>::const_iterator        RIter;
 
     // get current condition row
     CRowT row = gmm::mat_const_row(_constraints, i);
@@ -535,8 +541,8 @@ ConstrainedSolver::make_constraints_independent(
       CVector col = constraints_c.col(elim_j);
 
       // iterate over column
-      typename gmm::linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename gmm::linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
+      typename linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
+      typename linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
 
       for (; c_it != c_end; ++c_it)
       {
@@ -635,9 +641,9 @@ ConstrainedSolver::make_constraints_independent_reordering(
     // if not found for integers with value +-1
     // and finally take the smallest integer variable
 
-    typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-    typedef typename gmm::linalg_traits<RMatrixT>::sub_row_type       RowT;
-    typedef typename gmm::linalg_traits<CRowT>::const_iterator        RIter;
+    typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
+    typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
+    typedef typename linalg_traits<CRowT>::const_iterator        RIter;
 
     // get current condition row
     CRowT row = gmm::mat_const_row(_constraints, i);
@@ -744,8 +750,8 @@ ConstrainedSolver::make_constraints_independent_reordering(
       CVector col = constraints_c.col(elim_j);
 
       // iterate over column
-      typename gmm::linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename gmm::linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
+      typename linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
+      typename linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
 
       for (; c_it != c_end; ++c_it)
       {
@@ -828,8 +834,8 @@ ConstrainedSolver::update_constraint_gcd(RMatrixT& _constraints,
     return false;
 
   // divide by gcd
-  typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-  typedef typename gmm::linalg_traits<CRowT>::const_iterator        RIter;
+  typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
+  typedef typename linalg_traits<CRowT>::const_iterator        RIter;
 
   // get current constraint row
   RIter row_it = gmm::vect_const_begin(gmm::mat_const_row(_constraints, _row_i));
@@ -882,8 +888,8 @@ ConstrainedSolver::eliminate_constraints(
       SVector3T col = _Bcol.col(cur_j);
 
       // iterate over column
-      typename gmm::linalg_traits<SVector3T>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename gmm::linalg_traits<SVector3T>::const_iterator c_end = gmm::vect_const_end(col);
+      typename linalg_traits<SVector3T>::const_iterator c_it = gmm::vect_const_begin(col);
+      typename linalg_traits<SVector3T>::const_iterator c_end = gmm::vect_const_end(col);
 
       for (; c_it != c_end; ++c_it)
         add_row(c_it.index(), -(*c_it) / cur_val, gmm::mat_row(_constraints, i), _Bcol);
@@ -946,8 +952,8 @@ ConstrainedSolver::eliminate_constraints(
   Base::StopWatch sw;
   sw.start();
   // define iterator on matrix A and on constraints C
-  typedef typename gmm::linalg_traits<SVector2T>::const_iterator  AIter;
-  typedef typename gmm::linalg_traits<SVector1T>::const_iterator  CIter;
+  typedef typename linalg_traits<SVector2T>::const_iterator  AIter;
+  typedef typename linalg_traits<SVector1T>::const_iterator  CIter;
 
   // store variable indices to be eliminated
   std::vector<int> elim_varids;
@@ -1091,7 +1097,7 @@ ConstrainedSolver::add_row(gmm::size_type       _row_i,
   RowT      _row,
   MatrixT&  _mat)
 {
-  typedef typename gmm::linalg_traits<RowT>::const_iterator RIter;
+  typedef typename linalg_traits<RowT>::const_iterator RIter;
   RIter r_it = gmm::vect_const_begin(_row);
   RIter r_end = gmm::vect_const_end(_row);
 
@@ -1111,7 +1117,7 @@ ConstrainedSolver::add_row_simultaneously(gmm::size_type _row_i,
   RMatrixT&      _rmat,
   CMatrixT&      _cmat)
 {
-  typedef typename gmm::linalg_traits<RowT>::const_iterator RIter;
+  typedef typename linalg_traits<RowT>::const_iterator RIter;
   RIter r_it = gmm::vect_const_begin(_row);
   RIter r_end = gmm::vect_const_end(_row);
 
@@ -1325,8 +1331,8 @@ ConstrainedSolver::verify_constrained_system(
   double          _eps)
 {
   DEB_enter_func;
-  typedef typename gmm::linalg_traits<RMatrixT>::const_sub_row_type RowT;
-  typedef typename gmm::linalg_traits<RowT>::const_iterator RIter;
+  typedef typename linalg_traits<RMatrixT>::const_sub_row_type RowT;
+  typedef typename linalg_traits<RowT>::const_iterator RIter;
 
   VectorT Ax(_x.size());
   gmm::mult(_A, _x, Ax);
