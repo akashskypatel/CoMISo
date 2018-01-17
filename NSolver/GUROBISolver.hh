@@ -46,7 +46,9 @@ public:
   bool solve(NProblemInterface*                  _problem,                      // problem instance
              const std::vector<NConstraintInterface*>& _constraints,            // linear constraints
              const std::vector<PairIndexVtype>&        _discrete_constraints,   // discrete constraints
-             const double                        _time_limit = 60     );        // time limit in seconds
+             const double                        _time_limit = 60,              // time limit in seconds
+             const double                        _gap = 0.0);                   // stops when solution with optimality gap
+                                                                                // lower than _gab is reached
 
   bool solve(NProblemInterface*                  _problem,                // problem instance
              const std::vector<NConstraintInterface*>& _constraints,      // linear constraints

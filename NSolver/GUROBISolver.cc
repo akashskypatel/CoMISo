@@ -97,7 +97,8 @@ GUROBISolver::
 solve(NProblemInterface*                  _problem,
       const std::vector<NConstraintInterface *> &_constraints,
       const std::vector<PairIndexVtype> &_discrete_constraints,
-      const double                        _time_limit)
+      const double                        _time_limit,
+      const double                        _gap)
 {
   DEB_enter_func;
   try
@@ -237,6 +238,8 @@ solve(NProblemInterface*                  _problem,
         GurobiHelper::outputModelToMpsGz(model, problem_output_path_);
       }
 #endif//COMISO_QT_AVAILABLE
+      if (_gap > 0.0)
+        model.getEnv().set(GRB_DoubleParam_MIPGap, _gap);
       model.optimize();
     }
     else
