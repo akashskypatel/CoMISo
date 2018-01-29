@@ -96,7 +96,8 @@ public:
                     const std::vector<NConstraintInterface*>& _lazy_constraints,
                     const std::vector<PairIndexVtype>&              _discrete_constraints,   // discrete constraints
                     const double                              _time_limit = 60,
-                    const bool                                _silent = false);
+                    const double                              _gap = 0.0,
+                    const int                                 _lazy_level = 0); // lazy level between 0 and 3
 
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
@@ -119,13 +120,6 @@ public:
   void set_solution_input_path       ( const std::string &_solution_input_path);
 
 protected:
-  double* P(std::vector<double>& _v)
-  {
-    if( !_v.empty())
-      return ((double*)&_v[0]);
-    else
-      return 0;
-  }
 
 private:
 
