@@ -40,6 +40,7 @@ void
 NProblemIPOPT::
 split_constraints(const std::vector<NConstraintInterface*>& _constraints)
 {
+  DEB_enter_func;
   // split user-provided constraints into general-constraints and bound-constraints
   constraints_      .clear();       constraints_.reserve(_constraints.size());
   bound_constraints_.clear(); bound_constraints_.reserve(_constraints.size());
@@ -100,6 +101,7 @@ analyze_special_properties(const NProblemInterface* _problem, const std::vector<
 bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
+  DEB_enter_func;
   // number of variables
   n = static_cast<Index>(problem_->n_unknowns());
 
@@ -233,6 +235,7 @@ bool NProblemIPOPT::get_starting_point(Index n, bool init_x, Number* x,
                                Index m, bool init_lambda,
                                Number* lambda)
 {
+  DEB_enter_func;
   // get initial value of problem instance
   problem_->initial_x(x);
 
@@ -245,6 +248,7 @@ bool NProblemIPOPT::get_starting_point(Index n, bool init_x, Number* x,
 
 bool NProblemIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
 {
+  DEB_enter_func;
   // return the value of the objective function
   obj_value = problem_->eval_f(x);
   return true;
@@ -256,6 +260,7 @@ bool NProblemIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_val
 
 bool NProblemIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
 {
+  DEB_enter_func;
   problem_->eval_gradient(x, grad_f);
 
   return true;
@@ -267,6 +272,7 @@ bool NProblemIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* gr
 
 bool NProblemIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
 {
+  DEB_enter_func;
   // evaluate all constraint functions
   for( int i=0; i<m; ++i)
     g[i] = constraints_[i]->eval_constraint(x);
@@ -512,6 +518,26 @@ void NProblemIPOPT::finalize_solution(SolverReturn status,
 //-----------------------------------------------------------------------------
 
 
+bool NProblemIPOPT::intermediate_callback(
+  Ipopt::AlgorithmMode /*mode*/,
+  Index /*iter*/, Number /*obj_value*/,
+  Number /*inf_pr*/, Number /*inf_du*/,
+  Number /*mu*/, Number /*d_norm*/,
+  Number /*regularization_size*/,
+  Number /*alpha_du*/, Number /*alpha_pr*/,
+  Index /*ls_trials*/,
+  const IpoptData* /*ip_data*/,
+  IpoptCalculatedQuantities* /*ip_cq*/
+) 
+{
+  PROGRESS_TICK;
+  return true;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
 bool NProblemIPOPT::hessian_constant() const
 {
   return hessian_constant_;
@@ -542,6 +568,7 @@ bool NProblemIPOPT::jac_d_constant() const
 bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
+  DEB_enter_func;
   // number of variables
   n = problem_->n_unknowns();
 
@@ -633,6 +660,7 @@ bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
 bool NProblemGmmIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
                             Index m, Number* g_l, Number* g_u)
 {
+  DEB_enter_func;
   // first clear all variable bounds
   for( int i=0; i<n; ++i)
   {
@@ -668,6 +696,7 @@ bool NProblemGmmIPOPT::get_starting_point(Index n, bool init_x, Number* x,
                                Index m, bool init_lambda,
                                Number* lambda)
 {
+  DEB_enter_func;
   // get initial value of problem instance
   problem_->initial_x(x);
 
@@ -680,6 +709,7 @@ bool NProblemGmmIPOPT::get_starting_point(Index n, bool init_x, Number* x,
 
 bool NProblemGmmIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
 {
+  DEB_enter_func;
   // return the value of the objective function
   obj_value = problem_->eval_f(x);
   return true;
@@ -691,6 +721,7 @@ bool NProblemGmmIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_
 
 bool NProblemGmmIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
 {
+  DEB_enter_func;
   problem_->eval_gradient(x, grad_f);
 
   return true;
@@ -702,6 +733,7 @@ bool NProblemGmmIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number*
 
 bool NProblemGmmIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
 {
+  DEB_enter_func;
   // evaluate all constraint functions
   for( int i=0; i<m; ++i)
     g[i] = constraints_[i]->eval_constraint(x);
@@ -840,8 +872,25 @@ void NProblemGmmIPOPT::finalize_solution(SolverReturn status,
                               const IpoptData* ip_data,
                               IpoptCalculatedQuantities* ip_cq)
 {
+  DEB_enter_func;
   // problem knows what to do
   problem_->store_result(x);
+}
+
+bool NProblemGmmIPOPT::intermediate_callback(
+  Ipopt::AlgorithmMode /*mode*/,
+  Index /*iter*/, Number /*obj_value*/,
+  Number /*inf_pr*/, Number /*inf_du*/,
+  Number /*mu*/, Number /*d_norm*/,
+  Number /*regularization_size*/,
+  Number /*alpha_du*/, Number /*alpha_pr*/,
+  Index /*ls_trials*/,
+  const IpoptData* /*ip_data*/,
+  IpoptCalculatedQuantities* /*ip_cq*/
+) 
+{
+  PROGRESS_TICK;
+  return true;
 }
 
 

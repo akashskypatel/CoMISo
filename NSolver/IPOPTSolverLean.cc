@@ -323,7 +323,10 @@ void IPOPTSolverLean::solve(
     //----------------------------------------------------------------------------
     // 3. solve problem
     //----------------------------------------------------------------------------
-    status = impl_->app_->OptimizeTNLP(np);
+    {
+      DEB_time_session_def("IPOPT App OptimizeTNLP(np)");
+      status = impl_->app_->OptimizeTNLP(np);
+    }
 
     check_ipopt_status(status);
 

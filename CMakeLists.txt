@@ -293,6 +293,18 @@ else ()
   set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
 endif ()
 
+find_package (MOSEK)
+if (MOSEK_FOUND )
+  set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 1" )
+  list( APPEND COMISO_INCLUDE_DIRECTORIES ${MOSEK_INCLUDE_DIRS} )
+  list( APPEND COMISO_LINK_DIRECTORIES    ${MOSEK_LIBRARY_DIR} )
+  list( APPEND COMISO_LINK_LIBRARIES  ${MOSEK_LIBRARIES} )
+else ()
+  message (STATUS "MOSEK not found!")
+  set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 0" )
+endif ()
+
+
 find_package (ARPACK)
 if (ARPACK_FOUND )
   set (COMISO_ARPACK_CONFIG_FILE_SETTINGS "#define COMISO_ARPACK_AVAILABLE 1" )
@@ -352,7 +364,10 @@ link_directories (
 )
 
 # enable debug stuff
-add_definitions(-DDEB_ON)
+set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
+if (COMISO_ENABLE_DEBUG_OUTPUT)
+  add_definitions(-DDEB_ON)
+endif ()
 
 # source code directories
 set (directories 
@@ -507,6 +522,15 @@ if (COMISO_BUILD_EXAMPLES )
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_AQP/CMakeLists.txt" )
 	add_subdirectory (Examples/small_AQP)
+  endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/finite_element_integrability_problem/CMakeLists.txt" )
+	add_subdirectory (Examples/finite_element_integrability_problem)
+  endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_mosek_native/CMakeLists.txt" )
+	add_subdirectory (Examples/small_mosek_native)
+  endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_mosek_fusion_sdp/CMakeLists.txt" )
+	add_subdirectory (Examples/small_mosek_fusion_sdp)
   endif()
   
 endif (COMISO_BUILD_EXAMPLES )

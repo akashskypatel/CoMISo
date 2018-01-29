@@ -101,6 +101,8 @@ public:
   // access the ipopt-application (for setting parameters etc.)
   // examples: app().Options()->SetIntegerValue("max_iter", 100);
   //           app().Options()->SetStringValue("derivative_test", "second-order");
+  //           app().Options()->SetStringValue("hessian_approximation", "limited-memory");
+
   Ipopt::IpoptApplication& app() {return (*app_); }
 
 

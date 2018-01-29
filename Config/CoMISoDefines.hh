@@ -33,12 +33,19 @@
 				#define COMISODLLEXPORTONLY __declspec(dllexport)
 			#endif
 		#else		
-			#define COMISODLLEXPORT
-			#define COMISODLLEXPORTONLY
+      #define COMISODLLEXPORT
+      #define COMISODLLEXPORTONLY
 		#endif
-	#else
-		#define COMISODLLEXPORT
-		#define COMISODLLEXPORTONLY
+	#else // non-Windows symbols export:
+    #ifdef COMISODLL
+      // only export symbols if COMISODLL is defined (same behavior as Windows)
+      #define COMISODLLEXPORT __attribute__((visibility("default")))
+      #define COMISODLLEXPORTONLY COMISODLLEXPORT
+    #else // COMISODLL not defined
+      // this allows building CoMISo as static library without exposing its symbols
+      #define COMISODLLEXPORT
+      #define COMISODLLEXPORTONLY
+    #endif // COMISODLL
 	#endif
 #endif
 
