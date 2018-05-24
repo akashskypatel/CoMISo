@@ -27,6 +27,10 @@ elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 14.*Win64" )
   SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x64/")
 elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 14.*" )
   SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x32/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*Win64" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x32/")
 endif()
 
 
@@ -37,18 +41,19 @@ find_path( EIGEN3_INCLUDE_DIR
                  /usr/local/include
                  /usr/local/include/eigen3/
                  /opt/local/include/eigen3/
+                 "${CMAKE_WINDOWS_LIBS_DIR}/general/Eigen-3.3.4"
                  "${CMAKE_WINDOWS_LIBS_DIR}/general/Eigen-3.2.8"
                  "${CMAKE_WINDOWS_LIBS_DIR}/general/Eigen-3.2.6"
                  "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.6"
-		 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.6/include"                 
+                 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.6/include"
                  "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.1"
-		 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.1/include"
-		 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2/include"
+                 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2.1/include"
+                 "${CMAKE_WINDOWS_LIBS_DIR}/Eigen-3.2/include"
                  "${CMAKE_WINDOWS_LIBS_DIR}/eigen3/include"
-		 "${CMAKE_WINDOWS_LIBS_DIR}/eigen/include"
-		  ${PROJECT_SOURCE_DIR}/MacOS/Libs/eigen3/include
-                  ../../External/include
-                  ${module_file_path}/../../../External/include
+                 "${CMAKE_WINDOWS_LIBS_DIR}/eigen/include"
+                 ${PROJECT_SOURCE_DIR}/MacOS/Libs/eigen3/include
+                 ../../External/include
+                 ${module_file_path}/../../../External/include
           )
 
 set(EIGEN3_INCLUDE_DIRS "${EIGEN3_INCLUDE_DIR}" )
