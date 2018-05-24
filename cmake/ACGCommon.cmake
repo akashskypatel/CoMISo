@@ -791,14 +791,8 @@ function (acg_add_library _target _libtype)
     endif ()
   endif ()
 
-  if( ${CMAKE_BUILD_TYPE} STREQUAL Debug )
-    set ( postfix ${CMAKE_DEBUG_POSTFIX} )
-  else ()
-    set ( postfix "" )
-  endif ()
-
+  set( postfix $<IF:$<CONFIG:Debug>,${CMAKE_DEBUG_POSTFIX},"">)
   set( fullname ${_target}${postfix} )
-
 
   if (WIN32)
     # copy exe file to "Build" directory
