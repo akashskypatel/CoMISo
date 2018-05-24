@@ -37,10 +37,15 @@ if (WIN32)
     SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x64/")
   elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 14.*" )
     SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x32/")
+  elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*Win64" )
+    SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x64/")
+  elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*" )
+    SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x32/")
   endif()
   
    find_path(IPOPT_INCLUDE_DIR NAMES IpNLP.hpp
      PATHS
+	 "${VS_SEARCH_PATH}Ipopt-3.12.9/include/coin"
 	 "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/coin"
 	 "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/include/coin"
      "C:\\libs\\Ipopt-3.8.2\\include\\coin"
@@ -51,14 +56,16 @@ if (WIN32)
       find_library( IPOPT_LIBRARY_RELEASE 
                     Ipopt ipopt libipopt IpOpt-vc10
                     PATHS "C:\\libs\\Ipopt-3.8.2\\lib\\win32\\release" 
-			  "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
-			  "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
+			        "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
 				   )
       find_library( IPOPT_LIBRARY_DEBUG
                     Ipopt ipoptd libipoptd IpOpt-vc10d
                     PATHS "C:\\libs\\Ipopt-3.8.2\\lib\\win32\\debug" 
-			  "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
-			  "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+				    "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
+			        "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
 		   )
 
       set ( IPOPT_LIBRARY "optimized;${IPOPT_LIBRARY_RELEASE};debug;${IPOPT_LIBRARY_DEBUG}" CACHE  STRING "IPOPT Libraries" )
