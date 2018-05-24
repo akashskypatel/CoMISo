@@ -26,6 +26,18 @@ CoMISo-VS2013-Qt-5.5.1-x64:
     - VS2013
     - Qt551
 
+CoMISo-VS2017-Qt-5.10.1-x64:
+  variables:
+    BUILD_PLATFORM: "VS2017"
+    ARCHITECTURE:   "x64"
+    QT_VERSION:     "Qt5.10.1"
+    GIT_SUBMODULE_STRATEGY: recursive
+    COMPILER:       "VS2017"
+
+  script: "CI\\Windows.bat"
+  tags:
+    - VS2017
+
 trigger_build:
   stage: deploy
   script:
