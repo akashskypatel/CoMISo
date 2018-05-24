@@ -11,22 +11,47 @@ ENDIF (CGAL_INCLUDE_DIR)
 
 GET_FILENAME_COMPONENT(module_file_path ${CMAKE_CURRENT_LIST_FILE} PATH )
 
+# Check if the base path is set
+if ( NOT CMAKE_WINDOWS_LIBS_DIR )
+  # This is the base directory for windows library search used in the finders we shipp.
+  set(CMAKE_WINDOWS_LIBS_DIR "c:/libs" CACHE STRING "Default Library search dir on windows." )
+endif()
+
+if ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*Win64" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2012/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 11.*" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2012/x32/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*Win64" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2013/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 12.*" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2013/x32/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 14.*Win64" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 14.*" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2015/x32/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*Win64" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x64/")
+elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*" )
+  SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x32/")
+endif()
+
 IF (NOT APPLE )
 	# Look for the header file.
 	FIND_PATH(CGAL_INCLUDE_DIR NAMES CGAL/auto_link/auto_link.h
         	                   PATHS /usr/include
         	                         ../../External/include
-					 $ENV{CGAL_DIR}/include
-                                         "C:/libs/CGAL-3.6/include"
-   				         "C:/Program Files/CGAL-3.5/include"
-                                         "C:/Programme/CGAL-3.5/include"
-                                         "C:/libs/CGAL-3.5/include"
+									 $ENV{CGAL_DIR}/include
+									 "${VS_SEARCH_PATH}/CGAL-4.12/include"
+                                     "C:/libs/CGAL-3.6/include"
+									 "C:/Program Files/CGAL-3.5/include"
+                                     "C:/Programme/CGAL-3.5/include"
+                                     "C:/libs/CGAL-3.5/include"
                 	                 "C:/Program Files/CGAL-3.4/include"
-                                         "C:/Programme/CGAL-3.4/include"
-                                         "C:/libs/CGAL-3.4/include"
-					 "C:/Programme/CGAL-3.9/include"
-					 "C:/Program Files/CGAL-3.9/include"
-					 "C:/Program Files (x86)/CGAL-3.9/include"
+                                     "C:/Programme/CGAL-3.4/include"
+                                     "C:/libs/CGAL-3.4/include"
+									 "C:/Programme/CGAL-3.9/include"
+									 "C:/Program Files/CGAL-3.9/include"
+									 "C:/Program Files (x86)/CGAL-3.9/include"
 	                                 ${module_file_path}/../../../External/include )
 ELSE( NOT APPLE)
 	# Look for the header file.
