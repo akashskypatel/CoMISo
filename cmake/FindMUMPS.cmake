@@ -38,7 +38,7 @@ find_path(MUMPS_INCLUDE_DIR NAMES dmumps_c.h
      PATHS "$ENV{IPOPT_HOME}/ThirdParty/Mumps/MUMPS/include/"
            "/usr/include/"
 		   "${VS_SEARCH_PATH}Ipopt-3.12.9/include/mumps"
-           "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/mumps/include/"
+           "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/mumps"
    )
    
 find_library( MUMPS_LIBRARY_DEBUG
