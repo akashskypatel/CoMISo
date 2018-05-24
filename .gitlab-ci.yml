@@ -37,6 +37,7 @@ CoMISo-VS2017-Qt-5.10.1-x64:
   script: "CI\\Windows.bat"
   tags:
     - VS2017
+    - IPOPT-3.12.9
 
 trigger_build:
   stage: deploy
