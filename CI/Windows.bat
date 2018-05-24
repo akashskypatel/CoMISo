@@ -70,6 +70,21 @@ IF "%BUILD_PLATFORM%" == "VS2017" (
     set CMAKE_CONFIGURATION=%QT_BASE_CONFIG% -DBOOST_ROOT="%LIBPATH%/%ARCHITECTURE%/boost_1_67_0" -DBOOST_LIBRARYDIR="%LIBPATH%/%ARCHITECTURE%/boost_1_67_0/lib64-msvc-14.1"
 )
 
+ECHO "============================================================="
+ECHO "============================================================="
+ECHO "Building with :"
+ECHO "ARCHITECTURE        : %ARCHITECTURE%"
+ECHO "BUILD_PLATFORM      : %BUILD_PLATFORM%"
+ECHO "GTESTVERSION        : %GTESTVERSION%"
+ECHO "GENERATOR           : %GENERATOR%"
+ECHO "VS_PATH             : %VS_PATH%"
+ECHO "LIBPATH             : %LIBPATH%"
+ECHO "QT_INSTALL_PATH     : %QT_INSTALL_PATH%"
+ECHO "QT_INSTALL_PATH     : %QT_BASE_CONFIG%"
+ECHO "CMAKE_CONFIGURATION : %CMAKE_CONFIGURATION%"
+ECHO "============================================================="
+ECHO "============================================================="
+
 "C:\Program Files\CMake\bin\cmake.exe" -DGTEST_PREFIX="%LIBPATH%\%ARCHITECTURE%\%GTESTVERSION%" -G "%GENERATOR%"  -DCMAKE_BUILD_TYPE=Release -DOPENFLIPPER_BUILD_UNIT_TESTS=TRUE -DCMAKE_WINDOWS_LIBS_DIR=%CMAKE_WINDOWS_LIBS_DIR% %CMAKE_CONFIGURATION% ..
 
 IF %errorlevel% NEQ 0 exit /b %errorlevel%
