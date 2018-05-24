@@ -45,7 +45,7 @@ find_library( MUMPS_LIBRARY_DEBUG
               dmumpsd coinmumpsd coinmumpscd
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
-					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib/"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )
                     
@@ -53,7 +53,7 @@ find_library( MUMPS_LIBRARY_RELEASE
               dmumps coinmumps coinmumpsc
               PATHS "$ENV{IPOPT_HOME}/lib/"
                     "/usr/lib"
-					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib/"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )                    
 
