@@ -38,10 +38,10 @@ endif()
 IF (NOT APPLE )
 	# Look for the header file.
 	FIND_PATH(CGAL_INCLUDE_DIR NAMES CGAL/auto_link/auto_link.h
-        	                   PATHS /usr/include
+        	                   PATHS "${VS_SEARCH_PATH}/CGAL-4.12/include"
+							          /usr/include
         	                         ../../External/include
-									 $ENV{CGAL_DIR}/include
-									 "${VS_SEARCH_PATH}/CGAL-4.12/include"
+									 $ENV{CGAL_DIR}/include									 
                                      "C:/libs/CGAL-3.6/include"
 									 "C:/Program Files/CGAL-3.5/include"
                                      "C:/Programme/CGAL-3.5/include"
