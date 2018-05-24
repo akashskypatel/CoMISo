@@ -39,20 +39,21 @@ IF (NOT APPLE )
 	# Look for the header file.
 	FIND_PATH(CGAL_INCLUDE_DIR NAMES CGAL/auto_link/auto_link.h
         	                   PATHS "${VS_SEARCH_PATH}/CGAL-4.12/include"
-							          /usr/include
-        	                         ../../External/include
-									 $ENV{CGAL_DIR}/include									 
+                                     "${VS_SEARCH_PATH}/CGAL-4.7/include"
+                                      /usr/include
+                                     ../../External/include
+                                     $ENV{CGAL_DIR}/include									 
                                      "C:/libs/CGAL-3.6/include"
-									 "C:/Program Files/CGAL-3.5/include"
+                                     "C:/Program Files/CGAL-3.5/include"
                                      "C:/Programme/CGAL-3.5/include"
                                      "C:/libs/CGAL-3.5/include"
-                	                 "C:/Program Files/CGAL-3.4/include"
+                                     "C:/Program Files/CGAL-3.4/include"
                                      "C:/Programme/CGAL-3.4/include"
                                      "C:/libs/CGAL-3.4/include"
-									 "C:/Programme/CGAL-3.9/include"
-									 "C:/Program Files/CGAL-3.9/include"
-									 "C:/Program Files (x86)/CGAL-3.9/include"
-	                                 ${module_file_path}/../../../External/include )
+                                     "C:/Programme/CGAL-3.9/include"
+                                     "C:/Program Files/CGAL-3.9/include"
+                                     "C:/Program Files (x86)/CGAL-3.9/include"
+                                     ${module_file_path}/../../../External/include )
 ELSE( NOT APPLE)
 	# Look for the header file.
 	FIND_PATH(CGAL_INCLUDE_DIR NAMES CGAL/auto_link/auto_link.h
@@ -85,10 +86,10 @@ IF(CGAL_INCLUDE_DIR )
     include(CGAL_GeneratorSpecificSettings)
     find_path(CGAL_LIBRARY_DIR 
                 NAMES "CGAL-${CGAL_TOOLSET}-mt.lib" 
-				      "CGAL-${CGAL_TOOLSET}-mt-gd.lib" 
-					  "CGAL-${CGAL_TOOLSET}-mt-4.12.lib" 
-					  "CGAL-${CGAL_TOOLSET}-mt-4.7.lib" 
-					  "CGAL-${CGAL_TOOLSET}-mt-4.5.lib"
+                      "CGAL-${CGAL_TOOLSET}-mt-gd.lib" 
+                      "CGAL-${CGAL_TOOLSET}-mt-4.12.lib" 
+                      "CGAL-${CGAL_TOOLSET}-mt-4.7.lib" 
+                      "CGAL-${CGAL_TOOLSET}-mt-4.5.lib"
                 PATHS "${CGAL_INCLUDE_DIR}/../lib"
                 DOC "Directory containing the CGAL library"
                ) 
@@ -96,9 +97,9 @@ IF(CGAL_INCLUDE_DIR )
     # Binary dir for DLLs			
 	find_path(CGAL_BIN_DIR 
                 NAMES "CGAL-${CGAL_TOOLSET}-mt-4.12.dll" 
-				      "CGAL-${CGAL_TOOLSET}-mt-4.7.dll" 
-				      "CGAL-${CGAL_TOOLSET}-mt-4.5.dll" 
-					  "CGAL-${CGAL_TOOLSET}-mt-gd.dll"
+                      "CGAL-${CGAL_TOOLSET}-mt-4.7.dll" 
+                      "CGAL-${CGAL_TOOLSET}-mt-4.5.dll" 
+                      "CGAL-${CGAL_TOOLSET}-mt-gd.dll"
                 PATHS "${CGAL_INCLUDE_DIR}/../bin"
                 DOC "Directory containing the CGAL DLLs"
                ) 
