@@ -234,7 +234,19 @@ else()
       sgemm
       ""
       "libblas"
-      "${VS_SEARCH_PATH}suitesparse-metis-for-windows-1.2.2-install/lib64/lapack_blas_windows"	
+      "${VS_SEARCH_PATH}lapack_blas_windows"
+	)
+    endif()
+	# try different folder
+    if(NOT BLAS_LIBRARIES)
+      check_fortran_libraries(
+      BLAS_DEFINITIONS
+      BLAS_LIBRARIES
+      BLAS
+      sgemm
+      ""
+      "libblas"
+      "${VS_SEARCH_PATH}suitesparse-metis-for-windows-1.2.2-install/lib64/lapack_blas_windows"
 	)
     endif()
 

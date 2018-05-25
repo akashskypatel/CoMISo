@@ -291,6 +291,19 @@ else()
       ""
       "liblapack"
       "${BLAS_LIBRARIES}"
+      "${VS_SEARCH_PATH}/lapack_blas_windows"
+      )
+    endif()
+	# try different folder
+    if ( NOT LAPACK_LIBRARIES )
+      check_lapack_libraries(
+      LAPACK_DEFINITIONS
+      LAPACK_LIBRARIES
+      LAPACK
+      cheev
+      ""
+      "liblapack"
+      "${BLAS_LIBRARIES}"
       "${VS_SEARCH_PATH}/suitesparse-metis-for-windows-1.2.2-install/lib64/lapack_blas_windows"
       )
     endif()
