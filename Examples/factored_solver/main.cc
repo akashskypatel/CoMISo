@@ -30,6 +30,7 @@
 #include <CoMISo/Solver/ConstrainedSolver.hh>
 #include <CoMISo/Solver/MISolver.hh>
 #include <CoMISo/Solver/GMM_Tools.hh>
+#include <CoMISo/Utils/Tools.hh>
 
 /// function to setup a random sparse row matrix of dimension _m x _n
 /// for the simplicity of this example only integer valued entries are used
@@ -87,6 +88,8 @@ void print_equations( const MatrixT& _B)
 // Example main
 int main(void)
 {
+  using COMISO_GMM::operator<<;
+
   // initialize random number generator
   srand(12345);
 

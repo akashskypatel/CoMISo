@@ -48,6 +48,8 @@ int main(void)
   typedef Eigen::MatrixXd DenMatrix;
   typedef Eigen::Triplet< double > Triplet;
 
+  using COMISO_GMM::operator<<;
+
   int dimr(4+1);
   int dimc(4+2);
 

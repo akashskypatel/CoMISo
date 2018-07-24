@@ -68,6 +68,8 @@ void print_equations( const MatrixT& _B)
 // Example main
 int main(void)
 {
+  using COMISO_GMM::operator<<;
+
   std::cout << "---------- 1) Setup small (symmetric) test equation system Ax=b..." << std::endl;
   int n = 4;
   gmm::col_matrix< gmm::wsvector< double > > A(n,n);

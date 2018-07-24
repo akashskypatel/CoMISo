@@ -62,10 +62,11 @@ void print_equations( const MatrixT& _B)
   }
 }
 
-
 // Example main
 int main(void)
 {
+  using namespace COMISO_GMM;
+
   std::cout << "---------- 1) Setup a number of equations (i.e. the B matrix of a factored system of linear equations B^tB)..." << std::endl;
   int n = 4;
   gmm::row_matrix< gmm::wsvector< double > > B(n+1,n+1);
