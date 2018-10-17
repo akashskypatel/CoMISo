@@ -73,18 +73,6 @@ else()
   message (FATAL_ERROR "GMM not found!")
 endif ()
 
-# We require cgal with its blas on windows
-  find_package(CGAL)
-if (CGAL_FOUND)
-  set (COMISO_CGAL_CONFIG_FILE_SETTINGS "#define COMISO_CGAL_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CGAL_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${CGAL_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CGAL_LIBRARIES} )
-  add_definitions(-DCGAL_NO_AUTOLINK)
-else()
-  set (COMISO_CGAL_CONFIG_FILE_SETTINGS "#define COMISO_CGAL_AVAILABLE 0" )
-  message (STATUS "CGAL not found!")
-endif()
 
 
 find_package (BLAS)
