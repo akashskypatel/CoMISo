@@ -330,6 +330,8 @@ else ()
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 0" )
 endif ()
 
+set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
+set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib. Is there a better way to find it than this?
 if (NEED_LAPACK)
   FIND_PACKAGE(LAPACK)
   if (LAPACK_FOUND)
@@ -340,6 +342,7 @@ if (NEED_LAPACK)
     message(STATUS "LAPACK not found!")
   endif()
 endif(NEED_LAPACK)
+set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 include_directories (
   ..
