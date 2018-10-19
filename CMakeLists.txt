@@ -331,8 +331,8 @@ else ()
 endif ()
 
 set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
-set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib. Is there a better way to find it than this?
-if (NEED_LAPACK)
+set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our lapack library is called liblapack.lib. Is there a better way to find it than this?
+if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
   FIND_PACKAGE(LAPACK)
   if (LAPACK_FOUND)
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${LAPACK_INCLUDE_DIR} )
@@ -341,7 +341,7 @@ if (NEED_LAPACK)
   else()
     message(STATUS "LAPACK not found!")
   endif()
-endif(NEED_LAPACK)
+endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 include_directories (
