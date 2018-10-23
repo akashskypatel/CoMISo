@@ -20,6 +20,7 @@ endif()
 find_path( GMM_INCLUDE_DIR 
            NAMES gmm/gmm.h 
            PATHS $ENV{GMM_DIR}
+                 $ENV{GMM_DIR}/include
                  /usr/include
                  /usr/include
                  /usr/local/include
