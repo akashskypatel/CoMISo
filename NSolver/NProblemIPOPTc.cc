@@ -21,7 +21,7 @@
 
 #include <Base/Debug/DebTime.hh>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.h>
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
@@ -137,7 +137,7 @@ bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   {
     constraints_[i]->eval_gradient(P(x),g);
 
-    nnz_jac_g += g.nonZeros();
+    nnz_jac_g += static_cast<Index>(g.nonZeros());
 
     if(!hessian_approximation_)
     {
@@ -368,8 +368,8 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
          if(it.row() >= it.col())
          {
            //         it.value();
-           iRow[gi] = it.row();
-           jCol[gi] = it.col();
+           iRow[gi] = static_cast<Index>(it.row());
+           jCol[gi] = static_cast<Index>(it.col());
            ++gi;
          }
        }

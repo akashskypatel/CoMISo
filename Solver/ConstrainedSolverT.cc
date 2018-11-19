@@ -33,7 +33,7 @@
 //== INCLUDES =================================================================
 
 #include "ConstrainedSolver.hh"
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.h>
 #include "GMM_Tools.hh"
 #include <float.h>
 #include <CoMISo/Utils/MutablePriorityQueueT.hh>

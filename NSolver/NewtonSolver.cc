@@ -273,7 +273,7 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 {
   DEB_enter_func;
   const int n  = _problem->n_unknowns();
-  const int m  = _A.rows();
+  const int m  = static_cast<int>(_A.rows());
   const int nf = n+m;
 
   // get hessian of quadratic problem
@@ -288,17 +288,17 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
   // add elements of H
   for (int k=0; k<H.outerSize(); ++k)
     for (SMatrixD::InnerIterator it(H,k); it; ++it)
-      trips.push_back(Triplet(it.row(),it.col(),it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.row()),static_cast<int>(it.col()),it.value()));
 
   // add elements of _A
   for (int k=0; k<_A.outerSize(); ++k)
     for (SMatrixD::InnerIterator it(_A,k); it; ++it)
     {
       // insert _A block below
-      trips.push_back(Triplet(it.row()+n,it.col(),it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.row())+n,static_cast<int>(it.col()),it.value()));
 
       // insert _A^T block right
-      trips.push_back(Triplet(it.col(),it.row()+n,it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.col()),static_cast<int>(it.row())+n,it.value()));
     }
 
   // regularize constraints

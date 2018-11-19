@@ -38,7 +38,7 @@
 #include <Base/Debug/DebOut.hh>
 #include <Base/Utils/StopWatch.hh>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.h>
 #include <float.h>
 
 // hack for testing only

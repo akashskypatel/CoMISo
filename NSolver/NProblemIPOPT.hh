@@ -27,7 +27,7 @@
 
 #include <Base/Debug/DebTime.hh>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.h>
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
