@@ -12,8 +12,8 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Utils/gmm.h>
 #include <iostream>
-#include <gmm/gmm.h>
 
 //== FORWARDDECLARATIONS ======================================================
 

@@ -13,7 +13,7 @@
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <iostream>
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.h>
 
 //== FORWARDDECLARATIONS ======================================================
 
