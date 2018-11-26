@@ -20,7 +20,7 @@
 
 #include <mpi.h>
 #include <tao.h>
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 
 //== FORWARDDECLARATIONS ======================================================

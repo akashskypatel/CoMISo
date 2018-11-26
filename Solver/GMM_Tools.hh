@@ -36,7 +36,7 @@
 #include <vector>
 #include <algorithm>
 
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #if COMISO_SUITESPARSE_AVAILABLE
 #include <cholmod.h>

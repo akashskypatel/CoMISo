@@ -12,7 +12,7 @@
 //== INCLUDES =================================================================
 
 #include <Base/Utils/StopWatch.hh>
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 #include "NProblemInterface.hh"
 #include <CoMISo/Config/CoMISoDefines.hh>
 

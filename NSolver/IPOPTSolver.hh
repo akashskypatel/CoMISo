@@ -17,7 +17,7 @@
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Utils/StopWatch.hh>
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 #include <vector>
 #include <cstddef>
 #include "NProblemGmmInterface.hh"

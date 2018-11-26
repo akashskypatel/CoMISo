@@ -11,7 +11,7 @@
 
 //== INCLUDES =================================================================
 
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 #include <deque>
 #include <queue>
 #include <set>

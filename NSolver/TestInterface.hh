@@ -12,7 +12,7 @@
 //== INCLUDES =================================================================
 
 #include "NProblemGmmInterface.hh"
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 

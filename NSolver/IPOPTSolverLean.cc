@@ -23,7 +23,7 @@
 #include <Base/Debug/DebConfig.hh>
 #include <Base/Debug/DebTime.hh>
 
-#include <CoMISo/Utils/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
