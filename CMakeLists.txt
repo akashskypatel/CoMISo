@@ -1,11 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 
-
 #Only set project name if CoMISo is built as stand-alone library
 if("${PROJECT_NAME}" STREQUAL "")
     project(CoMISo)
 endif()
-
 
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -13,10 +11,8 @@ set (CMAKE_DEBUG_POSTFIX "d")
 
 include (ACGCommon)
 
-
 # Flag to enable or disable QT widgets in CoMISo
 set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
-
 
 if( WANT_COMISO_QT )
 
@@ -40,7 +36,7 @@ set(COMISO_LINK_DIRECTORIES "")
 set(COMISO_LINK_LIBRARIES "")
 set(NEED_LAPACK "")
 
-FIND_PACKAGE( Boost 1.42.0 COMPONENTS system filesystem regex QUIET)
+FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET)
 if(Boost_FOUND)
   set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
@@ -73,20 +69,8 @@ else()
   message (FATAL_ERROR "GMM not found!")
 endif ()
 
-# We require cgal with its blas on windows
-  find_package(CGAL)
-if (CGAL_FOUND)
-  set (COMISO_CGAL_CONFIG_FILE_SETTINGS "#define COMISO_CGAL_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CGAL_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${CGAL_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CGAL_LIBRARIES} )
-  add_definitions(-DCGAL_NO_AUTOLINK)
-else()
-  set (COMISO_CGAL_CONFIG_FILE_SETTINGS "#define COMISO_CGAL_AVAILABLE 0" )
-  message (STATUS "CGAL not found!")
-endif()
-
-
+set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
+set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib. Is there a better way to find it than this?
 find_package (BLAS)
 if (BLAS_FOUND )
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 1" )
@@ -98,6 +82,7 @@ else()
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 0" )
   message (STATUS "BLAS not found!")
 endif ()
+set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 find_package (ADOLC)
 if (ADOLC_FOUND)
@@ -288,7 +273,7 @@ endif ()
 find_package (Taucs)
 set (SUPRESS_TAUCS OFF CACHE BOOL "Set to ON if CoMISo should be built without TAUCS.")
 if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
-  list (APPEND NEED_LAPACK "Tacus")
+  list (APPEND NEED_LAPACK "Taucs")
   set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAUCS_INCLUDE_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${TAUCS_LIBRARY} )
@@ -345,7 +330,9 @@ else ()
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 0" )
 endif ()
 
-if (NEED_LAPACK)
+set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
+set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our lapack library is called liblapack.lib. Is there a better way to find it than this?
+if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
   FIND_PACKAGE(LAPACK)
   if (LAPACK_FOUND)
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${LAPACK_INCLUDE_DIR} )
@@ -354,7 +341,8 @@ if (NEED_LAPACK)
   else()
     message(STATUS "LAPACK not found!")
   endif()
-endif(NEED_LAPACK)
+endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
+set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 include_directories (
   ..
