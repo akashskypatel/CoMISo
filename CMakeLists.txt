@@ -428,11 +428,14 @@ acg_drop_templates (sources)
 if ( QT5_FOUND )
   # genereate uic and moc targets
   acg_qt5_autouic (uic_targets ${ui})
-  acg_qt5_automoc (moc_targets ${headers})
+
+  # Enable automoc
+  set(CMAKE_AUTOMOC ON)
+ 
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
 endif()
 
-acg_add_library (CoMISo SHARED ${uic_targets} ${sources} ${headers} ${moc_targets})
+acg_add_library (CoMISo SHARED ${uic_targets} ${sources} ${headers} )
 
 if (NOT APPLE)
 	target_link_libraries (CoMISo 
