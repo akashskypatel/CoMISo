@@ -42,7 +42,7 @@
 
 //== INCLUDES =================================================================
 
-#include "ui_QtMISolverDialogBaseUI.hh"
+#include "ui_QtMISolverDialogBaseUI.h"
 
 // ACGMake users have to include
 // #include "QtMISolverDialogBase.hh"
