@@ -96,6 +96,7 @@ else( WIN32 )
                       NAMES libSuiteSparse.dylib
                       PATHS /opt/local/lib )
 
+           message("SUITESPARSE_LIBRARY_DIR: ${SUITESPARSE_LIBRARY_DIR}")
            list ( APPEND SUITESPARSE_LIBRARY_DIRS ${SUITESPARSE_LIBRARY_DIR} )
 
            list ( APPEND SUITESPARSE_LIBRARIES SuiteSparse)
