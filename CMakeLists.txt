@@ -344,35 +344,6 @@ if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
-include_directories (
-  ..
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/../
-  ${COMISO_INCLUDE_DIRECTORIES}
-)
-
-# generate dllexport macros on windows
-if (WIN32)
-  add_definitions(-DCOMISODLL)
-  add_definitions(-DBASEDLL)
-  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
-  # ignore "... needs to have dll-interface to be used by clients"
-  add_definitions(/wd4251)
-endif ()
-
-
-link_directories (
-  ${COMISO_LINK_DIRECTORIES}
-)
-
-# enable debug stuff
-set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
-if (COMISO_ENABLE_DEBUG_OUTPUT)
-  add_definitions(-DDEB_ON)
-endif ()
-
 # source code directories
 set (directories 
   .
@@ -388,17 +359,6 @@ set (directories
   QtWidgets
 )
 
-if (WIN32)
-  add_definitions(
-      -D_USE_MATH_DEFINES -DNOMINMAX
-  )
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
-  # disable unused parameter warning
-  add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
-endif()
-
 # collect all header,source and ui files
 acg_append_files (headers "*.hh" ${directories})
 acg_append_files (sources "*.cc" ${directories})
@@ -406,7 +366,6 @@ acg_append_files (sources "*.cc" ${directories})
 if( QT5_FOUND )
 acg_append_files (ui "*.ui" ${directories})
 endif()
-
 
 macro (of_list_filter _list)
   if (WIN32)
@@ -421,22 +380,60 @@ endmacro ()
 of_list_filter  ( headers )
 of_list_filter  ( sources )
 
-
 # remove template cc files from source file list
 acg_drop_templates (sources)
 
 if ( QT5_FOUND )
-
   # Enable automoc
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_AUTOUIC ON)
  
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
-
 endif()
 
 acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
 
+target_include_directories (CoMISo PUBLIC
+  $<BUILD_INTERFACE:
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../>
+  $<INSTALL_INTERFACE:include>
+  ${COMISO_INCLUDE_DIRECTORIES}
+)
+
+set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES
+  ${COMISO_LINK_DIRECTORIES}
+)
+
+# generate dllexport macros on windows
+if (WIN32)
+  add_definitions(-DCOMISODLL)
+  add_definitions(-DBASEDLL)
+  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
+  # ignore "... needs to have dll-interface to be used by clients"
+  #add_definitions(/wd4251)
+  target_compile_definitions(CoMISo PRIVATE /wd4251)
+endif ()
+
+# enable debug stuff
+set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
+if (COMISO_ENABLE_DEBUG_OUTPUT)
+  #add_definitions(-DDEB_ON)
+  target_compile_definitions(CoMISo PRIVATE -DDEB_ON)
+endif ()
+
+if (WIN32)
+  #add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX)
+  target_compile_definitions(CoMISo PRIVATE -D_USE_MATH_DEFINES -DNOMINMAX)
+endif ()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
+  # disable unused parameter warning
+  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
+  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
+endif()
 if ( QT5_FOUND )
 
   if ( NOT WIN32 )
