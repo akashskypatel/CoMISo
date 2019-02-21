@@ -558,10 +558,10 @@ endif (COMISO_BUILD_EXAMPLES )
 if(${PROJECT_NAME} MATCHES "CoMISo")
 
   # Install library
-  install (TARGETS CoMISo 
-                   RUNTIME DESTINATION lib 
-                   LIBRARY DESTINATION lib
-                   ARCHIVE DESTINATION lib)
+  install (TARGETS CoMISo EXPORT CoMISoTargets
+           RUNTIME DESTINATION lib 
+           LIBRARY DESTINATION lib
+           ARCHIVE DESTINATION lib)
 
   # Install Header Files
   install(DIRECTORY . 
@@ -581,6 +581,16 @@ if(${PROJECT_NAME} MATCHES "CoMISo")
   # Install Config File
   install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
            DESTINATION include/CoMISo/Config )
+  
+
+  install(EXPORT CoMISoTargets
+          FILE CoMISoTargets.cmake
+          NAMESPACE CoMISo::
+          DESTINATION cmake)
+
+  install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
+          DESTINATION cmake
+          )
 
 endif()
 
