@@ -48,8 +48,8 @@ if (WIN32)
 	 "${VS_SEARCH_PATH}Ipopt-3.12.9/include/coin"
 	 "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/coin"
 	 "${VS_SEARCH_PATH}Ipopt-3.11.9/Ipopt/MSVisualStudio/v8-ifort/installed/include/coin"
-     "C:\\libs\\Ipopt-3.8.2\\include\\coin"
-     ${IPOPT_DIR}/include
+         "C:\\libs\\Ipopt-3.8.2\\include\\coin"
+         ${IPOPT_DIR}/include
    )
 
    IF(IPOPT_INCLUDE_DIR)
@@ -83,20 +83,23 @@ if (WIN32)
     ENDIF(IPOPT_INCLUDE_DIR)
 
 ELSE( WIN32 )
-
    find_path(IPOPT_INCLUDE_DIR NAMES IpNLP.hpp
-     HINTS  "$ENV{IPOPT_HOME}/include/coin"
+     PATHS  "$ENV{IPOPT_HOME}/include/coin"
             "/usr/include/coin"
-    
+            "~/sw/Ipopt-3.12.4-installed/include/coin"
    )
 
    find_library( IPOPT_LIBRARY 
                  ipopt
                  HINTS "$ENV{IPOPT_HOME}/lib"
-                       "/usr/lib" )   
+                 PATHS
+                       "/usr/lib"
+                       "~/sw/Ipopt-3.12.4-installed/lib"
+    )
     
     #wrong config under Debian workaround
     add_definitions( -DHAVE_CSTDDEF )
+
 
    # set optional path to HSL Solver for dynamic usage
    find_path(IPOPT_HSL_LIBRARY_DIR 
@@ -106,13 +109,13 @@ ELSE( WIN32 )
                    "$ENV{HOME}/opt/HSL/lib"
    )
 
-   # find HSL library for fixed linking of solvers   
+   # find HSL library for fixed linking of solvers
    find_library( IPOPT_HSL_LIBRARY 
-                 NAMES hsl coinhsl
+                 coinhsl hsl
                  HINTS "$ENV{IPOPT_HSL_LIBRARY_PATH}"
                        "$ENV{IPOPT_HOME}/lib"
-                       "/usr/lib" )   
-  
+                 PATHS "/usr/lib" )
+   
    
    IF( IPOPT_HSL_LIBRARY_DIR)
      IF( NOT IPOPT_FIND_QUIETLY )
@@ -122,7 +125,7 @@ ELSE( WIN32 )
      LIST( APPEND IPOPT_LIBRARY_DIRS "${IPOPT_HSL_LIBRARY_DIR}")
    ENDIF(IPOPT_HSL_LIBRARY_DIR)
    
-
+   
    set(IPOPT_INCLUDE_DIRS "${IPOPT_INCLUDE_DIR}" )
    set(IPOPT_LIBRARIES "${IPOPT_LIBRARY}" )
    

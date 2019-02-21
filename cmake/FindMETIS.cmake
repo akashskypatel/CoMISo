@@ -36,30 +36,31 @@ endif()
 
 
 find_path(METIS_INCLUDE_DIR NAMES metis.h
-     PATHS "$ENV{IPOPT_HOME}/ThirdParty/Metis/metis-4.0/Lib/"
-           "/usr/include/"
+     HINTS "$ENV{IPOPT_HOME}/include/coin/ThirdParty"
+           "$ENV{IPOPT_HOME}/ThirdParty/Metis/metis-4.0/Lib/"
+     PATHS "/usr/include/"
            "/usr/include/metis"
            "/opt/local/include"
            "/opt/local/include/metis"
-		   "${VS_SEARCH_PATH}Ipopt-3.12.9/include/metis"
+           "${VS_SEARCH_PATH}Ipopt-3.12.9/include/metis"
            "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/metis"
    )
    
 find_library( METIS_LIBRARY_RELEASE
-              metis coinmetis
-              PATHS "$ENV{IPOPT_HOME}/lib/"
-                    "/usr/lib"
+              coinmetis metis
+              HINTS "$ENV{IPOPT_HOME}/lib/"
+              PATHS "/usr/lib"
                     "/opt/local/lib"
-					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )
                     
 find_library( METIS_LIBRARY_DEBUG
-              metisd coinmetisd
-              PATHS "$ENV{IPOPT_HOME}/lib/"
-                    "/usr/lib"
+              coinmetisd metisd
+              HINTS "$ENV{IPOPT_HOME}/lib/"
+              PATHS "/usr/lib"
                     "/opt/local/lib" 
-					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+                    "${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )      
                     
