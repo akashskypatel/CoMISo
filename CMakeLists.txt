@@ -1,3 +1,4 @@
+cmake_minimum_required (VERSION 3.9)
 cmake_minimum_required (VERSION 2.6)
 
 #Only set project name if CoMISo is built as stand-alone library
