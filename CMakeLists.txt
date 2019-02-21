@@ -403,7 +403,9 @@ target_include_directories (CoMISo PUBLIC
 )
 
 message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
-set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES ${COMISO_LINK_DIRECTORIES})
+if (${COMISO_LINK_DIRECTORIES})
+  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES ${COMISO_LINK_DIRECTORIES})
+endif()
 
 # generate dllexport macros on windows
 if (WIN32)
