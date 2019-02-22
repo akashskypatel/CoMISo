@@ -390,6 +390,10 @@ if ( QT5_FOUND )
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
 endif()
 
+# TODO: remove this line when we can assume people have a cmake 3.13.
+# Then link directories is set as target property below.
+link_directories(${COMISO_LINK_DIRECTORIES})
+
 acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
 
 target_include_directories (CoMISo PUBLIC
