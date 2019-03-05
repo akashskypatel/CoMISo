@@ -103,15 +103,18 @@ if (SUITESPARSE_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${SUITESPARSE_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
+
+  # special handling, since spqr is incorrect in several distributions
+  if(SUITESPARSE_SPQR_VALID)
+    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 1" )
+  else()
+    message (STATUS "SUITESPARSE SPQR seems to be invalid!")
+    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
+  endif()
+
 else ()
   message (STATUS "SUITESPARSE not found!")
   set (COMISO_SUITESPARSE_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_AVAILABLE 0" )
-endif ()
-# special handling, since spqr is incorrect in several distributions
-if(SUITESPARSE_SPQR_VALID)
-  set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 1" )
-else()
-  message (STATUS "SUITESPARSE SPQR seems to be invalid!")
   set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
 endif()
 
@@ -390,6 +393,10 @@ if ( QT5_FOUND )
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
 endif()
 
+# TODO: remove this line when we can assume people have a cmake 3.13.
+# Then link directories is set as target property below.
+link_directories(${COMISO_LINK_DIRECTORIES})
+
 acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
 
 target_include_directories (CoMISo PUBLIC
@@ -402,9 +409,14 @@ target_include_directories (CoMISo PUBLIC
   ${COMISO_INCLUDE_DIRECTORIES}
 )
 
-set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES
-  ${COMISO_LINK_DIRECTORIES}
-)
+get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
+message("Target CoMISo include dirs: ${INC_DIRS}")
+message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
+
+message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+if (COMISO_LINK_DIRECTORIES)
+  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES ${COMISO_LINK_DIRECTORIES})
+endif()
 
 # generate dllexport macros on windows
 if (WIN32)
