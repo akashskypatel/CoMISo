@@ -1,4 +1,7 @@
 cmake_minimum_required (VERSION 3.9)
+if (WIN32)
+  cmake_minimum_required (VERSION 3.13)
+endif()
 
 #Only set project name if CoMISo is built as stand-alone library
 if("${PROJECT_NAME}" STREQUAL "")
@@ -416,6 +419,10 @@ message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
 message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
 if (COMISO_LINK_DIRECTORIES)
   set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES ${COMISO_LINK_DIRECTORIES})
+endif()
+if (WIN32)
+#TODO: do this also for non windows platforms as soon as we can require cmake 3.13
+  target_link_directories(CoMISo PUBLIC ${COMISO_LINK_DIRECTORIES})
 endif()
 
 # generate dllexport macros on windows
