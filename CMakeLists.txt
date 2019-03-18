@@ -418,7 +418,7 @@ message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
 
 message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
 if (COMISO_LINK_DIRECTORIES)
-  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES ${COMISO_LINK_DIRECTORIES})
+  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES "${COMISO_LINK_DIRECTORIES}")
 endif()
 if (WIN32)
 #TODO: do this also for non windows platforms as soon as we can require cmake 3.13
