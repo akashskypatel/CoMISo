@@ -401,6 +401,7 @@ endif()
 link_directories(${COMISO_LINK_DIRECTORIES})
 
 acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
+add_library(CoMISo::CoMISo ALIAS CoMISo)
 
 target_include_directories (CoMISo PUBLIC
   $<BUILD_INTERFACE:
