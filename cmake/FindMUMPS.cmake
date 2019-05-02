@@ -34,29 +34,30 @@ elseif ( CMAKE_GENERATOR MATCHES "^Visual Studio 15.*" )
   SET(VS_SEARCH_PATH "${CMAKE_WINDOWS_LIBS_DIR}/vs2017/x32/")
 endif()
 
-find_path(MUMPS_INCLUDE_DIR NAMES dmumps_c.h
-     HINTS "$ENV{IPOPT_HOME}/include/coin/ThirdParty/"
-           "$ENV{IPOPT_HOME}/ThirdParty/Mumps/MUMPS/include/"
-     PATHS "/usr/include/"
-           "${VS_SEARCH_PATH}Ipopt-3.12.9/include/mumps"
+find_path(MUMPS_INCLUDE_DIR 
+     NAMES mumps.h dmumps_c.h
+     HINTS "$ENV{IPOPT_HOME}/ThirdParty/Mumps/MUMPS/include/"
+           "$ENV{IPOPT_HOME}/include/coin/ThirdParty"
+           "/usr/include/"
+		   "${VS_SEARCH_PATH}Ipopt-3.12.9/include/mumps"
            "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/include/mumps"
    )
-
+   
 find_library( MUMPS_LIBRARY_DEBUG
-              dmumpsd coinmumpsd coinmumpscd
+              coinmumpsd dmumpsd coinmumpscd
               HINTS "$ENV{IPOPT_HOME}/lib/"
-              PATHS "/usr/lib"
-                    "${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+                    "/usr/lib"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
                     )
-
+                    
 find_library( MUMPS_LIBRARY_RELEASE
               coinmumps dmumps coinmumpsc
               HINTS "$ENV{IPOPT_HOME}/lib/"
-              PATHS "/usr/lib"
-                    "${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
+                    "/usr/lib"
+					"${VS_SEARCH_PATH}Ipopt-3.12.9/lib"
                     "${VS_SEARCH_PATH}Ipopt-3.12.4/Ipopt/MSVisualStudio/v8-ifort/installed/lib"
-                    )            
+                    )                    
 
 include(SelectLibraryConfigurations)
 select_library_configurations( MUMPS )                 
