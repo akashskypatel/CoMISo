@@ -1,4 +1,7 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.9)
+if (WIN32)
+  cmake_minimum_required (VERSION 3.13)
+endif()
 
 #Only set project name if CoMISo is built as stand-alone library
 if("${PROJECT_NAME}" STREQUAL "")
@@ -59,14 +62,13 @@ else()
 endif ()
 
 
-find_package (GMM)
+find_package (GMM REQUIRED)
 if (GMM_FOUND)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
   list (APPEND NEED_LAPACK "GMM")
 else()
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
-  message (FATAL_ERROR "GMM not found!")
 endif ()
 
 set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
@@ -104,15 +106,18 @@ if (SUITESPARSE_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${SUITESPARSE_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
+
+  # special handling, since spqr is incorrect in several distributions
+  if(SUITESPARSE_SPQR_VALID)
+    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 1" )
+  else()
+    message (STATUS "SUITESPARSE SPQR seems to be invalid!")
+    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
+  endif()
+
 else ()
   message (STATUS "SUITESPARSE not found!")
   set (COMISO_SUITESPARSE_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_AVAILABLE 0" )
-endif ()
-# special handling, since spqr is incorrect in several distributions
-if(SUITESPARSE_SPQR_VALID)
-  set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 1" )
-else()
-  message (STATUS "SUITESPARSE SPQR seems to be invalid!")
   set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
 endif()
 
@@ -188,9 +193,9 @@ endif ()
 find_package (IPOPT)
 if (IPOPT_FOUND)
   set (COMISO_IPOPT_CONFIG_FILE_SETTINGS "#define COMISO_IPOPT_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${IPOPT_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES ${IPOPT_LIBRARY} )
+  list( APPEND COMISO_INCLUDE_DIRECTORIES ${IPOPT_INCLUDE_DIRS} )
+  list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIRS} )
+  list( APPEND COMISO_LINK_LIBRARIES ${IPOPT_LIBRARIES} )
   if ( IPOPT_HSL_LIBRARY_DIR )
 	set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 1" )
   else ()
@@ -344,35 +349,6 @@ if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
-include_directories (
-  ..
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/../
-  ${COMISO_INCLUDE_DIRECTORIES}
-)
-
-# generate dllexport macros on windows
-if (WIN32)
-  add_definitions(-DCOMISODLL)
-  add_definitions(-DBASEDLL)
-  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
-  # ignore "... needs to have dll-interface to be used by clients"
-  add_definitions(/wd4251)
-endif ()
-
-
-link_directories (
-  ${COMISO_LINK_DIRECTORIES}
-)
-
-# enable debug stuff
-set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
-if (COMISO_ENABLE_DEBUG_OUTPUT)
-  add_definitions(-DDEB_ON)
-endif ()
-
 # source code directories
 set (directories 
   .
@@ -388,17 +364,6 @@ set (directories
   QtWidgets
 )
 
-if (WIN32)
-  add_definitions(
-      -D_USE_MATH_DEFINES -DNOMINMAX
-  )
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
-  # disable unused parameter warning
-  add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
-endif()
-
 # collect all header,source and ui files
 acg_append_files (headers "*.hh" ${directories})
 acg_append_files (sources "*.cc" ${directories})
@@ -406,7 +371,6 @@ acg_append_files (sources "*.cc" ${directories})
 if( QT5_FOUND )
 acg_append_files (ui "*.ui" ${directories})
 endif()
-
 
 macro (of_list_filter _list)
   if (WIN32)
@@ -421,22 +385,74 @@ endmacro ()
 of_list_filter  ( headers )
 of_list_filter  ( sources )
 
-
 # remove template cc files from source file list
 acg_drop_templates (sources)
 
 if ( QT5_FOUND )
-
   # Enable automoc
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_AUTOUIC ON)
  
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
-
 endif()
 
-acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
+# TODO: remove this line when we can assume people have a cmake 3.13.
+# Then link directories is set as target property below.
+link_directories(${COMISO_LINK_DIRECTORIES})
 
+acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
+add_library(CoMISo::CoMISo ALIAS CoMISo)
+
+target_include_directories (CoMISo PUBLIC
+  $<BUILD_INTERFACE:
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../>
+  $<INSTALL_INTERFACE:include>
+  ${COMISO_INCLUDE_DIRECTORIES}
+)
+
+get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
+message("Target CoMISo include dirs: ${INC_DIRS}")
+message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
+
+message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+if (COMISO_LINK_DIRECTORIES)
+  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES "${COMISO_LINK_DIRECTORIES}")
+endif()
+if (WIN32)
+#TODO: do this also for non windows platforms as soon as we can require cmake 3.13
+  target_link_directories(CoMISo PUBLIC ${COMISO_LINK_DIRECTORIES})
+endif()
+
+# generate dllexport macros on windows
+if (WIN32)
+  add_definitions(-DCOMISODLL)
+  add_definitions(-DBASEDLL)
+  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
+  # ignore "... needs to have dll-interface to be used by clients"
+  #add_definitions(/wd4251)
+  target_compile_definitions(CoMISo PRIVATE /wd4251)
+endif ()
+
+# enable debug stuff
+set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
+if (COMISO_ENABLE_DEBUG_OUTPUT)
+  #add_definitions(-DDEB_ON)
+  target_compile_definitions(CoMISo PRIVATE -DDEB_ON)
+endif ()
+
+if (WIN32)
+  #add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX)
+  target_compile_definitions(CoMISo PRIVATE -D_USE_MATH_DEFINES -DNOMINMAX)
+endif ()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
+  # disable unused parameter warning
+  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
+  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
+endif()
 if ( QT5_FOUND )
 
   if ( NOT WIN32 )
@@ -562,10 +578,10 @@ endif (COMISO_BUILD_EXAMPLES )
 if(${PROJECT_NAME} MATCHES "CoMISo")
 
   # Install library
-  install (TARGETS CoMISo 
-                   RUNTIME DESTINATION lib 
-                   LIBRARY DESTINATION lib
-                   ARCHIVE DESTINATION lib)
+  install (TARGETS CoMISo EXPORT CoMISoTargets
+           RUNTIME DESTINATION lib 
+           LIBRARY DESTINATION lib
+           ARCHIVE DESTINATION lib)
 
   # Install Header Files
   install(DIRECTORY . 
@@ -585,6 +601,16 @@ if(${PROJECT_NAME} MATCHES "CoMISo")
   # Install Config File
   install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
            DESTINATION include/CoMISo/Config )
+  
+
+  install(EXPORT CoMISoTargets
+          FILE CoMISoTargets.cmake
+          NAMESPACE CoMISo::
+          DESTINATION cmake)
+
+  install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
+          DESTINATION cmake
+          )
 
 endif()
 
