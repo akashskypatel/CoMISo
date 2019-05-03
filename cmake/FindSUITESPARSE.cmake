@@ -174,8 +174,9 @@ else( WIN32 )
 
     # Metis and spqr are optional
     FIND_LIBRARY( SUITESPARSE_METIS_LIBRARY
-      NAMES metis
-      PATHS ${SUITESPARSE_LIBRARY_DIR} )
+                  NAMES coinmetis metis
+                  PATHS "$ENV{IPOPT_HOME}/lib"
+                        ${SUITESPARSE_LIBRARY_DIR} )
     if (SUITESPARSE_METIS_LIBRARY)
       list ( APPEND SUITESPARSE_LIBRARIES ${SUITESPARSE_METIS_LIBRARY})
     endif(SUITESPARSE_METIS_LIBRARY)
