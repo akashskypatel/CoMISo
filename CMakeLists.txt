@@ -468,16 +468,10 @@ if ( QT5_FOUND )
 
 endif()
 
+target_link_libraries (CoMISo
+  ${COMISO_LINK_LIBRARIES}
+)
 
-if (NOT APPLE)
-	target_link_libraries (CoMISo 
-	  ${COMISO_LINK_LIBRARIES}
-	)
-else(NOT APPLE)
-	target_link_libraries (CoMISo
-	  ${COMISO_LINK_LIBRARIES}
-	)
-endif(NOT APPLE)
 
 # display results
 acg_print_configure_header (COMISO "CoMISo")
