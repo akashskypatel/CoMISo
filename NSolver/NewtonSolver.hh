@@ -84,6 +84,8 @@ public:
     solver_type_ = _st;
   }
 
+  bool converged() { return converged_; }
+
 protected:
 
   bool factorize(NProblemInterface* _problem, const SMatrixD& _A,
@@ -149,6 +151,8 @@ private:
 
   // deprecated
   bool   constant_hessian_structure_;
+
+  bool converged_;
 };
 
 

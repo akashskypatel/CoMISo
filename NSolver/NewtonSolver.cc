@@ -23,6 +23,7 @@ solve(NProblemGmmInterface* _problem)
 {
   DEB_enter_func;
 #if COMISO_SUITESPARSE_AVAILABLE  
+  converged_ = true;
   
   // get problem size
   int n = _problem->n_unknowns();
@@ -98,16 +99,19 @@ solve(NProblemGmmInterface* _problem)
         _problem->store_result(P(x));
         DEB_line(2, "Newton solver reached max regularization but did not "
           "converge");
+        converged_ = false;
         return false;
       }
     }
   }
   _problem->store_result(P(x));
   DEB_line(2, "Newton Solver did not converge!!! after iterations.");
+  converged_ = false;
   return false;
 
 #else
   DEB_warning(1,"NewtonSolver requires not-available CholmodSolver");
+  converged_ = false;
   return false;
 #endif	    
 }
@@ -120,6 +124,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   const VectorD& _b)
 {
   DEB_time_func_def;
+  converged_ = false;
 
   const double KKT_res_eps = 1e-6;
   const int    max_KKT_regularization_iters = 40;
@@ -251,8 +256,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       << ", KKT residual^2 = " << kkt_res2);
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) < eps_ls_)
+    if(newton_decrement < eps_ || std::abs(t) < eps_ls_ )
+    {
+      converged_ = true;
       break;
+    }
 
     ++iter;
   }
@@ -398,11 +406,11 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
   DEB_enter_func;
   switch(solver_type_)
   {
-    case LS_EigenLU:      
+    case LS_EigenLU:
       lu_solver_.factorize(_KKT); 
       return (lu_solver_.info() == Eigen::Success);
 #if COMISO_SUITESPARSE_AVAILABLE
-    case LS_Umfpack: 
+    case LS_Umfpack:
       umfpack_solver_.factorize(_KKT); 
       return (umfpack_solver_.info() == Eigen::Success);
 #endif
