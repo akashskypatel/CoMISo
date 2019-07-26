@@ -223,6 +223,9 @@ void IPOPTSolverLean::solve(NProblemInterface* _problem,
   }
   DEB_out(2,"\n");
 
+  // TODO: check if this is used and refactor
+  impl_->app_->Options()->SetIntegerValue("max_iter", impl_->max_iter_);
+
   //----------------------------------------------------------------------------
   // 3. solve problem
   //----------------------------------------------------------------------------
