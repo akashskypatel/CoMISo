@@ -469,55 +469,11 @@ void IPOPTSolverLean::solve(
 
 //-----------------------------------------------------------------------------
 
-
 void IPOPTSolverLean::solve(NProblemInterface*    _problem)
 {
   std::vector<NConstraintInterface*> constraints;
   solve(_problem, constraints);
 }
-
-
-//-----------------------------------------------------------------------------
-
-
-void IPOPTSolverLean::solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
-{
-  DEB_enter_func;
-  DEB_warning(1,"******NProblemGmmInterface is deprecated!!! -> use NProblemInterface *******");
-
-  //----------------------------------------------------------------------------
-  // 1. Create an instance of IPOPT NLP
-  //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemGmmIPOPT(_problem, _constraints);
-
-  //----------------------------------------------------------------------------
-  // 2. solve problem
-  //----------------------------------------------------------------------------
-
-  // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
-  if (status != Ipopt::Solve_Succeeded)
-     COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
-
-  //----------------------------------------------------------------------------
-  // 3. solve problem
-  //----------------------------------------------------------------------------
-  status = impl_->app_->OptimizeTNLP(np);
-
-  //----------------------------------------------------------------------------
-  // 4. output statistics
-  //----------------------------------------------------------------------------
-  check_ipopt_status(status);
-
-  // Retrieve some statistics about the solve
-  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
-  DEB_out(1,"\n*** IPOPT: The problem solved in " << iter_count << " iterations!\n");
-
-  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
-  DEB_out(1, "\n*** IPOPT: The final value of the objective function is "
-    << final_obj << "\n");
-}
-
 
 //=============================================================================
 } // namespace COMISO

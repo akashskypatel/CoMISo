@@ -96,11 +96,6 @@ public:
   //! \throws Outcome
   void solve(NProblemInterface* _problem);
 
-  // deprecated interface for backwards compatibility
-  //! \throws Outcome
-  void solve(NProblemGmmInterface* _problem, 
-    std::vector<NConstraintInterface*>& _constraints);
-
   //! Get the computed solution energy 
   double energy();
 
