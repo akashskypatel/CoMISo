@@ -388,7 +388,8 @@ solve
   int  cur_pass = impl_->enbl_all_lzy_cnstr_ ? 1 : 0;
   const int max_passes = impl_->incr_lazy_cnstr_max_iter_nmbr_;
 
-  double acceptable_tolerance = 0.01; // hack: read out from ipopt!!!
+  double acceptable_tolerance = get_ipopt_option<double>("acceptable_tol");
+
   // copy default constraints
   std::vector<NConstraintInterface*> constraints = _constraints;
   std::vector<bool> lazy_added(_lazy_constraints.size(),false);
