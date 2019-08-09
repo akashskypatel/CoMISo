@@ -35,68 +35,77 @@ namespace COMISO {
 
 //== IMPLEMENTATION ===========================================================
 
-
-// smart pointer to IpoptApplication to set options etc.
 class IPOPTSolverLean::Impl
-{// Create an instance of the IpoptApplication
+{
 public:
   Impl()
-    : app_(IpoptApplicationFactory()), max_iter_(200), alm_infsb_thrsh_(0.5),
-    incr_lazy_cnstr_max_iter_nmbr_(5), enbl_all_lzy_cnstr_(true)
-  {}
+    : app_(IpoptApplicationFactory()), // Create an instance of IpoptApplication
+      alm_infsb_thrsh_(0.5),
+      incr_lazy_cnstr_max_iter_nmbr_(5),
+      enbl_all_lzy_cnstr_(true)
+  {
+    setup_ipopt_defaults();
+  }
+
+private:
+  void setup_ipopt_defaults();
 
 public:
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
 
-  int max_iter_;
   double alm_infsb_thrsh_;
   int incr_lazy_cnstr_max_iter_nmbr_;
   bool enbl_all_lzy_cnstr_;
+
+private:
+  // default ipopt options
+  static const std::string ipopt_default_hsl_solver;
+  static const int ipopt_default_max_iter;
+  static const int ipopt_default_mumps_mem_percent;
 };
 
-// Constructor
-IPOPTSolverLean::IPOPTSolverLean()
-  : impl_(new Impl)
-{
+const std::string IPOPTSolverLean::Impl::ipopt_default_hsl_solver = "ma57";
+const int IPOPTSolverLean::Impl::ipopt_default_max_iter = 200;
+const int IPOPTSolverLean::Impl::ipopt_default_mumps_mem_percent = 5;
 
+
+void IPOPTSolverLean::Impl::setup_ipopt_defaults()
+{
   // Switch to HSL if available
 #if COMISO_HSL_AVAILABLE
-  impl_->app_->Options()->SetStringValue("linear_solver", "ma57");
+  app_->Options()->SetStringValue("linear_solver", ipopt_default_hsl_solver);
 #else
-  impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
+  app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
 
 #ifdef DEB_ON
   if (!Debug::Config::query().console())
 #endif
   {// Block any output on cout and cerr from Ipopt.
-    impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
+    app_->Options()->SetStringValue("suppress_all_output", "yes");
   }
 
 #ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
   // with the default mumps solver
   // TODO: find out what this does and whether it makes sense to do it
-  impl_->app_->Options()->SetIntegerValue("mumps_mem_percent", 5);
+  app_->Options()->SetIntegerValue("mumps_mem_percent",
+                                   ipopt_default_mumps_mem_percent);
 #endif
 
-  // set default parameters
-  impl_->app_->Options()->SetIntegerValue("max_iter", 100);
-  //  app->Options()->SetStringValue("derivative_test", "second-order");
-  //  app->Options()->SetIntegerValue("print_level", 0);
-  //  app->Options()->SetStringValue("expect_infeasible_problem", "yes");
+  // set max iterations
+  app_->Options()->SetIntegerValue("max_iter", ipopt_default_max_iter);
+}
+
+// Constructor
+IPOPTSolverLean::IPOPTSolverLean()
+  : impl_(new Impl)
+{
 }
 
 IPOPTSolverLean::
 ~IPOPTSolverLean()
 { delete impl_; }
-
-double
-IPOPTSolverLean::
-energy()
-{
-  return impl_->app_->Statistics()->FinalObjective();
-}
 
 //-----------------------------------------------------------------------------
 
@@ -105,14 +114,16 @@ IPOPTSolverLean::
 set_max_iterations
 (const int _max_iterations)
 {
-    impl_->max_iter_ = _max_iterations;
+  impl_->app_->Options()->SetIntegerValue("max_iter", _max_iterations);
 }
 
 int
 IPOPTSolverLean::
 max_iterations() const
 {
-    return impl_->max_iter_;
+  int max_iter;
+  impl_->app_->Options()->GetIntegerValue("max_iter", max_iter, "");
+  return max_iter;
 }
 
 double
@@ -159,8 +170,6 @@ set_enable_all_lazy_contraints
 {
   impl_->enbl_all_lzy_cnstr_ = _enbl_all_lzy_cnstr;
 }
-
-//-----------------------------------------------------------------------------
 
 static void
 throw_ipopt_solve_failure
@@ -278,10 +287,6 @@ solve
     << final_obj << "\n");
 }
 
-
-//-----------------------------------------------------------------------------
-
-
 void
 IPOPTSolverLean::
 solve
@@ -312,9 +317,6 @@ solve
   // cache statistics of all iterations
   std::vector<int> n_inf;
   std::vector<int> n_almost_inf;
-
-  // set max iterations
-  impl_->app_->Options()->SetIntegerValue("max_iter", impl_->max_iter_);
 
   while(!feasible_point_found && cur_pass < max_passes)
   {
@@ -498,15 +500,19 @@ solve
       << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
 }
 
-
-//-----------------------------------------------------------------------------
-
 void
 IPOPTSolverLean::
 solve(NProblemInterface* _problem)
 {
   std::vector<NConstraintInterface*> constraints;
   solve(_problem, constraints);
+}
+
+double
+IPOPTSolverLean::
+energy()
+{
+  return impl_->app_->Statistics()->FinalObjective();
 }
 
 //=============================================================================
