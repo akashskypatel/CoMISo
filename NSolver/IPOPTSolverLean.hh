@@ -8,24 +8,20 @@
 #ifndef COMISO_IPOPTLEANSOLVER_HH
 #define COMISO_IPOPTLEANSOLVER_HH
 
-
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
 #if COMISO_IPOPT_AVAILABLE
 
 //== INCLUDES =================================================================
-
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <vector>
 #include <cstddef>
 
 
 //== NAMESPACES ===============================================================
-
 namespace COMISO {
 
 //== FORWARDDECLARATIONS ======================================================
-class NProblemGmmInterface; // deprecated
 class NProblemInterface;
 class NConstraintInterface;
 
@@ -41,10 +37,8 @@ class NConstraintInterface;
 class COMISODLLEXPORT IPOPTSolverLean
 {
 public:
-  /// Default constructor
+
   IPOPTSolverLean();
- 
-  /// Destructor
   ~IPOPTSolverLean();
 
   // *********** OPTIONS **************//
@@ -55,25 +49,24 @@ public:
   void set_max_iterations(const int _max_iterations);
   int max_iterations() const;
 
-  /*! 
-  Set the threshold on the lazy inequality constraint to decide if we are near 
-  the  constraint boundary.
+  /*!  Set the threshold on the lazy inequality constraint to decide
+  if we are near the constraint boundary.
   */
   void set_almost_infeasible_threshold(const double _alm_infsb_thrsh);
   double almost_infeasible_threshold() const;
 
   /*!
-  Set the max number of incremental lazy constraint iterations before switching 
+  Set the max number of incremental lazy constraint iterations before switching
   to the fully constrained problem.
   \note The default value is 5.
   */
-  void set_incremental_lazy_constraint_max_iteration_number(const int 
-    _incr_lazy_cnstr_max_iter_nmbr);
+  void set_incremental_lazy_constraint_max_iteration_number
+    (const int _incr_lazy_cnstr_max_iter_nmbr);
   int incremental_lazy_constraint_max_iteration_number() const;
 
   /*
-  Turn on/off solving the fully constraint problem after exhausting the 
-  incremental lazy constraint iterations. 
+  Turn on/off solving the fully constraint problem after exhausting the
+  incremental lazy constraint iterations.
 
   \note The default value of this is true.
   */
@@ -81,22 +74,24 @@ public:
   bool enable_all_lazy_contraints() const;
 
   // ********** SOLVE **************** //
-  
-  //! \throws Outcome
-  void solve(NProblemInterface* _problem, 
-    const std::vector<NConstraintInterface*>& _constraints);
 
-  //! Same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
+  //! Solve a problem instance with an optional set of constraints.
   //! \throws Outcome
-  void solve(NProblemInterface* _problem,
-    const std::vector<NConstraintInterface*>& _constraints,
-    const std::vector<NConstraintInterface*>& _lazy_constraints);
+  void solve
+  (NProblemInterface* _problem,
+   const std::vector<NConstraintInterface*>& _constraints = {});
 
-  // for convenience, if no constraints are given
+  //! Same as above with additional lazy constraints that are only
+  //! added iteratively to the problem if not satisfied.
   //! \throws Outcome
+  void solve
+  (NProblemInterface* _problem,
+   const std::vector<NConstraintInterface*>& _constraints,
+   const std::vector<NConstraintInterface*>& _lazy_constraints);
+
   void solve(NProblemInterface* _problem);
 
-  //! Get the computed solution energy 
+  //! Get the computed solution energy
   double energy();
 
 private:
@@ -108,13 +103,10 @@ private:
   IPOPTSolverLean& operator=(const IPOPTSolverLean&);
 };
 
-
-//=============================================================================
 } // namespace COMISO
 
 //=============================================================================
 #endif // COMISO_IPOPT_AVAILABLE
 //=============================================================================
-#endif // ACG_IPOPTSOLVER_HH defined
+#endif // COMISO_IPOPTLEANSOLVER_HH defined
 //=============================================================================
-
