@@ -500,14 +500,6 @@ solve
       << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
 }
 
-void
-IPOPTSolverLean::
-solve(NProblemInterface* _problem)
-{
-  std::vector<NConstraintInterface*> constraints;
-  solve(_problem, constraints);
-}
-
 double
 IPOPTSolverLean::
 energy()

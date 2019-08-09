@@ -97,8 +97,6 @@ public:
    const std::vector<NConstraintInterface*>& _constraints,
    const std::vector<NConstraintInterface*>& _lazy_constraints);
 
-  void solve(NProblemInterface* _problem);
-
   //! Get the computed solution energy
   double energy();
 
