@@ -13,10 +13,11 @@
 #if COMISO_IPOPT_AVAILABLE
 
 //== INCLUDES =================================================================
-#include <CoMISo/Config/CoMISoDefines.hh>
-#include <vector>
 #include <cstddef>
+#include <vector>
+#include <string>
 
+#include <CoMISo/Config/CoMISoDefines.hh>
 
 //== NAMESPACES ===============================================================
 namespace COMISO {
@@ -52,16 +53,34 @@ public:
   // *********** OPTIONS **************//
 
   /*!
+    Set options of the underlying ipopt solver.
+
+    For a thorough list and documentation of available options, refer
+    to: https://www.coin-or.org/Ipopt/documentation/node40.html
+  */
+  template<typename T>
+  void set_ipopt_option(std::string option, const T& value);
+
+  /*!
+  Get options of the underlying ipopt solver.
+
+  The type of option {int, double, std::string} needs to be passed as
+  template argument.
+  */
+  template<typename T>
+  T get_ipopt_option(std::string option);
+
+  /*!
   Set the maximum number of iterations
   */
   void set_max_iterations(const int _max_iterations);
-  int max_iterations() const;
+  int get_max_iterations() const;
 
   /*!  Set the threshold on the lazy inequality constraint to decide
   if we are near the constraint boundary.
   */
   void set_almost_infeasible_threshold(const double _alm_infsb_thrsh);
-  double almost_infeasible_threshold() const;
+  double get_almost_infeasible_threshold() const;
 
   /*!
   Set the max number of incremental lazy constraint iterations before switching
@@ -70,7 +89,7 @@ public:
   */
   void set_incremental_lazy_constraint_max_iteration_number
     (const int _incr_lazy_cnstr_max_iter_nmbr);
-  int incremental_lazy_constraint_max_iteration_number() const;
+  int get_incremental_lazy_constraint_max_iteration_number() const;
 
   /*
   Turn on/off solving the fully constraint problem after exhausting the
@@ -79,7 +98,7 @@ public:
   \note The default value of this is true.
   */
   void set_enable_all_lazy_contraints(const bool _enbl_all_lzy_cnstr);
-  bool enable_all_lazy_contraints() const;
+  bool get_enable_all_lazy_contraints() const;
 
   // ********** SOLVE **************** //
 
@@ -95,7 +114,7 @@ public:
   void solve
   (NProblemInterface* _problem,
    const std::vector<NConstraintInterface*>& _constraints,
-   const std::vector<NConstraintInterface*>& _lazy_constraints);
+   const std::vector<NConstraintInterface*>& _lazy_constraints = {});
 
   //! Get the computed solution energy
   double energy();

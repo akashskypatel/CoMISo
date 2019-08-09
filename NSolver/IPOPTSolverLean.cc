@@ -47,6 +47,13 @@ public:
     setup_ipopt_defaults();
   }
 
+  void set_ipopt_option(std::string, int);
+  void set_ipopt_option(std::string, double);
+  void set_ipopt_option(std::string, std::string);
+
+  template <typename T>
+  T get_ipopt_option(std::string);
+
 private:
   void setup_ipopt_defaults();
 
@@ -68,36 +75,94 @@ const std::string IPOPTSolverLean::Impl::ipopt_default_hsl_solver = "ma57";
 const int IPOPTSolverLean::Impl::ipopt_default_max_iter = 200;
 const int IPOPTSolverLean::Impl::ipopt_default_mumps_mem_percent = 5;
 
+void
+IPOPTSolverLean::Impl::
+set_ipopt_option
+(std::string option, int value)
+{
+  app_->Options()->SetIntegerValue(option, value);
+}
+
+void
+IPOPTSolverLean::Impl::
+set_ipopt_option
+(std::string option, double value)
+{
+  app_->Options()->SetNumericValue(option, value);
+}
+
+void
+IPOPTSolverLean::Impl::
+set_ipopt_option
+(std::string option, std::string value)
+{
+  app_->Options()->SetStringValue(option, value);
+}
+
+template <typename T> T
+IPOPTSolverLean::Impl::
+get_ipopt_option(std::string)
+{
+  // @TODO print warning about unsupported option type!
+}
+
+template <> int
+IPOPTSolverLean::Impl::
+get_ipopt_option<int>(std::string option)
+{
+  int value;
+  app_->Options()->GetIntegerValue(option, value, "");
+  return value;
+}
+
+template <> double
+IPOPTSolverLean::Impl::
+get_ipopt_option<double>(std::string option)
+{
+  double value;
+  app_->Options()->GetNumericValue(option, value, "");
+  return value;
+}
+
+template <> std::string
+IPOPTSolverLean::Impl::
+get_ipopt_option<std::string>(std::string option)
+{
+  std::string value;
+  app_->Options()->GetStringValue(option, value, "");
+  return value;
+}
 
 void IPOPTSolverLean::Impl::setup_ipopt_defaults()
 {
   // Switch to HSL if available
 #if COMISO_HSL_AVAILABLE
-  app_->Options()->SetStringValue("linear_solver", ipopt_default_hsl_solver);
+  set_ipopt_option("linear_solver", ipopt_default_hsl_solver);
 #else
-  app_->Options()->SetStringValue("linear_solver", "mumps");
+  set_ipopt_option("linear_solver", "mumps");
 #endif
 
 #ifdef DEB_ON
   if (!Debug::Config::query().console())
 #endif
   {// Block any output on cout and cerr from Ipopt.
-    app_->Options()->SetStringValue("suppress_all_output", "yes");
+    set_ipopt_option("suppress_all_output", "yes");
   }
 
 #ifdef WIN32
   // Restrict memory to be able to run larger problems on windows
   // with the default mumps solver
   // TODO: find out what this does and whether it makes sense to do it
-  app_->Options()->SetIntegerValue("mumps_mem_percent",
-                                   ipopt_default_mumps_mem_percent);
+  set_ipopt_option("mumps_mem_percent",
+                   ipopt_default_mumps_mem_percent);
 #endif
 
-  // set max iterations
-  app_->Options()->SetIntegerValue("max_iter", ipopt_default_max_iter);
+  // set maximum solver iterations
+  set_ipopt_option("max_iter", ipopt_default_max_iter);
 }
 
-// Constructor
+//-----------------------------------------------------------------------------
+
 IPOPTSolverLean::IPOPTSolverLean()
   : impl_(new Impl)
 {
@@ -105,32 +170,39 @@ IPOPTSolverLean::IPOPTSolverLean()
 
 IPOPTSolverLean::
 ~IPOPTSolverLean()
-{ delete impl_; }
+{
+  delete impl_;
+}
 
-//-----------------------------------------------------------------------------
+template <typename T>
+void
+IPOPTSolverLean::
+set_ipopt_option
+(std::string option, const T& value)
+{
+  impl_->set_ipopt_option(option, value);
+}
+
+template <typename T> T
+IPOPTSolverLean::
+get_ipopt_option(std::string option)
+{
+  return impl_->get_ipopt_option<T>(option);
+}
 
 void
 IPOPTSolverLean::
 set_max_iterations
 (const int _max_iterations)
 {
-  impl_->app_->Options()->SetIntegerValue("max_iter", _max_iterations);
+  impl_->set_ipopt_option("max_iter", _max_iterations);
 }
 
 int
 IPOPTSolverLean::
-max_iterations() const
+get_max_iterations() const
 {
-  int max_iter;
-  impl_->app_->Options()->GetIntegerValue("max_iter", max_iter, "");
-  return max_iter;
-}
-
-double
-IPOPTSolverLean::
-almost_infeasible_threshold() const
-{
-  return impl_->alm_infsb_thrsh_;
+  return impl_->get_ipopt_option<int>("max_iter");
 }
 
 void
@@ -141,11 +213,11 @@ set_almost_infeasible_threshold
   impl_->alm_infsb_thrsh_ = _alm_infsb_thrsh;
 }
 
-int
+double
 IPOPTSolverLean::
-incremental_lazy_constraint_max_iteration_number() const
+get_almost_infeasible_threshold() const
 {
-  return impl_->incr_lazy_cnstr_max_iter_nmbr_;
+  return impl_->alm_infsb_thrsh_;
 }
 
 void
@@ -156,11 +228,11 @@ set_incremental_lazy_constraint_max_iteration_number
   impl_->incr_lazy_cnstr_max_iter_nmbr_ = _incr_lazy_cnstr_max_iter_nmbr;
 }
 
-bool
+int
 IPOPTSolverLean::
-enable_all_lazy_contraints() const
+get_incremental_lazy_constraint_max_iteration_number() const
 {
-  return impl_->enbl_all_lzy_cnstr_;
+  return impl_->incr_lazy_cnstr_max_iter_nmbr_;
 }
 
 void
@@ -169,6 +241,13 @@ set_enable_all_lazy_contraints
 (const bool _enbl_all_lzy_cnstr)
 {
   impl_->enbl_all_lzy_cnstr_ = _enbl_all_lzy_cnstr;
+}
+
+bool
+IPOPTSolverLean::
+get_enable_all_lazy_contraints() const
+{
+  return impl_->enbl_all_lzy_cnstr_;
 }
 
 static void
