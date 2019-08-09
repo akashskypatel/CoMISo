@@ -27,12 +27,20 @@ class NConstraintInterface;
 
 //== CLASS DEFINITION =========================================================
 
+/** \class IPOPTSolverLean
+    Solver for Interior Point optimization problems.
 
-/** \class NewtonSolver NewtonSolver.hh <ACG/.../NewtonSolver.hh>
+    Solves an interior point problem, given an NProblemInterface
+    instance and optionally a set of constraints as well as "lazy
+    constraints" via NConstraintInterface.
 
-    Brief Description.
-  
-    A more elaborate description follows.
+    Lazy constraints are not active while the initial solution to the
+    problem is computed. After the first solution is found, the lazy
+    constraints are checked and added to the set of active constraints
+    if they are violated. This process is then repeated until all
+    constraints are satisfied OR a maximum number of solution attempts
+    has been reached. In that case the optimization is started once
+    more, with all lazy constraints active.
 */
 class COMISODLLEXPORT IPOPTSolverLean
 {
