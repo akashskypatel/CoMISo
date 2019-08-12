@@ -614,3 +614,4 @@ if(${PROJECT_NAME} MATCHES "CoMISo")
 
 endif()
 
+list(REMOVE_AT CMAKE_MODULE_PATH -1)
