@@ -39,8 +39,10 @@ set(COMISO_LINK_DIRECTORIES "")
 set(COMISO_LINK_LIBRARIES "")
 set(NEED_LAPACK "")
 
+option(COMISO_BUILD_WITHOUT_BOOST "Build CoMISo without boost" OFF)
+
 FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET)
-if(Boost_FOUND)
+if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
   set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES    ${Boost_LIBRARY_DIR} )
@@ -58,7 +60,11 @@ if(Boost_FOUND)
 
 else()
   set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 0" )
-  message (STATUS "Boost not found!")
+  if(COMISO_BUILD_WITHOUT_BOOST)
+    message (STATUS "Building without boost (COMISO_BUILD_WITHOUT_BOOST flag is set)")
+  else()
+    message (STATUS "Boost not found!")
+  endif()
 endif ()
 
 
