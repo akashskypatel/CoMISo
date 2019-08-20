@@ -281,7 +281,7 @@ else ()
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
 endif ()
 
-find_package (Taucs)
+find_package (Taucs QUIET)
 set (SUPRESS_TAUCS OFF CACHE BOOL "Set to ON if CoMISo should be built without TAUCS.")
 if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
   list (APPEND NEED_LAPACK "Taucs")
@@ -420,10 +420,11 @@ target_include_directories (CoMISo PUBLIC
 )
 
 get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
-message("Target CoMISo include dirs: ${INC_DIRS}")
-message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
 
-message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+#message("Target CoMISo include dirs: ${INC_DIRS}")
+#message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
+#message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+
 if (COMISO_LINK_DIRECTORIES)
   set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES "${COMISO_LINK_DIRECTORIES}")
 endif()
