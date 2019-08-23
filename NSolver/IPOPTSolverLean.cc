@@ -47,9 +47,9 @@ public:
     setup_ipopt_defaults();
   }
 
-  void set_ipopt_option(std::string, int);
-  void set_ipopt_option(std::string, double);
-  void set_ipopt_option(std::string, std::string);
+  void set_ipopt_option(std::string, const int&);
+  void set_ipopt_option(std::string, const double&);
+  void set_ipopt_option(std::string, const std::string&);
 
   template <typename T>
   T get_ipopt_option(std::string);
@@ -78,7 +78,7 @@ const int IPOPTSolverLean::Impl::ipopt_default_mumps_mem_percent = 5;
 void
 IPOPTSolverLean::Impl::
 set_ipopt_option
-(std::string option, int value)
+(std::string option, const int& value)
 {
   app_->Options()->SetIntegerValue(option, value);
 }
@@ -86,7 +86,7 @@ set_ipopt_option
 void
 IPOPTSolverLean::Impl::
 set_ipopt_option
-(std::string option, double value)
+(std::string option, const double& value)
 {
   app_->Options()->SetNumericValue(option, value);
 }
@@ -94,7 +94,7 @@ set_ipopt_option
 void
 IPOPTSolverLean::Impl::
 set_ipopt_option
-(std::string option, std::string value)
+(std::string option, const std::string& value)
 {
   app_->Options()->SetStringValue(option, value);
 }
@@ -174,13 +174,28 @@ IPOPTSolverLean::
   delete impl_;
 }
 
-template <typename T>
 void
 IPOPTSolverLean::
 set_ipopt_option
-(std::string option, const T& value)
+(std::string option, const int& value)
 {
   impl_->set_ipopt_option(option, value);
+}
+
+void
+IPOPTSolverLean::
+set_ipopt_option
+(std::string option, const double& value)
+{
+    impl_->set_ipopt_option(option, value);
+}
+
+void
+IPOPTSolverLean::
+set_ipopt_option
+(std::string option, const std::string& value)
+{
+    impl_->set_ipopt_option(option, value);
 }
 
 template <typename T> T
@@ -189,6 +204,10 @@ get_ipopt_option(std::string option)
 {
   return impl_->get_ipopt_option<T>(option);
 }
+
+template int IPOPTSolverLean::get_ipopt_option<int>(std::string);
+template double IPOPTSolverLean::get_ipopt_option<double>(std::string);
+template std::string IPOPTSolverLean::get_ipopt_option<std::string>(std::string);
 
 void
 IPOPTSolverLean::

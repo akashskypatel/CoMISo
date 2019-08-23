@@ -58,8 +58,9 @@ public:
     For a thorough list and documentation of available options, refer
     to: https://www.coin-or.org/Ipopt/documentation/node40.html
   */
-  template<typename T>
-  void set_ipopt_option(std::string option, const T& value);
+  void set_ipopt_option(std::string, const int&);
+  void set_ipopt_option(std::string, const double&);
+  void set_ipopt_option(std::string, const std::string&);
 
   /*!
   Get options of the underlying ipopt solver.
@@ -114,7 +115,7 @@ public:
   void solve
   (NProblemInterface* _problem,
    const std::vector<NConstraintInterface*>& _constraints,
-   const std::vector<NConstraintInterface*>& _lazy_constraints = {});
+   const std::vector<NConstraintInterface*>& _lazy_constraints);
 
   //! Get the computed solution energy
   double energy();
