@@ -160,10 +160,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     double kkt_res2(0.0);
     double constraint_res2(0.0);
     int    reg_iters(0);
+    bool fact_ok = true;
     do
     {
       // get Newton search direction by solving LSE
-      bool fact_ok = factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
+      fact_ok = factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
       first_factorization = false;
 
       if(fact_ok)
@@ -204,7 +205,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       }
       ++reg_iters;
     }
-    while( (kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2) && reg_iters < max_KKT_regularization_iters);
+    while( (!fact_ok || kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2) && reg_iters < max_KKT_regularization_iters);
 
     // no valid step could be found?
     if(kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2 || reg_iters >= max_KKT_regularization_iters)
