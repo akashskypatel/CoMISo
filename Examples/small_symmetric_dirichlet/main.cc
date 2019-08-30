@@ -27,9 +27,10 @@
 #if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
 
 #include <CoMISo/Utils/StopWatch.hh>
-#include <vector>
 #include <CoMISo/NSolver/NewtonSolver.hh>
 #include <CoMISo/NSolver/SymmetricDirichletProblem.hh>
+#include <vector>
+#include <iostream>
 
 //------------------------------------------------------------------------------------------------------
 
