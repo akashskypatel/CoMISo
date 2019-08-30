@@ -23,6 +23,7 @@
 \*===========================================================================*/
 
 #include <CoMISo/Config/config.hh>
+#include <iostream>
 
 #if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
 
@@ -30,7 +31,6 @@
 #include <CoMISo/NSolver/NewtonSolver.hh>
 #include <CoMISo/NSolver/SymmetricDirichletProblem.hh>
 #include <vector>
-#include <iostream>
 
 //------------------------------------------------------------------------------------------------------
 
