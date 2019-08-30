@@ -86,8 +86,6 @@ void SymmetricDirichletElement::eval_gradient(const VecV& _x, const VecC& _c, Ve
 
 void SymmetricDirichletElement::eval_hessian(const VecV& _x, const VecC& _c, std::vector<Triplet>& _triplets)
 {
-//    _H.setZero();
-
   Vector12 x;
   x << _x[0], _x[1], _x[2], _x[3], _x[4], _x[5],
        _c[0], _c[1], _c[2], _c[3], _c[4], _c[5];
@@ -115,8 +113,14 @@ void SymmetricDirichletElement::eval_hessian(const VecV& _x, const VecC& _c, std
 
     Eigen::MatrixXd H(6,6);
     for (int i = 0; i < 6; ++i)
-      for (int j = 0; j < 6; ++j)
+    {
+      H(i,i) = dense_hessian[i][i];
+      for (int j = 0; j < i; ++j)
+      {
         H(i,j) = dense_hessian[i][j];
+        H(j,i) = dense_hessian[i][j];
+      }
+    }
 
     Eigen::MatrixXd Hspd(6,6);
     project_hessian(H, Hspd, 1e-6);
@@ -199,33 +203,29 @@ adouble SymmetricDirichletElement::f_adouble(const adouble* _x)
 {
   Matrix2x2ad B;
   B(0,0) = _x[2]-_x[0];
-  B(1,0) = _x[4]-_x[0];
-  B(0,1) = _x[3]-_x[1];
+  B(0,1) = _x[4]-_x[0];
+  B(1,0) = _x[3]-_x[1];
   B(1,1) = _x[5]-_x[1];
   Matrix2x2ad Bin = B.inverse();
 
   Matrix2x2ad R;
   R(0,0) = _x[6+2]-_x[6+0];
-  R(1,0) = _x[6+4]-_x[6+0];
-  R(0,1) = _x[6+3]-_x[6+1];
+  R(0,1) = _x[6+4]-_x[6+0];
+  R(1,0) = _x[6+3]-_x[6+1];
   R(1,1) = _x[6+5]-_x[6+1];
   Matrix2x2ad Rin = R.inverse();
 
   adouble area = 0.5 * R.determinant();
-  if (B.determinant() * area < 0)
+  if (B.determinant() * area <= 0)
   {
     adouble res = std::numeric_limits<double>::max();
     return res;
   }
 
-  Matrix2x2ad J   = Rin * B;
-  Matrix2x2ad Jin = Bin * R;
+  Matrix2x2ad J   =  B * Rin;
+  Matrix2x2ad Jin =  R * Bin;
 
-  adouble res = 0.0;
-
-  for (int i = 0; i < 2; ++i)
-    for (int j = 0; j < 2; ++j)
-      res += J(i,j)*J(i,j) + Jin(i,j)*Jin(i,j);
+  adouble res = J.squaredNorm() + Jin.squaredNorm();
 
   return area * (res - 4);
 }
