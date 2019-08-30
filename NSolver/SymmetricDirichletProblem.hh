@@ -34,6 +34,10 @@
 
 //== INCLUDES =================================================================
 
+#include <CoMISo/Config/config.hh>
+
+#if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include "FiniteElementProblem.hh"
 
@@ -151,6 +155,10 @@ private:
 
 //=============================================================================
 } // namespace COMISO
+//=============================================================================
+
+#endif //(COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
+
 //=============================================================================
 #endif // COMISO_SYMMETRICDIRICHLETPROBLEM_HH defined
 //=============================================================================

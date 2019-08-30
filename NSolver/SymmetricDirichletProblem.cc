@@ -22,6 +22,10 @@
  *                                                                           *
 \*===========================================================================*/
 
+#include <CoMISo/Config/config.hh>
+
+#if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
+
 #include "SymmetricDirichletProblem.hh"
 
 
@@ -330,8 +334,7 @@ void SymmetricDirichletProblem::get_constraints(SMatrixD& _A, VectorD& _b)
   _A.setFromTriplets(triplets.begin(), triplets.end());
 }
 
+} // namespace COMISO
 
-
-}
-
+#endif //(COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
 

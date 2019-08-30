@@ -23,6 +23,9 @@
 \*===========================================================================*/
 
 #include <CoMISo/Config/config.hh>
+
+#if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
+
 #include <CoMISo/Utils/StopWatch.hh>
 #include <vector>
 #include <CoMISo/NSolver/NewtonSolver.hh>
@@ -73,3 +76,13 @@ int main(void)
   return 0;
 }
 
+#else // (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
+
+int main(void)
+{
+  std::cerr << "Warning: Example cannot be executed since either EIGEN3 or ADOLC is not available..." << std::endl;
+  return 0;
+}
+
+
+#endif // (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
