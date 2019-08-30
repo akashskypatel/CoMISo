@@ -40,22 +40,18 @@ int main(void)
   COMISO::SymmetricDirichletProblem sd_problem(n_vertices);
   COMISO::SymmetricDirichletProblem::IndexVector indices(0,1,2);
   COMISO::SymmetricDirichletProblem::ReferencePositionVector2D positions;
-  positions << 0, 0,
-               1, 0,
-               0, 1;
+  positions << 0, 0, // first point
+               1, 0, // second point
+               0, 1; // third point
   sd_problem.add_triangle(indices, positions);
   COMISO::SymmetricDirichletProblem::IndexVector indices2(3,2,1);
   sd_problem.add_triangle(indices2, positions); // same reference positions can be used because we want both triangles to be isosceles
 
-  std::vector<double> initial_solution{0.0,0.0,2,0.0,0.0,2.0,3.0,4.0};
+  std::vector<double> initial_solution{0.0,0.0,
+                                       2.0,0.0,
+                                       2.0,2.0,
+                                       3.0,4.0};
   sd_problem.x() = initial_solution;
-
-  auto f = sd_problem.eval_f(initial_solution.data());
-  std::vector<double> grad(8);
-  sd_problem.eval_gradient(initial_solution.data(), grad.data());
-
-  std::cout << "energy: " << f << std::endl;
-  std::cout << "grad: " << grad[0] << ", " << grad[1] << ", " << grad[2] << ", " << grad[3] << ", " << grad[4] << ", " << grad[5] << ", " << grad[6] << ", " << grad[7] << std::endl;
 
   std::cout << "---------- 2) Set up constraints..." << std::endl;
   // fix first vertex to origin to fix translational degree of freedom
@@ -67,12 +63,12 @@ int main(void)
   COMISO::SymmetricDirichletProblem::VectorD b;
   COMISO::SymmetricDirichletProblem::SMatrixD A;
   sd_problem.get_constraints(A, b);
-  COMISO::NewtonSolver nsolver(1e-6,1e-9,20000);
+  COMISO::NewtonSolver nsolver;
   nsolver.solve(&sd_problem, A, b);
 
   // print result
-  for(unsigned int i=0; i<sd_problem.x().size(); ++i)
-    std::cerr << "x[" << i << "] = " << sd_problem.x()[i] << std::endl;
+  for (unsigned int i = 0; i < n_vertices; ++i)
+    std::cerr << "p" << i << " = ( " << sd_problem.x()[2*i+0] << ", " << sd_problem.x()[2*i+1] << ")"  << std::endl;
 
   return 0;
 }
