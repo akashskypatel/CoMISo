@@ -592,9 +592,14 @@ if(NOT COMISO_NO_INSTALL)
 
     install(FILES
         "${CMAKE_CURRENT_BINARY_DIR}/CoMISoConfigVersion.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/CoMISoConfig.cmake"
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
         DESTINATION ${INSTALL_CONFIGDIR})
 
+  install(EXPORT CoMISoTargets
+          FILE CoMISoTargets.cmake
+          NAMESPACE CoMISo::
+          DESTINATION ${INSTALL_CONFIGDIR})
+          )
 
   # Install library
   install (TARGETS CoMISo EXPORT CoMISoTargets
@@ -622,14 +627,6 @@ if(NOT COMISO_NO_INSTALL)
            DESTINATION include/CoMISo/Config )
   
 
-  install(EXPORT CoMISoTargets
-          FILE CoMISoTargets.cmake
-          NAMESPACE CoMISo::
-          DESTINATION cmake)
-
-  install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
-          DESTINATION cmake
-          )
 
       export(EXPORT CoMISoTargets
           NAMESPACE CoMISo::)
