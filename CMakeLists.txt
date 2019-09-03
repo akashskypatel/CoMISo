@@ -597,7 +597,7 @@ if(NOT COMISO_NO_INSTALL)
   install(EXPORT CoMISoTargets
           FILE CoMISoTargets.cmake
           NAMESPACE CoMISo::
-          DESTINATION ${INSTALL_CONFIGDIR})
+          DESTINATION ${INSTALL_CONFIGDIR}
           )
 
   # Install library
