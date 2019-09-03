@@ -84,6 +84,10 @@ public:
     x_ = x;
   }
 
+  const SMatrixNP       &A() const {return A_;}
+  const Eigen::VectorXd &b() const {return b_;}
+  double c() const {return c_;}
+
   // get current solution
   Eigen::VectorXd& x() { return x_;}
 
