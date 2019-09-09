@@ -334,6 +334,218 @@ void SymmetricDirichletProblem::get_constraints(SMatrixD& _A, VectorD& _b)
   _A.setFromTriplets(triplets.begin(), triplets.end());
 }
 
+SymmetricDirichletProblem::ReferencePositionVector2D SymmetricDirichletProblem::get_equilateral_refernce_positions(double _area)
+{
+  ReferencePositionVector2D equilateral_reference;
+  equilateral_reference << 0.0, 0.0,
+                           1.0, 0.0,
+                           0.5, 0.5*std::sqrt(3.0);
+  equilateral_reference *= _area / 0.5*0.5*std::sqrt(3.0);
+  return equilateral_reference;
+}
+
+
+
+double SymmetricDirichletOneVertexElement::eval_f(const VecV& _x, const VecC& _c)
+{
+  Matrix2x2d B;
+  B(0,0) = _c[0]-_x[0];
+  B(0,1) = _c[2]-_x[0];
+  B(1,0) = _c[1]-_x[1];
+  B(1,1) = _c[3]-_x[1];
+  Matrix2x2d Bin = B.inverse();
+
+  Matrix2x2d R;
+  R(0,0) = _c[4+2]-_x[4+0];
+  R(0,1) = _c[4+4]-_x[4+0];
+  R(1,0) = _c[4+3]-_x[4+1];
+  R(1,1) = _c[4+5]-_x[4+1];
+  Matrix2x2d Rin = R.inverse();
+
+  double area = 0.5 * R.determinant();
+  if (B.determinant() * area <= 0)
+  {
+    double res = std::numeric_limits<double>::max();
+    return res;
+  }
+
+  Matrix2x2d J   =  B * Rin;
+  Matrix2x2d Jin =  R * Bin;
+
+  double res = J.squaredNorm() + Jin.squaredNorm();
+
+  return area * (res - 4);
+}
+
+void SymmetricDirichletOneVertexElement::eval_gradient(const VecV& _x, const VecC& _c, VecV& _g)
+{
+  const double a_x = _x[0];
+  const double a_y = _x[1];
+  const double b_x = _c[0];
+  const double b_y = _c[1];
+  const double c_x = _c[2];
+  const double c_y = _c[3];
+  const double d_x = _c[4];
+  const double d_y = _c[5];
+  const double e_x = _c[6];
+  const double e_y = _c[7];
+  const double f_x = _c[8];
+  const double f_y = _c[9];
+
+  const double det = d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x;
+
+  _g[0] = (2*(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x))*(e_y - f_y) + 2*(-(a_x - c_x)*(e_x - f_x) + (b_x - c_x)*(d_x - f_x))*(-e_x + f_x))/
+          std::pow(d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x,2)
+      -  2*(std::pow(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x),2) +
+            std::pow(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x),2) +
+            std::pow( (b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y),2) +
+            std::pow(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x),2)) *
+            ( b_y - c_y)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3)
+      + (2*(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x))*( e_x - f_x) +
+         2*(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x))*( e_y - f_y))/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,2);
+
+  _g[1] = (2*( (a_y - c_y)*(e_y - f_y) - (b_y - c_y)*(d_y - f_y))*(e_y - f_y) + 2*(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x))*(-e_x + f_x))/
+          std::pow(d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x,2)
+      - 2*(std::pow(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x),2) +
+           std::pow(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x),2) +
+           std::pow( (b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y),2) +
+           std::pow(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x),2)) *
+           (-b_x + c_x)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3)
+      + (2*(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x))*(-e_x + f_x) +
+         2*( (b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y))*(-e_y + f_y))/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,2);
+
+  // area weight
+  _g[0] *= 0.5*det;
+  _g[1] *= 0.5*det;
+}
+
+void SymmetricDirichletOneVertexElement::eval_hessian(const VecV& _x, const VecC& _c, std::vector<Triplet>& _triplets)
+{
+  const double a_x = _x[0];
+  const double a_y = _x[1];
+  const double b_x = _c[0];
+  const double b_y = _c[1];
+  const double c_x = _c[2];
+  const double c_y = _c[3];
+  const double d_x = _c[4];
+  const double d_y = _c[5];
+  const double e_x = _c[6];
+  const double e_y = _c[7];
+  const double f_x = _c[8];
+  const double f_y = _c[9];
+
+  const double det = d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x;
+
+  Eigen::MatrixXd H(2,2);
+  H(0,0) = (2*std::pow(e_y - f_y,2) + 2*std::pow(-e_x + f_x,2))/std::pow(d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x,2) + 6*(std::pow(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x),2) + std::pow(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x),2) + std::pow((b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y),2) + std::pow(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x),2))*std::pow( b_y - c_y,2)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,4) - 4*(2*(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x))*( e_x - f_x) + 2*(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x))*( e_y - f_y))*( b_y - c_y)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3) + (2*std::pow( e_x - f_x,2) + 2*std::pow( e_y - f_y,2))/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,2);
+  H(1,1) = (2*std::pow(e_y - f_y,2) + 2*std::pow(-e_x + f_x,2))/std::pow(d_x*e_y - d_x*f_y - d_y*e_x + d_y*f_x + e_x*f_y - e_y*f_x,2) + 6*(std::pow(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x),2) + std::pow(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x),2) + std::pow((b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y),2) + std::pow(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x),2))*std::pow(-b_x + c_x,2)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,4) - 4*(2*(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x))*(-e_x + f_x) + 2*( (b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y))*(-e_y + f_y))*(-b_x + c_x)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3) + (2*std::pow(-e_x + f_x,2) + 2*std::pow(-e_y + f_y,2))/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,2);
+  H(1,0) = 6*(std::pow(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x),2) + std::pow(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x),2) + std::pow((b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y),2) + std::pow(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x),2))*(b_y - c_y)*(-b_x + c_x)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,4) - 2*(2*(-(a_y - c_y)*(e_x - f_x) + (b_y - c_y)*(d_x - f_x))*(-e_x + f_x) + 2*((b_y - c_y)*(d_y - f_y) - (a_y - c_y)*(e_y - f_y))*(-e_y + f_y))*(b_y - c_y)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3) - 2*(2*(-(b_x - c_x)*(d_x - f_x) + (a_x - c_x)*(e_x - f_x))*(e_x - f_x) + 2*(-(d_y - f_y)*(b_x - c_x) + (e_y - f_y)*(a_x - c_x))*(e_y - f_y))*(-b_x + c_x)/std::pow(a_x*b_y - a_x*c_y - a_y*b_x + a_y*c_x + b_x*c_y - b_y*c_x,3);
+  H(0,1) = H(1,0);
+  H *=  0.5 * det;
+
+  Eigen::MatrixXd Hspd(2,2);
+  project_hessian(H, Hspd, 1e-6);
+
+  _triplets.reserve(2*2);
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j)
+      _triplets.push_back(Triplet(i,j,Hspd(i,j)));
+
+}
+
+void SymmetricDirichletOneVertexElement::project_hessian(Eigen::MatrixXd& H_orig, Eigen::MatrixXd& H_spd, double eps)
+{
+  // Compute eigen-decomposition (of symmetric matrix)
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(H_orig);
+  Eigen::MatrixXd V = eig.eigenvectors();
+  Eigen::MatrixXd D = eig.eigenvalues().asDiagonal();
+
+  // Clamp all eigenvalues to eps
+  for (int i = 0; i < H_orig.rows(); ++i)
+      D(i, i) = std::max(eps, D(i, i));
+  H_spd = V * D * V.inverse();
+}
+
+double SymmetricDirichletOneVertexElement::max_feasible_step(const VecV& _x, const VecV& _v, const VecC& _c)
+{
+  // get quadratic coefficients (ax^2 + b^x + c)
+  auto U11 = _x[0];
+  auto U12 = _x[1];
+  auto U21 = _c[0];
+  auto U22 = _c[1];
+  auto U31 = _c[2];
+  auto U32 = _c[3];
+
+  auto V11 = _v[0];
+  auto V12 = _v[1];
+  const VecV::Scalar V21 = 0.0;
+  const VecV::Scalar V22 = 0.0;
+  const VecV::Scalar V31 = 0.0;
+  const VecV::Scalar V32 = 0.0;
+
+  double a = V11*V22 - V12*V21 - V11*V32 + V12*V31 + V21*V32 - V22*V31;
+  double b = U11*V22 - U12*V21 - U21*V12 + U22*V11 - U11*V32 + U12*V31 + U31*V12 - U32*V11 + U21*V32 - U22*V31 - U31*V22 + U32*V21;
+  double c = U11*U22 - U12*U21 - U11*U32 + U12*U31 + U21*U32 - U22*U31;
+
+  double delta_in = pow(b,2) - 4*a*c;
+  if (delta_in < 0) {
+    return std::numeric_limits<double>::max();
+  }
+  double delta = sqrt(delta_in);
+  double t1 = (-b + delta)/ (2*a);
+  double t2 = (-b - delta)/ (2*a);
+
+  double tmp_n = std::min(t1,t2);
+  t1 = std::max(t1,t2); t2 = tmp_n;
+  // return the smallest negative root if it exists, otherwise return infinity
+  if (t1 > 0)
+  {
+    if (t2 > 0)
+    {
+      return 0.999 * t2;
+    }
+    else
+    {
+      return 0.999 * t1;
+    }
+  }
+  else
+  {
+    return std::numeric_limits<double>::max();
+  }
+}
+
+SymmetricDirichletOneRingProblem::SymmetricDirichletOneRingProblem()
+  :
+    FiniteElementProblem(2)
+{
+  FiniteElementProblem::add_set(&element_set);
+}
+
+void SymmetricDirichletOneRingProblem::add_triangle(const InputPositionVector2D& _current_positions, const SymmetricDirichletOneRingProblem::ReferencePositionVector2D& _reference_positions)
+{
+
+  SymmetricDirichletOneVertexElement::VecI indices;
+  indices << 0,1;
+  SymmetricDirichletOneVertexElement::VecC constants;
+  constants << _current_positions  (1, 0),  _current_positions (1, 1),
+               _current_positions  (2, 0),  _current_positions (2, 1),
+               _reference_positions(0, 0), _reference_positions(0, 1),
+               _reference_positions(1, 0), _reference_positions(1, 1),
+               _reference_positions(2, 0), _reference_positions(2, 1);
+  element_set.instances().add_element(indices, constants);
+}
+
+SymmetricDirichletOneRingProblem::ReferencePositionVector2D SymmetricDirichletOneRingProblem::get_equilateral_refernce_positions(double _area)
+{
+  ReferencePositionVector2D equilateral_reference;
+  equilateral_reference << 0.0, 0.0,
+                           1.0, 0.0,
+                           0.5, 0.5*std::sqrt(3.0);
+  equilateral_reference *= _area / 0.5*0.5*std::sqrt(3.0);
+  return equilateral_reference;
+}
+
 } // namespace COMISO
 
 #endif //(COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
