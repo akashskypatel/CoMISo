@@ -356,10 +356,10 @@ double SymmetricDirichletOneVertexElement::eval_f(const VecV& _x, const VecC& _c
   Matrix2x2d Bin = B.inverse();
 
   Matrix2x2d R;
-  R(0,0) = _c[4+2]-_x[4+0];
-  R(0,1) = _c[4+4]-_x[4+0];
-  R(1,0) = _c[4+3]-_x[4+1];
-  R(1,1) = _c[4+5]-_x[4+1];
+  R(0,0) = _c[4+2]-_c[4+0];
+  R(0,1) = _c[4+4]-_c[4+0];
+  R(1,0) = _c[4+3]-_c[4+1];
+  R(1,1) = _c[4+5]-_c[4+1];
   Matrix2x2d Rin = R.inverse();
 
   double area = 0.5 * R.determinant();
