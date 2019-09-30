@@ -66,9 +66,7 @@ IPOPTSolverLean::IPOPTSolverLean()
   impl_->app_->Options()->SetStringValue("linear_solver", "mumps");
 #endif
 
-#ifdef DEB_ON
-  if (!Debug::Config::query().console())
-#endif
+  DEB_only(if (Debug::Config::query().console_print == nullptr))
   {// Block any output on cout and cerr from Ipopt.
     impl_->app_->Options()->SetStringValue("suppress_all_output", "yes");
   }
