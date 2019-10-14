@@ -78,8 +78,6 @@ public:
   // print result
   virtual void   store_result ( const double* _x               )
   {
-    std::cerr << "Energy: " << eval_f(_x) << std::endl;
-    std::cerr << "(x,y) = (" << _x[0] << "," << _x[1] << ")" << std::endl;
     solution.resize(n_unknowns());
     for (int i = 0; i < n_unknowns(); ++i)
       solution[i] = _x[i];
@@ -116,6 +114,7 @@ int main(void)
 
   std::cout << "---------- 3) Solve with Newton Solver..." << std::endl;
   COMISO::NewtonSolver nsolver;
+  nsolver.set_verbosity(15);
   nsolver.solve(&problem, A, b);
 
   std::cout << "---------- 4) Print solution..." << std::endl;

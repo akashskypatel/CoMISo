@@ -45,7 +45,7 @@ solve(NProblemGmmInterface* _problem)
     // check for convergence
     if( gmm::vect_norm2(g) < eps_)
     {
-      DEB_line(2, "Newton Solver converged after " << i << " iterations");
+      DEB_line(verbosity_, "Newton Solver converged after " << i << " iterations");
       _problem->store_result(P(x));
       return true;
     }
@@ -79,7 +79,7 @@ solve(NProblemGmmInterface* _problem)
           f = f_new;
           improvement = true;
 
-          DEB_line(2, "energy improved to " << f);
+          DEB_line(verbosity_, "energy improved to " << f);
         }
       }
 
@@ -96,14 +96,14 @@ solve(NProblemGmmInterface* _problem)
       else
       {
         _problem->store_result(P(x));
-        DEB_line(2, "Newton solver reached max regularization but did not "
+        DEB_line(verbosity_, "Newton solver reached max regularization but did not "
           "converge");
         return false;
       }
     }
   }
   _problem->store_result(P(x));
-  DEB_line(2, "Newton Solver did not converge!!! after iterations.");
+  DEB_line(verbosity_, "Newton Solver did not converge!!! after iterations.");
   return false;
 
 #else
@@ -119,7 +119,7 @@ solve(NProblemGmmInterface* _problem)
 int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A, 
   const VectorD& _b)
 {
-  DEB_time_func_def;
+  DEB_time_func(verbosity_);
 
   const double KKT_res_eps = 1e-6;
   const int    max_KKT_regularization_iters = 40;
@@ -131,7 +131,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   // number of constraints
   size_t m = _b.size();
 
-  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m << 
+  DEB_line(verbosity_, "optimize via Newton with " << n << " unknowns and " << m <<
     " linear constraints");
 
   // initialize vectors of unknowns
@@ -188,7 +188,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         // alternate hessian and constraints regularization
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
-          DEB_line(2, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
+          DEB_line(verbosity_, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
           if(regularize_hessian == 0.0)
             regularize_hessian = 1e-6;
           else
@@ -196,7 +196,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         }
         else
         {
-          DEB_line(2, "residual^2 " << kkt_res2 << " -> regularize constraints");
+          DEB_line(verbosity_, "residual^2 " << kkt_res2 << " -> regularize constraints");
           if(regularize_constraints == 0.0)
             regularize_constraints = 1e-8;
           else
@@ -242,7 +242,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     }
 
 
-    DEB_line(2, "iter: " << iter
+    DEB_line(verbosity_, "iter: " << iter
       << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
       << (t < t_max ? " _clamped_" : "")
       << ", eps = [Newton decrement] = " << newton_decrement

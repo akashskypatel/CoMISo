@@ -58,7 +58,7 @@ public:
 
   /// Default constructor
   NewtonSolver(const double _eps = 1e-6, const double _eps_line_search = 1e-9, const int _max_iters = 200, const double _alpha_ls=0.2, const double _beta_ls = 0.6)
-    : eps_(_eps), eps_ls_(_eps_line_search), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), solver_type_(LS_EigenLU), constant_hessian_structure_(false)
+    : eps_(_eps), eps_ls_(_eps_line_search), max_iters_(_max_iters), alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), verbosity_(2), solver_type_(LS_EigenLU), constant_hessian_structure_(false)
   {
 //#if COMISO_SUITESPARSE_AVAILABLE
 //    solver_type_ = LS_Umfpack;
@@ -83,6 +83,10 @@ public:
   {
     solver_type_ = _st;
   }
+
+
+  // set verbosity level of the solver. Lower numbers are more verbose
+  void set_verbosity(int _verbosity) { verbosity_ = _verbosity; }
 
 protected:
 
@@ -132,6 +136,7 @@ private:
   int    max_iters_;
   double alpha_ls_;
   double beta_ls_;
+  int verbosity_;
 
   VectorD x_ls_;
 
@@ -146,6 +151,7 @@ private:
 #if COMISO_SUITESPARSE_AVAILABLE
   Eigen::UmfPackLU<SMatrixD> umfpack_solver_;
 #endif
+
 
   // deprecated
   bool   constant_hessian_structure_;
