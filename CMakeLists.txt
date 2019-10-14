@@ -574,6 +574,9 @@ if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_symmetric_dirichlet/CMakeLists.txt" )
   add_subdirectory (Examples/small_symmetric_dirichlet)
   endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_exact_constraint_satifaction_example/CMakeLists.txt" )
+  add_subdirectory (Examples/small_exact_constraint_satifaction_example)
+  endif()
   
 endif (COMISO_BUILD_EXAMPLES )
 
