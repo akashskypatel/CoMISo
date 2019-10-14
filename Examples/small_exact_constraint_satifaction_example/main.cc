@@ -84,7 +84,7 @@ public:
   }
 
   // advanced properties
-  virtual bool   constant_hessian() const { return true; }
+  virtual bool   constant_hessian() const { return false; }
 
   std::vector<double> solution;
 };
@@ -105,7 +105,7 @@ int main(void)
   b.resize(n_constraints);
   b.setZero();
 
-  // first constraint: first variable equals two times second
+  // first constraint: first variable equals three times second
   A.coeffRef(0,0) =  1;
   A.coeffRef(0,1) = -3;
   b.coeffRef(0)   =  0;
