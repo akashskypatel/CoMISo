@@ -29,6 +29,7 @@
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <vector>
 
+#include <CoMISo/Utils/ExactConstraintSatisfaction.hh>
 //------------------------------------------------------------------------------------------------------
 
 class SmallNProblem : public COMISO::NProblemInterface
@@ -89,7 +90,6 @@ public:
   std::vector<double> solution;
 };
 
-
 // Example main
 int main(void)
 {
@@ -97,7 +97,7 @@ int main(void)
   SmallNProblem problem;
 
   std::cout << "---------- 2) Set up constraints..." << std::endl;
-  int n_constraints = 1; // there will be one constraints
+  int n_constraints = 3; // there will be one constraints
   Eigen::VectorXd b;
   Eigen::SparseMatrix<double> A;
   A.resize(n_constraints, problem.n_unknowns());
@@ -106,9 +106,15 @@ int main(void)
   b.setZero();
 
   // first constraint: first variable equals three times second
-  A.coeffRef(0,0) =  1;
-  A.coeffRef(0,1) = -3;
+  A.coeffRef(0,0) =  2;
+  A.coeffRef(0,1) = -6;
+  A.coeffRef(1,0) =  10;
+  A.coeffRef(1,1) = -3;
+  A.coeffRef(2,0) =  1;
+  A.coeffRef(2,1) = -3;
   b.coeffRef(0)   =  0;
+  b.coeffRef(1)   =  27;
+  b.coeffRef(2)   =  0;
 
   std::cout << A << std::endl << b << std::endl;
 
@@ -133,6 +139,16 @@ int main(void)
 
 
   std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
+
+  Eigen::SparseMatrix<int> C = A.cast<int>();
+  Eigen::VectorXi d = b.cast<int>();
+  ExactConstraintSatisfaction satisfy;
+  satisfy.printMatrix(C);
+  satisfy.IREF_Gaussian(&C,&d);
+  satisfy.printMatrix(C);
+  satisfy.IRREF_Jordan(&C,&d);
+  satisfy.printMatrix(C);
+  satisfy.printVector(d);
 
   x.coeffRef(0) = 3.0 * x.coeffRef(1);
 
