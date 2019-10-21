@@ -106,15 +106,22 @@ int main(void)
   b.setZero();
 
   // first constraint: first variable equals three times second
-  A.coeffRef(0,0) =  2;
-  A.coeffRef(0,1) = -6;
-  A.coeffRef(1,0) =  10;
-  A.coeffRef(1,1) = -3;
-  A.coeffRef(2,0) =  1;
-  A.coeffRef(2,1) = -3;
-  b.coeffRef(0)   =  0;
-  b.coeffRef(1)   =  27;
-  b.coeffRef(2)   =  0;
+  //different number of constraints :
+  if(n_constraints == 1){
+      A.coeffRef(0,0) =  2;
+      A.coeffRef(0,1) = -6;
+      b.coeffRef(0)   =  0;
+  }else if(n_constraints == 3){
+      A.coeffRef(0,0) =  2;
+      A.coeffRef(0,1) = -6;
+      A.coeffRef(1,0) =  10;
+      A.coeffRef(1,1) = -3;
+      A.coeffRef(2,0) =  1;
+      A.coeffRef(2,1) = -3;
+      b.coeffRef(0)   =  0;
+      b.coeffRef(1)   =  27;
+      b.coeffRef(2)   =  0;
+  }
 
   std::cout << A << std::endl << b << std::endl;
 
@@ -144,10 +151,13 @@ int main(void)
   Eigen::VectorXi d = b.cast<int>();
   ExactConstraintSatisfaction satisfy;
   satisfy.printMatrix(C);
+  std::cout << std::endl;
   satisfy.IREF_Gaussian(&C,&d);
   satisfy.printMatrix(C);
+   std::cout << std::endl;
   satisfy.IRREF_Jordan(&C,&d);
   satisfy.printMatrix(C);
+   std::cout << std::endl;
   satisfy.printVector(d);
 
   x.coeffRef(0) = 3.0 * x.coeffRef(1);
