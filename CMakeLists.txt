@@ -412,11 +412,10 @@ target_include_directories(CoMISo
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
 )
 
-foreach(_incdir ${COMISO_INCLUDE_DIRECTORIES})
-    target_include_directories(CoMISo PUBLIC "$<BUILD_INTERFACE:${_incdir}>")
-endforeach()
+target_include_directories(CoMISo PUBLIC "${COMISO_INCLUDE_DIRECTORIES}")
 
 #get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
 #get_target_property(INT_INC_DIRS CoMISo INTERFACE_INCLUDE_DIRECTORIES)
@@ -586,25 +585,17 @@ if(NOT COMISO_NO_INSTALL)
   write_basic_package_version_file(
       CoMISoConfigVersion.cmake
       VERSION ${PROJECT_VERSION}
-      COMPATIBILITY SameMajorVersion
-      )
+      COMPATIBILITY SameMajorVersion)
 
   install(FILES
       "${CMAKE_CURRENT_BINARY_DIR}/CoMISoConfigVersion.cmake"
-      "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
       DESTINATION ${INSTALL_CONFIGDIR})
 
-  install(EXPORT CoMISoTargets
-          FILE CoMISoTargets.cmake
-          NAMESPACE CoMISo::
-          DESTINATION ${INSTALL_CONFIGDIR}
-          )
-
   # Install library
-  install (TARGETS CoMISo EXPORT CoMISoTargets
-           RUNTIME DESTINATION lib
-           LIBRARY DESTINATION lib
-           ARCHIVE DESTINATION lib)
+  install(TARGETS CoMISo EXPORT CoMISoTargets
+          RUNTIME DESTINATION lib
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
 
   # Install Header Files
   install(DIRECTORY .
@@ -622,12 +613,19 @@ if(NOT COMISO_NO_INSTALL)
           PATTERN "Debian*" EXCLUDE)
 
   # Install Config File
-  install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
-           DESTINATION include/CoMISo/Config )
+  install(FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
+          DESTINATION include/CoMISo/Config)
 
-  export(EXPORT CoMISoTargets NAMESPACE CoMISo::)
+  # Create export target to reference CoMISo installation
+  install(EXPORT CoMISoTargets
+          FILE CoMISoConfig.cmake
+          NAMESPACE CoMISo::
+          DESTINATION ${INSTALL_CONFIGDIR})
+
+  export(EXPORT CoMISoTargets
+         NAMESPACE CoMISo::
+         FILE CoMISoConfig.cmake)
   export(PACKAGE CoMISo)
-
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
