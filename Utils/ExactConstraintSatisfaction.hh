@@ -6,7 +6,7 @@
 
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <vector>
-#include <set>
+#include <list>
 
 class COMISODLLEXPORT ExactConstraintSatisfaction
 {
@@ -33,7 +33,7 @@ public:
     int largestExponent(Eigen::VectorXd x);
     double F_delta(double x);
     int lcm(const int a, const int b);
-    int lcm_Set(const std::set<int> D);
+    int lcm_list(const std::list<int> D);
     int indexPivot(Eigen::SparseMatrix<int>::RowXpr row);
 
     //--------------------matrix transformation-------------------------------
@@ -43,9 +43,9 @@ public:
 
     //-------------------Evaluation--------------------------------------------
 
-    void evaluation(Eigen::SparseMatrix<int>* A, Eigen::VectorXi* b, Eigen::VectorXd x);
-    double makeDiv(const std::set<int>& D, double x);
-    double safeDot(const std::set<std::pair<double, double>>& S);
+    void evaluation(Eigen::SparseMatrix<int>* A, Eigen::VectorXi* b, Eigen::VectorXd* x);
+    double makeDiv(const std::list<int>& D, double x);
+    double safeDot(const std::list<std::pair<double, double>>& S);
 };
 
 #endif // EXACTCONSTRAINTSATISFACTION_HH

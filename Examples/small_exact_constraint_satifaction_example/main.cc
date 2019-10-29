@@ -97,7 +97,7 @@ int main(void)
   SmallNProblem problem;
 
   std::cout << "---------- 2) Set up constraints..." << std::endl;
-  int n_constraints = 3; // there will be one constraints
+  int n_constraints = 4; // there will be one constraints
   Eigen::VectorXd b;
   Eigen::SparseMatrix<double> A;
   A.resize(n_constraints, problem.n_unknowns());
@@ -108,19 +108,39 @@ int main(void)
   // first constraint: first variable equals three times second
   //different number of constraints :
   if(n_constraints == 1){
-      A.coeffRef(0,0) =  2;
-      A.coeffRef(0,1) = -6;
-      b.coeffRef(0)   =  0;
+      A.coeffRef(0,0) =  3;
+      A.coeffRef(0,1) = 0;
+      b.coeffRef(0)   =  1;
   }else if(n_constraints == 3){
       A.coeffRef(0,0) =  2;
       A.coeffRef(0,1) = -6;
-      A.coeffRef(1,0) =  10;
-      A.coeffRef(1,1) = -3;
-      A.coeffRef(2,0) =  1;
+      A.coeffRef(1,0) =  5;
+      A.coeffRef(1,1) =  0;
+      A.coeffRef(2,0) =  0;
       A.coeffRef(2,1) = -3;
       b.coeffRef(0)   =  0;
-      b.coeffRef(1)   =  27;
-      b.coeffRef(2)   =  0;
+      b.coeffRef(1)   =  15;
+      b.coeffRef(2)   =  -3;
+  }else if(n_constraints == 2){
+    A.coeffRef(0,0) =  3;
+    A.coeffRef(0,1) =  0;
+    b.coeffRef(0)   =  1;
+    A.coeffRef(1,0) =  0;
+    A.coeffRef(1,1) =  5;
+    b.coeffRef(1)   =  1;
+  }else if(n_constraints == 4){
+    A.coeffRef(0,0) =  2;
+    A.coeffRef(0,1) = -6;
+    b.coeffRef(0)   =  0;
+    A.coeffRef(1,0) =  2;
+    A.coeffRef(1,1) = -6;
+    b.coeffRef(1)   =  0;
+    A.coeffRef(2,0) =  2;
+    A.coeffRef(2,1) = -6;
+    b.coeffRef(2)   =  0;
+    A.coeffRef(3,0) =  2;
+    A.coeffRef(3,1) = -6;
+    b.coeffRef(3)   =  0;
   }
 
   std::cout << A << std::endl << b << std::endl;
@@ -159,8 +179,10 @@ int main(void)
   satisfy.printMatrix(C);
    std::cout << std::endl;
   satisfy.printVector(d);
-
-  x.coeffRef(0) = 3.0 * x.coeffRef(1);
+  satisfy.evaluation(&C,&d,&x);
+  //x.coeffRef(0) = 3.0 * x.coeffRef(1);
+  //satisfy.printVector(x);
+  std::cout << "values of vector x : " << x.coeffRef(0) << " and " << x.coeffRef(1) << std::endl;
 
   std::cout << "---------- 7) Check constraint violation again..." << std::endl;
 
