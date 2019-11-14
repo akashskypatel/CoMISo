@@ -571,6 +571,9 @@ if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_mosek_fusion_sdp/CMakeLists.txt" )
     add_subdirectory (Examples/small_mosek_fusion_sdp)
   endif()
+  if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_symmetric_dirichlet/CMakeLists.txt" )
+  add_subdirectory (Examples/small_symmetric_dirichlet)
+  endif()
 
 endif (COMISO_BUILD_EXAMPLES )
 

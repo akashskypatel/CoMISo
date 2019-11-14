@@ -144,7 +144,7 @@ void IPOPTSolverLean::set_enable_all_lazy_contraints(const bool
 static void throw_ipopt_solve_failure(Ipopt::ApplicationReturnStatus const status)
 {
   DEB_enter_func
-  DEB_warning(1, " IPOPT solve failure code is " << status)
+  DEB_error(" IPOPT solve failure code is " << status)
   // TODO: we could translate these return codes, but will not do it for now
   //  enum ApplicationReturnStatus
   //    {

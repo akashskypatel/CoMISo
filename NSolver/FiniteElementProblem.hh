@@ -182,6 +182,7 @@ public:
       for(unsigned int j=0; j<NV; ++j)
         x_[j] = _x[instances_.index(i,j)];
 
+      triplets_.clear();
       element_.eval_hessian(x_, instances_.c(i), triplets_);
 
       for(unsigned int j=0; j<triplets_.size(); ++j)

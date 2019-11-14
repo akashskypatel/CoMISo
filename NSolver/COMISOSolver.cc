@@ -76,6 +76,8 @@ solve(NProblemInterface*                  _problem,
 
       // move to next constraint
       ++n_constraints;
+    } else {
+        std::cerr << "Warning: COMISOSolver received a problem with non-equality constraints!!!" << std::endl;
     }
 
   // resize matrix to final number of constraints
