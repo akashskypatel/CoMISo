@@ -8,134 +8,144 @@
 #ifndef COMISO_IPOPTSOLVER_HH
 #define COMISO_IPOPTSOLVER_HH
 
-
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
 #if COMISO_IPOPT_AVAILABLE
 
 //== INCLUDES =================================================================
+#include <cstddef>
+#include <functional>
+#include <vector>
+#include <string>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <CoMISo/Utils/StopWatch.hh>
-#include <CoMISo/Utils/gmm.hh>
-#include <vector>
-#include <cstddef>
-#include "NProblemGmmInterface.hh"
-#include "NProblemInterface.hh"
-#include "NConstraintInterface.hh"
-#include "BoundConstraint.hh"
-
-#include "IPOPTProblemInstance.hh"
-#include <IpTNLP.hpp>
-#include <IpIpoptApplication.hpp>
-#include <IpSolveStatistics.hpp>
-
-//== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================
-
 namespace COMISO {
+
+//== FORWARDDECLARATIONS ======================================================
+class NProblemInterface;
+class NConstraintInterface;
+struct IPOPTCallbackParameters;
 
 //== CLASS DEFINITION =========================================================
 
-	      
+/** \class IPOPTSolver
+    Solver for Interior Point optimization problems.
 
-/** \class NewtonSolver NewtonSolver.hh <ACG/.../NewtonSolver.hh>
+    Solves an interior point problem, given an NProblemInterface
+    instance and optionally a set of constraints as well as "lazy
+    constraints" via NConstraintInterface.
 
-    Brief Description.
-  
-    A more elaborate description follows.
+    Lazy constraints are not active while the initial solution to the
+    problem is computed. After the first solution is found, the lazy
+    constraints are checked and added to the set of active constraints
+    if they are violated. This process is then repeated until all
+    constraints are satisfied OR a maximum number of solution attempts
+    has been reached. In that case the optimization is started once
+    more, with all lazy constraints active.
 */
 class COMISODLLEXPORT IPOPTSolver
 {
 public:
-   
-  /// Default constructor -> set up IpOptApplication
+
   IPOPTSolver();
- 
+  ~IPOPTSolver();
+
+  // *********** OPTIONS **************//
+
+  /*!
+    Set options of the underlying ipopt solver.
+
+    For a thorough list and documentation of available options, refer
+    to: https://www.coin-or.org/Ipopt/documentation/node40.html
+  */
+  void set_ipopt_option(std::string, const int&);
+  void set_ipopt_option(std::string, const double&);
+  void set_ipopt_option(std::string, const std::string&);
+
+  /*!
+  Get options of the underlying ipopt solver.
+
+  The type of option {int, double, std::string} needs to be passed as
+  template argument.
+  */
+  template<typename T>
+  T get_ipopt_option(std::string option);
+
+  /*!
+  Set the maximum number of iterations
+  */
+  void set_max_iterations(const int _max_iterations);
+  int get_max_iterations() const;
+
+  /*!  Set the threshold on the lazy inequality constraint to decide
+  if we are near the constraint boundary.
+  */
+  void set_almost_infeasible_threshold(const double _alm_infsb_thrsh);
+  double get_almost_infeasible_threshold() const;
+
+  /*!
+  Set the max number of incremental lazy constraint iterations before switching
+  to the fully constrained problem.
+  \note The default value is 5.
+  */
+  void set_incremental_lazy_constraint_max_iteration_number
+    (const int _incr_lazy_cnstr_max_iter_nmbr);
+  int get_incremental_lazy_constraint_max_iteration_number() const;
+
+  /*
+  Turn on/off solving the fully constraint problem after exhausting the
+  incremental lazy constraint iterations.
+
+  \note The default value of this is true.
+  */
+  void set_enable_all_lazy_contraints(const bool _enbl_all_lzy_cnstr);
+  bool get_enable_all_lazy_contraints() const;
+
+  /*
+  Set intermediate callback function object. For the definition of
+  IPOPTCallbackParameters include the IPOPTCallbackParameters.hh
+  header.
+
+  If the callback function returns false, IPOPT will terminate
+  prematurely with the User_Requested_Stop status.
+  */
+  void set_callback_function
+  (std::function<bool(const IPOPTCallbackParameters &)>);
+
   // ********** SOLVE **************** //
-  // solve -> returns ipopt status code
-//------------------------------------------------------
-//  enum ApplicationReturnStatus
-//    {
-//      Solve_Succeeded=0,
-//      Solved_To_Acceptable_Level=1,
-//      Infeasible_Problem_Detected=2,
-//      Search_Direction_Becomes_Too_Small=3,
-//      Diverging_Iterates=4,
-//      User_Requested_Stop=5,
-//      Feasible_Point_Found=6,
-//
-//      Maximum_Iterations_Exceeded=-1,
-//      Restoration_Failed=-2,
-//      Error_In_Step_Computation=-3,
-//      Maximum_CpuTime_Exceeded=-4,
-//      Not_Enough_Degrees_Of_Freedom=-10,
-//      Invalid_Problem_Definition=-11,
-//      Invalid_Option=-12,
-//      Invalid_Number_Detected=-13,
-//
-//      Unrecoverable_Exception=-100,
-//      NonIpopt_Exception_Thrown=-101,
-//      Insufficient_Memory=-102,
-//      Internal_Error=-199
-//    };
-//------------------------------------------------------
 
-  int solve(NProblemInterface*    _problem, const std::vector<NConstraintInterface*>& _constraints);
+  //! Solve a problem instance with an optional set of constraints.
+  //! \throws Outcome
+  void solve
+  (NProblemInterface* _problem,
+   const std::vector<NConstraintInterface*>& _constraints = {});
 
-  // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
-  int solve(NProblemInterface*                        _problem,
-            const std::vector<NConstraintInterface*>& _constraints,
-            const std::vector<NConstraintInterface*>& _lazy_constraints,
-            const double                              _almost_infeasible = 0.5,
-            const int                                 _max_passes        = 5   );
+  //! Same as above with additional lazy constraints that are only
+  //! added iteratively to the problem if not satisfied.
+  //! \throws Outcome
+  void solve
+  (NProblemInterface* _problem,
+   const std::vector<NConstraintInterface*>& _constraints,
+   const std::vector<NConstraintInterface*>& _lazy_constraints);
 
-
-  // for convenience, if no constraints are given
-  int solve(NProblemInterface*    _problem);
-
-  // deprecated interface for backwards compatibility
-  int solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints);
-
-  // ********* CONFIGURATION ********************* //
-  // access the ipopt-application (for setting parameters etc.)
-  // examples: app().Options()->SetIntegerValue("max_iter", 100);
-  //           app().Options()->SetStringValue("derivative_test", "second-order");
-  //           app().Options()->SetStringValue("hessian_approximation", "limited-memory");
-
-  Ipopt::IpoptApplication& app() {return (*app_); }
-
-
-  void set_print_level(const int _level)
-  {
-    app().Options()->SetIntegerValue("print_level", _level);
-    print_level_ = _level;
-  }
-
-protected:
-  double* P(std::vector<double>& _v)
-  {
-    if( !_v.empty())
-      return ((double*)&_v[0]);
-    else
-      return 0;
-  }
+  //! Get the computed solution energy
+  double energy();
 
 private:
+  class Impl;
+  Impl* impl_;
 
-  // smart pointer to IpoptApplication to set options etc.
-  Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
-
-  int print_level_;
+  // inhibit copy
+  IPOPTSolver(const IPOPTSolver&);
+  IPOPTSolver& operator=(const IPOPTSolver&);
 };
 
-
-//=============================================================================
 } // namespace COMISO
 
 //=============================================================================
 #endif // COMISO_IPOPT_AVAILABLE
 //=============================================================================
-#endif // ACG_IPOPTSOLVER_HH defined
+#endif // COMISO_IPOPTSOLVER_HH defined
 //=============================================================================
