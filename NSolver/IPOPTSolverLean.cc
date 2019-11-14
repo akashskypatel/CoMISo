@@ -11,11 +11,8 @@
 #if COMISO_IPOPT_AVAILABLE
 //=============================================================================
 
-
-#include "IPOPTSolverLean.hh"
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
-#include "NProblemIPOPT.hh"
 #include "NConstraintInterface.hh"
 #include "BoundConstraint.hh"
 #include "CoMISo/Utils/CoMISoError.hh"
@@ -28,6 +25,9 @@
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
+#include "IPOPTProblemInstance.hh"
+
+#include "IPOPTSolverLean.hh"
 
 //== NAMESPACES ===============================================================
 
@@ -59,6 +59,7 @@ private:
 
 public:
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 
   double alm_infsb_thrsh_;
   int incr_lazy_cnstr_max_iter_nmbr_;
@@ -269,6 +270,14 @@ get_enable_all_lazy_contraints() const
   return impl_->enbl_all_lzy_cnstr_;
 }
 
+void
+IPOPTSolverLean::
+set_callback_function
+(std::function<bool(const IPOPTCallbackParameters &)> func)
+{
+  impl_->intermediate_callback_ = func;
+}
+
 static void
 throw_ipopt_solve_failure
 (Ipopt::ApplicationReturnStatus const status)
@@ -332,8 +341,10 @@ solve
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, _constraints);
-  NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+  Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, _constraints);
+  IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
+
+  np2->set_callback_function(impl_->intermediate_callback_);
 
   //----------------------------------------------------------------------------
   // 2. exploit special characteristics of problem
@@ -423,8 +434,8 @@ solve
     //--------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
     //--------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 
@@ -542,8 +553,8 @@ solve
     //--------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
     //--------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 

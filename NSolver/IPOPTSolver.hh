@@ -22,9 +22,10 @@
 #include <cstddef>
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
-#include "NProblemIPOPT.hh"
 #include "NConstraintInterface.hh"
 #include "BoundConstraint.hh"
+
+#include "IPOPTProblemInstance.hh"
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
@@ -138,4 +139,3 @@ private:
 //=============================================================================
 #endif // ACG_IPOPTSOLVER_HH defined
 //=============================================================================
-

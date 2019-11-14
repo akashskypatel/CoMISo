@@ -73,8 +73,8 @@ solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _co
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, _constraints, hessian_approximation);
-  NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+  Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, _constraints, hessian_approximation);
+  IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
 
   //----------------------------------------------------------------------------
   // 2. exploit special characteristics of problem
@@ -196,8 +196,8 @@ solve(NProblemInterface*                        _problem,
     //----------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
     //----------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints, hessian_approximation);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints, hessian_approximation);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 
@@ -302,8 +302,8 @@ solve(NProblemInterface*                        _problem,
     //----------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
     //----------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 
@@ -392,7 +392,7 @@ solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _const
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemGmmIPOPT(_problem, _constraints);
+  Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstanceGmm(_problem, _constraints);
 
   //----------------------------------------------------------------------------
   // 2. solve problem

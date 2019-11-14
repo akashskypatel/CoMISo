@@ -14,6 +14,7 @@
 
 //== INCLUDES =================================================================
 #include <cstddef>
+#include <functional>
 #include <vector>
 #include <string>
 
@@ -25,6 +26,7 @@ namespace COMISO {
 //== FORWARDDECLARATIONS ======================================================
 class NProblemInterface;
 class NConstraintInterface;
+struct IPOPTCallbackParameters;
 
 //== CLASS DEFINITION =========================================================
 
@@ -100,6 +102,17 @@ public:
   */
   void set_enable_all_lazy_contraints(const bool _enbl_all_lzy_cnstr);
   bool get_enable_all_lazy_contraints() const;
+
+  /*
+  Set intermediate callback function object. For the definition of
+  IPOPTCallbackParameters include the IPOPTCallbackParameters.hh
+  header.
+
+  If the callback function returns false, IPOPT will terminate
+  prematurely with the User_Requested_Stop status.
+  */
+  void set_callback_function
+  (std::function<bool(const IPOPTCallbackParameters &)>);
 
   // ********** SOLVE **************** //
 
