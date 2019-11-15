@@ -411,8 +411,6 @@ target_include_directories(CoMISo
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
 )
 
 target_include_directories(CoMISo PUBLIC "${COMISO_INCLUDE_DIRECTORIES}")
@@ -582,7 +580,13 @@ if(NOT COMISO_NO_INSTALL)
 
   include(CMakePackageConfigHelpers)
   include(GNUInstallDirs)
-
+  
+  target_include_directories(CoMISo
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
+  )
+  
   set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/CoMISo)
 
   write_basic_package_version_file(
@@ -602,7 +606,7 @@ if(NOT COMISO_NO_INSTALL)
 
   # Install Header Files
   install(DIRECTORY .
-          DESTINATION include/CoMISo
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CoMISo # include/CoMISo
           FILES_MATCHING
           PATTERN "*.hh"
           PATTERN "*T.cc"
