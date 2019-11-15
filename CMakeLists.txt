@@ -620,7 +620,7 @@ if(NOT COMISO_NO_INSTALL)
           PATTERN "Debian*" EXCLUDE)
 
   # Install Config File
-  install(FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CoMISo/Config/config.hh
           DESTINATION include/CoMISo/Config)
 
   # Create export target to reference CoMISo installation
