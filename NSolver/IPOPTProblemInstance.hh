@@ -32,10 +32,7 @@
 
 #include <CoMISo/Utils/gmm.hh>
 
-// HAVE_CSTDDEF fixes 'error "don't have header file for stddef"'. See https://github.com/casadi/casadi/issues/1010
-#define HAVE_CSTDDEF
 #include <IpTNLP.hpp>
-#undef HAVE_CSTDDEF
 
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
