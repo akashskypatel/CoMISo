@@ -97,37 +97,39 @@ int main(void)
   SmallNProblem problem;
 
   std::cout << "---------- 2) Set up constraints..." << std::endl;
-  int n_constraints = 4; // there will be one constraints
+
+/*
+  int n_constraints = 2; // there will be one constraints
   Eigen::VectorXd b;
-  Eigen::SparseMatrix<double> A;
-  A.resize(n_constraints, problem.n_unknowns());
-  A.setZero();
+  Eigen::SparseMatrix<double> A(n_constraints, problem.n_unknowns());
+  //A.resize(n_constraints, problem.n_unknowns());
+  //A.setZero();
   b.resize(n_constraints);
   b.setZero();
 
   // first constraint: first variable equals three times second
   //different number of constraints :
   if(n_constraints == 1){
-      A.coeffRef(0,0) =  3;
-      A.coeffRef(0,1) = 0;
-      b.coeffRef(0)   =  1;
+    A.coeffRef(0,0) =  2;
+    A.coeffRef(0,1) = -6;
+    b.coeffRef(0)   =  0;
   }else if(n_constraints == 3){
-      A.coeffRef(0,0) =  2;
-      A.coeffRef(0,1) = -6;
-      A.coeffRef(1,0) =  5;
-      A.coeffRef(1,1) =  0;
-      A.coeffRef(2,0) =  0;
-      A.coeffRef(2,1) = -3;
-      b.coeffRef(0)   =  0;
-      b.coeffRef(1)   =  15;
-      b.coeffRef(2)   =  -3;
+    A.coeffRef(0,0) =  2;
+    A.coeffRef(0,1) = -6;
+    A.coeffRef(1,0) =  5;
+    A.coeffRef(1,1) =  0;
+    A.coeffRef(2,0) =  0;
+    A.coeffRef(2,1) = -3;
+    b.coeffRef(0)   =  0;
+    b.coeffRef(1)   =  15;
+    b.coeffRef(2)   =  -3;
   }else if(n_constraints == 2){
-    A.coeffRef(0,0) =  3;
-    A.coeffRef(0,1) =  0;
-    b.coeffRef(0)   =  1;
-    A.coeffRef(1,0) =  0;
-    A.coeffRef(1,1) =  5;
-    b.coeffRef(1)   =  1;
+    //A.coeffRef(0,0) =  2;
+    //A.coeffRef(0,1) =  -1;
+    b.coeffRef(0)   =  0;
+    A.coeffRef(1,0) =  -2;
+    //A.coeffRef(1,1) =  8;
+    b.coeffRef(1)   =  21;
   }else if(n_constraints == 4){
     A.coeffRef(0,0) =  2;
     A.coeffRef(0,1) = -6;
@@ -142,6 +144,46 @@ int main(void)
     A.coeffRef(3,1) = -6;
     b.coeffRef(3)   =  0;
   }
+*/
+
+
+  int n_constraints = 20;
+  int rows = n_constraints;
+  int cols = 100;
+  double error = 0.00000000001;
+
+  std::vector<Eigen::Triplet<int>> triplets;
+  Eigen::SparseMatrix<int> A(rows, cols);
+  Eigen::VectorXd x(cols);
+  Eigen::VectorXi b(rows);
+
+  //set triplets
+
+  triplets.clear();
+  for(int i = 0; i < rows; i++){
+    if(i == 0){
+      triplets.push_back({i,  0        , 1});
+      triplets.push_back({i, (cols - 2), 1});
+      triplets.push_back({i, (cols - 1), -1});
+    }else{
+      triplets.push_back({i,  0     ,  1});
+      triplets.push_back({i,  i     ,  1});
+      triplets.push_back({i, (i + 1), -1});
+    }
+  }
+  A.setFromTriplets(triplets.begin(), triplets.end());
+
+  //set x_vec 1,2,3,4...
+
+  for(int i = 0; i < cols; i++){
+    x.coeffRef(i) = i+1 + error;
+  }
+
+  //set b_vec = 0;
+
+  b.setZero(rows);
+
+/*
 
   std::cout << A << std::endl << b << std::endl;
 
@@ -162,31 +204,23 @@ int main(void)
   for (unsigned int i = 0; i < problem.n_unknowns(); ++i)
     x.coeffRef(i) = problem.solution[i];
 
-  std::cout << "Constraint violation: " << (A*x - b).squaredNorm() << std::endl;
+  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
+*/
 
+  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 
   std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
 
-  Eigen::SparseMatrix<int> C = A.cast<int>();
-  Eigen::VectorXi d = b.cast<int>();
   ExactConstraintSatisfaction satisfy;
-  satisfy.printMatrix(C);
-  std::cout << std::endl;
-  satisfy.IREF_Gaussian(&C,&d);
-  satisfy.printMatrix(C);
-   std::cout << std::endl;
-  satisfy.IRREF_Jordan(&C,&d);
-  satisfy.printMatrix(C);
-   std::cout << std::endl;
-  satisfy.printVector(d);
-  satisfy.evaluation(&C,&d,&x);
-  //x.coeffRef(0) = 3.0 * x.coeffRef(1);
-  //satisfy.printVector(x);
-  std::cout << "values of vector x : " << x.coeffRef(0) << " and " << x.coeffRef(1) << std::endl;
+  satisfy.printMatrix(A);
+  satisfy.evaluation(&A, &b, &x);
+
+
+  std::cout << "values of vector x : " << x << std::endl;
 
   std::cout << "---------- 7) Check constraint violation again..." << std::endl;
 
-  std::cout << "Constraint violation: " << (A*x - b).squaredNorm() << std::endl;
+  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 
 
   return 0;

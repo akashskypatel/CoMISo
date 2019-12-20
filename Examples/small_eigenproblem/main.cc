@@ -75,10 +75,10 @@ int main(void)
   
   std::cout << "---------- 2) Solving for m smallest eigenvalues and eigenvectors..." << std::endl;
   unsigned int m=3;
-  COMISO::ArpackSolver arsolv;
+//  COMISO::ArpackSolver arsolv;
   std::vector<double> evals;
   Matrix evects;
-  arsolv.solve(A, evals, evects, m);
+//  arsolv.solve(A, evals, evects, m);
   
   std::cout << "---------- 3) printing results..." << std::endl;
   std::cerr << "********* eigenvalues: ";
