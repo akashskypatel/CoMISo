@@ -213,7 +213,7 @@ int main(void)
 
   ExactConstraintSatisfaction satisfy;
   satisfy.printMatrix(A);
-  satisfy.evaluation(&A, &b, &x);
+  satisfy.evaluation(A, b, x);
 
 
   std::cout << "values of vector x : " << x << std::endl;

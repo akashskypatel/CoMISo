@@ -12,29 +12,20 @@ ExactConstraintSatisfaction::ExactConstraintSatisfaction()
 
 
 // ------------------------Helpfull Methods----------------------------------------
-void ExactConstraintSatisfaction::swapRows(Eigen::SparseMatrix<int>* A, Eigen::VectorXi* b, int row1, int row2){
+void ExactConstraintSatisfaction::swapRows(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b, int row1, int row2){
   int temp = 0;
-  //Eigen::SparseVector<int> row_first = A->row(row1);
-  //for(Eigen::SparseVector<int>::InnerIterator it(row); it; ++it){
-  for(int i = 0; i < A->cols(); i++){
-    temp = A->coeffRef(row1,i);
-    A->coeffRef(row1,i) = A->coeffRef(row2, i);
-    A->coeffRef(row2, i) = temp;
-    //auto row_number2 = A->row(row1);
-    //auto row_number1 = A->row(row2);
-    //A->row(row2) = row_number2;
-    //A->row(row1) = row_number1;
+  for(int i = 0; i < A.cols(); i++){
+    temp = A.coeffRef(row1,i);
+    A.coeffRef(row1,i) = A.coeffRef(row2, i);
+    A.coeffRef(row2, i) = temp;
   }
 
-  auto b_Value = b->coeffRef(row1);
-  b->coeffRef(row1) = b->coeffRef(row2);
-  b->coeffRef(row2) = b_Value;
-  //std::cout << "swapRows" << std::endl;
+  auto b_Value = b.coeffRef(row1);
+  b.coeffRef(row1) = b.coeffRef(row2);
+  b.coeffRef(row2) = b_Value;
 }
 
 int ExactConstraintSatisfaction::gcd(const int a, const int b){
-//  if(b == 0 && a == 0) //to prevent dividing by 0 later
-//    return ;
   if(b == 0){
     return std::abs(a);
   }
@@ -43,11 +34,19 @@ int ExactConstraintSatisfaction::gcd(const int a, const int b){
 
 int ExactConstraintSatisfaction::gcdRow(const Eigen::SparseMatrix<int>::RowXpr row, const int b){
   int gcdValue = b;
+  bool first = true;
+  bool is_negativ = 0;
   for(int i = 0; i < row.cols(); i ++){
+    if(row.coeff(i) != 0 && first){
+      first = false;
+      is_negativ = row.coeff(i) < 0;
+    }
     gcdValue = gcd(gcdValue, row.coeff(i));
   }
   if(gcdValue == 0)
     return 1;
+  if(is_negativ)
+    gcdValue = std::abs(gcdValue) * -1;
   return gcdValue;
 }
 
@@ -74,7 +73,6 @@ void ExactConstraintSatisfaction::printMatrix(Eigen::SparseMatrix<int> A){
       if(!first){
         std::cout << std::endl;
         std::cout << std::endl;
-        //std::cout << "pivot at : " << indexPivot(&A, i) << std::endl;
       }
 
     }
@@ -90,46 +88,22 @@ void ExactConstraintSatisfaction::printVector(Eigen::VectorXi b)
   std::cout << std::endl;
 }
 
-int ExactConstraintSatisfaction::largestExponent(const Eigen::SparseMatrix<int>* A, const Eigen::VectorXd* x)
+int ExactConstraintSatisfaction::largestExponent(const Eigen::SparseMatrix<int>& A, const Eigen::VectorXd& x)
 {
-
-  /* int expo = -65;
-    bool empty_row = true;
-    for(int i = 0; i < x->size(); i++){
-      for(int x = 0; x < A->cols(); x++){
-        if(A->coeff(i,x) != 0){
-          empty_row = false;
-          break;
-        }
-      }
-      if(!empty_row)
-        expo = std::max(expo, (int)std::ceil(std::log2(std::abs(x->coeffRef(i)))) + 1);
-    }
-    largest_exponent = expo;
-    delta = std::pow(2, expo);
-    return expo;
-*/
-
   int expo = -65;
   bool empty_col= true;
-  for(int i = 0; i < x->size(); i++){
-    for(int j = 0; j < A->rows(); j++){
-      if(A->coeff(j,i) != 0){
+  for(int i = 0; i < x.size(); i++){
+    for(int j = 0; j < A.rows(); j++){
+      if(A.coeff(j,i) != 0){
         empty_col = false;
         break;
       }
     }
-    if(!empty_col){
-      //      double val = x->coeffRef(i);
-      //      if(val > 2){
-      //        std::cout << "value is: " << val << " at pos: " << i << std::endl;
-      //      }
-      expo = std::max(expo, (int)std::ceil(std::log2(std::abs(x->coeffRef(i)))) + 2);
-    }
+    if(!empty_col)
+      expo = std::max(expo, static_cast<int>(std::ceil(std::log2(std::abs(x.coeffRef(i)))) + 2));
   }
-  largest_exponent = expo;
-  delta = std::pow(2, expo);
-  std::cout << "expo is : " << expo << std::endl;
+  largest_exponent_ = expo;
+  delta_ = std::pow(2, expo);
   return expo;
 }
 
@@ -138,7 +112,7 @@ double ExactConstraintSatisfaction::F_delta(double x)
   int sign = -1;
   if(x >= 0)
     sign = 1;
-  double x_of_F = (x + sign * delta) - sign * delta;
+  double x_of_F = (x + sign * delta_) - sign * delta_;
   return x_of_F;
 }
 
@@ -158,22 +132,10 @@ int ExactConstraintSatisfaction::lcm_list(const std::list<int> D)
   return lcm_D;
 }
 
-int ExactConstraintSatisfaction::indexPivot(const Eigen::SparseMatrix<int>* A, int row)
+int ExactConstraintSatisfaction::indexPivot(const Eigen::SparseMatrix<int>& A, int row)
 {
-  //Eigen::SparseVector<int> row2 = A->row(row);
-  //for (Eigen::SparseVector<int>::InnerIterator it(row2); it; ++it){
-  //
-  //if(it == true  && it.value() != 0){
-  //  if(std::abs(it.value() > 10))
-  //    std::cout << "true, index row : " << it.row() << " index col: " << it.col() << " inner index : " << it.index() << " value : " << it.value() << std::endl;
-  //  return it.index();
-  //}
-  //}
-  //return -1;
-
-  auto row1 = A->row(row);
+  auto row1 = A.row(row);
   for(int i = 0; i < row1.size(); i++){
-    //std::cout << " row : " << row << " col : " << i << " value " << row1.coeff(i) << std::endl;
     if(row1.coeff(i) != 0)
       return i;
   }
@@ -182,36 +144,36 @@ int ExactConstraintSatisfaction::indexPivot(const Eigen::SparseMatrix<int>* A, i
 
 double ExactConstraintSatisfaction::get_delta()
 {
-  return delta;
+  return delta_;
 }
 
 // ----------------------Matrix transformation-----------------------------------
-void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int>* A, Eigen::VectorXi* b){
-  number_pivots = 0;
-  int rows = A->rows(); //number of rows
-  int cols = A->cols(); //number of columns
-  int col_index = -1;   //save the last column where we found a pivot
+void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b){
 
-  for (int k = 0; k < rows; k++) { //order Matrix after pivot
+  number_pivots_ = 0;
+  int rows = A.rows();        //number of rows
+  int cols = A.cols();        //number of columns
+  int col_index = -1;         //save the last column where we found a pivot
+
+  for (int k = 0; k < rows; k++) {                                        //order Matrix after pivot
 
     //needed for the first line
     if(k == 0){
-      int gcdValue = gcdRow(A->row(k), b->coeffRef(k)); //compute the gcd to make the values as small as possible
+      int gcdValue = gcdRow(A.row(k), b.coeffRef(k));                     //compute the gcd to make the values as small as possible
       for(int x = 0; x < cols; x++){
-        int temp = A->coeffRef(k ,x);
-        A->coeffRef(k, x) = A->coeffRef(k,x) / gcdValue;
+        A.coeffRef(k, x) = A.coeffRef(k,x) / gcdValue;
       }
-      b->coeffRef(k) = b->coeffRef(k) / gcdValue;
+      b.coeffRef(k) = b.coeffRef(k) / gcdValue;
     }
 
     if(k < cols){
-      if(A->coeffRef(k,k) == 0){
+      if(A.coeffRef(k,k) == 0){
         int pivot_row = -1;
-        for(col_index += 1; col_index < cols; col_index++){     //find the smallest column with a pivot
-          for (int i = k; i < rows; i++) {                      //find row with pivot in this column
-            if(A->coeffRef(i,col_index) != 0){
+        for(col_index += 1; col_index < cols; col_index++){              //find the smallest column with a pivot
+          for (int i = k; i < rows; i++) {                               //find row with pivot in this column
+            if(A.coeffRef(i,col_index) != 0){
               pivot_row = i;
-              number_pivots++;
+              number_pivots_++;
               break;
             }
           }
@@ -221,157 +183,123 @@ void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int>* A, Eig
         if(pivot_row == -1)
           continue;
         if(pivot_row != k)
-          swapRows(A, b, pivot_row, k); //swap rows so the pivot is in the right row
+          swapRows(A, b, pivot_row, k);                                  //swap rows so the pivot is in the right row
       }else{
         col_index ++;
-        number_pivots++;
+        number_pivots_++;
       }
     }
     for(int i = k+1; i < rows; i++){
-      int under_pivot = A->coeffRef(i,col_index);
-      for(int j = col_index; j < cols; j++){                                                                //change k+1 to k to eliminate the elements below the pivot
-        int t1 = A->coeffRef(k,col_index);
-        int t2 = A->coeffRef(i,j);
-        int t3 = A->coeffRef(k,j);
-        int value = A->coeffRef(k,col_index) * A->coeffRef(i,j) - under_pivot * A->coeffRef(k,j);
-        A->coeffRef(i,j) = A->coeffRef(k,col_index) * A->coeffRef(i,j) - under_pivot * A->coeffRef(k,j);    //eliminate the rows below the row with pivot, only one pivot per column
+      int under_pivot = A.coeffRef(i,col_index);
+      for(int j = col_index; j < cols; j++){                                                          //change k+1 to k to eliminate the elements below the pivot
+        A.coeffRef(i,j) = A.coeffRef(k,col_index) * A.coeffRef(i,j) - under_pivot * A.coeffRef(k,j);  //eliminate the rows below the row with pivot, only one pivot per column
       }
-      b->coeffRef(i) = A->coeffRef(k,col_index) * b->coeffRef(i) - under_pivot * b->coeffRef(k);
+      b.coeffRef(i) = A.coeffRef(k,col_index) * b.coeffRef(i) - under_pivot * b.coeffRef(k);
     }
 
     for(int i = k; i < rows; i++){
-      int gcdValue = gcdRow(A->row(i), b->coeffRef(i)); //compute the gcd to make the values as small as possible
+      int gcdValue = gcdRow(A.row(i), b.coeffRef(i));                                                 //compute the gcd to make the values as small as possible
       for(int j = 0; j < cols; j++){
-        A->coeffRef(i, j) = A->coeffRef(i,j) / gcdValue;
+        A.coeffRef(i, j) = A.coeffRef(i,j) / gcdValue;
       }
-      b->coeffRef(i) = b->coeffRef(i) / gcdValue;
+      b.coeffRef(i) = b.coeffRef(i) / gcdValue;
     }
+
   }
-  /*for(int i = 0; i < rows; i++){
-    if(i == 71)
-      i = 71;
-        int gcdValue = gcdRow(A->row(i), b->coeffRef(i)); //compute the gcd to make the values as small as possible
-        std::cout << "gcd is : " << gcdValue << " for row : " << i << std::endl;
-        for(int j = 0; j < cols; j++){
-          if(A->coeffRef(i,j) != 0){
-            std::cout << "before : " << A->coeffRef(i,j);
-            A->coeffRef(i, j) = A->coeffRef(i,j) / gcdValue;
-            std::cout << " after :" << A->coeffRef(i,j) << std::endl;
-          }
-        }
-        if(b->coeffRef(i) != 0){
-          std::cout << "b before is : " << b->coeffRef(i);
-          b->coeffRef(i) = b->coeffRef(i) / gcdValue;
-          std::cout << " after : " << b->coeffRef(i) << std::endl << std::endl;
-        }
-  }*/
 }
 
-void ExactConstraintSatisfaction::IRREF_Jordan(Eigen::SparseMatrix<int> *A, Eigen::VectorXi *b)
+void ExactConstraintSatisfaction::IRREF_Jordan(Eigen::SparseMatrix<int> &A, Eigen::VectorXi &b)
 {
-  int cols = A->cols();
-  for(int k = number_pivots - 1; k > 0; k--){
+  int cols = A.cols();
+  for(int k = number_pivots_ - 1; k > 0; k--){
     int p_col = k;
-    for(p_col = k; p_col < cols; p_col++){                //find pivot
-      if(A->coeffRef(k,p_col) != 0)
+    for(p_col = k; p_col < cols; p_col++){              //find pivot
+      if(A.coeffRef(k,p_col) != 0)
         break;
     }
-    for(int i = k-1; i >= 0; i--){          //eliminate row i with row k
-      int above_p = A->coeffRef(i,p_col);   //element in rows above the pivot
+    for(int i = k-1; i >= 0; i--){                      //eliminate row i with row k
+      int above_p = A.coeffRef(i,p_col);                //element in rows above the pivot
       for(int j = cols-1; j >= i; j--){
         if(j >= p_col){
-          A->coeffRef(i,j) = A->coeffRef(k,p_col) * A->coeffRef(i,j) - above_p * A->coeffRef(k,j);
+          A.coeffRef(i,j) = A.coeffRef(k,p_col) * A.coeffRef(i,j) - above_p * A.coeffRef(k,j);
         }else if(j >= i){
-          A->coeffRef(i,j) = A->coeffRef(k,p_col) * A->coeffRef(i,j);
+          A.coeffRef(i,j) = A.coeffRef(k,p_col) * A.coeffRef(i,j);
         }
       }
-      b->coeffRef(i) = A->coeffRef(k,p_col) * b->coeffRef(i) - above_p * b->coeffRef(k);
+      b.coeffRef(i) = A.coeffRef(k,p_col) * b.coeffRef(i) - above_p * b.coeffRef(k);
 
-      int gcdValue = gcdRow(A->row(i), b->coeffRef(i)); //compute the gcd to make the values as small as possible
+      int gcdValue = gcdRow(A.row(i), b.coeffRef(i));   //compute the gcd to make the values as small as possible
       for(int j = 0; j < cols; j++){
-        A->coeffRef(i, j) = A->coeffRef(i,j) / gcdValue;
+        A.coeffRef(i, j) = A.coeffRef(i,j) / gcdValue;
       }
-      b->coeffRef(i) = b->coeffRef(i) / gcdValue;
+      b.coeffRef(i) = b.coeffRef(i) / gcdValue;
     }
+
   }
 }
 
 //-------------------------------------Evaluation--------------------------------------------------------------------
 
-void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int> *A, Eigen::VectorXi *b, Eigen::VectorXd *x)
+void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b, Eigen::VectorXd& x)
 {
-  std::cout << "evaluation" << std::endl;
   IREF_Gaussian(A, b);
-  std::cout << "after Gaus" << std::endl;
-  printMatrix(*A);
-  //printVector(*b);
   IRREF_Jordan(A, b);
-  std::cout << "after Jordan" << std::endl;
-  std::cout << "error is after Jordan: " << ((*A).cast<double>() * *x).squaredNorm() << std::endl;
-  printMatrix(*A);
-  //printVector(*b);
 
-  int cols = A->cols();
+  int cols = A.cols();
   std::cout << "largest Expo" << std::endl;
   largestExponent(A, x);
   std::cout << "findPivo" << std::endl;
   for(int k = cols -1; k >= 0; k--){
     int pivot = -1;
 
-    //new faster Version test, iterates over the non zero (non empty) elements of one col
-    for(iteratorV it(static_cast<sparsVec>(A->col(k))); it; ++it){
-      int i = it.index();
+//new faster Version test, iterates over the non zero (non empty) elements of one col
+//    for(iteratorV it(static_cast<sparsVec>(A.col(k))); it; ++it){
+//      int i = it.index();
 
-      //for(int i = 0; i <= k; i++){     //find row with pivot in this column
-      if(i < A->rows()){
+
+      for(int i = 0; i <= k; i++){                      //find row with pivot in this column
+      if(i < A.rows()){
         int pivotIndex = indexPivot(A,i);
         if(pivotIndex == k){
-          pivot = i;           //the row with the pivot
+          pivot = i;                                    //the row with the pivot
           break;
         }
       }
 
     }
 
-    if(pivot == -1){      //there is no pivot in this column
-      //std::cout << "no pivo" << std::endl;
+    if(pivot == -1){                                    //there is no pivot in this column
       std::list<int> D;
       D.clear();
-      for(int i = 1; i <= std::min(k, number_pivots - 1); i ++){
+      for(int i = 1; i <= std::min(k, number_pivots_ - 1); i ++){
         int pivot_col = indexPivot(A, i);
-        if(A->coeffRef(i,k) != 0 && pivot_col < k){
-          int val = A->coeffRef(i, pivot_col);
-          D.push_front(A->coeffRef(i, pivot_col));
+        if(A.coeffRef(i,k) != 0 && pivot_col < k){
+          D.push_front(A.coeffRef(i, pivot_col));
         }
       }
-      x->coeffRef(k) = makeDiv(D, x->coeffRef(k));    //fix free variables so they are in F_delta
-      std::cout << "error is after solver: " << (A->cast<double>() * *x).squaredNorm() << "for iteration k:" << k << "no pivot in col" << std::endl;
+      x.coeffRef(k) = makeDiv(D, x.coeffRef(k));        //fix free variables so they are in F_delta
 
 
     }else{                                              //compute now the implied variables
 
-      //std::cout << "pivo" << std::endl;
       std::list<std::pair<int, double>> S;
       S.clear();
-      for(int i = k+1; i < cols; i++){                //construct the list S to do the dot Product
+      for(int i = k+1; i < cols; i++){                  //construct the list S to do the dot Product
         std::pair<int, double> tuple;
-        tuple.first = A->coeffRef(pivot,i);
-        double test =x->coeffRef(i) / A->coeffRef(pivot,k);
-        if(x->coeffRef(i) != ( test * A->coeffRef(pivot,k)))
+        tuple.first = A.coeffRef(pivot,i);
+        double test =x.coeffRef(i) / A.coeffRef(pivot,k);
+        if(x.coeffRef(i) != ( test * A.coeffRef(pivot,k)))
            std::cout << "WARNING: can't devide" << " in row : " << i << std::endl;
-        tuple.second = x->coeffRef(i) / A->coeffRef(pivot,k);
+        tuple.second = x.coeffRef(i) / A.coeffRef(pivot,k);
         if(tuple.first != 0)
           S.push_front(tuple);
 
-
       }
-      double divided_B = b->coeffRef(pivot);
-      divided_B = F_delta(divided_B / A->coeffRef(pivot, k));
-      if( divided_B * A->coeffRef(pivot, k) !=  static_cast<double>(b->coeffRef(pivot)))
+      double divided_B = b.coeffRef(pivot);
+      divided_B = F_delta(divided_B / A.coeffRef(pivot, k));
+      if( divided_B * A.coeffRef(pivot, k) !=  static_cast<double>(b.coeffRef(pivot)))
         std::cout << "WARNING: Can't handle the right hand side perfectly" << std::endl;
-      //std::cout << "safeDot" << std::endl;
-      x->coeffRef(k) = divided_B - safeDot(S);
-      std::cout << "error is after solver: " << (A->cast<double>() * *x).squaredNorm() << "for iteration k:" << k << "pivot in col"  << std::endl;
+      x.coeffRef(k) = divided_B - safeDot(S);
     }
   }
 }
@@ -395,8 +323,9 @@ double ExactConstraintSatisfaction::safeDot(const std::list<std::pair<int, doubl
   std::list<std::pair<int, double>> P, N;
   P.clear();
   N.clear();
-  int k = 0; //eventuelly a double not sure
-  double r = 0;          //return value of the dot
+  int k = 0;
+  double r = 0;                                         //return value of the dot
+
   for(std::pair<int, double> element : S){
     if(element.first * element.second > 0)
     {
@@ -411,21 +340,25 @@ double ExactConstraintSatisfaction::safeDot(const std::list<std::pair<int, doubl
       N.push_front(element);
     }
   }
+
   while((!P.empty() || !N.empty()) && safebreak > 0){
-    safebreak--; //break out of the while after an amount of time
+
+    safebreak--;                                        //break out of the while after an amount of time
     if(!P.empty() && (r < 0 || N.empty())){
       const std::pair<int, double> element = P.front();
       P.pop_front();
-      k = std::min(element.first, static_cast<int>(std::floor((delta - r)/element.second)));
+      k = std::min(element.first, static_cast<int>(std::floor((delta_ - r)/element.second)));
       if(k <=0)
         std::cout << "k == 0" << std::endl;
       r = r + k * element.second;
       if(k < element.first)
         P.push_front({element.first - k, element.second});
+
     }else{
+
       const std::pair<int, double> element = N.front();
       N.pop_front();
-      k = std::min(element.first, static_cast<int>(std::floor((-delta - r)/element.second)));
+      k = std::min(element.first, static_cast<int>(std::floor((-delta_ - r)/element.second)));
       if(k <= 0)
         std::cout << "k == 0" << std::endl;
       r = r + k * element.second;
