@@ -3,10 +3,7 @@ if (WIN32)
   cmake_minimum_required (VERSION 3.13)
 endif()
 
-#Only set project name if CoMISo is built as stand-alone library
-if("${PROJECT_NAME}" STREQUAL "")
-    project(CoMISo)
-endif()
+project(CoMISo VERSION 1.1.0)
 
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -27,7 +24,7 @@ if( WANT_COMISO_QT )
   else()
     set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 0" )
   endif()
-  
+
 endif( WANT_COMISO_QT )
 
 acg_get_version ()
@@ -82,7 +79,7 @@ set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib
 find_package (BLAS)
 if (BLAS_FOUND )
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 1" )
-  
+
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${BLAS_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${BLAS_LIBRARY_DIRS} ${BLAS_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${BLAS_LIBRARIES} )
@@ -106,9 +103,9 @@ endif ()
 find_package (SUITESPARSE)
 if (SUITESPARSE_FOUND )
   list (APPEND NEED_LAPACK "SUITESPARSE")
-  
+
   set (COMISO_SUITESPARSE_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_AVAILABLE 1" )
-  
+
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${SUITESPARSE_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
@@ -177,7 +174,7 @@ endif ()
 find_package (METIS)
 if (METIS_FOUND )
   set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 1" )
-  
+
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${METIS_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${METIS_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${METIS_LIBRARIES} )
@@ -203,9 +200,9 @@ if (IPOPT_FOUND)
   list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES ${IPOPT_LIBRARIES} )
   if ( IPOPT_HSL_LIBRARY_DIR )
-	set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 1" )
+    set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 1" )
   else ()
-	set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
+    set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
   endif()
 else ()
   message (STATUS "IPOPT or dependency not found!")
@@ -281,14 +278,14 @@ else ()
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
 endif ()
 
-find_package (Taucs)
+find_package (Taucs QUIET)
 set (SUPRESS_TAUCS OFF CACHE BOOL "Set to ON if CoMISo should be built without TAUCS.")
 if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
   list (APPEND NEED_LAPACK "Taucs")
   set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAUCS_INCLUDE_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${TAUCS_LIBRARY} )
-   
+
 else ()
   message (STATUS "TAUCS not found!")
   set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
@@ -333,7 +330,7 @@ if (CPLEX_FOUND )
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${CPLEX_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${CPLEX_LIBRARIES} )
-  
+
   #enable c++ support
    add_definitions(-DIL_STD)
 else ()
@@ -356,7 +353,7 @@ endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 # source code directories
-set (directories 
+set (directories
   .
   Base/Code
   Base/Debug
@@ -398,7 +395,7 @@ if ( QT5_FOUND )
   # Enable automoc
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_AUTOUIC ON)
- 
+
   list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
 endif()
 
@@ -406,24 +403,25 @@ endif()
 # Then link directories is set as target property below.
 link_directories(${COMISO_LINK_DIRECTORIES})
 
-acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} ) 
+acg_add_library (CoMISo SHARED ${ui} ${sources} ${headers} )
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
-target_include_directories (CoMISo PUBLIC
-  $<BUILD_INTERFACE:
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/../>
-  $<INSTALL_INTERFACE:include>
-  ${COMISO_INCLUDE_DIRECTORIES}
+target_include_directories(CoMISo
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
 )
 
-get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
-message("Target CoMISo include dirs: ${INC_DIRS}")
-message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
+target_include_directories(CoMISo PUBLIC "${COMISO_INCLUDE_DIRECTORIES}")
 
-message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+#get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
+#get_target_property(INT_INC_DIRS CoMISo INTERFACE_INCLUDE_DIRECTORIES)
+#message("Target CoMISo include dirs: ${INC_DIRS}")
+#message("Target CoMISo int include dirs: ${INT_INC_DIRS}")
+#message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
+#message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
+
 if (COMISO_LINK_DIRECTORIES)
   set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES "${COMISO_LINK_DIRECTORIES}")
 endif()
@@ -463,13 +461,13 @@ if ( QT5_FOUND )
 
   if ( NOT WIN32 )
     # Allow targets depending on ACG find the autogenerated header files
-    target_include_directories( CoMISo PUBLIC
-                               ${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include )
+    #target_include_directories( CoMISo PUBLIC
+    #                           ${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include )
   else()
      # Allow targets depending on ACG find the autogenerated header files
-    target_include_directories( CoMISo PUBLIC
-                               $<$<CONFIG:Debug>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Debug/>
-                               $<$<CONFIG:Release>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Release/> )
+     #target_include_directories( CoMISo PUBLIC
+     #                          $<$<CONFIG:Debug>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Debug/>
+     #                          $<$<CONFIG:Release>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Release/> )
   endif()
 
 endif()
@@ -485,9 +483,9 @@ acg_print_configure_header (COMISO "CoMISo")
 # write config file
 configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config.hh.in"
      "CoMISo/Config/config.hh" @ONLY IMMEDIATE)
-     
-     
-     
+
+
+
 #######################################################################
 # Configure the examples last to be sure, that all configure files
 # of the library are already there
@@ -497,79 +495,79 @@ set (COMISO_BUILD_EXAMPLES TRUE CACHE BOOL "Build CoMISo Examples")
 
 if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/factored_solver/CMakeLists.txt" )
-	add_subdirectory (Examples/factored_solver)
+    add_subdirectory (Examples/factored_solver)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/quadratic_solver/CMakeLists.txt" )
-	add_subdirectory (Examples/quadratic_solver)
+    add_subdirectory (Examples/quadratic_solver)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/test2/CMakeLists.txt" )
-	add_subdirectory (Examples/test2)
+    add_subdirectory (Examples/test2)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_quadratic_example/CMakeLists.txt" )
-	add_subdirectory (Examples/small_quadratic_example)
+    add_subdirectory (Examples/small_quadratic_example)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_factored_example/CMakeLists.txt" )
-	add_subdirectory (Examples/small_factored_example)
+    add_subdirectory (Examples/small_factored_example)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/super_sparse_matrix/CMakeLists.txt" )
-	add_subdirectory (Examples/super_sparse_matrix)
+    add_subdirectory (Examples/super_sparse_matrix)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/eigen_solver/CMakeLists.txt" )
-	add_subdirectory (Examples/eigen_solver)
+    add_subdirectory (Examples/eigen_solver)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_nsolver/CMakeLists.txt" )
-	add_subdirectory (Examples/small_nsolver)
+    add_subdirectory (Examples/small_nsolver)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_eigenproblem/CMakeLists.txt" )
-	add_subdirectory (Examples/small_eigenproblem)
+    add_subdirectory (Examples/small_eigenproblem)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_miqp/CMakeLists.txt" )
-	add_subdirectory (Examples/small_miqp)
+    add_subdirectory (Examples/small_miqp)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_nleast_squares/CMakeLists.txt" )
-	add_subdirectory (Examples/small_nleast_squares)
+    add_subdirectory (Examples/small_nleast_squares)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_sparseqr/CMakeLists.txt" )
-	add_subdirectory (Examples/small_sparseqr)
+    add_subdirectory (Examples/small_sparseqr)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_quadratic_resolve_example/CMakeLists.txt" )
-	add_subdirectory (Examples/small_quadratic_resolve_example)
+    add_subdirectory (Examples/small_quadratic_resolve_example)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_cplex_soc/CMakeLists.txt" )
-	add_subdirectory (Examples/small_cplex_soc)
+    add_subdirectory (Examples/small_cplex_soc)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_adolc/CMakeLists.txt" )
-	add_subdirectory (Examples/small_adolc)
+    add_subdirectory (Examples/small_adolc)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_dco/CMakeLists.txt" )
-	add_subdirectory (Examples/small_dco)
+    add_subdirectory (Examples/small_dco)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/vector1_adolc/CMakeLists.txt" )
-	add_subdirectory (Examples/vector1_adolc)
+    add_subdirectory (Examples/vector1_adolc)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_linear_problem/CMakeLists.txt" )
-	add_subdirectory (Examples/small_linear_problem)
+    add_subdirectory (Examples/small_linear_problem)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/crossfield3d/CMakeLists.txt" )
-	add_subdirectory (Examples/crossfield3d)
+    add_subdirectory (Examples/crossfield3d)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/crossfield3d/CMakeLists.txt" )
-	add_subdirectory (Examples/crossfield3d_dco)
+    add_subdirectory (Examples/crossfield3d_dco)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_finite_element/CMakeLists.txt" )
-	add_subdirectory (Examples/small_finite_element)
+    add_subdirectory (Examples/small_finite_element)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_AQP/CMakeLists.txt" )
-	add_subdirectory (Examples/small_AQP)
+    add_subdirectory (Examples/small_AQP)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/finite_element_integrability_problem/CMakeLists.txt" )
-	add_subdirectory (Examples/finite_element_integrability_problem)
+    add_subdirectory (Examples/finite_element_integrability_problem)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_mosek_native/CMakeLists.txt" )
-	add_subdirectory (Examples/small_mosek_native)
+    add_subdirectory (Examples/small_mosek_native)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_mosek_fusion_sdp/CMakeLists.txt" )
-	add_subdirectory (Examples/small_mosek_fusion_sdp)
+    add_subdirectory (Examples/small_mosek_fusion_sdp)
   endif()
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_symmetric_dirichlet/CMakeLists.txt" )
   add_subdirectory (Examples/small_symmetric_dirichlet)
@@ -577,22 +575,42 @@ if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_SOURCE_DIR}/Examples/small_exact_constraint_satifaction_example/CMakeLists.txt" )
   add_subdirectory (Examples/small_exact_constraint_satifaction_example)
   endif()
-  
+
 endif (COMISO_BUILD_EXAMPLES )
 
 # Only create install target, when we are building CoMISo standalone
-if(${PROJECT_NAME} MATCHES "CoMISo")
+if(NOT COMISO_NO_INSTALL)
+
+  include(CMakePackageConfigHelpers)
+  include(GNUInstallDirs)
+  
+  target_include_directories(CoMISo
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
+  )
+  
+  set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/CoMISo)
+
+  write_basic_package_version_file(
+      CoMISoConfigVersion.cmake
+      VERSION ${PROJECT_VERSION}
+      COMPATIBILITY SameMajorVersion)
+
+  install(FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/CoMISoConfigVersion.cmake"
+      DESTINATION ${INSTALL_CONFIGDIR})
 
   # Install library
-  install (TARGETS CoMISo EXPORT CoMISoTargets
-           RUNTIME DESTINATION lib 
-           LIBRARY DESTINATION lib
-           ARCHIVE DESTINATION lib)
+  install(TARGETS CoMISo EXPORT CoMISoTargets
+          RUNTIME DESTINATION lib
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
 
   # Install Header Files
-  install(DIRECTORY . 
-          DESTINATION include/CoMISo
-          FILES_MATCHING 
+  install(DIRECTORY .
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CoMISo # include/CoMISo
+          FILES_MATCHING
           PATTERN "*.hh"
           PATTERN "*T.cc"
           PATTERN "CVS" EXCLUDE
@@ -605,18 +623,19 @@ if(${PROJECT_NAME} MATCHES "CoMISo")
           PATTERN "Debian*" EXCLUDE)
 
   # Install Config File
-  install( FILES ${CMAKE_BINARY_DIR}/CoMISo/Config/config.hh
-           DESTINATION include/CoMISo/Config )
-  
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CoMISo/Config/config.hh
+          DESTINATION include/CoMISo/Config)
 
+  # Create export target to reference CoMISo installation
   install(EXPORT CoMISoTargets
-          FILE CoMISoTargets.cmake
+          FILE CoMISoConfig.cmake
           NAMESPACE CoMISo::
-          DESTINATION cmake)
+          DESTINATION ${INSTALL_CONFIGDIR})
 
-  install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/CoMISoConfig.cmake"
-          DESTINATION cmake
-          )
-
+  export(EXPORT CoMISoTargets
+         NAMESPACE CoMISo::
+         FILE CoMISoConfig.cmake)
+  export(PACKAGE CoMISo)
 endif()
 
+list(REMOVE_AT CMAKE_MODULE_PATH -1)

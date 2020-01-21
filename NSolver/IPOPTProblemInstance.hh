@@ -15,10 +15,13 @@
 
 //== INCLUDES =================================================================
 
+#include <vector>
+#include <cstddef>
+#include <functional>
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
-#include "IPOPTSolverLean.hh"
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
@@ -30,25 +33,22 @@
 #include <CoMISo/Utils/gmm.hh>
 
 #include <IpTNLP.hpp>
+
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
-#include <vector>
-#include <cstddef>
 
 
 //== NAMESPACES ===============================================================
-
 namespace COMISO {
 
 //== FORWARDDECLARATIONS ======================================================
 class NProblemGmmInterface; // deprecated
 class NProblemInterface;
 class NConstraintInterface;
+struct IPOPTCallbackParameters;
 
-
-//== CLASS DEFINITION PROBLEM INSTANCE=========================================================
-
-class NProblemIPOPT : public Ipopt::TNLP
+//== CLASS DEFINITION PROBLEM INSTANCE ========================================
+class IPOPTProblemInstance : public Ipopt::TNLP
 {
 public:
 
@@ -65,8 +65,11 @@ public:
   typedef NProblemInterface::SMatrixNP    SMatrixNP;
 
   /** default constructor */
-  NProblemIPOPT(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, const bool _hessian_approximation = false)
-   : problem_(_problem), store_solution_(false), hessian_approximation_(_hessian_approximation)
+  IPOPTProblemInstance(NProblemInterface* _problem,
+    const std::vector<NConstraintInterface*>& _constraints,
+    const bool _hessian_approximation = false)
+   : problem_(_problem), store_solution_(false),
+     hessian_approximation_(_hessian_approximation)
   {
     split_constraints(_constraints);
     analyze_special_properties(_problem, _constraints);
@@ -127,6 +130,9 @@ public:
                                  IpoptCalculatedQuantities* ip_cq) override;
   //@}
 
+  /** Set intermediate callback function object **/
+  void set_callback_function(std::function<bool(const IPOPTCallbackParameters &)>);
+
   /** Intermediate Callback method for the user.  Providing dummy
     *  default implementation.  For details see IntermediateCallBack
     *  in IpNLP.hpp. */
@@ -163,8 +169,8 @@ private:
    */
   //@{
   //  MyNLP();
-  NProblemIPOPT(const NProblemIPOPT&);
-  NProblemIPOPT& operator=(const NProblemIPOPT&);
+  IPOPTProblemInstance(const IPOPTProblemInstance&);
+  IPOPTProblemInstance& operator=(const IPOPTProblemInstance&);
   //@}
 
   // split user-provided constraints into general-constraints and bound-constraints
@@ -193,13 +199,15 @@ private:
   std::vector<double> x_;
 
   bool hessian_approximation_;
+
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 };
 
 
 //== CLASS DEFINITION PROBLEM INSTANCE=========================================================
 
 
-class NProblemGmmIPOPT : public Ipopt::TNLP
+class IPOPTProblemInstanceGmm : public Ipopt::TNLP
 {
 public:
 
@@ -226,7 +234,7 @@ public:
   typedef gmm::linalg_traits<SVectorNP>::iterator       SVectorNP_iter;
 
   /** default constructor */
-  NProblemGmmIPOPT(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
+  IPOPTProblemInstanceGmm(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
    : problem_(_problem), constraints_(_constraints), nnz_jac_g_(0), nnz_h_lag_(0)
    {}
 
@@ -285,6 +293,9 @@ public:
                                  IpoptCalculatedQuantities* ip_cq) override;
   //@}
 
+  /** Set intermediate callback function object **/
+  void set_callback_function(std::function<bool(const IPOPTCallbackParameters &)>);
+
   /** Intermediate Callback method for the user.  Providing dummy
     *  default implementation.  For details see IntermediateCallBack
     *  in IpNLP.hpp. */
@@ -314,8 +325,8 @@ private:
    */
   //@{
   //  MyNLP();
-  NProblemGmmIPOPT(const NProblemGmmIPOPT&);
-  NProblemGmmIPOPT& operator=(const NProblemGmmIPOPT&);
+  IPOPTProblemInstanceGmm(const IPOPTProblemInstanceGmm&);
+  IPOPTProblemInstanceGmm& operator=(const IPOPTProblemInstanceGmm&);
   //@}
 
 
@@ -337,6 +348,8 @@ private:
 
   // Sparse Matrix of problem (don't initialize every time!!!)
   SMatrixNP HP_;
+
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 };
 
 //=============================================================================
@@ -347,4 +360,3 @@ private:
 //=============================================================================
 #endif // COMISO_NPROBLEMIPOPT_HH
 //=============================================================================
-

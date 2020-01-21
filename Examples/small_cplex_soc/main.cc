@@ -114,14 +114,13 @@ int main(void)
   std::cout << "---------- 5) Solve with IPOPT solver... " << std::endl;
 
   COMISO::IPOPTSolver ipopt;
-  ipopt.app().Options()->SetStringValue("derivative_test", "second-order");
+  ipopt.set_ipopt_option("derivative_test", "second-order");
   ipopt.solve(&lsqp, constraints);
 #endif
 
   std::cout << "---------- 6) Print solution..." << std::endl;
   for( int i=0; i<n; ++i)
     std::cerr << "x_" << i << " = " << lsqp.x()[i] << std::endl;
-  
+
   return 0;
 }
-

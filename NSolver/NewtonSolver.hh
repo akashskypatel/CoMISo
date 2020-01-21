@@ -84,9 +84,11 @@ public:
     solver_type_ = _st;
   }
 
-
   // set verbosity level of the solver. Lower numbers are more verbose
   void set_verbosity(int _verbosity) { verbosity_ = _verbosity; }
+
+  bool converged() { return converged_; }
+
 
 protected:
 
@@ -155,6 +157,8 @@ private:
 
   // deprecated
   bool   constant_hessian_structure_;
+
+  bool converged_;
 };
 
 
