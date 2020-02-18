@@ -80,7 +80,7 @@ private:
 } // namespace COMISO
 //=============================================================================
 // support std vectors
-EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(COMISO::ConeConstraint);
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(COMISO::ConeConstraint)
 //=============================================================================
 #endif // ACG_CONECONSTRAINT_HH defined
 //=============================================================================
