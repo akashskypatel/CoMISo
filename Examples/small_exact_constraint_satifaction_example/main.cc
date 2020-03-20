@@ -93,10 +93,10 @@ public:
 // Example main
 int main(void)
 {
-  std::cout << "---------- 1) Get an instance of a problem..." << std::endl;
-  SmallNProblem problem;
+//  std::cout << "---------- 1) Get an instance of a problem..." << std::endl;
+//  SmallNProblem problem;
 
-  std::cout << "---------- 2) Set up constraints..." << std::endl;
+//  std::cout << "---------- 2) Set up constraints..." << std::endl;
 
 /*
   int n_constraints = 2; // there will be one constraints
@@ -147,31 +147,31 @@ int main(void)
 */
 
 
-  int n_constraints = 20;
-  int rows = n_constraints;
-  int cols = 100;
-  double error = 0.00000000001;
+//  int n_constraints = 20;
+//  int rows = n_constraints;
+//  int cols = 100;
+//  double error = 0.00000000001;
 
-  std::vector<Eigen::Triplet<int>> triplets;
-  Eigen::SparseMatrix<int> A(rows, cols);
-  Eigen::VectorXd x(cols);
-  Eigen::VectorXi b(rows);
+//  std::vector<Eigen::Triplet<int>> triplets;
+//  Eigen::SparseMatrix<int> A(rows, cols);
+//  Eigen::VectorXd x(cols);
+//  Eigen::VectorXi b(rows);
 
   //set triplets
 
-  triplets.clear();
-  for(int i = 0; i < rows; i++){
-    if(i == 0){
-      triplets.push_back({i,  0        , 1});
-      triplets.push_back({i, (cols - 2), 1});
-      triplets.push_back({i, (cols - 1), -1});
-    }else{
-      triplets.push_back({i,  0     ,  1});
-      triplets.push_back({i,  i     ,  1});
-      triplets.push_back({i, (i + 1), -1});
-    }
-  }
-  A.setFromTriplets(triplets.begin(), triplets.end());
+//  triplets.clear();
+//  for(int i = 0; i < rows; i++){
+//    if(i == 0){
+//      triplets.push_back({i,  0        , 1});
+//      triplets.push_back({i, (cols - 2), 1});
+//      triplets.push_back({i, (cols - 1), -1});
+//    }else{
+//      triplets.push_back({i,  0     ,  1});
+//      triplets.push_back({i,  i     ,  1});
+//      triplets.push_back({i, (i + 1), -1});
+//    }
+//  }
+//  A.setFromTriplets(triplets.begin(), triplets.end());
 
   //set x_vec 1,2,3,4...
 
@@ -181,7 +181,7 @@ int main(void)
 
   //set b_vec = 0;
 
-  b.setZero(rows);
+//  b.setZero(rows);
 
 /*
 
@@ -207,20 +207,20 @@ int main(void)
   std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 */
 
-  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
+ // std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 
-  std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
+//  std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
 
-  ExactConstraintSatisfaction satisfy;
-  satisfy.print_matrix(A);
-  satisfy.evaluation(A, b, x);
+//  ExactConstraintSatisfaction satisfy;
+//  satisfy.print_matrix(A);
+//  satisfy.evaluation(A, b, x);
 
 
-  std::cout << "values of vector x : " << x << std::endl;
+//  std::cout << "values of vector x : " << x << std::endl;
 
-  std::cout << "---------- 7) Check constraint violation again..." << std::endl;
+//  std::cout << "---------- 7) Check constraint violation again..." << std::endl;
 
-  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
+//  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 
 
   return 0;
