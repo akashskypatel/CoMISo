@@ -14,32 +14,36 @@ public:
     ExactConstraintSatisfaction();
 
     typedef Eigen::SparseVector<int>::InnerIterator iteratorV;
-    typedef Eigen::SparseVector<int> sparsVec;
+    typedef Eigen::SparseVector<int> sparseVec;
+    typedef Eigen::SparseMatrix<int, Eigen::ColMajor> SP_Matrix_C;
+    typedef Eigen::SparseMatrix<int, Eigen::RowMajor> SP_Matrix_R;
 
     //-----------------------helpfull methods---------------------------------
-    void   printMatrix(Eigen::SparseMatrix<int> A);
-    void   printVector(Eigen::VectorXi b);
+    void   print_matrix(const Eigen::SparseMatrix<int, Eigen::RowMajor> A);
+    void   print_vector(Eigen::VectorXi b);
 
 
     int    gcd(const int a, const int b);
-    int    gcdRow(const Eigen::SparseMatrix<int>::RowXpr row, const int b);
+    int    gcd_row(const Eigen::SparseVector<int> row, const int b);
+
     int    lcm(const int a, const int b);
     int    lcm_list(const std::list<int> D);
 
-    void   swapRows(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b,  int row1, int row2);
-    int    largestExponent(const Eigen::SparseMatrix<int>& A, const Eigen::VectorXd& x);
-    int    indexPivot(const Eigen::SparseMatrix<int>& A, int row);
+    void   swap_rows(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat,  int row1, int row2);
+    void   eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2);
+    int    largest_exponent(const Eigen::SparseMatrix<int, Eigen::ColMajor>& A, const Eigen::VectorXd& x);
+    int    index_pivot(const sparseVec row);
     double F_delta(double x);
     double get_delta();
 
     //--------------------matrix transformation-------------------------------
 
-    void   IREF_Gaussian(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b);
-    void   IRREF_Jordan(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b);
+    void   IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::RowMajor>& A, Eigen::VectorXi& b, const Eigen::VectorXd x);
+    void   IRREF_Jordan(Eigen::SparseMatrix<int, Eigen::RowMajor>& A, Eigen::VectorXi& b);
 
     //-------------------Evaluation--------------------------------------------
 
-    void   evaluation(Eigen::SparseMatrix<int>& A, Eigen::VectorXi& b, Eigen::VectorXd& x);
+    void   evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x);
     double makeDiv(const std::list<int>& D, double x);
     double safeDot(const std::list<std::pair<int, double>>& S);
 
