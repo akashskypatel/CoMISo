@@ -175,9 +175,9 @@ int main(void)
 
   //set x_vec 1,2,3,4...
 
-  for(int i = 0; i < cols; i++){
-    x.coeffRef(i) = i+1 + error;
-  }
+//  for(int i = 0; i < cols; i++){
+//    x.coeffRef(i) = i+1 + error;
+//  }
 
   //set b_vec = 0;
 
