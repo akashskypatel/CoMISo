@@ -212,7 +212,7 @@ int main(void)
   std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
 
   ExactConstraintSatisfaction satisfy;
-  satisfy.printMatrix(A);
+  satisfy.print_matrix(A);
   satisfy.evaluation(A, b, x);
 
 
