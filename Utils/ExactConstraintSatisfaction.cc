@@ -21,7 +21,7 @@ void ExactConstraintSatisfaction::swap_rows(Eigen::SparseMatrix<int, Eigen::RowM
   mat.row(row2) = row_1;
   mat.row(row1) = row_2;
 
-  mat.prune(0.0, 0);
+//  mat.prune(0.0, 0);
   mat.makeCompressed();
   mat.finalize();
 
@@ -30,27 +30,36 @@ void ExactConstraintSatisfaction::swap_rows(Eigen::SparseMatrix<int, Eigen::RowM
 
 //We want to eliminate row1 in mat with the row corresponding to row2 in mat
 //the row_2 has a pivot in (row2, col_p)
-void ExactConstraintSatisfaction::eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2)
+void ExactConstraintSatisfaction::eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2, int pivot_column)
 {
 
-//  print_matrix(mat);
-
-  int pivot_column = -1;
-  const sparseVec row_1 = mat.row(row1);
+//  int pivot_column = -1;
   const sparseVec row_2 = mat.row(row2);
 
-  for(sparseVec::InnerIterator it(row_2); it; ++it){
-    if(it.value() != 0){
-      pivot_column = it.index();
-      break;
-    }
-  }
+//  for(sparseVec::InnerIterator it(row_2); it; ++it){
+//    if(it.value() != 0){
+//      pivot_column = it.index();
+//      break;
+//    }
+//  }
+
+//  if(counter != pivot_column)
+//    std::cout << "UNGLEICH!!!!!!!!!!!!!!!!!!!!! " << counter << ", " << pivot_column << std::endl;
 
   if(pivot_column == -1)
     std::cout << "Error in eliminate_row (ExactConstraintSatsfaction.cc) : expected a pivot but didn't find any." << std::endl;
 
-  int pivot_row2 = mat.coeff(row2, pivot_column);     //the pivot
   int pivot_row1 = mat.coeff(row1, pivot_column);     //the element under the pivot
+
+  if(pivot_row1 == 0)
+    return;
+
+  //declination here, to reduce runtime
+  const sparseVec row_1 = mat.row(row1);
+  int pivot_row2 = mat.coeff(row2, pivot_column);     //the pivot
+
+
+//  if(counter == 109)
 //  std::cout << mat << std::endl << std::endl << row_1 << std::endl << row_2 << std::endl;
 
 
@@ -60,22 +69,16 @@ void ExactConstraintSatisfaction::eliminate_row(Eigen::SparseMatrix<int, Eigen::
     mat.coeffRef(row1, it.index()) = (pivot_row2 * it.value());
   }
 
-//  std::cout << mat << std::endl << std::endl << row_1 << std::endl << row_2 << std::endl;
   mat.makeCompressed();
   mat.finalize();
 
   for(sparseVec::InnerIterator it(row_2); it; ++it){
-    int col = it.col();
-    int index = it.index();
-    int value = it.value();
     mat.coeffRef(row1, it.index()) = mat.coeff(row1, it.index()) - (pivot_row1 * it.value());
   }
 
- // std::cout << mat  << std::endl;
   mat.prune(0.0, 0);
   mat.makeCompressed();
   mat.finalize();
-
 }
 
 int ExactConstraintSatisfaction::gcd(const int a, const int b){
@@ -127,20 +130,12 @@ void ExactConstraintSatisfaction::print_vector(Eigen::VectorXi b)
   std::cout << std::endl;
 }
 
-int ExactConstraintSatisfaction::largest_exponent(const Eigen::SparseMatrix<int, Eigen::ColMajor>& A, const Eigen::VectorXd& x)
+int ExactConstraintSatisfaction::largest_exponent(const Eigen::VectorXd& x)
 {
 
   int expo = -65;
-  bool empty_col= true;
   for(int i = 0; i < x.size(); i++){
-    for(Eigen::SparseMatrix<int, Eigen::ColMajor>::InnerIterator it(A, i); it; ++it){
-      if(it.value() != 0){
-        empty_col = false;
-        break;
-      }
-    }
-    if(!empty_col)
-      expo = std::max(expo, static_cast<int>(std::ceil(std::log2(std::abs(x.coeffRef(i)))) + 2));
+    expo = std::max(expo, static_cast<int>(std::ceil(std::log2(std::abs(x.coeffRef(i)))) + 2));
 
   }
   largest_exponent_ = expo;
@@ -201,6 +196,9 @@ void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::
     //needed for the first line
     if(k == 0){
       int gcdValue = gcd_row(A.row(k), b.coeffRef(k));                     //compute the gcd to make the values as small as possible
+      if(gcdValue == 1)
+        continue;
+
       for(Eigen::SparseMatrix<int, Eigen::RowMajor>::InnerIterator it(A, k); it; ++it){
         it.valueRef() = (it.value() / gcdValue);
       }
@@ -210,6 +208,7 @@ void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::
       if(A.coeff(k, col_index) == 0){
 
         int pivot_row = -1;
+
         for(; col_index < cols; col_index++){
 
           Eigen::SparseVector<int> col = A.col(col_index);
@@ -220,8 +219,10 @@ void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::
             }
           }
           if(pivot_row != -1){
-            if(k != pivot_row)
+            if(k != pivot_row){
               swap_rows(A, k, pivot_row);
+              //std::cout << "error is in Gaus at " << counter << ": " << (A.cast<double>() * x).squaredNorm() << std::endl;
+            }
             col_index++;
             break;
           }
@@ -237,78 +238,106 @@ void ExactConstraintSatisfaction::IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::
       }
     number_pivots_++;                                                                       //we have found a pivot in column: col_index - 1, and row: pivot_row
 
-
     int col_p = col_index -1;
+
     for(int i = k+1; i < rows; ++i){
+      if(A.coeff(i, col_p) == 0)
+        continue;
+
       b.coeffRef(i) = (A.coeff(k, col_p) * b.coeff(i) - A.coeff(i, col_p) * b.coeff(k));    //so we don't delete entries in A for the computation of b
-      eliminate_row(A, i, k);     //Robin  : maybe write the method directly here
+      eliminate_row(A, i, k, col_p);     //Robin  : maybe write the method directly here
     }
 
     for(int i = k; i < rows; i++){
+
       int gcdValue = gcd_row(A.row(i), b.coeffRef(i));                                       //compute the gcd to make the values as small as possible
+
+      if(gcdValue == 1)
+        continue;
+
       for(Eigen::SparseMatrix<int, Eigen::RowMajor>::InnerIterator it(A, i); it; ++it){
         it.valueRef() = (it.value() / gcdValue);
       }
       b.coeffRef(i) = b.coeffRef(i) / gcdValue;
     }
   }
-
 }
 
 void ExactConstraintSatisfaction::IRREF_Jordan(Eigen::SparseMatrix<int, Eigen::RowMajor> &A, Eigen::VectorXi &b)
 {
-
-  int cols = A.cols();
   for(int k = number_pivots_ - 1; k > 0; k--){
     int pivot_col = -1;
     for(Eigen::SparseMatrix<int, Eigen::RowMajor>::InnerIterator it(A, k); it; ++it){
-      if(it.value() != 0 && it.col() >= k){
-        pivot_col = it.col();
+      if(it.value() != 0){
+        pivot_col = it.index();
         break;
       }
     }
     if(pivot_col == -1)
       std::cout << "Error in IRREF_Jordan(ExactConstraintSatisfaction.cc) : couldn't find a pivot_col." << std::endl;
 
-
     for(int i = k-1; i >= 0; i--){                                                                      //eliminate row i with row k
-      b.coeffRef(i) = (A.coeff(k, pivot_col) * b.coeff(i) - A.coeff(i, pivot_col) * b.coeff(k));        //do it in this order, so we don't delete entries in A for the computation of b
-      eliminate_row(A, i, k);
+
+      if(A.coeff(i, pivot_col) == 0)
+        continue;
+      if(b.coeff(i) != 0 || b.coeff(k) != 0)
+        b.coeffRef(i) = (A.coeff(k, pivot_col) * b.coeff(i) - A.coeff(i, pivot_col) * b.coeff(k));        //do it in this order, so we don't delete entries in A for the computation of b
+      eliminate_row(A, i, k, pivot_col);
 
       int gcdValue = gcd_row(A.row(i), b.coeffRef(i));                                                   //compute the gcd to make the values as small as possible
+      if(gcdValue == 1)
+        continue;
+
       for(Eigen::SparseMatrix<int, Eigen::RowMajor>::InnerIterator it(A, i); it; ++it){
         it.valueRef() = (it.value() / gcdValue);
       }
       b.coeffRef(i) = b.coeffRef(i) / gcdValue;
     }
   }
-
   A.makeCompressed();
   A.finalize();
   A.prune(0.0, 0);
-
 }
 
 //-------------------------------------Evaluation--------------------------------------------------------------------
 
-void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x)
+void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values)
 {
-  _A.prune(0.0, 0);
-  _A.makeCompressed();
-  _A.finalize();
+  //debug
+  double time_G = 0.0;
+  double time_J = 0.0;
+  double time_e = 0.0;
+  double time_count;
+  //debug
+
+  time_count = clock();
   IREF_Gaussian(_A, b, x);
+  time_G = clock() - time_count;
+  time_G = time_G/CLOCKS_PER_SEC;
   _A.prune(0.0 , 0);
   _A.makeCompressed();
   _A.finalize();
-  std::cout << "Gaus is done" << std::endl;
   std::cout << "error is after Gaus: " << (_A.cast<double>() * x).squaredNorm() << std::endl;
+
+  //debug
+  time_count = clock();
+  //debug
+
   IRREF_Jordan(_A, b);
+
+  //debug
+  time_J = clock() - time_count;
+  time_J = time_J/CLOCKS_PER_SEC;
+  //debug
+
   _A.prune(0.0 , 0);
   _A.makeCompressed();
   _A.finalize();
-  std::cout << "Jordan is done" << std::endl;
   std::cout << "error is after Jordan: " << (_A.cast<double>() * x).squaredNorm() << std::endl;
 
+  //debug
+  time_count = clock();
+  //debug
 
 
   SP_Matrix_C A = _A;         //change the matrix type to allow easier iteration
@@ -316,7 +345,7 @@ void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int, Eigen::Row
 
   int cols = A.cols();
   std::cout << "largest Expo" << std::endl;
-  largest_exponent(A, x);
+  largest_exponent(values);
   std::cout << "findPivo" << std::endl;
   for(int k = cols -1; k >= 0; k--){
 
@@ -368,6 +397,15 @@ void ExactConstraintSatisfaction::evaluation(Eigen::SparseMatrix<int, Eigen::Row
 
     }
   }
+
+  //debug
+  time_e = clock() - time_count;
+  time_e = time_e/CLOCKS_PER_SEC;
+
+  std::cout.precision(64);
+  std::cout << "time for IREF: " << time_G << " Time for IRREF: " << time_J<< " Time for evaluation: " << time_e << std::endl;
+  //debug
+
 }
 
 double ExactConstraintSatisfaction::makeDiv(const std::list<int>& D, double x)
@@ -419,8 +457,6 @@ double ExactConstraintSatisfaction::safeDot(const std::list<std::pair<int, doubl
       }else{
         k = std::min(element.first, static_cast<int>(std::floor((delta_ - r)/element.second)));
       }
-      if(k <=0)
-        std::cout << "k == 0" << std::endl;
       r = r + k * element.second;
       if(k < element.first)
         P.push_front({element.first - k, element.second});
@@ -435,15 +471,19 @@ double ExactConstraintSatisfaction::safeDot(const std::list<std::pair<int, doubl
       }else{
         k = std::min(element.first, static_cast<int>(std::floor((-delta_ - r)/element.second)));
       }
-      if(k <= 0)
-        std::cout << "k == 0" << std::endl;
       r = r + k * element.second;
       if(k < element.first)
         N.push_front({element.first - k, element.second});
     }
+
+    if(k == 0){
+      std::cout << "ERROR: The representable range of double values (delta) is to small (ExactConstraintSatisfaction.cc)" << std::endl;
+      return -99999999;
+    }
   }
   if(safebreak == 0)
     std::cout << "WARNING:: the set number of Iterations in Method : safedot is exceeded" << std::endl;
+
   return r;
 }
 

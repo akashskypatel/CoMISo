@@ -7,6 +7,7 @@
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <vector>
 #include <list>
+#include <time.h>
 
 class COMISODLLEXPORT ExactConstraintSatisfaction
 {
@@ -30,8 +31,8 @@ public:
     int    lcm_list(const std::list<int> D);
 
     void   swap_rows(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat,  int row1, int row2);
-    void   eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2);
-    int    largest_exponent(const Eigen::SparseMatrix<int, Eigen::ColMajor>& A, const Eigen::VectorXd& x);
+    void   eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2, int pivot_column);
+    int    largest_exponent(const Eigen::VectorXd& x);
     int    index_pivot(const sparseVec row);
     double F_delta(double x);
     double get_delta();
@@ -43,7 +44,7 @@ public:
 
     //-------------------Evaluation--------------------------------------------
 
-    void   evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x);
+    void   evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
     double makeDiv(const std::list<int>& D, double x);
     double safeDot(const std::list<std::pair<int, double>>& S);
 
