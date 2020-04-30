@@ -72,7 +72,7 @@ bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
   DEB_time_func_def;  
 
-    n_ = _mat.rows();
+  n_ = static_cast<unsigned int>(_mat.rows());
     ldlt_.compute(_mat);
     return (ldlt_.info()==Eigen::Success);
 }

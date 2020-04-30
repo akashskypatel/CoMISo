@@ -11,21 +11,18 @@
 #if COMISO_IPOPT_AVAILABLE
 //=============================================================================
 
+#include "CoMISo/Utils/CoMISoError.hh"
+#include <CoMISo/Utils/gmm.hh>
 
-#include "NProblemIPOPT.hh"
+#include <Base/Debug/DebTime.hh>
+
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 #include "BoundConstraint.hh"
-#include "CoMISo/Utils/CoMISoError.hh"
+#include "IPOPTCallbackParameters.hh"
 
-#include <Base/Debug/DebTime.hh>
-
-#include <gmm/gmm.h>
-
-#include <IpTNLP.hpp>
-#include <IpIpoptApplication.hpp>
-#include <IpSolveStatistics.hpp>
+#include "IPOPTProblemInstance.hh"
 
 //== NAMESPACES ===============================================================
 
@@ -33,11 +30,10 @@ namespace COMISO {
 
 
 
-//== IMPLEMENTATION PROBLEM INSTANCE==========================================================
-
+//== IMPLEMENTATION PROBLEM INSTANCE===========================================
 
 void
-NProblemIPOPT::
+IPOPTProblemInstance::
 split_constraints(const std::vector<NConstraintInterface*>& _constraints)
 {
   DEB_enter_func;
@@ -61,7 +57,7 @@ split_constraints(const std::vector<NConstraintInterface*>& _constraints)
 
 
 void
-NProblemIPOPT::
+IPOPTProblemInstance::
 analyze_special_properties(const NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
 {
   hessian_constant_ = true;
@@ -98,7 +94,7 @@ analyze_special_properties(const NProblemInterface* _problem, const std::vector<
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
+bool IPOPTProblemInstance::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
   DEB_enter_func;
@@ -137,7 +133,7 @@ bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   {
     constraints_[i]->eval_gradient(P(x),g);
 
-    nnz_jac_g += g.nonZeros();
+    nnz_jac_g += static_cast<Index>(g.nonZeros());
 
     if(!hessian_approximation_)
     {
@@ -161,7 +157,7 @@ bool NProblemIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
+bool IPOPTProblemInstance::get_bounds_info(Index n, Number* x_l, Number* x_u,
                             Index m, Number* g_l, Number* g_u)
 {
   DEB_enter_func;
@@ -230,7 +226,7 @@ bool NProblemIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::get_starting_point(Index n, bool init_x, Number* x,
+bool IPOPTProblemInstance::get_starting_point(Index n, bool init_x, Number* x,
                                bool init_z, Number* z_L, Number* z_U,
                                Index m, bool init_lambda,
                                Number* lambda)
@@ -246,7 +242,7 @@ bool NProblemIPOPT::get_starting_point(Index n, bool init_x, Number* x,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
+bool IPOPTProblemInstance::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
 {
   DEB_enter_func;
   // return the value of the objective function
@@ -258,7 +254,7 @@ bool NProblemIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_val
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
+bool IPOPTProblemInstance::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
 {
   DEB_enter_func;
   problem_->eval_gradient(x, grad_f);
@@ -270,7 +266,7 @@ bool NProblemIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* gr
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
+bool IPOPTProblemInstance::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
 {
   DEB_enter_func;
   // evaluate all constraint functions
@@ -284,7 +280,7 @@ bool NProblemIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Number
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
+bool IPOPTProblemInstance::eval_jac_g(Index n, const Number* x, bool new_x,
                        Index m, Index nele_jac, Index* iRow, Index *jCol,
                        Number* values)
 {
@@ -342,7 +338,7 @@ bool NProblemIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
+bool IPOPTProblemInstance::eval_h(Index n, const Number* x, bool new_x,
                    Number obj_factor, Index m, const Number* lambda,
                    bool new_lambda, Index nele_hess, Index* iRow,
                    Index* jCol, Number* values)
@@ -368,8 +364,8 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
          if(it.row() >= it.col())
          {
            //         it.value();
-           iRow[gi] = it.row();
-           jCol[gi] = it.col();
+           iRow[gi] = static_cast<Index>(it.row());
+           jCol[gi] = static_cast<Index>(it.col());
            ++gi;
          }
        }
@@ -476,7 +472,7 @@ bool NProblemIPOPT::eval_h(Index n, const Number* x, bool new_x,
 
 double _QNT(const double x) { return x; }
 
-void NProblemIPOPT::finalize_solution(SolverReturn status,
+void IPOPTProblemInstance::finalize_solution(SolverReturn status,
                               Index n, const Number* x, const Number* z_L, const Number* z_U,
                               Index m, const Number* g, const Number* lambda,
                               Number obj_value,
@@ -516,21 +512,44 @@ void NProblemIPOPT::finalize_solution(SolverReturn status,
 
 
 //-----------------------------------------------------------------------------
+void
+IPOPTProblemInstance::
+set_callback_function
+(std::function<bool(const IPOPTCallbackParameters &)> func)
+{
+  intermediate_callback_ = func;
+}
 
-
-bool NProblemIPOPT::intermediate_callback(
-  Ipopt::AlgorithmMode /*mode*/,
-  Index /*iter*/, Number /*obj_value*/,
-  Number /*inf_pr*/, Number /*inf_du*/,
-  Number /*mu*/, Number /*d_norm*/,
-  Number /*regularization_size*/,
-  Number /*alpha_du*/, Number /*alpha_pr*/,
-  Index /*ls_trials*/,
-  const IpoptData* /*ip_data*/,
-  IpoptCalculatedQuantities* /*ip_cq*/
-) 
+bool IPOPTProblemInstance::intermediate_callback(
+  Ipopt::AlgorithmMode mode,
+  Index iter, Number obj_value,
+  Number inf_pr, Number inf_du,
+  Number mu, Number d_norm,
+  Number regularization_size,
+  Number alpha_du, Number alpha_pr,
+  Index ls_trials,
+  const IpoptData* ip_data,
+  IpoptCalculatedQuantities* ip_cq
+)
 {
   PROGRESS_TICK;
+
+  if(intermediate_callback_) {
+    IPOPTCallbackParameters callbackParameters {
+      mode,
+      iter, obj_value,
+      inf_pr, inf_du,
+      mu, d_norm,
+      regularization_size,
+      alpha_du, alpha_pr,
+      ls_trials,
+      ip_data,
+      ip_cq
+    };
+
+    return intermediate_callback_(callbackParameters);
+  }
+
   return true;
 }
 
@@ -538,7 +557,7 @@ bool NProblemIPOPT::intermediate_callback(
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::hessian_constant() const
+bool IPOPTProblemInstance::hessian_constant() const
 {
   return hessian_constant_;
 }
@@ -547,7 +566,7 @@ bool NProblemIPOPT::hessian_constant() const
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::jac_c_constant() const
+bool IPOPTProblemInstance::jac_c_constant() const
 {
   return jac_c_constant_;
 }
@@ -556,7 +575,7 @@ bool NProblemIPOPT::jac_c_constant() const
 //-----------------------------------------------------------------------------
 
 
-bool NProblemIPOPT::jac_d_constant() const
+bool IPOPTProblemInstance::jac_d_constant() const
 {
   return jac_d_constant_;
 }
@@ -565,7 +584,7 @@ bool NProblemIPOPT::jac_d_constant() const
 //== IMPLEMENTATION PROBLEM INSTANCE==========================================================
 
 
-bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
+bool IPOPTProblemInstanceGmm::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
   DEB_enter_func;
@@ -657,7 +676,7 @@ bool NProblemGmmIPOPT::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
+bool IPOPTProblemInstanceGmm::get_bounds_info(Index n, Number* x_l, Number* x_u,
                             Index m, Number* g_l, Number* g_u)
 {
   DEB_enter_func;
@@ -691,7 +710,7 @@ bool NProblemGmmIPOPT::get_bounds_info(Index n, Number* x_l, Number* x_u,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::get_starting_point(Index n, bool init_x, Number* x,
+bool IPOPTProblemInstanceGmm::get_starting_point(Index n, bool init_x, Number* x,
                                bool init_z, Number* z_L, Number* z_U,
                                Index m, bool init_lambda,
                                Number* lambda)
@@ -707,7 +726,7 @@ bool NProblemGmmIPOPT::get_starting_point(Index n, bool init_x, Number* x,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
+bool IPOPTProblemInstanceGmm::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
 {
   DEB_enter_func;
   // return the value of the objective function
@@ -719,7 +738,7 @@ bool NProblemGmmIPOPT::eval_f(Index n, const Number* x, bool new_x, Number& obj_
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
+bool IPOPTProblemInstanceGmm::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
 {
   DEB_enter_func;
   problem_->eval_gradient(x, grad_f);
@@ -731,7 +750,7 @@ bool NProblemGmmIPOPT::eval_grad_f(Index n, const Number* x, bool new_x, Number*
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
+bool IPOPTProblemInstanceGmm::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g)
 {
   DEB_enter_func;
   // evaluate all constraint functions
@@ -745,7 +764,7 @@ bool NProblemGmmIPOPT::eval_g(Index n, const Number* x, bool new_x, Index m, Num
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
+bool IPOPTProblemInstanceGmm::eval_jac_g(Index n, const Number* x, bool new_x,
                        Index m, Index nele_jac, Index* iRow, Index *jCol,
                        Number* values)
 {
@@ -791,7 +810,7 @@ bool NProblemGmmIPOPT::eval_jac_g(Index n, const Number* x, bool new_x,
 //-----------------------------------------------------------------------------
 
 
-bool NProblemGmmIPOPT::eval_h(Index n, const Number* x, bool new_x,
+bool IPOPTProblemInstanceGmm::eval_h(Index n, const Number* x, bool new_x,
                    Number obj_factor, Index m, const Number* lambda,
                    bool new_lambda, Index nele_hess, Index* iRow,
                    Index* jCol, Number* values)
@@ -865,7 +884,7 @@ bool NProblemGmmIPOPT::eval_h(Index n, const Number* x, bool new_x,
 //-----------------------------------------------------------------------------
 
 
-void NProblemGmmIPOPT::finalize_solution(SolverReturn status,
+void IPOPTProblemInstanceGmm::finalize_solution(SolverReturn status,
                               Index n, const Number* x, const Number* z_L, const Number* z_U,
                               Index m, const Number* g, const Number* lambda,
                               Number obj_value,
@@ -877,19 +896,43 @@ void NProblemGmmIPOPT::finalize_solution(SolverReturn status,
   problem_->store_result(x);
 }
 
-bool NProblemGmmIPOPT::intermediate_callback(
-  Ipopt::AlgorithmMode /*mode*/,
-  Index /*iter*/, Number /*obj_value*/,
-  Number /*inf_pr*/, Number /*inf_du*/,
-  Number /*mu*/, Number /*d_norm*/,
-  Number /*regularization_size*/,
-  Number /*alpha_du*/, Number /*alpha_pr*/,
-  Index /*ls_trials*/,
-  const IpoptData* /*ip_data*/,
-  IpoptCalculatedQuantities* /*ip_cq*/
-) 
+void
+IPOPTProblemInstanceGmm::
+set_callback_function
+(std::function<bool(const IPOPTCallbackParameters &)> func)
+{
+  intermediate_callback_ = func;
+}
+
+bool IPOPTProblemInstanceGmm::intermediate_callback(
+  Ipopt::AlgorithmMode mode,
+  Index iter, Number obj_value,
+  Number inf_pr, Number inf_du,
+  Number mu, Number d_norm,
+  Number regularization_size,
+  Number alpha_du, Number alpha_pr,
+  Index ls_trials,
+  const IpoptData* ip_data,
+  IpoptCalculatedQuantities* ip_cq
+)
 {
   PROGRESS_TICK;
+  if(intermediate_callback_) {
+    IPOPTCallbackParameters callbackParameters {
+      mode,
+      iter, obj_value,
+      inf_pr, inf_du,
+      mu, d_norm,
+      regularization_size,
+      alpha_du, alpha_pr,
+      ls_trials,
+      ip_data,
+      ip_cq
+    };
+
+    return intermediate_callback_(callbackParameters);
+  }
+
   return true;
 }
 

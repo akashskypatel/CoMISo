@@ -15,10 +15,13 @@
 
 //== INCLUDES =================================================================
 
+#include <vector>
+#include <cstddef>
+#include <functional>
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
-#include "IPOPTSolverLean.hh"
 #include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
@@ -27,28 +30,25 @@
 
 #include <Base/Debug/DebTime.hh>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #include <IpTNLP.hpp>
+
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
-#include <vector>
-#include <cstddef>
 
 
 //== NAMESPACES ===============================================================
-
 namespace COMISO {
 
 //== FORWARDDECLARATIONS ======================================================
 class NProblemGmmInterface; // deprecated
 class NProblemInterface;
 class NConstraintInterface;
+struct IPOPTCallbackParameters;
 
-
-//== CLASS DEFINITION PROBLEM INSTANCE=========================================================
-
-class NProblemIPOPT : public Ipopt::TNLP
+//== CLASS DEFINITION PROBLEM INSTANCE ========================================
+class IPOPTProblemInstance : public Ipopt::TNLP
 {
 public:
 
@@ -65,8 +65,11 @@ public:
   typedef NProblemInterface::SMatrixNP    SMatrixNP;
 
   /** default constructor */
-  NProblemIPOPT(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, const bool _hessian_approximation = false)
-   : problem_(_problem), store_solution_(false), hessian_approximation_(_hessian_approximation)
+  IPOPTProblemInstance(NProblemInterface* _problem,
+    const std::vector<NConstraintInterface*>& _constraints,
+    const bool _hessian_approximation = false)
+   : problem_(_problem), store_solution_(false),
+     hessian_approximation_(_hessian_approximation)
   {
     split_constraints(_constraints);
     analyze_special_properties(_problem, _constraints);
@@ -76,26 +79,26 @@ public:
   //@{
   /** Method to return some info about the nlp */
   virtual bool get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
-                            Index& nnz_h_lag, IndexStyleEnum& index_style);
+                            Index& nnz_h_lag, IndexStyleEnum& index_style) override;
 
   /** Method to return the bounds for my problem */
   virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,
-                               Index m, Number* g_l, Number* g_u);
+                               Index m, Number* g_l, Number* g_u) override;
 
   /** Method to return the starting point for the algorithm */
   virtual bool get_starting_point(Index n, bool init_x, Number* x,
                                   bool init_z, Number* z_L, Number* z_U,
                                   Index m, bool init_lambda,
-                                  Number* lambda);
+                                  Number* lambda) override;
 
   /** Method to return the objective value */
-  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value);
+  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value) override;
 
   /** Method to return the gradient of the objective */
-  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f);
+  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f) override;
 
   /** Method to return the constraint residuals */
-  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g);
+  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g) override;
 
   /** Method to return:
    *   1) The structure of the jacobian (if "values" is NULL)
@@ -103,7 +106,7 @@ public:
    */
   virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
                           Index m, Index nele_jac, Index* iRow, Index *jCol,
-                          Number* values);
+                          Number* values) override;
 
   /** Method to return:
    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
@@ -112,7 +115,7 @@ public:
   virtual bool eval_h(Index n, const Number* x, bool new_x,
                       Number obj_factor, Index m, const Number* lambda,
                       bool new_lambda, Index nele_hess, Index* iRow,
-                      Index* jCol, Number* values);
+                      Index* jCol, Number* values) override;
 
   //@}
 
@@ -124,8 +127,11 @@ public:
                                  Index m, const Number* g, const Number* lambda,
                                  Number obj_value,
                                  const IpoptData* ip_data,
-                                 IpoptCalculatedQuantities* ip_cq);
+                                 IpoptCalculatedQuantities* ip_cq) override;
   //@}
+
+  /** Set intermediate callback function object **/
+  void set_callback_function(std::function<bool(const IPOPTCallbackParameters &)>);
 
   /** Intermediate Callback method for the user.  Providing dummy
     *  default implementation.  For details see IntermediateCallBack
@@ -163,8 +169,8 @@ private:
    */
   //@{
   //  MyNLP();
-  NProblemIPOPT(const NProblemIPOPT&);
-  NProblemIPOPT& operator=(const NProblemIPOPT&);
+  IPOPTProblemInstance(const IPOPTProblemInstance&);
+  IPOPTProblemInstance& operator=(const IPOPTProblemInstance&);
   //@}
 
   // split user-provided constraints into general-constraints and bound-constraints
@@ -193,13 +199,15 @@ private:
   std::vector<double> x_;
 
   bool hessian_approximation_;
+
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 };
 
 
 //== CLASS DEFINITION PROBLEM INSTANCE=========================================================
 
 
-class NProblemGmmIPOPT : public Ipopt::TNLP
+class IPOPTProblemInstanceGmm : public Ipopt::TNLP
 {
 public:
 
@@ -226,7 +234,7 @@ public:
   typedef gmm::linalg_traits<SVectorNP>::iterator       SVectorNP_iter;
 
   /** default constructor */
-  NProblemGmmIPOPT(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
+  IPOPTProblemInstanceGmm(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
    : problem_(_problem), constraints_(_constraints), nnz_jac_g_(0), nnz_h_lag_(0)
    {}
 
@@ -234,26 +242,26 @@ public:
   //@{
   /** Method to return some info about the nlp */
   virtual bool get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
-                            Index& nnz_h_lag, IndexStyleEnum& index_style);
+                            Index& nnz_h_lag, IndexStyleEnum& index_style) override;
 
   /** Method to return the bounds for my problem */
   virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,
-                               Index m, Number* g_l, Number* g_u);
+                               Index m, Number* g_l, Number* g_u) override;
 
   /** Method to return the starting point for the algorithm */
   virtual bool get_starting_point(Index n, bool init_x, Number* x,
                                   bool init_z, Number* z_L, Number* z_U,
                                   Index m, bool init_lambda,
-                                  Number* lambda);
+                                  Number* lambda) override;
 
   /** Method to return the objective value */
-  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value);
+  virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value) override;
 
   /** Method to return the gradient of the objective */
-  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f);
+  virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f) override;
 
   /** Method to return the constraint residuals */
-  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g);
+  virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g) override;
 
   /** Method to return:
    *   1) The structure of the jacobian (if "values" is NULL)
@@ -261,7 +269,7 @@ public:
    */
   virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
                           Index m, Index nele_jac, Index* iRow, Index *jCol,
-                          Number* values);
+                          Number* values) override;
 
   /** Method to return:
    *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
@@ -270,7 +278,7 @@ public:
   virtual bool eval_h(Index n, const Number* x, bool new_x,
                       Number obj_factor, Index m, const Number* lambda,
                       bool new_lambda, Index nele_hess, Index* iRow,
-                      Index* jCol, Number* values);
+                      Index* jCol, Number* values) override;
 
   //@}
 
@@ -282,8 +290,11 @@ public:
                                  Index m, const Number* g, const Number* lambda,
                                  Number obj_value,
                                  const IpoptData* ip_data,
-                                 IpoptCalculatedQuantities* ip_cq);
+                                 IpoptCalculatedQuantities* ip_cq) override;
   //@}
+
+  /** Set intermediate callback function object **/
+  void set_callback_function(std::function<bool(const IPOPTCallbackParameters &)>);
 
   /** Intermediate Callback method for the user.  Providing dummy
     *  default implementation.  For details see IntermediateCallBack
@@ -314,8 +325,8 @@ private:
    */
   //@{
   //  MyNLP();
-  NProblemGmmIPOPT(const NProblemGmmIPOPT&);
-  NProblemGmmIPOPT& operator=(const NProblemGmmIPOPT&);
+  IPOPTProblemInstanceGmm(const IPOPTProblemInstanceGmm&);
+  IPOPTProblemInstanceGmm& operator=(const IPOPTProblemInstanceGmm&);
   //@}
 
 
@@ -337,6 +348,8 @@ private:
 
   // Sparse Matrix of problem (don't initialize every time!!!)
   SMatrixNP HP_;
+
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 };
 
 //=============================================================================
@@ -347,4 +360,3 @@ private:
 //=============================================================================
 #endif // COMISO_NPROBLEMIPOPT_HH
 //=============================================================================
-

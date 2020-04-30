@@ -35,7 +35,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <gmm/gmm.h>
+
+#include <CoMISo/Utils/gmm.hh>
 
 #if COMISO_SUITESPARSE_AVAILABLE
 #include <cholmod.h>
@@ -264,6 +265,15 @@ void gmm_to_cholmod( const MatrixT&  _A,
                      int             _sparsity_type = 0,
                      bool            _long_int      = false);
 #endif
+
+
+// GMM used to put operator<< for std::vector<T> into namespace std which was used in the CoMISo examples
+// Newer versions do not do that anymore.
+// The functions below allows to still use operator<< both with the older and newer GMM by putting
+// using COMISO_GMM::operator<<; at the start of the scope.
+inline std::ostream& operator <<(std::ostream &o, const std::vector<double>& m) { gmm::write(o,m); return o; }
+inline std::ostream& operator <<(std::ostream &o, const std::vector<size_t>& m) { gmm::write(o,m); return o; }
+inline std::ostream& operator <<(std::ostream &o, const std::vector<int>& m)    { gmm::write(o,m); return o; }
 
 //=============================================================================
 } // namespace COMISO_GMM

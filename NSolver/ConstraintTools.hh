@@ -19,7 +19,7 @@
 #include <iostream>
 #include <vector>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/NSolver/NConstraintInterface.hh>

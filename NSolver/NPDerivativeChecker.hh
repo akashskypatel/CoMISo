@@ -23,7 +23,7 @@
 #include <climits>
 
 #include <CoMISo/Utils/VSToolsT.hh>
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 

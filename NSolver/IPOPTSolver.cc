@@ -11,6 +11,21 @@
 #if COMISO_IPOPT_AVAILABLE
 //=============================================================================
 
+#include "NProblemGmmInterface.hh"
+#include "NProblemInterface.hh"
+#include "NConstraintInterface.hh"
+#include "BoundConstraint.hh"
+#include "CoMISo/Utils/CoMISoError.hh"
+
+#include <Base/Debug/DebConfig.hh>
+#include <Base/Debug/DebTime.hh>
+
+#include <CoMISo/Utils/gmm.hh>
+
+#include <IpTNLP.hpp>
+#include <IpIpoptApplication.hpp>
+#include <IpSolveStatistics.hpp>
+#include "IPOPTProblemInstance.hh"
 
 #include "IPOPTSolver.hh"
 
@@ -18,169 +33,393 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ========================================================== 
+//== IMPLEMENTATION ===========================================================
 
-
-// Constructor
-IPOPTSolver::
-IPOPTSolver()
+class IPOPTSolver::Impl
 {
-  // Create an instance of the IpoptApplication
-  app_ = IpoptApplicationFactory();
+public:
+  Impl()
+    : app_(IpoptApplicationFactory()), // Create an instance of IpoptApplication
+      alm_infsb_thrsh_(0.5),
+      incr_lazy_cnstr_max_iter_nmbr_(5),
+      enbl_all_lzy_cnstr_(true)
+  {
+    setup_ipopt_defaults();
+  }
 
-  // Switch to HSL if available in Comiso
-  #if COMISO_HSL_AVAILABLE
-    app_->Options()->SetStringValue("linear_solver", "ma57");
-  #endif
+  void set_ipopt_option(std::string, const int&);
+  void set_ipopt_option(std::string, const double&);
+  void set_ipopt_option(std::string, const std::string&);
 
-  // Restrict memory to be able to run larger problems on windows
-  // with the default mumps solver
-  #ifdef WIN32
-    app_->Options()->SetIntegerValue("mumps_mem_percent", 5);
-  #endif
+  template <typename T>
+  T get_ipopt_option(std::string);
 
-  // set default parameters
-  app_->Options()->SetIntegerValue("max_iter", 100);
-  //  app->Options()->SetStringValue("derivative_test", "second-order");
-  //  app->Options()->SetIntegerValue("print_level", 0);
-  //  app->Options()->SetStringValue("expect_infeasible_problem", "yes");
+private:
+  void setup_ipopt_defaults();
 
-  print_level_ = 5;
+public:
+  Ipopt::SmartPtr<Ipopt::IpoptApplication> app_;
+  std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
+
+  double alm_infsb_thrsh_;
+  int incr_lazy_cnstr_max_iter_nmbr_;
+  bool enbl_all_lzy_cnstr_;
+
+private:
+  // default ipopt options
+  static const std::string ipopt_default_hsl_solver;
+  static const int ipopt_default_max_iter;
+  static const int ipopt_default_mumps_mem_percent;
+};
+
+const std::string IPOPTSolver::Impl::ipopt_default_hsl_solver = "ma57";
+const int IPOPTSolver::Impl::ipopt_default_max_iter = 200;
+const int IPOPTSolver::Impl::ipopt_default_mumps_mem_percent = 5;
+
+void
+IPOPTSolver::Impl::
+set_ipopt_option
+(std::string option, const int& value)
+{
+  app_->Options()->SetIntegerValue(option, value);
 }
 
+void
+IPOPTSolver::Impl::
+set_ipopt_option
+(std::string option, const double& value)
+{
+  app_->Options()->SetNumericValue(option, value);
+}
+
+void
+IPOPTSolver::Impl::
+set_ipopt_option
+(std::string option, const std::string& value)
+{
+  app_->Options()->SetStringValue(option, value);
+}
+
+template <typename T> T
+IPOPTSolver::Impl::
+get_ipopt_option(std::string)
+{
+  // @TODO print warning about unsupported option type!
+}
+
+template <> int
+IPOPTSolver::Impl::
+get_ipopt_option<int>(std::string option)
+{
+  int value;
+  app_->Options()->GetIntegerValue(option, value, "");
+  return value;
+}
+
+template <> double
+IPOPTSolver::Impl::
+get_ipopt_option<double>(std::string option)
+{
+  double value;
+  app_->Options()->GetNumericValue(option, value, "");
+  return value;
+}
+
+template <> std::string
+IPOPTSolver::Impl::
+get_ipopt_option<std::string>(std::string option)
+{
+  std::string value;
+  app_->Options()->GetStringValue(option, value, "");
+  return value;
+}
+
+void IPOPTSolver::Impl::setup_ipopt_defaults()
+{
+  // Switch to HSL if available
+#if COMISO_HSL_AVAILABLE
+  set_ipopt_option("linear_solver", ipopt_default_hsl_solver);
+#else
+  set_ipopt_option("linear_solver", "mumps");
+#endif
+
+#ifdef DEB_ON
+  if (!Debug::Config::query().console())
+#endif
+  {// Block any output on cout and cerr from Ipopt.
+    set_ipopt_option("suppress_all_output", "yes");
+  }
+
+#ifdef WIN32
+  // Restrict memory to be able to run larger problems on windows
+  // with the default mumps solver
+  // TODO: find out what this does and whether it makes sense to do it
+  set_ipopt_option("mumps_mem_percent",
+                   ipopt_default_mumps_mem_percent);
+#endif
+
+  // set maximum solver iterations
+  set_ipopt_option("max_iter", ipopt_default_max_iter);
+}
 
 //-----------------------------------------------------------------------------
 
+IPOPTSolver::IPOPTSolver()
+  : impl_(new Impl)
+{
+}
 
+IPOPTSolver::
+~IPOPTSolver()
+{
+  delete impl_;
+}
+
+void
+IPOPTSolver::
+set_ipopt_option
+(std::string option, const int& value)
+{
+  impl_->set_ipopt_option(option, value);
+}
+
+void
+IPOPTSolver::
+set_ipopt_option
+(std::string option, const double& value)
+{
+    impl_->set_ipopt_option(option, value);
+}
+
+void
+IPOPTSolver::
+set_ipopt_option
+(std::string option, const std::string& value)
+{
+    impl_->set_ipopt_option(option, value);
+}
+
+template <typename T> T
+IPOPTSolver::
+get_ipopt_option(std::string option)
+{
+  return impl_->get_ipopt_option<T>(option);
+}
+
+template int IPOPTSolver::get_ipopt_option<int>(std::string);
+template double IPOPTSolver::get_ipopt_option<double>(std::string);
+template std::string IPOPTSolver::get_ipopt_option<std::string>(std::string);
+
+void
+IPOPTSolver::
+set_max_iterations
+(const int _max_iterations)
+{
+  impl_->set_ipopt_option("max_iter", _max_iterations);
+}
 
 int
 IPOPTSolver::
-solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+get_max_iterations() const
 {
-  //----------------------------------------------------------------------------
-  // 0. Check whether hessian_approximation is active
-  //----------------------------------------------------------------------------
-  bool hessian_approximation = false;
-  std::string ha, p;
-  app().Options()->GetStringValue("hessian_approximation", ha, p);
-  if(ha != "exact")
-  {
-    if(print_level_>=2)
-      std::cerr << "Hessian approximation is enabled" << std::endl;
-    hessian_approximation = true;
-  }
+  return impl_->get_ipopt_option<int>("max_iter");
+}
 
+void
+IPOPTSolver::
+set_almost_infeasible_threshold
+(const double _alm_infsb_thrsh)
+{
+  impl_->alm_infsb_thrsh_ = _alm_infsb_thrsh;
+}
+
+double
+IPOPTSolver::
+get_almost_infeasible_threshold() const
+{
+  return impl_->alm_infsb_thrsh_;
+}
+
+void
+IPOPTSolver::
+set_incremental_lazy_constraint_max_iteration_number
+(const int _incr_lazy_cnstr_max_iter_nmbr)
+{
+  impl_->incr_lazy_cnstr_max_iter_nmbr_ = _incr_lazy_cnstr_max_iter_nmbr;
+}
+
+int
+IPOPTSolver::
+get_incremental_lazy_constraint_max_iteration_number() const
+{
+  return impl_->incr_lazy_cnstr_max_iter_nmbr_;
+}
+
+void
+IPOPTSolver::
+set_enable_all_lazy_contraints
+(const bool _enbl_all_lzy_cnstr)
+{
+  impl_->enbl_all_lzy_cnstr_ = _enbl_all_lzy_cnstr;
+}
+
+bool
+IPOPTSolver::
+get_enable_all_lazy_contraints() const
+{
+  return impl_->enbl_all_lzy_cnstr_;
+}
+
+void
+IPOPTSolver::
+set_callback_function
+(std::function<bool(const IPOPTCallbackParameters &)> func)
+{
+  impl_->intermediate_callback_ = func;
+}
+
+static void
+throw_ipopt_solve_failure
+(Ipopt::ApplicationReturnStatus const status)
+{
+  DEB_enter_func
+  DEB_warning(1, " IPOPT solve failure code is " << status)
+  // TODO: we could translate these return codes, but will not do it for now
+  //  enum ApplicationReturnStatus
+  //    {
+  //      Solve_Succeeded=0,
+  //      Solved_To_Acceptable_Level=1,
+  //      Infeasible_Problem_Detected=2,
+  //      Search_Direction_Becomes_Too_Small=3,
+  //      Diverging_Iterates=4,
+  //      User_Requested_Stop=5,
+  //      Feasible_Point_Found=6,
+  //
+  //      Maximum_Iterations_Exceeded=-1,
+  //      Restoration_Failed=-2,
+  //      Error_In_Step_Computation=-3,
+  //      Maximum_CpuTime_Exceeded=-4,
+  //      Not_Enough_Degrees_Of_Freedom=-10,
+  //      Invalid_Problem_Definition=-11,
+  //      Invalid_Option=-12,
+  //      Invalid_Number_Detected=-13,
+  //
+  //      Unrecoverable_Exception=-100,
+  //      NonIpopt_Exception_Thrown=-101,
+  //      Insufficient_Memory=-102,
+  //      Internal_Error=-199
+  //    };
+  //------------------------------------------------------
+  switch (status)
+  {
+  case Ipopt::Maximum_Iterations_Exceeded:
+    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+  case Ipopt::NonIpopt_Exception_Thrown:
+    // this could be due to a thrown PROGRESS_ABORTED exception, ...
+    PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
+  default:
+    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
+  }
+}
+
+static void
+check_ipopt_status
+(Ipopt::ApplicationReturnStatus const _stat)
+{
+  if (_stat != Ipopt::Solve_Succeeded &&
+      _stat != Ipopt::Solved_To_Acceptable_Level)
+      throw_ipopt_solve_failure(_stat);
+}
+
+void
+IPOPTSolver::
+solve
+(NProblemInterface* _problem,
+ const std::vector<NConstraintInterface*>& _constraints)
+{
+  DEB_time_func_def;
   //----------------------------------------------------------------------------
   // 1. Create an instance of IPOPT NLP
   //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, _constraints, hessian_approximation);
-  NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+  Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, _constraints);
+  IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
+
+  np2->set_callback_function(impl_->intermediate_callback_);
 
   //----------------------------------------------------------------------------
   // 2. exploit special characteristics of problem
   //----------------------------------------------------------------------------
 
-  if(print_level_>=2)
-    std::cerr << "exploit detected special properties: ";
-  if(np2->hessian_constant())
+  DEB_out(2,"exploit detected special properties: ");
+  if (np2->hessian_constant())
   {
-    if(print_level_>=2)
-      std::cerr << "*constant hessian* ";
-    app().Options()->SetStringValue("hessian_constant", "yes");
+    DEB_out(2,"*constant hessian* ");
+    impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
   }
 
-  if(np2->jac_c_constant())
+  if (np2->jac_c_constant())
   {
-    if(print_level_>=2)
-      std::cerr << "*constant jacobian of equality constraints* ";
-    app().Options()->SetStringValue("jac_c_constant", "yes");
+    DEB_out(2, "*constant jacobian of equality constraints* ");
+    impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
   }
 
-  if(np2->jac_d_constant())
+  if (np2->jac_d_constant())
   {
-    if(print_level_>=2)
-      std::cerr << "*constant jacobian of in-equality constraints*";
-    app().Options()->SetStringValue("jac_d_constant", "yes");
+    DEB_out(2, "*constant jacobian of in-equality constraints*");
+    impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
   }
-
-  if(print_level_>=2)
-    std::cerr << std::endl;
+  DEB_out(2,"\n");
 
   //----------------------------------------------------------------------------
   // 3. solve problem
   //----------------------------------------------------------------------------
 
   // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
+  Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-  {
-    if(print_level_>=2)
-      printf("\n\n*** Error IPOPT during initialization!\n");
-  }
+    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
-  status = app_->OptimizeTNLP( np);
+  status = impl_->app_->OptimizeTNLP( np);
 
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if(print_level_>=2)
-    if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
-    {
-      // Retrieve some statistics about the solve
-      Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-      printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  check_ipopt_status(status);
 
-      Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-      printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
-    }
+  // Retrieve some statistics about the solve
+  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
+  DEB_out(1,"\n*** IPOPT: The problem solved in "
+    << iter_count << " iterations!\n");
 
-  return status;
+  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
+  DEB_out(1,"\n*** IPOPT: The final value of the objective function is "
+    << final_obj << "\n");
 }
 
-
-//-----------------------------------------------------------------------------
-
-
-
-int
+void
 IPOPTSolver::
-solve(NProblemInterface*                        _problem,
-      const std::vector<NConstraintInterface*>& _constraints,
-      const std::vector<NConstraintInterface*>& _lazy_constraints,
-      const double                              _almost_infeasible,
-      const int                                 _max_passes        )
+solve
+(NProblemInterface*                        _problem,
+ const std::vector<NConstraintInterface*>& _constraints,
+ const std::vector<NConstraintInterface*>& _lazy_constraints)
 {
+  DEB_time_func_def;
   //----------------------------------------------------------------------------
-  // 0. Check whether hessian_approximation is active
+  // 0. Initialize IPOPT Application
   //----------------------------------------------------------------------------
-  bool hessian_approximation = false;
-  std::string ha, p;
-  app().Options()->GetStringValue("hessian_approximation", ha, p);
-  if(ha != "exact")
-  {
-    if(print_level_>=2)
-      std::cerr << "Hessian approximation is enabled" << std::endl;
-    hessian_approximation = true;
-  }
-
-  //----------------------------------------------------------------------------
-  // 0. Initialize IPOPT Applicaiton
-  //----------------------------------------------------------------------------
-
-  StopWatch sw; sw.start();
 
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
+  status = impl_->app_->Initialize();
   if (status != Ipopt::Solve_Succeeded)
-  {
-    printf("\n\n*** Error IPOPT during initialization!\n");
-  }
+    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
-  int  cur_pass = 0;
-  double acceptable_tolerance = 0.01; // hack: read out from ipopt!!!
+  int  cur_pass = impl_->enbl_all_lzy_cnstr_ ? 1 : 0;
+  const int max_passes = impl_->incr_lazy_cnstr_max_iter_nmbr_;
+
+  double acceptable_tolerance = get_ipopt_option<double>("acceptable_tol");
+
   // copy default constraints
   std::vector<NConstraintInterface*> constraints = _constraints;
   std::vector<bool> lazy_added(_lazy_constraints.size(),false);
@@ -189,244 +428,194 @@ solve(NProblemInterface*                        _problem,
   std::vector<int> n_inf;
   std::vector<int> n_almost_inf;
 
-  while(!feasible_point_found && cur_pass <(_max_passes-1))
+  while(!feasible_point_found && cur_pass < max_passes)
   {
-
     ++cur_pass;
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
-    //----------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints, hessian_approximation);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    //--------------------------------------------------------------------------
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 2. exploit special characteristics of problem
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
-    if(print_level_>=2) std::cerr << "detected special properties which will be exploit: ";
-    if(np2->hessian_constant())
+    DEB_out(2, "detected special properties which will be exploit: ");
+    if (np2->hessian_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant hessian* ";
-      app().Options()->SetStringValue("hessian_constant", "yes");
+      DEB_out(2, "*constant hessian* ");
+      impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
-    if(np2->jac_c_constant())
+    if (np2->jac_c_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant jacobian of equality constraints* ";
-      app().Options()->SetStringValue("jac_c_constant", "yes");
+      DEB_out(2, "*constant jacobian of equality constraints* ");
+      impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
-    if(np2->jac_d_constant())
+    if (np2->jac_d_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant jacobian of in-equality constraints*";
-      app().Options()->SetStringValue("jac_d_constant", "yes");
+      DEB_out(2, "*constant jacobian of in-equality constraints*");
+      impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
-    if(print_level_>=2) std::cerr << std::endl;
+    DEB_out(2, "\n");
 
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 3. solve problem
-    //----------------------------------------------------------------------------
-    status = app_->OptimizeTNLP( np);
+    //--------------------------------------------------------------------------
+    {
+      DEB_time_session_def("IPOPT App OptimizeTNLP(np)");
+      status = impl_->app_->OptimizeTNLP(np);
+    }
+
+    check_ipopt_status(status);
 
     // check lazy constraints
     n_inf.push_back(0);
     n_almost_inf.push_back(0);
     feasible_point_found = true;
-    for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
-      if(!lazy_added[i])
-      {
-        NConstraintInterface* lc = _lazy_constraints[i];
-        double v = lc->eval_constraint(&(np2->solution()[0]));
-        bool inf        = false;
-        bool almost_inf = false;
+    for (unsigned int i = 0; i < _lazy_constraints.size(); ++i)
+    {
+      if (lazy_added[i])
+        continue;
+      NConstraintInterface* lc = _lazy_constraints[i];
 
-        if(lc->constraint_type() == NConstraintInterface::NC_EQUAL)
+      double v = lc->eval_constraint(&(np2->solution()[0]));
+
+      bool inf = false;
+      bool almost_inf = false;
+
+      if (lc->constraint_type() == NConstraintInterface::NC_EQUAL)
+      {
+        v = std::abs(v);
+        if (v > acceptable_tolerance)
+          inf = true;
+        else
+          if (v > impl_->alm_infsb_thrsh_)
+            almost_inf = true;
+      }
+      else
+        if (lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
         {
-          v = std::abs(v);
-          if(v>acceptable_tolerance)
+          if (v < -acceptable_tolerance)
             inf = true;
           else
-            if(v>_almost_infeasible)
+            if (v < impl_->alm_infsb_thrsh_)
               almost_inf = true;
         }
         else
-          if(lc->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
+          if (lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
           {
-            if(v<-acceptable_tolerance)
+            if (v > acceptable_tolerance)
               inf = true;
             else
-              if(v<_almost_infeasible)
+              if (v > -impl_->alm_infsb_thrsh_)
                 almost_inf = true;
           }
-          else
-            if(lc->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
-            {
-              if(v>acceptable_tolerance)
-                inf = true;
-              else
-                if(v>-_almost_infeasible)
-                  almost_inf = true;
-            }
 
-        // infeasible?
-        if(inf)
-        {
-          constraints.push_back(lc);
-          lazy_added[i] = true;
-          feasible_point_found = false;
-          ++n_inf.back();
-        }
-
-        // almost violated or violated? -> add to constraints
-        if(almost_inf)
-        {
-          constraints.push_back(lc);
-          lazy_added[i] = true;
-          ++n_almost_inf.back();
-        }
+      // infeasible?
+      if (inf)
+      {
+        constraints.push_back(lc);
+        lazy_added[i] = true;
+        feasible_point_found = false;
+        ++n_inf.back();
       }
+
+      // almost violated or violated? -> add to constraints
+      if (almost_inf)
+      {
+        constraints.push_back(lc);
+        lazy_added[i] = true;
+        ++n_almost_inf.back();
+      }
+    }
   }
 
   // no termination after max number of passes?
-  if(!feasible_point_found)
+  if (!feasible_point_found)
   {
+    DEB_warning(2, "Could not find a feasible point after " << max_passes - 1
+                << " incremental lazy constraint iterations");
+    if (!impl_->enbl_all_lzy_cnstr_)
+      throw_ipopt_solve_failure(Ipopt::Maximum_Iterations_Exceeded);
+
+    DEB_line(2, "Solving with ALL lazy constraints...");
     ++cur_pass;
-
-    std::cerr << "*************** could not find feasible point after " << _max_passes-1 << " -> solving with all lazy constraints..." << std::endl;
-    for(unsigned int i=0; i<_lazy_constraints.size(); ++i)
-      if(!lazy_added[i])
+    for (unsigned int i = 0; i < _lazy_constraints.size(); ++i)
+    {
+      if (!lazy_added[i])
         constraints.push_back(_lazy_constraints[i]);
-
-    //----------------------------------------------------------------------------
+    }
+    //--------------------------------------------------------------------------
     // 1. Create an instance of current IPOPT NLP
-    //----------------------------------------------------------------------------
-    Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemIPOPT(_problem, constraints);
-    NProblemIPOPT* np2 = dynamic_cast<NProblemIPOPT*> (Ipopt::GetRawPtr(np));
+    //--------------------------------------------------------------------------
+    Ipopt::SmartPtr<Ipopt::TNLP> np = new IPOPTProblemInstance(_problem, constraints);
+    IPOPTProblemInstance* np2 = dynamic_cast<IPOPTProblemInstance*> (Ipopt::GetRawPtr(np));
     // enable caching of solution
     np2->store_solution() = true;
 
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 2. exploit special characteristics of problem
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
-    if(print_level_>=2) std::cerr << "exploit detected special properties: ";
-    if(np2->hessian_constant())
+    DEB_out(2, "exploit detected special properties: ");
+    if (np2->hessian_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant hessian* ";
-      app().Options()->SetStringValue("hessian_constant", "yes");
+      DEB_out(2, "*constant hessian* ");
+      impl_->app_->Options()->SetStringValue("hessian_constant", "yes");
     }
 
-    if(np2->jac_c_constant())
+    if (np2->jac_c_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant jacobian of equality constraints* ";
-      app().Options()->SetStringValue("jac_c_constant", "yes");
+      DEB_out(2, "*constant jacobian of equality constraints* ");
+      impl_->app_->Options()->SetStringValue("jac_c_constant", "yes");
     }
 
-    if(np2->jac_d_constant())
+    if (np2->jac_d_constant())
     {
-      if(print_level_>=2) std::cerr << "*constant jacobian of in-equality constraints*";
-      app().Options()->SetStringValue("jac_d_constant", "yes");
+      DEB_out(2, "*constant jacobian of in-equality constraints*");
+      impl_->app_->Options()->SetStringValue("jac_d_constant", "yes");
     }
-    if(print_level_>=2) std::cerr << std::endl;
+    std::cerr << std::endl;
 
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     // 3. solve problem
-    //----------------------------------------------------------------------------
-    status = app_->OptimizeTNLP( np);
+    //--------------------------------------------------------------------------
+    status = impl_->app_->OptimizeTNLP( np);
   }
-
-  const double overall_time = sw.stop()/1000.0;
 
   //----------------------------------------------------------------------------
   // 4. output statistics
   //----------------------------------------------------------------------------
-  if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
-  {
-    if(print_level_>=2)
-    {
-      // Retrieve some statistics about the solve
-      Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-      printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
+  check_ipopt_status(status);
 
-      Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-      printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
-    }
-  }
+  // Retrieve some statistics about the solve
+  Ipopt::Index iter_count = impl_->app_->Statistics()->IterationCount();
+  DEB_out(1, "\n*** IPOPT: The problem solved in "
+    << iter_count << " iterations!\n");
 
-  if(print_level_>=2)
-  {
-    std::cerr <<"############# IPOPT with lazy constraints statistics ###############" << std::endl;
-    std::cerr << "overall time: " << overall_time << "s" << std::endl;
-    std::cerr << "#passes     : " << cur_pass << "( of " << _max_passes << ")" << std::endl;
-    for(unsigned int i=0; i<n_inf.size(); ++i)
-      std::cerr << "pass " << i << " induced " << n_inf[i] << " infeasible and " << n_almost_inf[i] << " almost infeasible" << std::endl;
-  }
+  Ipopt::Number final_obj = impl_->app_->Statistics()->FinalObjective();
+  DEB_out(1, "\n*** IPOPT: The final value of the objective function is "
+    << final_obj << "\n");
 
-  return status;
+  DEB_out(2, "############# IPOPT with "
+          "lazy constraints statistics ###############\n");
+  DEB_out(2, "#passes     : " << cur_pass << "( of " << max_passes << ")\n");
+  for(unsigned int i=0; i<n_inf.size(); ++i)
+    DEB_out(3, "pass " << i << " induced " << n_inf[i]
+      << " infeasible and " << n_almost_inf[i] << " almost infeasible\n")
 }
 
-
-//-----------------------------------------------------------------------------
-
-
-int
+double
 IPOPTSolver::
-solve(NProblemInterface*    _problem)
+energy()
 {
-  std::vector<NConstraintInterface*> constraints;
-  return this->solve(_problem, constraints);
+  return impl_->app_->Statistics()->FinalObjective();
 }
-
-
-//-----------------------------------------------------------------------------
-
-
-int
-IPOPTSolver::
-solve(NProblemGmmInterface* _problem, std::vector<NConstraintInterface*>& _constraints)
-{
-  std::cerr << "****** Warning: NProblemGmmInterface is deprecated!!! -> use NProblemInterface *******\n";
-
-  //----------------------------------------------------------------------------
-  // 1. Create an instance of IPOPT NLP
-  //----------------------------------------------------------------------------
-  Ipopt::SmartPtr<Ipopt::TNLP> np = new NProblemGmmIPOPT(_problem, _constraints);
-
-  //----------------------------------------------------------------------------
-  // 2. solve problem
-  //----------------------------------------------------------------------------
-
-  // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status;
-  status = app_->Initialize();
-  if (status != Ipopt::Solve_Succeeded)
-  {
-    printf("\n\n*** Error IPOPT during initialization!\n");
-  }
-
-  //----------------------------------------------------------------------------
-  // 3. solve problem
-  //----------------------------------------------------------------------------
-  status = app_->OptimizeTNLP(np);
-
-  //----------------------------------------------------------------------------
-  // 4. output statistics
-  //----------------------------------------------------------------------------
-  if (status == Ipopt::Solve_Succeeded || status == Ipopt::Solved_To_Acceptable_Level)
-  {
-    // Retrieve some statistics about the solve
-    Ipopt::Index iter_count = app_->Statistics()->IterationCount();
-    printf("\n\n*** IPOPT: The problem solved in %d iterations!\n", iter_count);
-
-    Ipopt::Number final_obj = app_->Statistics()->FinalObjective();
-    printf("\n\n*** IPOPT: The final value of the objective function is %e.\n", final_obj);
-  }
-
-  return status;
-}
-
 
 //=============================================================================
 } // namespace COMISO

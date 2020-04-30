@@ -38,7 +38,7 @@
 #include <Base/Debug/DebOut.hh>
 #include <Base/Utils/StopWatch.hh>
 
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 #include <float.h>
 
 // hack for testing only
@@ -94,7 +94,7 @@ MISolver::solve(
 {
   DEB_enter_func
 
-  DEB_out(2, "# integer    variables: " << _to_round.size() 
+  DEB_out(6, "# integer    variables: " << _to_round.size()
     << "\n# continuous variables: " << _x.size()-_to_round.size() << "\n")
 
   // nothing to solve?

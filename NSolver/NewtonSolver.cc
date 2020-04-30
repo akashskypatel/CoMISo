@@ -23,6 +23,7 @@ solve(NProblemGmmInterface* _problem)
 {
   DEB_enter_func;
 #if COMISO_SUITESPARSE_AVAILABLE  
+  converged_ = true;
   
   // get problem size
   int n = _problem->n_unknowns();
@@ -98,16 +99,19 @@ solve(NProblemGmmInterface* _problem)
         _problem->store_result(P(x));
         DEB_line(2, "Newton solver reached max regularization but did not "
           "converge");
+        converged_ = false;
         return false;
       }
     }
   }
   _problem->store_result(P(x));
   DEB_line(2, "Newton Solver did not converge!!! after iterations.");
+  converged_ = false;
   return false;
 
 #else
   DEB_warning(1,"NewtonSolver requires not-available CholmodSolver");
+  converged_ = false;
   return false;
 #endif	    
 }
@@ -120,6 +124,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   const VectorD& _b)
 {
   DEB_time_func_def;
+  converged_ = false;
 
   const double KKT_res_eps = 1e-6;
   const int    max_KKT_regularization_iters = 40;
@@ -160,10 +165,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     double kkt_res2(0.0);
     double constraint_res2(0.0);
     int    reg_iters(0);
+    bool fact_ok = true;
     do
     {
       // get Newton search direction by solving LSE
-      bool fact_ok = factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
+      fact_ok = factorize(_problem, _A, _b, x, regularize_hessian, regularize_constraints, first_factorization);
       first_factorization = false;
 
       if(fact_ok)
@@ -204,7 +210,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       }
       ++reg_iters;
     }
-    while( (kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2) && reg_iters < max_KKT_regularization_iters);
+    while( (!fact_ok || kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2) && reg_iters < max_KKT_regularization_iters);
 
     // no valid step could be found?
     if(kkt_res2 > KKT_res_eps || constraint_res2 > max_allowed_constraint_violation2 || reg_iters >= max_KKT_regularization_iters)
@@ -250,8 +256,11 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       << ", KKT residual^2 = " << kkt_res2);
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) < eps_ls_)
+    if(newton_decrement < eps_ || std::abs(t) < eps_ls_ )
+    {
+      converged_ = true;
       break;
+    }
 
     ++iter;
   }
@@ -273,7 +282,7 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 {
   DEB_enter_func;
   const int n  = _problem->n_unknowns();
-  const int m  = _A.rows();
+  const int m  = static_cast<int>(_A.rows());
   const int nf = n+m;
 
   // get hessian of quadratic problem
@@ -288,17 +297,17 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
   // add elements of H
   for (int k=0; k<H.outerSize(); ++k)
     for (SMatrixD::InnerIterator it(H,k); it; ++it)
-      trips.push_back(Triplet(it.row(),it.col(),it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.row()),static_cast<int>(it.col()),it.value()));
 
   // add elements of _A
   for (int k=0; k<_A.outerSize(); ++k)
     for (SMatrixD::InnerIterator it(_A,k); it; ++it)
     {
       // insert _A block below
-      trips.push_back(Triplet(it.row()+n,it.col(),it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.row())+n,static_cast<int>(it.col()),it.value()));
 
       // insert _A^T block right
-      trips.push_back(Triplet(it.col(),it.row()+n,it.value()));
+      trips.push_back(Triplet(static_cast<int>(it.col()),static_cast<int>(it.row())+n,it.value()));
     }
 
   // regularize constraints
@@ -397,11 +406,11 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
   DEB_enter_func;
   switch(solver_type_)
   {
-    case LS_EigenLU:      
+    case LS_EigenLU:
       lu_solver_.factorize(_KKT); 
       return (lu_solver_.info() == Eigen::Success);
 #if COMISO_SUITESPARSE_AVAILABLE
-    case LS_Umfpack: 
+    case LS_Umfpack:
       umfpack_solver_.factorize(_KKT); 
       return (umfpack_solver_.info() == Eigen::Success);
 #endif

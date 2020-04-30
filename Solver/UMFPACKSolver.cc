@@ -144,12 +144,12 @@ void UMFPACKSolver::print_error( int _status )
 {
   switch(_status)
   {
-    case UMFPACK_OK                    : std::cerr << "UMFPACK Error: UMFPACK_OK\n";
-    case UMFPACK_ERROR_n_nonpositive   : std::cerr << "UMFPACK Error: UMFPACK_ERROR_n_nonpositive\n";
-    case UMFPACK_ERROR_invalid_matrix  : std::cerr << "UMFPACK Error: UMFPACK_ERROR_invalid_matrix\n";
-    case UMFPACK_ERROR_out_of_memory   : std::cerr << "UMFPACK Error: UMFPACK_ERROR_out_of_memory\n";
-    case UMFPACK_ERROR_argument_missing: std::cerr << "UMFPACK Error: UMFPACK_ERROR_argument_missing\n";
-    case UMFPACK_ERROR_internal_error  : std::cerr << "UMFPACK Error: UMFPACK_ERROR_internal_error\n";
+    case UMFPACK_OK                    : std::cerr << "UMFPACK Error: UMFPACK_OK\n"; break;
+    case UMFPACK_ERROR_n_nonpositive   : std::cerr << "UMFPACK Error: UMFPACK_ERROR_n_nonpositive\n"; break;
+    case UMFPACK_ERROR_invalid_matrix  : std::cerr << "UMFPACK Error: UMFPACK_ERROR_invalid_matrix\n"; break;
+    case UMFPACK_ERROR_out_of_memory   : std::cerr << "UMFPACK Error: UMFPACK_ERROR_out_of_memory\n"; break;
+    case UMFPACK_ERROR_argument_missing: std::cerr << "UMFPACK Error: UMFPACK_ERROR_argument_missing\n"; break;
+    case UMFPACK_ERROR_internal_error  : std::cerr << "UMFPACK Error: UMFPACK_ERROR_internal_error\n"; break;
     default: std::cerr << "UMFPACK Error: UNSPECIFIED ERROR\n";
   }
 }

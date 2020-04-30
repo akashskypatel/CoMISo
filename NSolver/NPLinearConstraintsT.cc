@@ -9,7 +9,7 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <gmm/gmm.h>
+#include <CoMISo/Utils/gmm.hh>
 #include "NProblemGmmInterface.hh"
 #include "LinearConstraintHandlerElimination.hh"
 #include "LinearConstraintHandlerPenalty.hh"
