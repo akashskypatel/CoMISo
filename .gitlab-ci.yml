@@ -13,19 +13,6 @@ macos-c++11:
   tags:
     - Apple
 
-CoMISo-VS2013-Qt-5.5.1-x64:
-  variables:
-    BUILD_PLATFORM: "VS2013"
-    ARCHITECTURE:   "x64"
-    QT_VERSION:     "Qt5.5.1"
-    GIT_SUBMODULE_STRATEGY: recursive
-    COMPILER:       "VS2013"
-
-  script: "CI\\Windows.bat"
-  tags:
-    - VS2013
-    - Qt551
-
 CoMISo-VS2017-Qt-5.10.1-x64:
   variables:
     BUILD_PLATFORM: "VS2017"
