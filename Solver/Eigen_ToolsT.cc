@@ -751,11 +751,11 @@ void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 
 // convert a gmm col-sparse matrix into an eigen sparse matrix
 template <class GMM_RealT, class EIGEN_MatrixT>
-void f(const gmm::csc_matrix<GMM_RealT,0>& _G, EIGEN_MatrixT& _E)
+void f(const gmm::csc_matrix<GMM_RealT>& _G, EIGEN_MatrixT& _E)
 {
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
-  typedef typename gmm::csc_matrix<GMM_RealT,0> GMM_MatrixT;
+  typedef typename gmm::csc_matrix<GMM_RealT> GMM_MatrixT;
   typedef typename gmm::linalg_traits<GMM_MatrixT>::const_sub_col_type ColT;
   typedef typename gmm::linalg_traits<ColT>::const_iterator CIter;
 
