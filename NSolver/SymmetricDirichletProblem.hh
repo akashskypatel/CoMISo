@@ -213,7 +213,7 @@ public:
 
   void add_triangle(const InputPositionVector2D& _current_positions, const ReferencePositionVector2D& _reference_positions);
 
-  ReferencePositionVector2D get_equilateral_refernce_positions(double _area = 1.0);
+  static ReferencePositionVector2D get_equilateral_refernce_positions(double _area = 1.0);
 
 private:
   SymmetricDirichletOneVertexElementSet element_set;

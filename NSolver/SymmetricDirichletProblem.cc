@@ -536,13 +536,13 @@ void SymmetricDirichletOneRingProblem::add_triangle(const InputPositionVector2D&
   element_set.instances().add_element(indices, constants);
 }
 
-SymmetricDirichletOneRingProblem::ReferencePositionVector2D SymmetricDirichletOneRingProblem::get_equilateral_refernce_positions(double _area)
+ SymmetricDirichletOneRingProblem::ReferencePositionVector2D SymmetricDirichletOneRingProblem::get_equilateral_refernce_positions(double _area)
 {
   ReferencePositionVector2D equilateral_reference;
   equilateral_reference << 0.0, 0.0,
                            1.0, 0.0,
                            0.5, 0.5*std::sqrt(3.0);
-  equilateral_reference *= _area / 0.5*0.5*std::sqrt(3.0);
+  equilateral_reference *= _area/(0.5*0.5*std::sqrt(3.0));
   return equilateral_reference;
 }
 
