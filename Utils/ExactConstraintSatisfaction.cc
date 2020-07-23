@@ -15,7 +15,7 @@ ExactConstraintSatisfaction::ExactConstraintSatisfaction()
 // ------------------------Helpfull Methods----------------------------------------
 
 //row1 belongs to vector b, row2 to a row in the matrix
-void ExactConstraintSatisfaction::swap_rows(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2){
+void ExactConstraintSatisfaction::swap_rows(SP_Matrix_R& mat, int row1, int row2){
 
   Eigen::SparseVector<int> row_2 = mat.row(row2);
   Eigen::SparseVector<int> row_1 = mat.row(row1);
@@ -31,7 +31,7 @@ void ExactConstraintSatisfaction::swap_rows(Eigen::SparseMatrix<int, Eigen::RowM
 
 //We want to eliminate row1 in mat with the row corresponding to row2 in mat
 //the row_2 has a pivot in (row2, col_p)
-void ExactConstraintSatisfaction::eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2, int pivot_column)
+void ExactConstraintSatisfaction::eliminate_row(SP_Matrix_R& mat, int row1, int row2, int pivot_column)
 {
 
 //  int pivot_column = -1;
@@ -160,16 +160,17 @@ int ExactConstraintSatisfaction::lcm(const int a, const int b)
   return (a/gcd(a,b)) * b;
 }
 
-int ExactConstraintSatisfaction::lcm_list(const std::list<int> D)
+int ExactConstraintSatisfaction::lcm(const std::vector<int>& D)
 {
   int lcm_D = 1;
-  for(int d : D){
+  for(int d : D)
+  {
     lcm_D = lcm(lcm_D, d);
   }
   return lcm_D;
 }
 
-int ExactConstraintSatisfaction::index_pivot(const sparseVec row)
+int ExactConstraintSatisfaction::index_pivot(const sparseVec& row)
 {
 
   for(sparseVec::InnerIterator it(row); it; ++it)
@@ -366,21 +367,10 @@ void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b
     auto pivot_row = get_pivot_row_new(A, _A, k);
 
     if(pivot_row == -1)
-    {                                    //there is no pivot in this column
-      std::list<int> D;
-      D.clear();
-
-      for(SP_Matrix_C::InnerIterator it(A, k); it; ++it)
-      {
-        if(it.value() != 0 && it.index() <= k && it.index() < number_pivots_)
-        {
-          int pivot_col = index_pivot(A.row(it.index()));
-          D.push_front(A.coeff(it.index(), pivot_col));
-        }
-      }
-
+    {
+      //there is no pivot in this column
+      auto D = get_divisors_new(A, _A, k);
       x.coeffRef(k) = makeDiv(D, x.coeffRef(k));            //fix free variables so they are in F_delta
-
     }
     else
     {
@@ -418,12 +408,12 @@ void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b
 
 }
 
-double ExactConstraintSatisfaction::makeDiv(const std::list<int>& D, double x)
+double ExactConstraintSatisfaction::makeDiv(const std::vector<int>& D, double x)
 {
   if(D.empty()){
     return F_delta(x);
   }
-  int d = lcm_list(D);
+  int d = lcm(D);
   double result = F_delta(x/d) * d;
   return result;
 
@@ -534,5 +524,37 @@ int ExactConstraintSatisfaction::get_pivot_row_new(const SP_Matrix_C& A, const S
     return row;
 
   return -1;
+}
+
+std::vector<int> ExactConstraintSatisfaction::get_divisors_student(const ExactConstraintSatisfaction::SP_Matrix_C& A, int col)
+{
+  std::vector<int> D;
+  for(SP_Matrix_C::InnerIterator it(A, col); it; ++it)
+  {
+    COMISO_THROW_TODO_if(it.value() == 0, "There should be no zeros left in the matrix");
+    if(it.value() != 0 && it.index() <= col && it.index() < number_pivots_)
+    {
+      int pivot_col = index_pivot(A.row(it.index()));
+      D.push_back(A.coeff(it.index(), pivot_col));
+    }
+  }
+
+  return D;
+}
+
+std::vector<int> ExactConstraintSatisfaction::get_divisors_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col)
+{
+  std::vector<int> D;
+  for(SP_Matrix_C::InnerIterator it(A, col); it; ++it)
+  {
+    COMISO_THROW_TODO_if(it.value() == 0,              "There should be no zeros left in the matrix");
+    if (it.index() >= number_pivots_)
+      std::cout << A << std::endl;
+    COMISO_THROW_TODO_if(it.index() >= number_pivots_, "The matrix should only contain number_pivots non empty rows");
+    COMISO_THROW_TODO_if(it.index() > col,             "The matrix should not contain elements below the diagonal");
+
+    D.push_back(SP_Matrix_R::InnerIterator(_A, it.index()).value());
+  }
+  return D;
 }
 

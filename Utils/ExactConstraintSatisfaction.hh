@@ -28,12 +28,12 @@ public:
     int    gcd_row(const Eigen::SparseVector<int> row, const int b);
 
     int    lcm(const int a, const int b);
-    int    lcm_list(const std::list<int> D);
+    int    lcm(const std::vector<int>& D);
 
-    void   swap_rows(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat,  int row1, int row2);
-    void   eliminate_row(Eigen::SparseMatrix<int, Eigen::RowMajor>& mat, int row1, int row2, int pivot_column);
+    void   swap_rows(SP_Matrix_R& mat,  int row1, int row2);
+    void   eliminate_row(SP_Matrix_R& mat, int row1, int row2, int pivot_column);
     int    largest_exponent(const Eigen::VectorXd& x);
-    int    index_pivot(const sparseVec row);
+    int    index_pivot(const sparseVec& row);
     double F_delta(double x);
     double get_delta();
 
@@ -45,13 +45,16 @@ public:
     //-------------------Evaluation--------------------------------------------
 
     void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
-    double makeDiv(const std::list<int>& D, double x);
+    double makeDiv(const std::vector<int>& D, double x);
     double safeDot(const std::list<std::pair<int, double>>& S);
 
 private:
 
     int get_pivot_row_student(const SP_Matrix_C& A, int col);
     int get_pivot_row_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col);
+
+    std::vector<int> get_divisors_student(const SP_Matrix_C& A, int col);
+    std::vector<int> get_divisors_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col);
 
     //-----------------------helpfull variables-------------------------------
 
