@@ -46,15 +46,20 @@ public:
 
     void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
     double makeDiv(const std::vector<int>& D, double x);
-    double safeDot(const std::list<std::pair<int, double>>& S);
+    double safeDot(const std::vector<std::pair<int, double> >& S);
 
 private:
+
+    // for evaluation
 
     int get_pivot_row_student(const SP_Matrix_C& A, int col);
     int get_pivot_row_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col);
 
     std::vector<int> get_divisors_student(const SP_Matrix_C& A, int col);
     std::vector<int> get_divisors_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col);
+
+    std::vector<std::pair<int, double>> get_dot_product_elements_student(const SP_Matrix_C& A, const Eigen::VectorXd& x, int k, int pivot_row);
+    std::vector<std::pair<int, double>> get_dot_product_elements_new(const SP_Matrix_R& A, const Eigen::VectorXd& x, int pivot_row);
 
     //-----------------------helpfull variables-------------------------------
 

@@ -375,19 +375,7 @@ void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b
     else
     {
 
-      std::list<std::pair<int, double>> S;
-      S.clear();
-      for(int i = k+1; i < cols; i++)
-      {                      //construct the list S to do the dot Product
-        std::pair<int, double> tuple;
-        tuple.first = A.coeff(pivot_row,i);
-        double test =x.coeff(i) / A.coeff(pivot_row,k);
-        if(x.coeff(i) != ( test * A.coeff(pivot_row,k)))
-          std::cout << "WARNING: can't devide" << " in row : " << i << std::endl;
-        tuple.second = x.coeff(i) / A.coeff(pivot_row,k);
-        if(tuple.first != 0)
-          S.push_front(tuple);
-      }
+      auto S = get_dot_product_elements_new(_A, x, pivot_row);
 
       double divided_B = b.coeffRef(pivot_row);
       divided_B = F_delta(divided_B / A.coeffRef(pivot_row, k));
@@ -419,64 +407,72 @@ double ExactConstraintSatisfaction::makeDiv(const std::vector<int>& D, double x)
 
 }
 
-double ExactConstraintSatisfaction::safeDot(const std::list<std::pair<int, double> >& S)
+double ExactConstraintSatisfaction::safeDot(const std::vector<std::pair<int, double> >& S)
 {
-  if(S.empty()) //case all Cij are zero after the pivot
+  if (S.empty()) //case all Cij are zero after the pivot
     return 0;
   int safebreak = 9999999;
-  std::list<std::pair<int, double>> P, N;
-  P.clear();
-  N.clear();
+  std::vector<std::pair<int, double>> P;
+  std::vector<std::pair<int, double>> N;
+
   int k = 0;
   double r = 0;                                         //return value of the dot
 
-  for(std::pair<int, double> element : S){
+  for(auto element : S){
     if(element.first * element.second > 0)
     {
       element.first = std::abs(element.first);
       element.second = std::abs(element.second);
-      P.push_front(element);
+      P.push_back(element);
     }
     else if(element.first * element.second < 0)
     {
       element.first = std::abs(element.first);
       element.second = - std::abs(element.second);
-      N.push_front(element);
+      N.push_back(element);
     }
   }
 
-  while((!P.empty() || !N.empty()) && safebreak > 0){
-
+  while((!P.empty() || !N.empty()) && safebreak > 0)
+  {
     safebreak--;                                        //break out of the while after an amount of time
-    if(!P.empty() && (r < 0 || N.empty())){
-      const std::pair<int, double> element = P.front();
-      P.pop_front();
+    if(!P.empty() && (r < 0 || N.empty()))
+    {
+      const std::pair<int, double> element = P.back();
+      P.pop_back();
       double test_value = element.second;
-      if(test_value < 0.00000001){            //to prevent overflow through the dividing
+      if(test_value < 0.00000001)
+      { //to prevent overflow through the dividing
         k = element.first;
-      }else{
+      }
+      else
+      {
         k = std::min(element.first, static_cast<int>(std::floor((delta_ - r)/element.second)));
       }
       r = r + k * element.second;
       if(k < element.first)
-        P.push_front({element.first - k, element.second});
-
-    }else{
-
-      const std::pair<int, double> element = N.front();
-      N.pop_front();
+        P.push_back({element.first - k, element.second});
+    }
+    else
+    {
+      const std::pair<int, double> element = N.back();
+      N.pop_back();
       double test_value = element.second;
-      if(std::abs(test_value) < 0.00000001){            //to prevent overflow through the dividing
+      if(std::abs(test_value) < 0.00000001)
+      {            //to prevent overflow through the dividing
         k = element.first;
-      }else{
+      }
+      else
+      {
         k = std::min(element.first, static_cast<int>(std::floor((-delta_ - r)/element.second)));
       }
       r = r + k * element.second;
       if(k < element.first)
-        N.push_front({element.first - k, element.second});
+        N.push_back({element.first - k, element.second});
     }
 
-    if(k == 0){
+    if(k == 0)
+    {
       std::cout << "ERROR: The representable range of double values (delta) is to small (ExactConstraintSatisfaction.cc)" << std::endl;
       return -99999999;
     }
@@ -556,5 +552,43 @@ std::vector<int> ExactConstraintSatisfaction::get_divisors_new(const SP_Matrix_C
     D.push_back(SP_Matrix_R::InnerIterator(_A, it.index()).value());
   }
   return D;
+}
+
+std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_product_elements_student(const SP_Matrix_C& A, const Eigen::VectorXd& x,  int k, int pivot_row)
+{
+  std::vector<std::pair<int, double>> S;
+  int cols = A.cols();
+  for(int i = k+1; i < cols; i++)
+  {                      //construct the list S to do the dot Product
+    std::pair<int, double> pair;
+    pair.first = A.coeff(pivot_row,i);
+    double test = x.coeff(i) / A.coeff(pivot_row,k);
+    if(x.coeff(i) != ( test * A.coeff(pivot_row,k)))
+      std::cout << "WARNING: can't devide" << " in row : " << i << std::endl;
+    pair.second = x.coeff(i) / A.coeff(pivot_row,k);
+    if(pair.first != 0)
+      S.push_back(pair);
+  }
+
+  return S;
+}
+
+std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_product_elements_new(const SP_Matrix_R& A, const Eigen::VectorXd& x, int pivot_row)
+{
+  std::vector<std::pair<int, double>> S;
+
+  SP_Matrix_R::InnerIterator it(A, pivot_row);
+  auto pivot_val = it.value();
+
+  while (++it)
+  {
+    std::pair<int, double> pair;
+    pair.first = it.value();
+    auto tmp = x.coeff(it.index());
+    COMISO_THROW_TODO_if((tmp / pivot_val) * pivot_val != tmp, "element in x is not divisible by pivot element");
+    pair.second = tmp / pivot_val;
+    S.push_back(pair);
+  }
+  return S;
 }
 
