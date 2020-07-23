@@ -20,18 +20,18 @@ public:
     typedef Eigen::SparseMatrix<int, Eigen::RowMajor> SP_Matrix_R;
 
     //-----------------------helpfull methods---------------------------------
-    void   print_matrix(const Eigen::SparseMatrix<int, Eigen::RowMajor> A);
+    void   print_matrix(const SP_Matrix_R& A);
     void   print_vector(Eigen::VectorXi b);
 
 
     int    gcd(const int a, const int b);
-    int    gcd_row(const Eigen::SparseVector<int> row, const int b);
+    int    gcd_row(const SP_Matrix_R& A, int row, const int b);
 
     int    lcm(const int a, const int b);
     int    lcm(const std::vector<int>& D);
 
     void   swap_rows(SP_Matrix_R& mat,  int row1, int row2);
-    void   eliminate_row(SP_Matrix_R& mat, int row1, int row2, int pivot_column);
+    void   eliminate_row(SP_Matrix_R& mat, Eigen::VectorXi& b, int row1, int row2, int pivot_column);
     int    largest_exponent(const Eigen::VectorXd& x);
     int    index_pivot(const sparseVec& row);
     double F_delta(double x);
@@ -44,11 +44,16 @@ public:
 
     //-------------------Evaluation--------------------------------------------
 
-    void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
+    void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd& values);
     double makeDiv(const std::vector<int>& D, double x);
     double safeDot(const std::vector<std::pair<int, double> >& S);
+    void   evaluate(const SP_Matrix_R& _A, const Eigen::VectorXi& b, Eigen::VectorXd& x);
 
 private:
+
+    // for IREF
+    int get_pivot_col_student(SP_Matrix_R& _A, int k, int& col_index);
+    int get_pivot_col_new(SP_Matrix_R& _A, int k, int& col_index);
 
     // for evaluation
 
