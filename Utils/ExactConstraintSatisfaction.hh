@@ -39,16 +39,19 @@ public:
 
     //--------------------matrix transformation-------------------------------
 
-    void   IREF_Gaussian(Eigen::SparseMatrix<int, Eigen::RowMajor>& A, Eigen::VectorXi& b, const Eigen::VectorXd x);
-    void   IRREF_Jordan(Eigen::SparseMatrix<int, Eigen::RowMajor>& A, Eigen::VectorXi& b);
+    void   IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd x);
+    void   IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& b);
 
     //-------------------Evaluation--------------------------------------------
 
-    void   evaluation(Eigen::SparseMatrix<int, Eigen::RowMajor>& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
+    void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd values);
     double makeDiv(const std::list<int>& D, double x);
     double safeDot(const std::list<std::pair<int, double>>& S);
 
 private:
+
+    int get_pivot_row_student(const SP_Matrix_C& A, int col);
+    int get_pivot_row_new(const SP_Matrix_C& A, const SP_Matrix_R& _A, int col);
 
     //-----------------------helpfull variables-------------------------------
 
