@@ -6,8 +6,9 @@
 
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <vector>
-#include <list>
 #include <time.h>
+
+namespace COMISO {
 
 class COMISODLLEXPORT ExactConstraintSatisfaction
 {
@@ -39,12 +40,12 @@ public:
 
     //--------------------matrix transformation-------------------------------
 
-    void   IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd x);
+    void   IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd& x);
     void   IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& b);
 
     //-------------------Evaluation--------------------------------------------
 
-    void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd& values);
+    void   evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x);
     double makeDiv(const std::vector<int>& D, double x);
     double safeDot(const std::vector<std::pair<int, double> >& S);
     void   evaluate(const SP_Matrix_R& _A, const Eigen::VectorXi& b, Eigen::VectorXd& x);
@@ -72,5 +73,7 @@ private:
     int    largest_exponent_ = 0;
     double delta_ = 0;
 };
+
+}
 
 #endif // EXACTCONSTRAINTSATISFACTION_HH

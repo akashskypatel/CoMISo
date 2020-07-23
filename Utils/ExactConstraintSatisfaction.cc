@@ -6,6 +6,8 @@
 #include <CoMISo/Utils/CoMISoError.hh>
 #include <vector>
 
+namespace COMISO {
+
 ExactConstraintSatisfaction::ExactConstraintSatisfaction()
 {
 
@@ -164,7 +166,7 @@ double ExactConstraintSatisfaction::get_delta()
 }
 
 // ----------------------Matrix transformation-----------------------------------
-void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd x){
+void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd& x){
 
   number_pivots_ = 0;
   int rows = A.rows();        //number of rows
@@ -253,7 +255,7 @@ void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& 
 
 //-------------------------------------Evaluation--------------------------------------------------------------------
 
-void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x, const Eigen::VectorXd& values)
+void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x)
 {
   //debug
   double time_G = 0.0;
@@ -290,7 +292,7 @@ void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b
   //debug
 
   std::cout << "largest Expo" << std::endl;
-  largest_exponent(values);
+  largest_exponent(x);
 
   evaluate(_A, b, x);
 
@@ -571,5 +573,7 @@ std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_produc
     S.push_back(pair);
   }
   return S;
+}
+
 }
 
