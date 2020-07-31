@@ -33,7 +33,9 @@ public:
 
     void   swap_rows(SP_Matrix_R& mat,  int row1, int row2);
     void   eliminate_row(SP_Matrix_R& mat, Eigen::VectorXi& b, int row1, int row2, int pivot_column);
-    int    largest_exponent(const Eigen::VectorXd& x);
+    void   largest_exponent(const Eigen::VectorXd& x);
+    void   set_largest_exponent(int _exponent);
+    static int compute_largest_exponent(const Eigen::VectorXd& x);
     int    index_pivot(const sparseVec& row);
     double F_delta(double x);
     double get_delta();

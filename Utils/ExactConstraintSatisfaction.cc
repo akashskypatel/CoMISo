@@ -9,6 +9,8 @@
 namespace COMISO {
 
 ExactConstraintSatisfaction::ExactConstraintSatisfaction()
+  :
+    largest_exponent_(std::numeric_limits<int>::min())
 {
 
 }
@@ -110,16 +112,23 @@ void ExactConstraintSatisfaction::print_vector(Eigen::VectorXi b)
   std::cout << std::endl;
 }
 
-int ExactConstraintSatisfaction::largest_exponent(const Eigen::VectorXd& x)
+void ExactConstraintSatisfaction::largest_exponent(const Eigen::VectorXd& x)
 {
+  // only compute largest component if it was not set from the outside
+  if (largest_exponent_ == std::numeric_limits<int>::min())
+    set_largest_exponent(std::max(compute_largest_exponent(x)+2, -65));
+}
 
-  int expo = -65;
-  for(int i = 0; i < x.size(); i++)
-  {
-    expo = std::max(expo, static_cast<int>(std::ceil(std::log2(std::abs(x.coeffRef(i)))) + 2));
-  }
-  largest_exponent_ = expo;
-  delta_ = std::pow(2, expo);
+void ExactConstraintSatisfaction::set_largest_exponent(int _exponent)
+{
+  largest_exponent_ = _exponent;
+  delta_ = std::pow(2, largest_exponent_);
+}
+
+int ExactConstraintSatisfaction::compute_largest_exponent(const Eigen::VectorXd& x)
+{
+  double max_elem = std::max(x.maxCoeff(), -x.minCoeff());
+  auto expo = static_cast<int>(std::ceil(std::log2(max_elem)));
   return expo;
 }
 
