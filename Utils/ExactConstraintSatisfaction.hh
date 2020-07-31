@@ -20,11 +20,6 @@ public:
     typedef Eigen::SparseMatrix<int, Eigen::ColMajor> SP_Matrix_C;
     typedef Eigen::SparseMatrix<int, Eigen::RowMajor> SP_Matrix_R;
 
-    //-----------------------helpfull methods---------------------------------
-    void   print_matrix(const SP_Matrix_R& A);
-    void   print_vector(Eigen::VectorXi b);
-
-
     int    gcd(const int a, const int b);
     int    gcd_row(const SP_Matrix_R& A, int row, const int b);
 

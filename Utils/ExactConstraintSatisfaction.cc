@@ -37,8 +37,11 @@ void ExactConstraintSatisfaction::swap_rows(SP_Matrix_R& mat, int row1, int row2
 //the row_2 has a pivot in (row2, col_p)
 void ExactConstraintSatisfaction::eliminate_row(SP_Matrix_R& mat, Eigen::VectorXi& b, int row1, int row2, int pivot_column)
 {
-  if(pivot_column == -1)
-    std::cout << "Error in eliminate_row (ExactConstraintSatsfaction.cc) : expected a pivot but didn't find any." << std::endl;
+  if(pivot_column < 0)
+  {
+    DEB_error("Pivot column is negative");
+    return;
+  }
 
   int pivot_row1 = mat.coeff(row1, pivot_column);     //the element under the pivot
 
@@ -88,28 +91,6 @@ int ExactConstraintSatisfaction::gcd_row(const SP_Matrix_R& A, int row, const in
   if(is_negativ)
     gcdValue = std::abs(gcdValue) * -1;
   return gcdValue;
-}
-
-void ExactConstraintSatisfaction::print_matrix(const SP_Matrix_R& A){
-
-  for(int i = 0; i < A.rows(); i++){
-    std::cout << "row: " << i << " ";
-    for(SP_Matrix_R::InnerIterator it(A, i); it; ++it){
-      std::cout << "(" << it.index() << ", " << it.value() << "), ";
-    }
-
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
-}
-
-void ExactConstraintSatisfaction::print_vector(Eigen::VectorXi b)
-{
-  std::cout << "the vector contains the elements: ";
-  for(int i = 0; i < b.size(); i++){
-    std::cout << b.coeffRef(i) << " ";
-  }
-  std::cout << std::endl;
 }
 
 void ExactConstraintSatisfaction::largest_exponent(const Eigen::VectorXd& x)
@@ -227,6 +208,7 @@ void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi&
       eliminate_row(A, b, i, k, col_p);
     }
   }
+  A.prune(0.0 , 0);
 }
 
 void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& b)
@@ -266,78 +248,37 @@ void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& 
 
 void ExactConstraintSatisfaction::evaluation(SP_Matrix_R& _A, Eigen::VectorXi& b, Eigen::VectorXd& x)
 {
-  //debug
-  double time_G = 0.0;
-  double time_J = 0.0;
-  double time_e = 0.0;
-  double time_count;
-  //debug
-
-  time_count = clock();
   IREF_Gaussian(_A, b, x);
-  time_G = clock() - time_count;
-  time_G = time_G/CLOCKS_PER_SEC;
-  _A.prune(0.0 , 0);
-  std::cout << "error is after Gaus: " << (_A.cast<double>() * x).squaredNorm() << std::endl;
-
-  //debug
-  time_count = clock();
-  //debug
 
   IRREF_Jordan(_A, b);
 
-  //debug
-  time_J = clock() - time_count;
-  time_J = time_J/CLOCKS_PER_SEC;
-  //debug
-
-//  _A.prune(0.0 , 0);
-//  _A.makeCompressed();
-//  _A.finalize();
-  std::cout << "error is after Jordan: " << (_A.cast<double>() * x).squaredNorm() << std::endl;
-
-  //debug
-  time_count = clock();
-  //debug
-
-  std::cout << "largest Expo" << std::endl;
   largest_exponent(x);
 
   evaluate(_A, b, x);
-
-  //debug
-  time_e = clock() - time_count;
-  time_e = time_e/CLOCKS_PER_SEC;
-
-  std::cout.precision(64);
-  std::cout << "time for IREF: " << time_G << " Time for IRREF: " << time_J<< " Time for evaluation: " << time_e << std::endl;
-  //debug
-
 }
 
 double ExactConstraintSatisfaction::makeDiv(const std::vector<int>& D, double x)
 {
-  if(D.empty()){
+  if(D.empty())
     return F_delta(x);
-  }
+
   int d = lcm(D);
   double result = F_delta(x/d) * d;
   return result;
-
 }
 
 double ExactConstraintSatisfaction::safeDot(const std::vector<std::pair<int, double> >& S)
 {
   if (S.empty()) //case all Cij are zero after the pivot
     return 0;
-  int safebreak = 9999999;
   std::vector<std::pair<int, double>> P;
   std::vector<std::pair<int, double>> N;
 
   int k = 0;
-  double r = 0;                                         //return value of the dot
+  double result = 0;
 
-  for(auto element : S){
+  for(auto element : S)
+  {
     if(element.first * element.second > 0)
     {
       element.first = std::abs(element.first);
@@ -352,10 +293,10 @@ double ExactConstraintSatisfaction::safeDot(const std::vector<std::pair<int, dou
     }
   }
 
-  while((!P.empty() || !N.empty()) && safebreak > 0)
+  int safebreak = 9999999;
+  while((!P.empty() || !N.empty()))
   {
-    safebreak--;                                        //break out of the while after an amount of time
-    if(!P.empty() && (r < 0 || N.empty()))
+    if(!P.empty() && (result < 0 || N.empty()))
     {
       const std::pair<int, double> element = P.back();
       P.pop_back();
@@ -366,9 +307,9 @@ double ExactConstraintSatisfaction::safeDot(const std::vector<std::pair<int, dou
       }
       else
       {
-        k = std::min(element.first, static_cast<int>(std::floor((delta_ - r)/element.second)));
+        k = std::min(element.first, static_cast<int>(std::floor((delta_ - result)/element.second)));
       }
-      r = r + k * element.second;
+      result = result + k * element.second;
       if(k < element.first)
         P.push_back({element.first - k, element.second});
     }
@@ -377,37 +318,38 @@ double ExactConstraintSatisfaction::safeDot(const std::vector<std::pair<int, dou
       const std::pair<int, double> element = N.back();
       N.pop_back();
       double test_value = element.second;
-      if(std::abs(test_value) < 0.00000001)
-      {            //to prevent overflow through the dividing
+      if(std::abs(test_value) < 0.00000001) //to prevent overflow through the dividing
+      {
         k = element.first;
       }
       else
       {
-        k = std::min(element.first, static_cast<int>(std::floor((-delta_ - r)/element.second)));
+        k = std::min(element.first, static_cast<int>(std::floor((-delta_ - result)/element.second)));
       }
-      r = r + k * element.second;
+      result = result + k * element.second;
       if(k < element.first)
         N.push_back({element.first - k, element.second});
     }
 
     if(k == 0)
     {
-      std::cout << "ERROR: The representable range of double values (delta) is to small (ExactConstraintSatisfaction.cc)" << std::endl;
+      DEB_error("The representable range of double values (delta) is to small");
       return -99999999;
     }
-  }
-  if(safebreak == 0)
-    std::cout << "WARNING:: the set number of Iterations in Method : safedot is exceeded" << std::endl;
 
-  return r;
+    COMISO_THROW_TODO_if(--safebreak == 0, "Infinite loop detected");
+  }
+
+  return result;
 }
 
 void ExactConstraintSatisfaction::evaluate(const ExactConstraintSatisfaction::SP_Matrix_R& _A, const Eigen::VectorXi& b, Eigen::VectorXd& x)
 {
+  DEB_enter_func;
+
   SP_Matrix_C A = _A;         //change the matrix type to allow easier iteration
 
   int cols = A.cols();
-  std::cout << "findPivo" << std::endl;
   for(int k = cols -1; k >= 0; k--)
   {
     auto pivot_row = get_pivot_row_new(A, _A, k);
@@ -424,8 +366,8 @@ void ExactConstraintSatisfaction::evaluate(const ExactConstraintSatisfaction::SP
 
       double divided_B = b.coeffRef(pivot_row);
       divided_B = F_delta(divided_B / A.coeffRef(pivot_row, k));
-      if( divided_B * A.coeffRef(pivot_row, k) !=  static_cast<double>(b.coeffRef(pivot_row)))
-        std::cout << "WARNING: Can't handle the right hand side perfectly" << std::endl;
+      DEB_warning_if( divided_B * A.coeffRef(pivot_row, k) !=  static_cast<double>(b.coeffRef(pivot_row)), 2,
+                     "Can't handle the right hand side perfectly");
       x.coeffRef(k) = divided_B - safeDot(S);
     }
   }
@@ -535,9 +477,7 @@ std::vector<int> ExactConstraintSatisfaction::get_divisors_new(const SP_Matrix_C
   std::vector<int> D;
   for(SP_Matrix_C::InnerIterator it(A, col); it; ++it)
   {
-    COMISO_THROW_TODO_if(it.value() == 0,              "There should be no zeros left in the matrix");
-    if (it.index() >= number_pivots_)
-      std::cout << A << std::endl;
+    COMISO_THROW_TODO_if(it.value() == 0, "There should be no zeros left in the matrix");
     COMISO_THROW_TODO_if(it.index() >= number_pivots_, "The matrix should only contain number_pivots non empty rows");
     COMISO_THROW_TODO_if(it.index() > col,             "The matrix should not contain elements below the diagonal");
 
@@ -548,6 +488,7 @@ std::vector<int> ExactConstraintSatisfaction::get_divisors_new(const SP_Matrix_C
 
 std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_product_elements_student(const SP_Matrix_C& A, const Eigen::VectorXd& x,  int k, int pivot_row)
 {
+  DEB_enter_func;
   std::vector<std::pair<int, double>> S;
   int cols = A.cols();
   for(int i = k+1; i < cols; i++)
@@ -555,8 +496,8 @@ std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_produc
     std::pair<int, double> pair;
     pair.first = A.coeff(pivot_row,i);
     double test = x.coeff(i) / A.coeff(pivot_row,k);
-    if(x.coeff(i) != ( test * A.coeff(pivot_row,k)))
-      std::cout << "WARNING: can't devide" << " in row : " << i << std::endl;
+    DEB_warning_if(x.coeff(i) != ( test * A.coeff(pivot_row,k)), 2,
+                   "can't devide" << " in row : " << i);
     pair.second = x.coeff(i) / A.coeff(pivot_row,k);
     if(pair.first != 0)
       S.push_back(pair);
