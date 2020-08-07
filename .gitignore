@@ -5,3 +5,4 @@ Config/config.hh
 *.swp
 .DS_Store
 /build*/
+CMakeLists.txt.user*

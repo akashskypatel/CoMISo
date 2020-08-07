@@ -77,7 +77,7 @@ public:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_ARPACKSOLVER_C)
 #define COMISO_ARPACKSOLVER_TEMPLATES
-#include "ArpackSolver.cc"
+//#include "ArpackSolver.cc"
 #endif
 //=============================================================================
 #endif // COMISO_SUITESPARSE_AVAILABLE
