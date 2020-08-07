@@ -93,104 +93,37 @@ public:
 // Example main
 int main(void)
 {
-//  std::cout << "---------- 1) Get an instance of a problem..." << std::endl;
-//  SmallNProblem problem;
+  std::cout << "---------- 1) Get an instance of a problem..." << std::endl;
+  SmallNProblem problem;
 
-//  std::cout << "---------- 2) Set up constraints..." << std::endl;
+  std::cout << "---------- 2) Set up constraints..." << std::endl;
 
-/*
-  int n_constraints = 2; // there will be one constraints
-  Eigen::VectorXd b;
-  Eigen::SparseMatrix<double> A(n_constraints, problem.n_unknowns());
-  //A.resize(n_constraints, problem.n_unknowns());
-  //A.setZero();
-  b.resize(n_constraints);
-  b.setZero();
+
+  int n_constraints = 2; // there will be two constraints
+  Eigen::VectorXi b;
+  COMISO::ExactConstraintSatisfaction::SP_Matrix_R A(n_constraints, problem.n_unknowns());
+  b.setZero(n_constraints);
 
   // first constraint: first variable equals three times second
   //different number of constraints :
-  if(n_constraints == 1){
+  if(n_constraints == 2)
+  {
     A.coeffRef(0,0) =  2;
-    A.coeffRef(0,1) = -6;
-    b.coeffRef(0)   =  0;
-  }else if(n_constraints == 3){
-    A.coeffRef(0,0) =  2;
-    A.coeffRef(0,1) = -6;
-    A.coeffRef(1,0) =  5;
-    A.coeffRef(1,1) =  0;
-    A.coeffRef(2,0) =  0;
-    A.coeffRef(2,1) = -3;
-    b.coeffRef(0)   =  0;
-    b.coeffRef(1)   =  15;
-    b.coeffRef(2)   =  -3;
-  }else if(n_constraints == 2){
-    //A.coeffRef(0,0) =  2;
-    //A.coeffRef(0,1) =  -1;
+    A.coeffRef(0,1) =  -1;
     b.coeffRef(0)   =  0;
     A.coeffRef(1,0) =  -2;
-    //A.coeffRef(1,1) =  8;
+    A.coeffRef(1,1) =  8;
     b.coeffRef(1)   =  21;
-  }else if(n_constraints == 4){
-    A.coeffRef(0,0) =  2;
-    A.coeffRef(0,1) = -6;
-    b.coeffRef(0)   =  0;
-    A.coeffRef(1,0) =  2;
-    A.coeffRef(1,1) = -6;
-    b.coeffRef(1)   =  0;
-    A.coeffRef(2,0) =  2;
-    A.coeffRef(2,1) = -6;
-    b.coeffRef(2)   =  0;
-    A.coeffRef(3,0) =  2;
-    A.coeffRef(3,1) = -6;
-    b.coeffRef(3)   =  0;
   }
-*/
 
-
-//  int n_constraints = 20;
-//  int rows = n_constraints;
-//  int cols = 100;
-//  double error = 0.00000000001;
-
-//  std::vector<Eigen::Triplet<int>> triplets;
-//  Eigen::SparseMatrix<int> A(rows, cols);
-//  Eigen::VectorXd x(cols);
-//  Eigen::VectorXi b(rows);
-
-  //set triplets
-
-//  triplets.clear();
-//  for(int i = 0; i < rows; i++){
-//    if(i == 0){
-//      triplets.push_back({i,  0        , 1});
-//      triplets.push_back({i, (cols - 2), 1});
-//      triplets.push_back({i, (cols - 1), -1});
-//    }else{
-//      triplets.push_back({i,  0     ,  1});
-//      triplets.push_back({i,  i     ,  1});
-//      triplets.push_back({i, (i + 1), -1});
-//    }
-//  }
-//  A.setFromTriplets(triplets.begin(), triplets.end());
-
-  //set x_vec 1,2,3,4...
-
-//  for(int i = 0; i < cols; i++){
-//    x.coeffRef(i) = i+1 + error;
-//  }
-
-  //set b_vec = 0;
-
-//  b.setZero(rows);
-
-/*
-
-  std::cout << A << std::endl << b << std::endl;
+  std::cout << "Constraints: Ax = b with A = \n" << A << "and b = \n" << b << std::endl;
 
   std::cout << "---------- 3) Solve with Newton Solver..." << std::endl;
   COMISO::NewtonSolver nsolver;
   nsolver.set_verbosity(15);
-  nsolver.solve(&problem, A, b);
+  Eigen::SparseMatrix<double> Ad = A.cast<double>();
+  Eigen::VectorXd bd = b.cast<double>();
+  nsolver.solve(&problem, Ad, bd);
 
   std::cout << "---------- 4) Print solution..." << std::endl;
   std::cout << std::setprecision(100);
@@ -205,22 +138,20 @@ int main(void)
     x.coeffRef(i) = problem.solution[i];
 
   std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
-*/
 
- // std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
+  std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
 
-//  std::cout << "---------- 6) Try to exactly fulfill constraints..." << std::endl;
-
-//  ExactConstraintSatisfaction satisfy;
+  COMISO::ExactConstraintSatisfaction satisfy;
 //  satisfy.print_matrix(A);
-//  satisfy.evaluation(A, b, x);
+  satisfy.evaluation(A, b, x);
 
 
-//  std::cout << "values of vector x : " << x << std::endl;
+  for (unsigned int i = 0; i < problem.n_unknowns(); ++i)
+    std::cout << "x[" << i << "] = " << x[i] << std::endl;
 
-//  std::cout << "---------- 7) Check constraint violation again..." << std::endl;
+  std::cout << "---------- 7) Check constraint violation again..." << std::endl;
 
-//  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
+  std::cout << "Constraint violation: " << (A.cast<double>() *x - b.cast<double>()).squaredNorm() << std::endl;
 
 
   return 0;
