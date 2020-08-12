@@ -191,9 +191,9 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       {
         DEB_warning(2, "Numerical issues in KKT system");
         DEB_warning_if(!fact_ok, 2, "Factorization not ok");
-        DEB_warning_if(
+        DEB_line_if(
             kkt_res2 > KKT_res_eps, 3, "KKT Residuum too high: " << kkt_res2);
-        DEB_warning_if(constraint_res2 > max_allowed_constraint_violation2, 3,
+        DEB_line_if(constraint_res2 > max_allowed_constraint_violation2, 3,
             "Constraint violation too high: " << constraint_res2);
         // alternate hessian and constraints regularization
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
