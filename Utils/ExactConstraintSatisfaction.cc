@@ -4,6 +4,7 @@
 
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/Utils/CoMISoError.hh>
+#include <Base/Debug/DebOut.hh>
 #include <vector>
 
 namespace COMISO {
@@ -55,7 +56,7 @@ void ExactConstraintSatisfaction::eliminate_row(SP_Matrix_R& mat, Eigen::VectorX
 
   mat.row(row1) *= pivot_row2;
   mat.row(row1) -= pivot_row1 * mat.row(row2);
-  mat.row(row1) = mat.row(row1).pruned(0,0);
+  // mat.row(row1) = mat.row(row1).pruned(0,0); TODO: enable this
 
   int gcdValue = gcd_row(mat, row1, b.coeff(row1));
   mat.row(row1) /= gcdValue;
@@ -208,7 +209,7 @@ void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi&
       eliminate_row(A, b, i, k, col_p);
     }
   }
-  A.prune(0.0 , 0);
+  A.prune(0, 0);
 }
 
 void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& b)
@@ -241,7 +242,7 @@ void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& 
 
 //  A.makeCompressed();
 //  A.finalize();
-  A.prune(0.0, 0);
+  A.prune(0, 0);
 }
 
 //-------------------------------------Evaluation--------------------------------------------------------------------
