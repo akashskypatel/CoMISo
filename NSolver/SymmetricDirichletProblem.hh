@@ -146,8 +146,77 @@ public:
   /// remove all constraints
   void clear_constraints() { fix_points.clear();}
 
+  /// get reference positions for an equilateral triangle with the given area
+  ReferencePositionVector2D get_equilateral_refernce_positions(double _area = 1.0);
+
 private:
   SymmetricDirichletElementSet element_set;
+
+  std::vector<std::pair<int, double>> fix_points;
+};
+
+
+class SymmetricDirichletOneVertexElement
+{
+public:
+
+  // define dimensions
+  const static int NV = 2; // the one u and v coordinate of the single vertex that is optimized. u1, v1
+  const static int NC = 10; // the two other positions of the triangle u2, v2, u3, and v3, and the three reference positions of the triangle, x1, y1, x2, y2, x3, y3
+
+  typedef Eigen::Matrix<size_t,NV,1> VecI;
+  typedef Eigen::Matrix<double,NV,1> VecV;
+  typedef Eigen::Matrix<double,NC,1> VecC;
+  typedef Eigen::Triplet<double> Triplet;
+
+  typedef Eigen::Matrix<double,12,1> Vector12;
+  typedef Eigen::Matrix<adouble,2,2> Matrix2x2ad;
+  typedef Eigen::Matrix<double,2,2> Matrix2x2d;
+  typedef Eigen::Matrix<double,6,6> Matrix6x6;
+
+  SymmetricDirichletOneVertexElement(){}
+
+  double eval_f       (const VecV& _x, const VecC& _c);
+  void   eval_gradient(const VecV& _x, const VecC& _c, VecV& _g);
+  void   eval_hessian (const VecV& _x, const VecC& _c, std::vector<Triplet>& _triplets);
+
+  void project_hessian(Eigen::MatrixXd& H_orig, Eigen::MatrixXd& H_spd, double eps);
+
+  double max_feasible_step(const VecV& _x, const VecV& _v, const VecC& /*_c*/);
+};
+
+
+/** \class SymmetricDirichletOneRingProblem
+
+    A problem that allows you to add triangles with reference positions for which
+    the symmetric dirichlet energy should be minimized. Secial case of SymmetricDirichletProblem
+    that optimizes only a single vertex for which the user inputs all adjacent triangles.
+*/
+
+class COMISODLLEXPORT SymmetricDirichletOneRingProblem : public FiniteElementProblem
+{
+public:
+
+  typedef FiniteElementSet<SymmetricDirichletOneVertexElement> SymmetricDirichletOneVertexElementSet;
+
+  typedef Eigen::Matrix<size_t,3,1> IndexVector;
+  typedef Eigen::Matrix<double,3,2> InputPositionVector2D;
+  typedef Eigen::Matrix<double,3,2> ReferencePositionVector2D;
+  typedef Eigen::Matrix<double,3,3> ReferencePositionVector3D;
+
+  typedef Eigen::VectorXd             VectorD;
+  typedef Eigen::SparseMatrix<double> SMatrixD;
+
+
+  /// Default constructor
+  SymmetricDirichletOneRingProblem();
+
+  void add_triangle(const InputPositionVector2D& _current_positions, const ReferencePositionVector2D& _reference_positions);
+
+  static ReferencePositionVector2D get_equilateral_refernce_positions(double _area = 1.0);
+
+private:
+  SymmetricDirichletOneVertexElementSet element_set;
 
   std::vector<std::pair<int, double>> fix_points;
 };
