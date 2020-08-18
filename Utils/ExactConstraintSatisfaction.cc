@@ -56,7 +56,7 @@ void ExactConstraintSatisfaction::eliminate_row(SP_Matrix_R& mat, Eigen::VectorX
 
   mat.row(row1) *= pivot_row2;
   mat.row(row1) -= pivot_row1 * mat.row(row2);
-  // mat.row(row1) = mat.row(row1).pruned(0,0); TODO: enable this
+  mat.row(row1) = mat.row(row1).pruned(0,0);
 
   int gcdValue = gcd_row(mat, row1, b.coeff(row1));
   mat.row(row1) /= gcdValue;
