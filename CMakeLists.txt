@@ -10,13 +10,15 @@ my_add_subdir(Utils)
 
 include_directories(${PROJECT_SOURCE_DIR}/..)
 inc_3p_dir(Boost)
-inc_3p_dir(Eigen)
 inc_3p_dir(Gmm)
 nuget_inc_3p_dir(IPOPT)
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
-target_link_libraries(CoMISo Base)
+target_link_libraries(CoMISo 
+	PUBLIC Eigen
+	PUBLIC Base
+	)
 
 # generate dllexport macros on windows
 if (MSVC)
