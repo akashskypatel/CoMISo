@@ -134,10 +134,11 @@ protected:
   void pre_factorize(NProblemInterface* _quadratic_problem, const SMatrixD& _A, const VectorD& _b)
   {
     const int n  = _quadratic_problem->n_unknowns();
-    const int m  = _A.rows();
+    const int m  = static_cast<int>(_A.rows());
     const int nf = n+m;
 
     // get hessian of quadratic problem
+
     SMatrixD H(n,n);
     _quadratic_problem->eval_hessian(x_ls_.data(), H);
 
@@ -146,21 +147,30 @@ protected:
     std::vector< Triplet > trips;
     trips.reserve(H.nonZeros() + 2*_A.nonZeros());
 
-    // add elements of H
-    for (int k=0; k<H.outerSize(); ++k)
-      for (SMatrixD::InnerIterator it(H,k); it; ++it)
-        trips.push_back(Triplet(it.row(),it.col(),it.value()));
+    const auto add_triplet = [&trips](
+        const size_t _i, const size_t _j, const double _v)
+    {
+      trips.emplace_back(static_cast<int>(_i), static_cast<int>(_j), _v);
+    };
 
+    // add elements of H
+    for (int k = 0; k < H.outerSize(); ++k)
+    {
+      for (SMatrixD::InnerIterator it(H, k); it; ++it)
+        add_triplet(it.row(), it.col(), it.value());
+    }
     // add elements of _A
-    for (int k=0; k<_A.outerSize(); ++k)
-      for (SMatrixD::InnerIterator it(_A,k); it; ++it)
+    for (int k = 0; k < _A.outerSize(); ++k)
+    {
+      for (SMatrixD::InnerIterator it(_A, k); it; ++it)
       {
         // insert _A block below
-        trips.push_back(Triplet(it.row()+n,it.col(),it.value()));
+        add_triplet(it.row() + n, it.col(), it.value());
 
         // insert _A^T block right
-        trips.push_back(Triplet(it.col(),it.row()+n,it.value()));
+        add_triplet(it.col(), it.row() + n, it.value());
       }
+    }
 
     // create KKT matrix
     SMatrixD KKT(nf,nf);
@@ -175,8 +185,8 @@ protected:
 //      DEB_line(2, "-> re-try with regularized constraints...");
       std::cerr << "Eigen::SparseLU reported problem while factoring KKT system: " << lu_solver_.lastErrorMessage() << std::endl;
 
-      for( int i=0; i<m; ++i)
-        trips.push_back(Triplet(n+i,n+i,1e-9));
+      for (int i = 0; i < m; ++i)
+        add_triplet(n + i, n + i, 1e-9);
 
       // create KKT matrix
       KKT.setFromTriplets(trips.begin(), trips.end());
