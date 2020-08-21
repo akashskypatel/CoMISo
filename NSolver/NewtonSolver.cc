@@ -123,7 +123,7 @@ solve(NProblemGmmInterface* _problem)
 int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A, 
   const VectorD& _b)
 {
-  DEB_time_func(verbosity_);
+  DEB_time_func_def;
   converged_ = false;
 
   const double KKT_res_eps = 1e-6;
@@ -136,7 +136,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   // number of constraints
   size_t m = _b.size();
 
-  DEB_line(verbosity_, "optimize via Newton with " << n << " unknowns and " << m <<
+  DEB_line(2, "optimize via Newton with " << n << " unknowns and " << m <<
     " linear constraints");
 
   // initialize vectors of unknowns
@@ -191,12 +191,14 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       {
         DEB_warning(2, "Numerical issues in KKT system");
         DEB_warning_if(!fact_ok, 2, "Factorization not ok");
-        DEB_warning_if(kkt_res2 > KKT_res_eps, 2, "KKT Residuum too high: " << kkt_res2);
-        DEB_warning_if(constraint_res2 > max_allowed_constraint_violation2, 2, "Constraint violation too high: " << constraint_res2);
+        DEB_line_if(
+            kkt_res2 > KKT_res_eps, 3, "KKT Residuum too high: " << kkt_res2);
+        DEB_line_if(constraint_res2 > max_allowed_constraint_violation2, 3,
+            "Constraint violation too high: " << constraint_res2);
         // alternate hessian and constraints regularization
         if(reg_iters % 2 == 0 || regularize_constraints >= regularize_constraints_limit)
         {
-          DEB_line(verbosity_, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
+          DEB_line(2, "residual ^ 2 " << kkt_res2 << "->regularize hessian");
           if(regularize_hessian == 0.0)
             regularize_hessian = 1e-6;
           else
@@ -204,7 +206,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
         }
         else
         {
-          DEB_line(verbosity_, "residual^2 " << kkt_res2 << " -> regularize constraints");
+          DEB_line(2, "residual^2 " << kkt_res2 << " -> regularize constraints");
           if(regularize_constraints == 0.0)
             regularize_constraints = 1e-8;
           else
@@ -249,17 +251,16 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
       regularize_constraints_limit = regularize_constraints;
     }
 
-
-    DEB_line(verbosity_, "iter: " << iter
-      << ", f(x) = " << fx << ", t = " << t << " (tmax=" << t_max << ")"
-      << (t < t_max ? " _clamped_" : "")
-      << ", eps = [Newton decrement] = " << newton_decrement
-      << ", constraint violation prior = " << rhs.tail(m).norm()
-      << ", after = " << (_b - _A*x).norm()
-      << ", KKT residual^2 = " << kkt_res2);
+    DEB_line(4,
+        "iter: " << iter << ", f(x) = " << fx << ", t = " << t
+                 << " (tmax=" << t_max << ")" << (t < t_max ? " _clamped_" : "")
+                 << ", eps = [Newton decrement] = " << newton_decrement
+                 << ", constraint violation prior = " << rhs.tail(m).norm()
+                 << ", after = " << (_b - _A * x).norm()
+                 << ", KKT residual^2 = " << kkt_res2);
 
     // converged?
-    if(newton_decrement < eps_ || std::abs(t) < eps_ls_ )
+    if (newton_decrement < eps_ || std::abs(t) < eps_ls_)
     {
       converged_ = true;
       break;
