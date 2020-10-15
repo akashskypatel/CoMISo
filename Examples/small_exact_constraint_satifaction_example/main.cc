@@ -30,6 +30,9 @@
 #include <vector>
 
 #include <CoMISo/Utils/ExactConstraintSatisfaction.hh>
+
+#include <Base/Debug/DebConfig.hh>
+
 //------------------------------------------------------------------------------------------------------
 
 class SmallNProblem : public COMISO::NProblemInterface
@@ -120,10 +123,12 @@ int main(void)
 
   std::cout << "---------- 3) Solve with Newton Solver..." << std::endl;
   COMISO::NewtonSolver nsolver;
-  nsolver.set_verbosity(15);
   Eigen::SparseMatrix<double> Ad = A.cast<double>();
   Eigen::VectorXd bd = b.cast<double>();
-  nsolver.solve(&problem, Ad, bd);
+  {
+    Debug::ScopedOutputLevel output_lvl(0); // disable output for solve method
+    nsolver.solve(&problem, Ad, bd);
+  }
 
   std::cout << "---------- 4) Print solution..." << std::endl;
   std::cout << std::setprecision(100);
