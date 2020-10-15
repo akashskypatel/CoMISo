@@ -46,7 +46,7 @@ solve(NProblemGmmInterface* _problem)
     // check for convergence
     if( gmm::vect_norm2(g) < eps_)
     {
-      DEB_line(verbosity_, "Newton Solver converged after " << i << " iterations");
+      DEB_line(2, "Newton Solver converged after " << i << " iterations");
       _problem->store_result(P(x));
       return true;
     }
@@ -80,7 +80,7 @@ solve(NProblemGmmInterface* _problem)
           f = f_new;
           improvement = true;
 
-          DEB_line(verbosity_, "energy improved to " << f);
+          DEB_line(6, "energy improved to " << f);
         }
       }
 
@@ -97,7 +97,7 @@ solve(NProblemGmmInterface* _problem)
       else
       {
         _problem->store_result(P(x));
-        DEB_line(verbosity_, "Newton solver reached max regularization but did not "
+        DEB_warning(2, "Newton solver reached max regularization but did not "
           "converge");
         converged_ = false;
         return false;
@@ -105,7 +105,7 @@ solve(NProblemGmmInterface* _problem)
     }
   }
   _problem->store_result(P(x));
-  DEB_line(verbosity_, "Newton Solver did not converge!!! after iterations.");
+  DEB_warning(2, "Newton Solver did not converge!!! after iterations.");
   converged_ = false;
   return false;
 
