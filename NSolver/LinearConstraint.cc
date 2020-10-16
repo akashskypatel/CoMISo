@@ -37,7 +37,7 @@ LinearConstraint::LinearConstraint(const SVectorNC& _coeffs, const double _b, co
 
 int LinearConstraint::n_unknowns()
 {
-  return coeffs_.innerSize();
+  return static_cast<int>(coeffs_.innerSize());
 }
 
   void LinearConstraint::resize(const std::size_t _n)
@@ -103,7 +103,8 @@ void LinearConstraint::eval_gradient( const double* _x, SVectorNC& _g      )
 void LinearConstraint::eval_hessian    ( const double* _x, SMatrixNC& _h      )
 {
   _h.clear();
-  _h.resize(coeffs_.innerSize(), coeffs_.innerSize());
+  _h.resize(static_cast<unsigned int>(coeffs_.innerSize()),
+      static_cast<unsigned int>(coeffs_.innerSize()));
 }
 
 

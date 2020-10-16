@@ -4,6 +4,7 @@
 
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/Utils/CoMISoError.hh>
+#include <Base/Debug/DebOut.hh>
 #include <vector>
 
 namespace COMISO {
@@ -159,8 +160,8 @@ double ExactConstraintSatisfaction::get_delta()
 void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi& b, const Eigen::VectorXd& x){
 
   number_pivots_ = 0;
-  int rows = A.rows();        //number of rows
-  int cols = A.cols();        //number of columns
+  int rows = static_cast<int>(A.rows());        //number of rows
+  int cols = static_cast<int>(A.cols());        //number of columns
   int col_index  = 0;         //save the next column where we search for a pivot
 
   for (int k = 0; k < rows; k++)
@@ -208,7 +209,7 @@ void ExactConstraintSatisfaction::IREF_Gaussian(SP_Matrix_R& A, Eigen::VectorXi&
       eliminate_row(A, b, i, k, col_p);
     }
   }
-  A.prune(0.0 , 0);
+  A.prune(0, 0);
 }
 
 void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& b)
@@ -234,14 +235,14 @@ void ExactConstraintSatisfaction::IRREF_Jordan(SP_Matrix_R& A, Eigen::VectorXi& 
         break;
       if (it.value() == 0)
         continue;
-      eliminate_row(A, b, it.row(), k, pivot_col);
+      eliminate_row(A, b, static_cast<int>(it.row()), k, pivot_col);
     }
 
   }
 
 //  A.makeCompressed();
 //  A.finalize();
-  A.prune(0.0, 0);
+  A.prune(0, 0);
 }
 
 //-------------------------------------Evaluation--------------------------------------------------------------------
@@ -349,7 +350,7 @@ void ExactConstraintSatisfaction::evaluate(const ExactConstraintSatisfaction::SP
 
   SP_Matrix_C A = _A;         //change the matrix type to allow easier iteration
 
-  int cols = A.cols();
+  int cols = static_cast<int>(A.cols());
   for(int k = cols -1; k >= 0; k--)
   {
     auto pivot_row = get_pivot_row_new(A, _A, k);
@@ -377,7 +378,7 @@ void ExactConstraintSatisfaction::evaluate(const ExactConstraintSatisfaction::SP
 int ExactConstraintSatisfaction::get_pivot_col_student(SP_Matrix_R& _A, int k, int& col_index)
 {
   int pivot_row = -1;
-  int cols = _A.cols();
+  int cols = static_cast<int>(_A.cols());
   for(; col_index < cols; col_index++)
   {
 
@@ -402,8 +403,8 @@ int ExactConstraintSatisfaction::get_pivot_col_student(SP_Matrix_R& _A, int k, i
 
 int ExactConstraintSatisfaction::get_pivot_col_new(ExactConstraintSatisfaction::SP_Matrix_R& _A, int k, int& col_index)
 {
-  int cols = _A.cols();
-  int rows = _A.rows();
+  int cols = static_cast<int>(_A.cols());
+  int rows = static_cast<int>(_A.rows());
   for(; col_index < cols; col_index++)
   {
     for (int i = k; i < rows; ++i)
@@ -490,7 +491,7 @@ std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_produc
 {
   DEB_enter_func;
   std::vector<std::pair<int, double>> S;
-  int cols = A.cols();
+  int cols = static_cast<int>(A.cols());
   for(int i = k+1; i < cols; i++)
   {                      //construct the list S to do the dot Product
     std::pair<int, double> pair;

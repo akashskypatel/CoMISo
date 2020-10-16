@@ -447,8 +447,7 @@ endif ()
 # enable debug stuff
 set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 if (COMISO_ENABLE_DEBUG_OUTPUT)
-  #add_definitions(-DDEB_ON)
-  target_compile_definitions(CoMISo PRIVATE -DDEB_ON)
+  target_compile_definitions(CoMISo PUBLIC -DDEB_ON)
 endif ()
 
 if (WIN32)
