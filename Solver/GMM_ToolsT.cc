@@ -816,56 +816,52 @@ void eliminate_var_idx( const IntegerT           _evar,
 //-----------------------------------------------------------------------------
 
 
-template<class ScalarT, class VectorT, class RealT>
-void fix_var_csc_symmetric( const unsigned int                _i,
-			    const ScalarT                     _xi,
-			    typename gmm::csc_matrix<RealT>&  _A,
-			    VectorT&                          _x,
-			    VectorT&                          _rhs )
+template <class ScalarT, class VectorT, class RealT>
+void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
+    typename gmm::csc_matrix<RealT>& _A, VectorT& _x, VectorT& _rhs)
 {
-// GMM CSC FORMAT
-//     T *pr;        // values.
-//     IND_TYPE *ir; // row indices.
-//     IND_TYPE *jc; // column repartition on pr and ir.
+  // GMM CSC FORMAT
+  //     T *pr;        // values.
+  //     IND_TYPE *ir; // row indices.
+  //     IND_TYPE *jc; // column repartition on pr and ir.
 
   gmm::size_type n = _A.nc;
 
   // update x
-  _x[_i]   = _xi;
+  _x[_i] = _xi;
 
-  std::vector<unsigned int> idx; idx.reserve(16);
+  std::vector<unsigned int> idx;
+  idx.reserve(16);
 
-  // clear i-th column and collect nonzeros
-  for( unsigned int iv=_A.jc[_i]; iv<_A.jc[_i+1]; ++iv)
-  {
-    if(_A.ir[iv] == _i)
+  // clear i-th column and collect non-zeros
+  for (unsigned int iv = _A.jc[_i]; iv < _A.jc[_i + 1]; ++iv)
+  { 
+    if (_A.ir[iv] == _i)
     {
       _A.pr[iv] = 1.0;
-      _rhs[_i]  = _xi;
+      _rhs[_i] = _xi;
     }
     else
     {
-      // update rhs
-      _rhs[_A.ir[iv]] -= _A.pr[iv]*_xi;
-      // clear entry
-      _A.pr[iv] = 0;
-      // store index
-      idx.push_back( _A.ir[iv]);
+      _rhs[_A.ir[iv]] -= _A.pr[iv] * _xi; // update rhs
+      _A.pr[iv] = 0; // clear entry
+      idx.push_back(_A.ir[iv]); // store index
     }
-
   }
 
-  for(std::size_t i=0; i<idx.size(); ++i)
+  for (std::size_t i = 0; i < idx.size(); ++i)
   {
     unsigned int col = idx[i];
 
-    for( unsigned int j=_A.jc[col]; j<_A.jc[col+1]; ++j)
-      if(_A.ir[j] == _i)
+    for (unsigned int j = _A.jc[col]; j < _A.jc[col + 1]; ++j)
+    {
+      if (_A.ir[j] == _i)
       {
-	_A.pr[j] = 0.0;
-	// move to next
-	break;
+        _A.pr[j] = 0.0;
+        // move to next
+        break;
       }
+    }
   }
 }
 
