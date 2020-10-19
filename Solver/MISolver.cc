@@ -39,7 +39,7 @@ ILOSTLBEGIN
 #include <gurobi_c++.h>
 #endif
 
-#define COMISO_MISOLVER_PERFORMANCE_TEST
+//#define COMISO_MISOLVER_PERFORMANCE_TEST
 #ifdef COMISO_MISOLVER_PERFORMANCE_TEST
 #include "SparseQRSolver.hh"
 #include "UMFPACKSolver.hh"
@@ -300,11 +300,11 @@ void MISolver::solve_direct_rounding(
   direct_solver_.calc_system_gmm(_A);
   direct_solver_.solve(_x, _rhs);
 
+#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
   // check solver performance (only for testing!!!)
   {
     Base::StopWatch sw;
 
-#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
     // performance comparison code
 #if (COMISO_SUITESPARSE_SPQR_AVAILABLE)
     {
