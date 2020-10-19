@@ -285,7 +285,8 @@ void MISolver::resolve(Vecd& _x, Vecd& _rhs) { direct_solver_.solve(_x, _rhs); }
 void MISolver::solve_direct_rounding(
     CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round)
 {
-  DEB_enter_func Veci to_round(_to_round);
+  DEB_enter_func;
+  Veci to_round(_to_round);
   // copy to round vector and make it unique
   std::sort(to_round.begin(), to_round.end());
   Veci::iterator last_unique;
