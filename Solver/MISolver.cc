@@ -39,6 +39,13 @@ ILOSTLBEGIN
 #include <gurobi_c++.h>
 #endif
 
+//#define COMISO_MISOLVER_PERFORMANCE_TEST
+#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
+#include "SparseQRSolver.hh"
+#include "UMFPACKSolver.hh"
+#include "EigenLDLTSolver.hh"
+#endif
+
 #include <CoMISo/Utils/gmm.hh>
 
 #include <Base/Debug/DebTime.hh>
@@ -226,14 +233,15 @@ void MISolver::solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round)
     IloCplex cplex(model);
     cplex.setParam(IloCplex::TiLim, gurobi_max_time_);
 
-    //    // set parameters comparable to CoMISo
-    //    {
-    //      cplex.setParam(IloCplex::MIPSearch  , 1);  // Traditional
-    //      Branch-and-Cut cplex.setParam(IloCplex::NodeSel    , 0);  //
-    //      Depth-First cplex.setParam(IloCplex::VarSel     , -1);  // closest
-    //      to integer cplex.setParam(IloCplex::MIPEmphasis, 1);  // concentrate
-    //      on feasibility
-    //    }
+#ifdef 0
+    // set parameters comparable to CoMISo
+    {
+      cplex.setParam(IloCplex::MIPSearch  , 1);  // Traditional Branch-and-Cut
+      cplex.setParam(IloCplex::NodeSel    , 0);  // Depth-First
+      cplex.setParam(IloCplex::VarSel     , -1); // closest to integer
+      cplex.setParam(IloCplex::MIPEmphasis, 1);  // concentrate on feasibility
+    }
+#endif
 
     cplex.solve();
 
@@ -278,7 +286,8 @@ void MISolver::resolve(Vecd& _x, Vecd& _rhs) { direct_solver_.solve(_x, _rhs); }
 void MISolver::solve_direct_rounding(
     CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round)
 {
-  DEB_enter_func Veci to_round(_to_round);
+  DEB_enter_func;
+  Veci to_round(_to_round);
   // copy to round vector and make it unique
   std::sort(to_round.begin(), to_round.end());
   Veci::iterator last_unique;
@@ -293,16 +302,13 @@ void MISolver::solve_direct_rounding(
   direct_solver_.calc_system_gmm(_A);
   direct_solver_.solve(_x, _rhs);
 
+#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
   // check solver performance (only for testing!!!)
   {
     Base::StopWatch sw;
 
-    // hack
-    const bool enable_performance_test = false;
-
     // performance comparison code
 #if (COMISO_SUITESPARSE_SPQR_AVAILABLE)
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::SparseQRSolver spqr;
@@ -321,7 +327,6 @@ void MISolver::solve_direct_rounding(
 
     // performance comparison code
 #if (COMISO_SUITESPARSE_AVAILABLE)
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::UMFPACKSolver umf;
@@ -338,7 +343,6 @@ void MISolver::solve_direct_rounding(
     }
 
     // performance comparison code
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::CholmodSolver chol;
@@ -357,7 +361,6 @@ void MISolver::solve_direct_rounding(
 
 #if (COMISO_EIGEN3_AVAILABLE)
     // performance comparison code
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::EigenLDLTSolver ldlt;
@@ -373,6 +376,7 @@ void MISolver::solve_direct_rounding(
     }
 #endif
   }
+#endif
 
   // round and eliminate variables
   Vecui elim_i;
