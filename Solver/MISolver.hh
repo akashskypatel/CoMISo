@@ -88,11 +88,6 @@ public:
   typedef std::vector< int >              Veci;
   typedef std::vector< unsigned int >     Vecui;
 
-  // gmm Column and ColumnIterator of CSC matrix
-  typedef gmm::linalg_traits< CSCMatrix >::const_sub_col_type Col;
-  typedef gmm::linalg_traits< Col >::const_iterator           ColIter;
-
-
   /// default Constructor
   MISolver();
 
@@ -222,66 +217,6 @@ public:
   /// Set/Get use_constraint_reordering for constraint solver (default = true)
   bool& use_constraint_reordering() { return use_constraint_reordering_;}
 
- private:
-
-  // find set of variables for simultaneous rounding
-  class RoundingSet
-  {
-  public:
-    typedef std::pair<double,int> PairDI;
-    
-    RoundingSet() : threshold_(0.5), cur_sum_(0.0) {}
-
-    void clear() { rset_.clear(); cur_sum_ = 0.0;}
-
-    bool add( int _id, double _rd_val)
-    {
-      // empty set? -> always add one element
-      if( rset_.empty() || cur_sum_+_rd_val <= threshold_)
-      {
-	rset_.insert( PairDI(_rd_val,_id) );
-	cur_sum_ += _rd_val;
-	return true;
-      }
-      else
-      {
-	// move to last element
-	std::set<PairDI>::iterator s_it = rset_.end();
-	--s_it;
-
-	if( s_it->first > _rd_val)
-	{
-	  cur_sum_ -= s_it->first;
-	  rset_.erase(s_it);
-	  rset_.insert( PairDI(_rd_val,_id) );
-	  cur_sum_ += _rd_val;
-	  return true;
-	}
-      }
-      return false;
-    }
-    
-    void set_threshold( double _thres) { threshold_ = _thres; }
-
-    void get_ids( std::vector<int>& _ids )
-    {
-      _ids.clear();
-      _ids.reserve( rset_.size());
-      std::set<PairDI>::iterator s_it = rset_.begin();
-      for(; s_it != rset_.end(); ++s_it)
-	_ids.push_back( s_it->second);
-    }
-
-  private:
-
-    double threshold_;
-    double cur_sum_;
-
-    std::set<PairDI> rset_;
-
-    std::set<PairDI> test_;
-  };
-
 private:
 
   void solve_no_rounding( 
@@ -295,11 +230,8 @@ private:
     Vecd&      _rhs, 
     Veci&      _to_round);
 
-  void solve_multiple_rounding( 
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs, 
-    Veci&      _to_round );
+  void solve_multiple_rounding(
+      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
 
   void solve_iterative(
     CSCMatrix& _A, 
@@ -320,12 +252,8 @@ private:
     Vecd&      _rhs,
     Veci&      _to_round );
 
-
-void update_solution( 
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs, 
-    Vecui&     _neigh_i );
+  void update_solution(
+      const CSCMatrix& _A, Vecd& _x, const Vecd& _rhs, const Vecui& _neigh_i);
 
 private:
 
@@ -389,10 +317,6 @@ private:
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_MISOLVER_C)
-#define COMISO_MISOLVER_TEMPLATES
-#include "MISolverT.cc"
-#endif
 //=============================================================================
 #endif // COMISO_MISOLVER_HH defined
 //=============================================================================
