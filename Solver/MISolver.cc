@@ -39,6 +39,13 @@ ILOSTLBEGIN
 #include <gurobi_c++.h>
 #endif
 
+#define COMISO_MISOLVER_PERFORMANCE_TEST
+#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
+#include "SparseQRSolver.hh"
+#include "UMFPACKSolver.hh"
+#include "EigenLDLTSolver.hh"
+#endif
+
 #include <CoMISo/Utils/gmm.hh>
 
 #include <Base/Debug/DebTime.hh>
@@ -297,12 +304,9 @@ void MISolver::solve_direct_rounding(
   {
     Base::StopWatch sw;
 
-    // hack
-    const bool enable_performance_test = false;
-
+#ifdef COMISO_MISOLVER_PERFORMANCE_TEST
     // performance comparison code
 #if (COMISO_SUITESPARSE_SPQR_AVAILABLE)
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::SparseQRSolver spqr;
@@ -321,7 +325,6 @@ void MISolver::solve_direct_rounding(
 
     // performance comparison code
 #if (COMISO_SUITESPARSE_AVAILABLE)
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::UMFPACKSolver umf;
@@ -338,7 +341,6 @@ void MISolver::solve_direct_rounding(
     }
 
     // performance comparison code
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::CholmodSolver chol;
@@ -357,7 +359,6 @@ void MISolver::solve_direct_rounding(
 
 #if (COMISO_EIGEN3_AVAILABLE)
     // performance comparison code
-    if (enable_performance_test)
     {
       sw.start();
       COMISO::EigenLDLTSolver ldlt;
@@ -373,6 +374,7 @@ void MISolver::solve_direct_rounding(
     }
 #endif
   }
+#endif
 
   // round and eliminate variables
   Vecui elim_i;
