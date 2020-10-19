@@ -233,14 +233,15 @@ void MISolver::solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round)
     IloCplex cplex(model);
     cplex.setParam(IloCplex::TiLim, gurobi_max_time_);
 
-    //    // set parameters comparable to CoMISo
-    //    {
-    //      cplex.setParam(IloCplex::MIPSearch  , 1);  // Traditional
-    //      Branch-and-Cut cplex.setParam(IloCplex::NodeSel    , 0);  //
-    //      Depth-First cplex.setParam(IloCplex::VarSel     , -1);  // closest
-    //      to integer cplex.setParam(IloCplex::MIPEmphasis, 1);  // concentrate
-    //      on feasibility
-    //    }
+#ifdef 0
+    // set parameters comparable to CoMISo
+    {
+      cplex.setParam(IloCplex::MIPSearch  , 1);  // Traditional Branch-and-Cut
+      cplex.setParam(IloCplex::NodeSel    , 0);  // Depth-First
+      cplex.setParam(IloCplex::VarSel     , -1); // closest to integer
+      cplex.setParam(IloCplex::MIPEmphasis, 1);  // concentrate on feasibility
+    }
+#endif
 
     cplex.solve();
 
