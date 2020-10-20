@@ -125,76 +125,19 @@ ConstrainedSolver::solve_const(const RMatrixT& _constraints,
 //-----------------------------------------------------------------------------
 
 
-template<class RMatrixT, class VectorT, class VectorIT >
-void
-ConstrainedSolver::solve(
-  RMatrixT& _constraints,
-  RMatrixT& _B,
-  VectorT&  _x,
-  VectorIT& _idx_to_round,
-  double    _reg_factor,
-  bool      _show_miso_settings,
-  bool      _show_timings)
+template <class RMatrixT, class VectorT, class VectorIT>
+void ConstrainedSolver::solve(RMatrixT& _constraints, RMatrixT& _B, VectorT& _x,
+    VectorIT& _idx_to_round, double _reg_factor, bool _show_miso_settings,
+    bool _show_timings)
 {
   // convert into quadratic system
   VectorT rhs;
-  gmm::col_matrix< gmm::rsvector< double > > A;
+  gmm::col_matrix<gmm::rsvector<double>> A;
   COMISO_GMM::factored_to_quadratic(_B, A, rhs);
 
   // solve
-  solve(_constraints, A, _x, rhs,
-    _idx_to_round, _reg_factor,
-    _show_miso_settings,
-    _show_timings);
-
-  //   int nrows = gmm::mat_nrows(_B);
-  //   int ncols = gmm::mat_ncols(_B);
-  //   int ncons = gmm::mat_nrows(_constraints);
-
-  //   if( _show_timings) std::cerr << __FUNCTION__ << "\n Initial dimension: " << nrows << " x " << ncols << ", number of constraints: " << ncons << std::endl;
-
-  //   // StopWatch for Timings
-  //   Base::StopWatch sw, sw2; sw.start(); sw2.start();
-
-  //   // c_elim[i] = index of variable which is eliminated in condition i
-  //   // or -1 if condition is invalid
-  //   std::vector<int> c_elim( ncons);
-
-  //   // apply sparse gauss elimination to make subsequent _constraints independent
-  //   make_constraints_independent( _constraints, _idx_to_round, c_elim);
-  //   double time_gauss = sw.stop()/1000.0; sw.start();
-
-  //   // eliminate conditions and return column matrix Bcol
-  //   gmm::col_matrix< gmm::rsvector< double > > Bcol( nrows, ncols);
-
-  //   // reindexing vector
-  //   std::vector<int>                          new_idx;
-
-  //   eliminate_constraints( _constraints, _B, _idx_to_round, c_elim, new_idx, Bcol);
-  //   double time_eliminate = sw.stop()/1000.0; 
-
-  //   if( _show_timings) std::cerr << "Eliminated dimension: " << gmm::mat_nrows(Bcol) << " x " << gmm::mat_ncols(Bcol) << std::endl;
-
-  //   // setup and solve system
-  //   double time_setup = setup_and_solve_system( Bcol, _x, _idx_to_round, _reg_factor, _show_miso_settings);
-  //   sw.start();
-
-  //   //  double time_setup_solve = sw.stop()/1000.0; sw.start();
-
-  //   // restore eliminated vars to fulfill the given conditions
-  //   restore_eliminated_vars( _constraints, _x, c_elim, new_idx);
-
-  //   double time_resubstitute = sw.stop()/1000.0; sw.start();
-
-  //   //  double time_total = sw2.stop()/1000.0;
-
-  //   if( _show_timings) std::cerr << "Timings: \n\t" <<
-  //     "Gauss Elimination  " << time_gauss          << " s\n\t" <<
-  //     "System Elimination " << time_eliminate      << " s\n\t" <<
-  //     "Setup              " << time_setup          << " s\n\t" <<
-  //    // "Setup + Mi-Solver  " << time_setup_solve    << " s\n\t" <<
-  //     "Resubstitution     " << time_resubstitute   << " s\n\t" << std::endl << std::endl;
-  //     //"Total              " << time_total          << std::endl;
+  solve(_constraints, A, _x, rhs, _idx_to_round, _reg_factor,
+      _show_miso_settings, _show_timings);
 }
 
 
@@ -1262,149 +1205,6 @@ ConstrainedSolver::restore_eliminated_vars(
   _x.resize(_x.size() - 1);
 }
 
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class VectorT, class VectorIT >
-void
-ConstrainedSolver::verify_mi_factored(
-  const RMatrixT& _conditions,
-  const RMatrixT& _B,
-  const VectorT&  _x,
-  const VectorIT& _idx_to_round)
-{
-  DEB_enter_func;
-  DEB_out(2, "######### Verify Constrained Solver Result ############\n");
-
-  // create extended x vector
-  std::vector<double> x(_x);
-  x.resize(x.size() + 1);
-  x.back() = 1.0;
-
-  // verify conditions
-  std::vector<double> a(gmm::mat_nrows(_conditions));
-
-  gmm::mult(_conditions, x, a);
-
-  int conditions_not_ok = 0;
-  for (unsigned int i = 0; i < a.size(); ++i)
-    if (a[i] > 1e-6)
-    {
-      ++conditions_not_ok;
-    }
-
-  DEB_out_if(conditions_not_ok == 0, 2, "all conditions are ok!\n")
-    DEB_out_if(conditions_not_ok != 0, 1, " conditions are not fullfilled:\n ")
-
-    // verify rounding
-    int roundings_not_ok = 0;
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-  {
-    double d = _x[_idx_to_round[i]];
-    if (fabs(d - round(d)) > 1e-6)
-      ++roundings_not_ok;
-  }
-
-  DEB_out_if(roundings_not_ok, 1, roundings_not_ok << " Integer variables are not rounded\n")
-    DEB_out_if(!roundings_not_ok, 2, "all Integer roundings are ok\n")
-
-    // evaluate energy
-    VectorT Bx(x);
-  gmm::mult(_B, x, Bx);
-  DEB_out(1, "Total energy: " << gmm::vect_sp(Bx, Bx) << "\n");
-  DEB_out(2, "######### FINISHED ############\n");
-}
-
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class CMatrixT, class VectorT>
-double
-ConstrainedSolver::verify_constrained_system(
-  const RMatrixT& _conditions,
-  const CMatrixT& _A,
-  const VectorT&  _x,
-  const VectorT&  _rhs,
-  double          _eps)
-{
-  DEB_enter_func;
-  typedef typename linalg_traits<RMatrixT>::const_sub_row_type RowT;
-  typedef typename linalg_traits<RowT>::const_iterator RIter;
-
-  VectorT Ax(_x.size());
-  gmm::mult(_A, _x, Ax);
-
-  gmm::add(_rhs, gmm::scaled(Ax, -1.0), Ax);
-  double norm = gmm::vect_norm2(Ax);
-  //std::cerr << __FUNCTION__ << ": Error residual: " << norm << " vector : " << Ax << std::endl;
-
-  DEB_out(2, ": Checking constraints...\n");
-
-  unsigned int row_cond = gmm::mat_nrows(_conditions);
-  unsigned int col_cond = gmm::mat_ncols(_conditions);
-  bool all_conditions_ok = true;
-  for (unsigned int r = 0; r < row_cond; ++r)
-  {
-    double cond_value = 0.0;
-    RowT row = gmm::mat_const_row(_conditions, r);
-    RIter row_it = gmm::vect_const_begin(row);
-    RIter row_end = gmm::vect_const_end(row);
-    //std::cerr << "\t checking row : " << row << std::endl;
-
-    for (; row_it != row_end; ++row_it)
-    {
-      if (row_it.index() == col_cond - 1)
-        cond_value += (*row_it);
-      else
-        cond_value += _x[row_it.index()] * (*row_it);
-    }
-    //std::cerr << "\t Value is : " << cond_value << std::endl;
-    //std::cerr << "--- --- --- --- ---\n";
-    if (fabs(cond_value) > _eps)
-    {
-      DEB_out(1, "\t Error on row " << r << " with vector " << row
-        << " and condition value " << cond_value << "\n");
-      all_conditions_ok = false;
-    }
-  }
-  DEB_out(1,
-    (all_conditions_ok ? ": All conditions ok!" : ": Some conditions not ok!") << "\n")
-    return norm;
-}
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-double
-ConstrainedSolver::verify_constrained_system_round(
-  const RMatrixT& _conditions,
-  const CMatrixT& _A,
-  const VectorT&  _x,
-  const VectorT&  _rhs,
-  const VectorIT& _idx_to_round,
-  double          _eps)
-{
-  DEB_enter_func;
-  // test integer roundings
-  DEB_out(2, ": Testing integer roundings...\n");
-  bool all_roundings_ok = true;
-
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-    if (fabs(ROUND(_x[_idx_to_round[i]]) - _x[_idx_to_round[i]]) != 0.0)
-    {
-      DEB_out(1, "\t Warning: variable " << _idx_to_round[i] << " was not rounded!"
-        << " Value is = " << _x[_idx_to_round[i]] << "\n")
-        all_roundings_ok = false;
-    }
-  DEB_out(1, (all_roundings_ok ? ": All roundings ok!" : ": Some roundings not ok!") << "\n")
-
-    // also test other stuff
-    return verify_constrained_system(_conditions, _A, _x, _rhs, _eps);
-}
 
 //-----------------------------------------------------------------------------
 

@@ -37,10 +37,9 @@
 #include "GMM_Tools.hh"
 
 #define GMM_USES_LAPACK
-#include <gmm/gmm_lapack_interface.h>
 
-#include <CoMISo/Utils/VSToolsT.hh>
 #include <Base/Debug/DebOut.hh>
+#include <gmm/gmm_lapack_interface.h>
 #include <queue>
 
 //== NAMESPACES ===============================================================

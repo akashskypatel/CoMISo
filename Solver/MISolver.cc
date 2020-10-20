@@ -47,14 +47,13 @@ ILOSTLBEGIN
 #endif
 
 #include <CoMISo/Utils/gmm.hh>
+#include <CoMISo/Utils/Tools.hh>
 
 #include <Base/Debug/DebTime.hh>
 #include <Base/Utils/StopWatch.hh>
 
 #include <queue>
 #include <float.h>
-
-#define ROUND(x) ((x) < 0 ? int((x) - 0.5) : int((x) + 0.5))
 
 namespace COMISO
 {
@@ -383,7 +382,7 @@ void MISolver::solve_direct_rounding(
   Vecd elim_v;
   for (unsigned int i = 0; i < to_round.size(); ++i)
   {
-    _x[to_round[i]] = ROUND(_x[to_round[i]]);
+    _x[to_round[i]] = double_round(_x[to_round[i]]);
     elim_i.push_back(to_round[i]);
     elim_v.push_back(_x[to_round[i]]);
     // update old idx
@@ -494,7 +493,7 @@ void MISolver::solve_iterative(
         if (to_round[j] != -1)
         {
           int cur_idx = to_round[j];
-          double rnd_error = fabs(ROUND(xr[cur_idx]) - xr[cur_idx]);
+          const auto rnd_error = round_residue(xr[cur_idx]);
           if (rnd_error < r_best)
           {
             i_best = cur_idx;
@@ -507,7 +506,7 @@ void MISolver::solve_iterative(
     }
 
     // store rounded value
-    double rnd_x = ROUND(xr[i_best]);
+    const auto rnd_x = double_round(xr[i_best]);
     _x[old_idx[i_best]] = rnd_x;
 
     // compute neighbors
@@ -672,11 +671,7 @@ void MISolver::solve_multiple_rounding(
 
     // find index yielding smallest rounding error
     for (unsigned int j = 0; j < to_round.size(); ++j)
-    {
-      const auto xr_j = _x[to_round[j]];
-      const auto rnd_error = fabs(ROUND(xr_j) - xr_j);
-      rndg_queue.add(j, rnd_error);
-    }
+      rndg_queue.add(j, round_residue(_x[to_round[j]]));
     rndg_queue.get_ids(tr_best);
 
     DEB_only(time_search_next_integer += sw.stop());
@@ -693,7 +688,7 @@ void MISolver::solve_multiple_rounding(
     for (const auto tr_indx : tr_best)
     {
       const unsigned i_cur = static_cast<unsigned>(to_round[tr_indx]);
-      const double rnd_x = ROUND(_x[i_cur]); // store rounded value
+      const double rnd_x = double_round(_x[i_cur]); // store rounded value
 
       // compute neighbors
       const Col col = gmm::mat_const_col(_A, i_cur);

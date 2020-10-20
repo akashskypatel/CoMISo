@@ -22,7 +22,6 @@
 #include <cmath>
 #include <climits>
 
-#include <CoMISo/Utils/VSToolsT.hh>
 #include <CoMISo/Utils/gmm.hh>
 
 #include <CoMISo/Config/CoMISoDefines.hh>

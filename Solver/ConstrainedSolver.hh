@@ -41,13 +41,10 @@
 #include "MISolver.hh"
 #include <vector>
 
-//== FORWARDDECLARATIONS ======================================================
-
-//== DEFINES ==================================================================
-#define ROUND(x) ((x)<0?int((x)-0.5):int((x)+0.5))
 //== NAMESPACES ===============================================================
 
-namespace COMISO {
+namespace COMISO 
+{
 //== CLASS DEFINITION =========================================================
 
 /** \class ConstrainedSolver ConstrainedSolver.hh <ACG/.../ConstrainedSolver.hh>
@@ -262,37 +259,6 @@ public:
 
   // Get/Set whether the constraint reordering is used (default true)
   bool& use_constraint_reordering() { return miso_.use_constraint_reordering(); }
-
-/** @name Verify the result.
- * Functions to verify the result of the constrained solver. Are the constraints met, are the correct variables correctly rounded ...
- */
-/*@{*/
-
-
-  template<class RMatrixT, class CMatrixT, class VectorT>
-  double verify_constrained_system( 
-				   const RMatrixT& _conditions,
-				   const CMatrixT& _A,
-				   const VectorT&  _x,
-				   const VectorT&  _rhs,
-				   double          _eps = 1e-9);
-
-  template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-  double verify_constrained_system_round( 
-					 const RMatrixT& _conditions,
-					 const CMatrixT& _A,
-					 const VectorT&  _x,
-					 const VectorT&  _rhs,
-					 const VectorIT& _idx_to_round,
-					 double          _eps = 1e-9);
-
-  template<class RMatrixT, class VectorT, class VectorIT>
-  void verify_mi_factored( const RMatrixT& _conditions,
-			   const RMatrixT& _B, 
-			   const VectorT&  _x,
-			   const VectorIT& _idx_to_round );
-/*@}*/
-
 
   /// Access the MISolver (e.g. to change settings)
   COMISO::MISolver& misolver() { return miso_;}
