@@ -33,7 +33,6 @@
 #ifndef COMISO_MISOLVER_HH
 #define COMISO_MISOLVER_HH
 
-
 //== INCLUDES =================================================================
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/config.hh>
@@ -51,19 +50,12 @@
 
 #include <vector>
 
-#define ROUND_MI(x) ((x)<0?int((x)-0.5):int((x)+0.5))
-
-
-//== FORWARDDECLARATIONS ======================================================
-
-
-namespace COMISO {
-class MISolverDialog;
-}
-
 //== NAMESPACES ===============================================================
 
-namespace COMISO {
+namespace COMISO 
+{
+
+class MISolverDialog;
 
 //== CLASS DEFINITION =========================================================
 
@@ -284,13 +276,13 @@ private:
   unsigned int noisy_;
   bool         stats_;
 
-  // time limit for gurobi solver (in seconds)
+  // time limit for Gurobi solver (in seconds)
   double       gurobi_max_time_;
 
   // flag
   bool         cholmod_step_done_;
 
-  // declar direct solver depending on availability
+  // declare direct solver depending on availability
 #if COMISO_SUITESPARSE_AVAILABLE
   COMISO::CholmodSolver   direct_solver_;
 #elif COMISO_EIGEN3_AVAILABLE
