@@ -75,15 +75,15 @@ inline double round_residue(const double _x)
 }
 
 //! get if _x is rounded within _tol
-inline double rounded(const double _x, const double _tol)
+inline bool is_rounded(const double _x, const double _tol)
 {
   return round_residue(_x) <= _tol;
 }
 
 //! compare two double values within _tol
-inline bool same(const double _x, const double _y, const double _tol)
+inline bool are_same(const double _x, const double _y, const double _tol)
 {
-  return fabs(_x - _y) < _tol;
+  return fabs(_x - _y) <= _tol;
 }
 
 //! get _a * _a
