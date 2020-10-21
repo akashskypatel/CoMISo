@@ -98,8 +98,8 @@ public:
     return iter_;
   }
 
-  auto operator->() const { return get().operator->(); }
-  auto operator*() const { return get().operator*(); }
+  ToRoundSetIter::pointer operator->() const { return get().operator->(); }
+  ToRoundSetIter::reference operator*() const { return get().operator*(); }
   operator ToRoundSetIter() { return get(); }
 
 private:
