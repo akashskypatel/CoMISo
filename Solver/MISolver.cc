@@ -46,6 +46,16 @@ ILOSTLBEGIN
 #include "EigenLDLTSolver.hh"
 #endif
 
+#if COMISO_SUITESPARSE_AVAILABLE
+#include "CholmodSolver.hh"
+#elif COMISO_EIGEN3_AVAILABLE
+#include "EigenLDLTSolver.hh"
+#else
+#error "MISolver requires Suitesparse or Eigen3 support"
+#endif
+
+#include "IterativeSolverT.hh"
+
 #include <CoMISo/Utils/gmm.hh>
 #include <CoMISo/Utils/Tools.hh>
 
@@ -59,62 +69,65 @@ namespace COMISO
 {
 namespace
 {
-
-class RoundingQueue : protected std::priority_queue<std::pair<double, int>>
-{
-public:
-  RoundingQueue(const double _threshold) : threshold_(_threshold), cur_sum_(0.0)
-  {
-    c.reserve(128);
-  }
-
-  void clear()
-  {
-    c.clear();
-    cur_sum_ = 0.0;
-  }
-
-  void add(const int _id, const double _rd_val)
-  {
-    if (empty() || cur_sum_ + _rd_val <= threshold_)
-    { // empty? -> always add one element
-      emplace(_rd_val, _id);
-      cur_sum_ += _rd_val;
-      return;
-    }
-    if (top().first > _rd_val) // replace the last element if worse
-    {
-      cur_sum_ -= top().first;
-      pop();
-      emplace(_rd_val, _id);
-      cur_sum_ += _rd_val;
-    }
-  }
-
-  void get_ids(std::vector<int>& _ids)
-  {
-    _ids.clear();
-    _ids.reserve(size());
-    std::sort_heap(c.begin(), c.end());
-    for (auto s_it = c.begin(); s_it != c.end(); ++s_it)
-      _ids.push_back(s_it->second);
-  }
-
-private:
-  const double threshold_;
-  double cur_sum_;
-};
+typedef unsigned int uint;
 
 // gmm Column and ColumnIterator of CSC matrix
 typedef gmm::linalg_traits<MISolver::CSCMatrix>::const_sub_col_type Col;
 typedef gmm::linalg_traits<Col>::const_iterator ColIter;
 
+using ToRoundSet = std::set<std::pair<double, uint>>;
+using ToRoundSetIter = ToRoundSet::iterator;
+
+// extend ToRoundSetIter with a flag to tell if it has been set or not
+class ToRoundSetIterExt
+{ 
+public:
+  void set(ToRoundSetIter _iter)
+  {
+    iter_ = _iter;
+    null_ = false;
+  }
+
+  void clear() { null_ = true; }
+
+  bool is_null() const { return null_; }
+
+  const ToRoundSetIter& get() const
+  {
+    DEB_error_if(is_null(), "accessing an null iterator");
+    return iter_;
+  }
+
+  ToRoundSetIter::pointer operator->() const { return get().operator->(); }
+  ToRoundSetIter::reference operator*() const { return get().operator*(); }
+  operator ToRoundSetIter() { return get(); }
+
+private:
+  ToRoundSetIter iter_;
+  bool null_ = true;
+};
+
 } // namespace
+
+// base class selected based on the available packages
+class MISolver::DirectSolver : public
+#if COMISO_SUITESPARSE_AVAILABLE
+                               CholmodSolver
+#elif COMISO_EIGEN3_AVAILABLE
+                               EigenLDLTSolver
+#else
+#error "MISolver requires Suitesparse or Eigen3 support"
+#endif
+{
+};
+
+class MISolver::IterativeSolver : public IterativeSolverT<double>
+{
+};
 
 // Constructor
 MISolver::MISolver()
-{
-  // default parameters
+{// default parameters
   initial_full_solution_ = true;
   iter_full_solution_ = true;
   final_full_solution_ = true;
@@ -134,22 +147,23 @@ MISolver::MISolver()
 
   gurobi_max_time_ = 60;
 
-  noisy_ = 0;
-  stats_ = true;
-
-  use_constraint_reordering_ = true;
+  direct_solver_ = new DirectSolver;
+  iter_solver_ = new IterativeSolver;
 }
 
+MISolver::~MISolver()
+{
+  delete direct_solver_;
+  delete iter_solver_;
+}
 //-----------------------------------------------------------------------------
 
 void MISolver::solve(
     CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round, bool _fixed_order)
 {
   DEB_enter_func;
-
-  DEB_out(6, "# integer    variables: "
-                 << _to_round.size() << "\n# continuous variables: "
-                 << _x.size() - _to_round.size() << "\n");
+  DEB_line(2, "integer variables #: " << _to_round.size());
+  DEB_line(2, "continuous variables #: " << _x.size() - _to_round.size());
 
   // nothing to solve?
   if (gmm::mat_ncols(_A) == 0 || gmm::mat_nrows(_A) == 0)
@@ -272,13 +286,16 @@ void MISolver::solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round)
 void MISolver::solve_no_rounding(CSCMatrix& _A, Vecd& _x, Vecd& _rhs)
 {
   COMISO_THROW_if(
-      !direct_solver_.calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
-  COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
+      !direct_solver_->calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
+  COMISO_THROW_if(!direct_solver_->solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
 }
 
 //-----------------------------------------------------------------------------
 
-void MISolver::resolve(Vecd& _x, Vecd& _rhs) { direct_solver_.solve(_x, _rhs); }
+void MISolver::resolve(Vecd& _x, Vecd& _rhs)
+{
+  direct_solver_->solve(_x, _rhs);
+}
 
 //-----------------------------------------------------------------------------
 
@@ -298,8 +315,8 @@ void MISolver::solve_direct_rounding(
   Veci old_idx(_rhs.size());
   for (unsigned int i = 0; i < old_idx.size(); ++i)
     old_idx[i] = i;
-  direct_solver_.calc_system_gmm(_A);
-  direct_solver_.solve(_x, _rhs);
+  direct_solver_->calc_system_gmm(_A);
+  direct_solver_->solve(_x, _rhs);
 
 #ifdef COMISO_MISOLVER_PERFORMANCE_TEST
   // check solver performance (only for testing!!!)
@@ -403,9 +420,9 @@ void MISolver::solve_direct_rounding(
   // final full solution
   if (gmm::mat_ncols(_A) > 0)
   {
-    //    direct_solver_.update_system_gmm(_A);
-    direct_solver_.calc_system_gmm(_A);
-    direct_solver_.solve(xr, _rhs);
+    //    direct_solver_->update_system_gmm(_A);
+    direct_solver_->calc_system_gmm(_A);
+    direct_solver_->solve(xr, _rhs);
   }
 
   // store solution values to result vector
@@ -450,9 +467,9 @@ void MISolver::solve_iterative(
 
   if (initial_full_solution_)
   {
-    DEB_out_if(noisy_ > 2, 2, "initial full solution\n")
-        direct_solver_.calc_system_gmm(_A);
-    direct_solver_.solve(_x, _rhs);
+    DEB_line(2, "initial full solution");
+    direct_solver_->calc_system_gmm(_A);
+    direct_solver_->solve(_x, _rhs);
 
     cholmod_step_done_ = true;
 
@@ -468,10 +485,8 @@ void MISolver::solve_iterative(
   // loop until solution computed
   for (unsigned int i = 0; i < to_round.size(); ++i)
   {
-    DEB_out_if(noisy_ > 0, 2,
-        "Integer DOF's left: " << to_round.size() - (i + 1)
-                               << " ") DEB_out_if(noisy_ > 1, 1,
-        "residuum_norm: " << COMISO_GMM::residuum_norm(_A, xr, _rhs) << "\n");
+    DEB_line(11, "Integer DOF's left: " << to_round.size() - (i + 1) << " ");
+    DEB_line(11, "residuum_norm: " << COMISO_GMM::residuum_norm(_A, xr, _rhs));
 
     // index to eliminate
     unsigned int i_best = 0;
@@ -525,22 +540,22 @@ void MISolver::solve_iterative(
 
     // 3-stage update of solution w.r.t. roundings
     // local GS / CG / SparseCholesky
-    update_solution(_A, xr, _rhs, neigh_i);
+    update_solution_is_local(_A, xr, _rhs, neigh_i);
   }
 
   // final full solution?
   if (final_full_solution_)
   {
-    DEB_line_if(noisy_ > 2, 2, "final full solution");
+    DEB_line(2, "final full solution");
 
     if (gmm::mat_ncols(_A) > 0)
     {
       if (cholmod_step_done_)
-        direct_solver_.update_system_gmm(_A);
+        direct_solver_->update_system_gmm(_A);
       else
-        direct_solver_.calc_system_gmm(_A);
+        direct_solver_->calc_system_gmm(_A);
 
-      direct_solver_.solve(xr, _rhs);
+      direct_solver_->solve(xr, _rhs);
       ++n_full_;
     }
   }
@@ -550,19 +565,18 @@ void MISolver::solve_iterative(
     _x[old_idx[i]] = xr[i];
 
   // output statistics
-  DEB_out_if(stats_, 2,
-      " *** Statistics of MiSo Solver ***"
-          << "\n Number of CG    iterations  = " << n_cg_
-          << "\n Number of LOCAL iterations  = " << n_local_
-          << "\n Number of FULL  iterations  = " << n_full_
-          << "\n Number of ROUNDING          = " << _to_round.size()
-          << "\n time searching next integer = "
-          << time_search_next_integer / 1000.0 << "s\n\n");
+  DEB_line(2, " *** Statistics of MiSo Solver ***");
+  DEB_line(2, "Number of CG    iterations  = " << n_cg_);
+  DEB_line(2, "Number of LOCAL iterations  = " << n_local_);
+  DEB_line(2, "Number of FULL  iterations  = " << n_full_);
+  DEB_line(2, "Number of ROUNDING          = " << _to_round.size());
+  DEB_line(2, "time searching next integer = "
+                  << time_search_next_integer / 1000.0 << "s");
 }
 
 //-----------------------------------------------------------------------------
 
-void MISolver::update_solution(
+bool MISolver::update_solution_is_local(
     const CSCMatrix& _A, Vecd& _x, const Vecd& _rhs, const Vecui& _neigh_i)
 {
   DEB_enter_func;
@@ -570,29 +584,35 @@ void MISolver::update_solution(
 
   if (max_local_iters_ > 0) // compute new solution
   {
-    DEB_out(6, "use local iteration ");
-
-    int n_its = max_local_iters_;
-    double tolerance = max_local_error_;
-    converged =
-        siter_.gauss_seidel_local(_A, _x, _rhs, _neigh_i, n_its, tolerance);
+    DEB_out(11, "use local iteration ");
+    converged = iter_solver_->gauss_seidel_local(
+        _A, _x, _rhs, _neigh_i, max_local_iters_, max_local_error_);
 
     ++n_local_;
   }
 
-  // conjugate gradient
-  if (!converged && max_cg_iters_ > 0)
+  if (converged)
   {
+    DEB_line(11, "Local iteration converged");
+    return true;
+  }
+
+  bool only_local_updates = true; // set to false if we do any global updates
+
+  DEB_line(6, "Local iterations failed to converge, needs global update");
+  if (max_cg_iters_ > 0) 
+  {// conjugate gradient iterations
     DEB_out(6, ", cg ");
 
     int max_cg_iters = max_cg_iters_;
     double tolerance = max_cg_error_;
     converged =
-        siter_.conjugate_gradient(_A, _x, _rhs, max_cg_iters, tolerance);
+        iter_solver_->conjugate_gradient(_A, _x, _rhs, max_cg_iters, tolerance);
 
     DEB_out(6, "( converged " << converged << " "
                               << " iters " << max_cg_iters << " "
                               << " res_norm " << tolerance << "\n");
+    only_local_updates = false;
     ++n_cg_;
   }
 
@@ -600,19 +620,21 @@ void MISolver::update_solution(
   {
     DEB_out(6, ", full ");
     if (cholmod_step_done_)
-      direct_solver_.update_system_gmm(_A);
+      direct_solver_->update_system_gmm(_A);
     else
     {
-      direct_solver_.calc_system_gmm(_A);
+      direct_solver_->calc_system_gmm(_A);
       cholmod_step_done_ = true;
     }
     // const_cast<> to work around broken const correctness in Eigen
-    direct_solver_.solve(_x, const_cast<Vecd&>(_rhs)); 
+    direct_solver_->solve(_x, const_cast<Vecd&>(_rhs)); 
 
+    only_local_updates = false;
     ++n_full_;
   }
 
   DEB_line(6, "");
+  return only_local_updates;
 }
 
 //-----------------------------------------------------------------------------
@@ -629,117 +651,112 @@ void MISolver::solve_multiple_rounding(
   // reset cholmod step flag
   cholmod_step_done_ = false;
 
-  Veci to_round(_to_round);
-  { // copy to round vector and make it unique
-    std::sort(to_round.begin(), to_round.end());
-    const auto last_unique = std::unique(to_round.begin(), to_round.end());
-    to_round.resize(last_unique - to_round.begin());
-  }
-
   if (initial_full_solution_)
   {
-    DEB_out_if(noisy_ > 2, 2, "initial full solution\n");
+    DEB_line(2, "initial full solution");
     // TODO: we can throw more specific outcomes in the body of the
     // functions below
     COMISO_THROW_if(
-        !direct_solver_.calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
-    COMISO_THROW_if(!direct_solver_.solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
+        !direct_solver_->calc_system_gmm(_A), UNSPECIFIED_EIGEN_FAILURE);
+    COMISO_THROW_if(!direct_solver_->solve(_x, _rhs), UNSPECIFIED_EIGEN_FAILURE);
 
     cholmod_step_done_ = true;
 
     ++n_full_;
   }
 
-  //  data context for the main rounding cycle
-  Vecui neigh_i;            // neighbors for local optimization
-  std::vector<int> tr_best; // best indices to round
-  RoundingQueue rndg_queue(multiple_rounding_threshold_); // rounding queue
+  DEB_warning_if(max_local_iters_ == 0, 1,
+      "No local iterations available, this method will not perform well");
 
-#ifdef DEB_ON
-  Base::StopWatch sw; // additional timer for the search next integer time
-  double time_search_next_integer = 0;
-#endif // DEB_ON
+  // use a doubly-indexed data structure to be able to access a "to_round"
+  // variable by both its index and round residue
+  ToRoundSet to_round; // variables yet to round sorted by round residue 
+  // pointer to the to_round variable in the residue array
+  std::vector<ToRoundSetIterExt> to_round_indx(_x.size());
 
-  // loop until solution computed
-  while (!to_round.empty())
+  const auto add_to_round_index = 
+      [&_x, &to_round, &to_round_indx](const uint _tr_indx)
+  {
+    const auto x_rr = round_residue(_x[_tr_indx]);
+    to_round_indx[_tr_indx].set(to_round.emplace(x_rr, _tr_indx).first);
+  };
+
+  for (const auto tr_indx : _to_round)
+  {// initialize the doubly-indexed data
+    if (to_round_indx[tr_indx].is_null()) // not added already?
+      add_to_round_index(tr_indx);
+  }
+
+  Vecui neigh_i; // neighbors for local optimization
+  while (!to_round.empty()) // loop until solution computed
   {
     DEB_line(11, "Integer DOF's left: " << to_round.size());
     DEB_line(11, "residuum_norm: " << COMISO_GMM::residuum_norm(_A, _x, _rhs));
 
-    DEB_only(sw.start());
-    rndg_queue.clear();
+    neigh_i.clear(); // clear neigh for local update
 
-    // find index yielding smallest rounding error
-    for (unsigned int j = 0; j < to_round.size(); ++j)
-      rndg_queue.add(j, round_residue(_x[to_round[j]]));
-    rndg_queue.get_ids(tr_best);
-
-    DEB_only(time_search_next_integer += sw.stop());
-
-    // nothing more to do?
-    if (tr_best.empty())
-      break;
-
-    DEB_line(11, "rounding " << tr_best.size() << " variables simultaneously");
-
-    // clear neigh for local update
-    neigh_i.clear();
-
-    for (const auto tr_indx : tr_best)
+    double rnd_err_sum = 0;
+    for (auto tr_it = to_round.begin(); // start at the front
+         tr_it != to_round.end() && // if there are still variables to round ..
+         (rnd_err_sum == 0 || // ... at least one variable should be rounded
+             rnd_err_sum + tr_it->first <= multiple_rounding_threshold_);
+         tr_it = to_round.erase(tr_it))
     {
-      const unsigned i_cur = static_cast<unsigned>(to_round[tr_indx]);
-      const double rnd_x = double_round(_x[i_cur]); // store rounded value
+      rnd_err_sum += tr_it->first;
+      const auto tr_indx = tr_it->second;
+      const auto rnd_x = double_round(_x[tr_indx]); // store rounded value
+      to_round_indx[tr_indx].clear(); // clear pointer
 
       // compute neighbors
-      const Col col = gmm::mat_const_col(_A, i_cur);
+      const Col col = gmm::mat_const_col(_A, tr_indx);
       for (auto it = gmm::vect_const_begin(col), ite = gmm::vect_const_end(col);
            it != ite; ++it)
       {
-        if (it.index() != (unsigned int)i_cur)
+        if (it.index() != tr_indx)
           neigh_i.push_back(static_cast<int>(it.index()));
       }
-      COMISO_GMM::fix_var_csc_symmetric(
-          i_cur, rnd_x, _A, _x, _rhs); // eliminate
-      to_round[tr_indx] = -1;
+      // eliminate x_i from _A and _rhs, and set _x[tr_indx] = rnd_x
+      COMISO_GMM::fix_var_csc_symmetric(tr_indx, rnd_x, _A, _x, _rhs);
     }
 
-    // 3-stage update of solution w.r.t. roundings
-    // local GS / CG / SparseCholesky
-    update_solution(_A, _x, _rhs, neigh_i);
-
-    // remove all rounded indices from the to_round[] array
-    for (const auto tr_indx : tr_best)
-    {
-      while (!to_round.empty() && to_round.back() < 0)
-        to_round.pop_back(); // remove entries that are already rounded
-      if (tr_indx >= to_round.size())
-        continue; // already removed
-      std::swap(to_round[tr_indx], to_round.back());
-      to_round.pop_back();
+    // 3-stage solution update w.r.t. roundings: local GS / CG / SparseCholesky
+    if (update_solution_is_local(_A, _x, _rhs, neigh_i)) // only local updates?
+    {// re-sort only the updated variables 
+      for (const auto updt_indx : iter_solver_->updated_variable_indices())
+      { // refresh the rounding residues for the updated variables only
+        if (to_round_indx[updt_indx].is_null())
+          continue; // _x[updt_indx] does not need to be rounded
+        to_round.erase(to_round_indx[updt_indx]); // erase from the set
+        add_to_round_index(updt_indx);
+      }
+      continue;
     }
+
+    // global iteration(s) performed, so update all
+    ToRoundSet to_round_temp; // temporary storage for the to_round entries
+    std::swap(to_round_temp, to_round); // swap() is fast, and clears to_round
+    for (const auto& tr : to_round_temp) // re-add all variables still to round
+      add_to_round_index(tr.second);
   }
 
-  // final full solution?
-  if (final_full_solution_ && gmm::mat_ncols(_A) > 0)
+  if (final_full_solution_ && gmm::mat_ncols(_A) > 0) // final full solution?
   {
     DEB_line(3, "final full solution");
     if (cholmod_step_done_)
-      direct_solver_.update_system_gmm(_A);
+      direct_solver_->update_system_gmm(_A);
     else
-      direct_solver_.calc_system_gmm(_A);
+      direct_solver_->calc_system_gmm(_A);
 
-    direct_solver_.solve(_x, _rhs);
+    direct_solver_->solve(_x, _rhs);
     ++n_full_;
   }
 
-  DEB_out_if(stats_, 2, // output statistics
-      " *** Statistics of MiSo Solver ***"
-          << "\n Number of CG    iterations  = " << n_cg_
-          << "\n Number of LOCAL iterations  = " << n_local_
-          << "\n Number of FULL  iterations  = " << n_full_
-          << "\n Number of ROUNDING          = " << _to_round.size()
-          << "\n time searching next integer = "
-          << time_search_next_integer / 1000.0 << "s\n\n");
+  // output statistics
+  DEB_line(2, " *** Statistics of MiSo Solver ***");
+  DEB_line(2, "Number of LOCAL iterations  = " << n_local_);
+  DEB_line(2, "Number of CG    iterations  = " << n_cg_);
+  DEB_line(2, "Number of FULL  iterations  = " << n_full_);
+  DEB_line(2, "Number of ROUNDING          = " << _to_round.size());
 }
 
 //-----------------------------------------------------------------------------

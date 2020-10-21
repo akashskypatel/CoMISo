@@ -37,16 +37,7 @@
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/config.hh>
 
-#if COMISO_SUITESPARSE_AVAILABLE
-  #include "CholmodSolver.hh"
-#elif COMISO_EIGEN3_AVAILABLE
-  #include "EigenLDLTSolver.hh"
-#else
-  #print "Warning: MISolver requires Suitesparse or Eigen3 support"
-#endif
-
 #include "GMM_Tools.hh"
-#include "IterativeSolverT.hh"
 
 #include <vector>
 
@@ -59,8 +50,6 @@ class MISolverDialog;
 
 //== CLASS DEFINITION =========================================================
 
-
-
 /** \class MISolver MISolver.hh 
 
     Mixed-Integer Solver.
@@ -69,192 +58,155 @@ class MISolverDialog;
     rounding of the one variable x_i which is subsequently eliminated from the
     system, and the system is solved again ...
 */
-
 class COMISODLLEXPORT MISolver
 {
 public:
    
-  // typedefs
-  typedef gmm::csc_matrix< double >       CSCMatrix;
-  typedef std::vector< double >           Vecd;
-  typedef std::vector< int >              Veci;
-  typedef std::vector< unsigned int >     Vecui;
+  typedef gmm::csc_matrix<double> CSCMatrix;
+  typedef std::vector<double> Vecd;
+  typedef std::vector<int> Veci;
+  typedef std::vector<unsigned int> Vecui;
 
   /// default Constructor
   MISolver();
 
+  /// delete copy constructor 
+  MISolver(const MISolver&) = delete;
+
+  /// delete assignment operator 
+  MISolver& operator=(const MISolver& _rhs) = delete;
+
+  // destructor
+  ~MISolver();
+
   /// Compute greedy approximation to a mixed integer problem.
-	/** @param _A symmetric positive semi-definite CSC matrix (Will be \b destroyed!)
-	 *  @param _x vector holding solution at the end
+  /** @param _A symmetric positive semi-definite CSC matrix (Will be \b
+   * destroyed!)
+   *  @param _x vector holding solution at the end
    *  @param _rhs right hand side of system Ax=rhs (Will be \b destroyed!)
    *  @param _to_round vector with variable indices to round to integers
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
-	 *  */
-  void solve(
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs, 
-    Veci&      _to_round,
-    bool       _fixed_order = false );
+   *  */
+  void solve(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round,
+      bool _fixed_order = false);
 
-  void resolve(
-    Vecd&      _x,
-    Vecd&      _rhs );
+  //! Resolve usig the direct solver
+  void resolve(Vecd& _x, Vecd& _rhs);
 
   /// Compute greedy approximation to a mixed integer problem.
-	/** @param _B mx(n+1) matrix with (still non-squared) equations of the energy,
+  /** @param _B mx(n+1) matrix with (still non-squared) equations of the energy,
    * including the right hand side (Will be \b destroyed!)
-	 *  @param _x vector holding solution at the end
+   *  @param _x vector holding solution at the end
    *  @param _to_round vector with variable indices to round to integers
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
-	 *  */
-  //template<class CMatrixT>
-  //void solve( 
-  //  CMatrixT& _B,
-  //  Vecd&     _x,
-  //  Veci&     _to_round,
-  //  bool      _fixed_order = false );
+   *  */
+  // TODO: Missing function??
 
   /// show Qt-Options-Dialog for setting algorithm parameters
   /** Requires a Qt Application running and COMISO_GUI to be defined */
   void show_options_dialog();
 
-  /** @name Get/Set functions for algorithm parameters 
-	 * Besides being used by the Qt-Dialog these can also be called explicitly
+  /** @name Get/Set functions for algorithm parameters
+   * Besides being used by the Qt-Dialog these can also be called explicitly
    * to set parameters of the algorithm. */
-	/*@{*/
-	/// Shall an initial full solution be computed?
-  void set_inital_full( bool _b) {        initial_full_solution_=_b;}
-	/// Will an initial full solution be computed?
-  bool get_inital_full()         { return initial_full_solution_;}
+  /*@{*/
+  /// Shall an initial full solution be computed?
+  void set_inital_full(bool _b) { initial_full_solution_ = _b; }
+  /// Will an initial full solution be computed?
+  bool get_inital_full() { return initial_full_solution_; }
 
-	/// Shall an full solution be computed if iterative methods did not converged?
-  void set_iter_full( bool _b) {        iter_full_solution_=_b;}
-	/// Will an full solution be computed if iterative methods did not converged?
-  bool get_iter_full()         { return iter_full_solution_;}
+  /// Shall an full solution be computed if iterative methods did not converged?
+  void set_iter_full(bool _b) { iter_full_solution_ = _b; }
+  /// Will an full solution be computed if iterative methods did not converged?
+  bool get_iter_full() { return iter_full_solution_; }
 
-	/// Shall a final full solution be computed?
-  void set_final_full( bool _b) {        final_full_solution_=_b;}
-	/// Will a final full solution be computed?
-  bool get_final_full()         { return final_full_solution_;}
+  /// Shall a final full solution be computed?
+  void set_final_full(bool _b) { final_full_solution_ = _b; }
+  /// Will a final full solution be computed?
+  bool get_final_full() { return final_full_solution_; }
 
   /// Shall direct (or greedy) rounding be used?
-  void set_direct_rounding( bool _b) {        direct_rounding_=_b;}
+  void set_direct_rounding(bool _b) { direct_rounding_ = _b; }
   /// Will direct rounding be used?
-  bool get_direct_rounding()         { return direct_rounding_;}
+  bool get_direct_rounding() { return direct_rounding_; }
 
   /// Shall no rounding be performed?
-  void set_no_rounding( bool _b) {        no_rounding_=_b;}
+  void set_no_rounding(bool _b) { no_rounding_ = _b; }
   /// Will no rounding be performed?
-  bool get_no_rounding()         { return no_rounding_;}
+  bool get_no_rounding() { return no_rounding_; }
 
   /// Shall multiple rounding be performed?
-  void set_multiple_rounding( bool _b) {       multiple_rounding_=_b;}
+  void set_multiple_rounding(bool _b) { multiple_rounding_ = _b; }
   /// Will multiple rounding be performed?
-  bool get_multiple_rounding()         { return multiple_rounding_;}
+  bool get_multiple_rounding() { return multiple_rounding_; }
 
   /// Shall gurobi solver be used?
-  void set_gurobi_rounding( bool _b) {        gurobi_rounding_=_b;}
+  void set_gurobi_rounding(bool _b) { gurobi_rounding_ = _b; }
   /// Will gurobi rounding be performed?
-  bool get_gurobi_rounding()         { return gurobi_rounding_;}
+  bool get_gurobi_rounding() { return gurobi_rounding_; }
 
   /// Shall cplex solver be used?
-  void set_cplex_rounding( bool _b) {        cplex_rounding_=_b;}
+  void set_cplex_rounding(bool _b) { cplex_rounding_ = _b; }
   /// Will cplex rounding be performed?
-  bool get_cplex_rounding()         { return cplex_rounding_;}
+  bool get_cplex_rounding() { return cplex_rounding_; }
 
   /// Set number of maximum Gauss-Seidel iterations
-  void         set_local_iters( unsigned int _i) { max_local_iters_ = _i;}
+  void set_local_iters(unsigned int _i) { max_local_iters_ = _i; }
   /// Get number of maximum Gauss-Seidel iterations
-  unsigned int get_local_iters()                 { return max_local_iters_;}
+  unsigned int get_local_iters() { return max_local_iters_; }
 
   /// Set error threshold for Gauss-Seidel solver
-  void   set_local_error( double _d) { max_local_error_ = _d;}
+  void set_local_error(double _d) { max_local_error_ = _d; }
   /// Get error threshold for Gauss-Seidel solver
-  double get_local_error()           { return max_local_error_;}
+  double get_local_error() { return max_local_error_; }
 
-  /// Set number of maximum Conjugate Gradient iterations 
-  void         set_cg_iters( unsigned int _i) { max_cg_iters_ = _i;}
-  /// Get number of maximum Conjugate Gradient iterations 
-  unsigned int get_cg_iters()                 { return max_cg_iters_;}
+  /// Set number of maximum Conjugate Gradient iterations
+  void set_cg_iters(unsigned int _i) { max_cg_iters_ = _i; }
+  /// Get number of maximum Conjugate Gradient iterations
+  unsigned int get_cg_iters() { return max_cg_iters_; }
 
   /// Set error threshold for Conjugate Gradient
-  void   set_cg_error( double _d) { max_cg_error_ = _d;}
+  void set_cg_error(double _d) { max_cg_error_ = _d; }
   /// Get error threshold for Conjugate Gradient
-  double get_cg_error()           { return max_cg_error_;}
+  double get_cg_error() { return max_cg_error_; }
 
-  /// Set multiple rounding threshold (upper bound of rounding performed in each iteration)
-  void   set_multiple_rounding_threshold( double _d) { multiple_rounding_threshold_ = _d;}
-  /// Get multiple rounding  threshold (upper bound of rounding performed in each iteration)
-  double get_multiple_rounding_threshold()           { return multiple_rounding_threshold_;}
-
-  /// Set noise level of algorithm. 0 - quiet, 1 - more noise, 2 - even more, 100 - all noise
-  void         set_noise( unsigned int _i) { noisy_ = _i;}
-  /// Get noise level of algorithm
-  unsigned int get_noise()                 { return noisy_;}
+  /// Set multiple rounding threshold (upper bound of rounding performed in each
+  /// iteration)
+  void set_multiple_rounding_threshold(double _d)
+  {
+    multiple_rounding_threshold_ = _d;
+  }
+  /// Get multiple rounding  threshold (upper bound of rounding performed in
+  /// each iteration)
+  double get_multiple_rounding_threshold()
+  {
+    return multiple_rounding_threshold_;
+  }
 
   /// Set time limit for gurobi solver (in seconds)
-  void   set_gurobi_max_time( double _d) { gurobi_max_time_ = _d;}
+  void set_gurobi_max_time(double _d) { gurobi_max_time_ = _d; }
   /// Get time limit for gurobi solver (in seconds)
-  double get_gurobi_max_time()          { return gurobi_max_time_;}
-
-  /// Set output statistics of solver
-  void set_stats( bool _stats) { stats_ = _stats; }
-  /// Get output statistics of solver
-  bool get_stats( )            { return stats_; }
-	/*@}*/
-
-  /// Set/Get use_constraint_reordering for constraint solver (default = true)
-  bool& use_constraint_reordering() { return use_constraint_reordering_;}
+  double get_gurobi_max_time() { return gurobi_max_time_; }
+  /*@}*/
 
 private:
-
-  void solve_no_rounding( 
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs );
-
-  void solve_direct_rounding( 
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs, 
-    Veci&      _to_round);
-
+  void solve_no_rounding(CSCMatrix& _A, Vecd& _x, Vecd& _rhs);
+  void solve_direct_rounding(
+      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
   void solve_multiple_rounding(
       CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
-
   void solve_iterative(
-    CSCMatrix& _A, 
-    Vecd&      _x, 
-    Vecd&      _rhs, 
-    Veci&      _to_round,
-    bool       _fixed_order );
+      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round, bool _fixed_order);
+  void solve_gurobi(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
+  void solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
 
-  void solve_gurobi(
-    CSCMatrix& _A,
-    Vecd&      _x,
-    Vecd&      _rhs,
-    Veci&      _to_round );
-
-  inline void solve_cplex(
-    CSCMatrix& _A,
-    Vecd&      _x,
-    Vecd&      _rhs,
-    Veci&      _to_round );
-
-  void update_solution(
+  // return true if the solution has been improved only by local iterations
+  bool update_solution_is_local( 
       const CSCMatrix& _A, Vecd& _x, const Vecd& _rhs, const Vecui& _neigh_i);
 
 private:
-
-  /// Copy constructor (not used)
-  MISolver(const MISolver& _rhs);
-
-  /// Assignment operator (not used)
-  MISolver& operator=(const MISolver& _rhs);
-
   // parameters used by the MiSo
   bool initial_full_solution_;
   bool iter_full_solution_;
@@ -273,38 +225,28 @@ private:
   unsigned int max_cg_iters_;
   double       max_cg_error_;
   double       max_full_error_;
-  unsigned int noisy_;
-  bool         stats_;
 
   // time limit for Gurobi solver (in seconds)
   double       gurobi_max_time_;
 
-  // flag
-  bool         cholmod_step_done_;
+  // the actual solver declarations are hidden in the implementation code
+  class DirectSolver;
+  class IterativeSolver;
 
-  // declare direct solver depending on availability
-#if COMISO_SUITESPARSE_AVAILABLE
-  COMISO::CholmodSolver   direct_solver_;
-#elif COMISO_EIGEN3_AVAILABLE
-  COMISO::EigenLDLTSolver direct_solver_;
-#else
-  #print "Warning: MISolver requires Suitesparse or Eigen3 support"
-#endif
+  DirectSolver* direct_solver_;
+  IterativeSolver* iter_solver_;
 
-  IterativeSolverT<double> siter_;
+  bool cholmod_step_done_; // indicate if system factorization has been done
 
   // statistics
   unsigned int n_local_;
   unsigned int n_cg_;
   unsigned int n_full_;
 
-  bool use_constraint_reordering_;
-
 #if(COMISO_QT_AVAILABLE)
   friend class COMISO::MISolverDialog;
 #endif
 };
-
 
 //=============================================================================
 } // namespace COMISO
@@ -312,4 +254,3 @@ private:
 //=============================================================================
 #endif // COMISO_MISOLVER_HH defined
 //=============================================================================
-
