@@ -67,6 +67,18 @@ public:
   typedef std::vector<int> Veci;
   typedef std::vector<unsigned int> Vecui;
 
+  enum class RoundingType
+  {
+    NONE,     // no rounding at all, use with caution
+    DIRECT,   /* simple method that round all integer variables in one pass,
+                 fast, but solutions are far from optimal. */
+    MULTIPLE, /* greedy method that rounds several variables at once,
+                 controlled by set_multiple_rounding_threshold(). */
+    GUROBI,   // only available if you have the Gurobi solver configured
+    CPLEX,    // only available if you have the CPLEX solver configured
+    DEFAULT = MULTIPLE // default setting
+  };
+
   /// default Constructor
   MISolver();
 
@@ -88,8 +100,7 @@ public:
    *  @param _fixed_order specifies if _to_round indices shall be rounded in the
    *  given order (\b true) or be greedily selected (\b false)
    *  */
-  void solve(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round,
-      bool _fixed_order = false);
+  void solve(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
 
   //! Resolve usig the direct solver
   void resolve(Vecd& _x, Vecd& _rhs);
@@ -106,7 +117,28 @@ public:
 
   /// show Qt-Options-Dialog for setting algorithm parameters
   /** Requires a Qt Application running and COMISO_GUI to be defined */
-  void show_options_dialog();
+  void show_options_dialog() const;
+
+  /// Set the solve type
+  void set_rounding_type(const RoundingType _rt) { rounding_type_ = _rt; }
+
+  /// Get the solve type
+  RoundingType get_rounding_type() const { return rounding_type_; }
+
+  /// Shall no rounding be performed?
+  void set_no_rounding() { rounding_type_ = RoundingType::NONE; }
+
+  /// Shall direct (or greedy) rounding be used?
+  void set_direct_rounding() { rounding_type_ = RoundingType::DIRECT; }
+
+  /// Shall multiple rounding be performed?
+  void set_multiple_rounding() { rounding_type_ = RoundingType::MULTIPLE; }
+
+  /// Shall Gurobi solver be used?
+  void set_gurobi_rounding() { rounding_type_ = RoundingType::GUROBI; }
+
+  /// Shall CPLEX solver be used?
+  void set_cplex_rounding() { rounding_type_ = RoundingType::CPLEX; }
 
   /** @name Get/Set functions for algorithm parameters
    * Besides being used by the Qt-Dialog these can also be called explicitly
@@ -115,42 +147,17 @@ public:
   /// Shall an initial full solution be computed?
   void set_inital_full(bool _b) { initial_full_solution_ = _b; }
   /// Will an initial full solution be computed?
-  bool get_inital_full() { return initial_full_solution_; }
+  bool get_inital_full() const { return initial_full_solution_; }
 
   /// Shall an full solution be computed if iterative methods did not converged?
   void set_iter_full(bool _b) { iter_full_solution_ = _b; }
   /// Will an full solution be computed if iterative methods did not converged?
-  bool get_iter_full() { return iter_full_solution_; }
+  bool get_iter_full() const { return iter_full_solution_; }
 
   /// Shall a final full solution be computed?
   void set_final_full(bool _b) { final_full_solution_ = _b; }
   /// Will a final full solution be computed?
-  bool get_final_full() { return final_full_solution_; }
-
-  /// Shall direct (or greedy) rounding be used?
-  void set_direct_rounding(bool _b) { direct_rounding_ = _b; }
-  /// Will direct rounding be used?
-  bool get_direct_rounding() { return direct_rounding_; }
-
-  /// Shall no rounding be performed?
-  void set_no_rounding(bool _b) { no_rounding_ = _b; }
-  /// Will no rounding be performed?
-  bool get_no_rounding() { return no_rounding_; }
-
-  /// Shall multiple rounding be performed?
-  void set_multiple_rounding(bool _b) { multiple_rounding_ = _b; }
-  /// Will multiple rounding be performed?
-  bool get_multiple_rounding() { return multiple_rounding_; }
-
-  /// Shall gurobi solver be used?
-  void set_gurobi_rounding(bool _b) { gurobi_rounding_ = _b; }
-  /// Will gurobi rounding be performed?
-  bool get_gurobi_rounding() { return gurobi_rounding_; }
-
-  /// Shall cplex solver be used?
-  void set_cplex_rounding(bool _b) { cplex_rounding_ = _b; }
-  /// Will cplex rounding be performed?
-  bool get_cplex_rounding() { return cplex_rounding_; }
+  bool get_final_full() const { return final_full_solution_; }
 
   /// Set number of maximum Gauss-Seidel iterations
   void set_local_iters(unsigned int _i) { max_local_iters_ = _i; }
@@ -186,48 +193,41 @@ public:
   }
 
   /// Set time limit for gurobi solver (in seconds)
-  void set_gurobi_max_time(double _d) { gurobi_max_time_ = _d; }
+  void set_gurobi_max_time(double _d) { max_time_ = _d; }
   /// Get time limit for gurobi solver (in seconds)
-  double get_gurobi_max_time() { return gurobi_max_time_; }
+  double get_gurobi_max_time() { return max_time_; }
   /*@}*/
 
 private:
   void solve_no_rounding(CSCMatrix& _A, Vecd& _x, Vecd& _rhs);
   void solve_direct_rounding(
-      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
+      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
   void solve_multiple_rounding(
       CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
   void solve_iterative(
       CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round, bool _fixed_order);
-  void solve_gurobi(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
-  void solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round);
+  void solve_gurobi(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
+  void solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
 
   // return true if the solution has been improved only by local iterations
   bool update_solution_is_local( 
       const CSCMatrix& _A, Vecd& _x, const Vecd& _rhs, const Vecui& _neigh_i);
 
 private:
+  RoundingType rounding_type_;
+
   // parameters used by the MiSo
   bool initial_full_solution_;
   bool iter_full_solution_;
   bool final_full_solution_;
 
-  bool direct_rounding_;
-  bool no_rounding_;
-  bool multiple_rounding_;
-  bool gurobi_rounding_;
-  bool cplex_rounding_;
-
-  double multiple_rounding_threshold_;
-
   unsigned int max_local_iters_;
   double       max_local_error_;
   unsigned int max_cg_iters_;
   double       max_cg_error_;
-  double       max_full_error_;
 
-  // time limit for Gurobi solver (in seconds)
-  double       gurobi_max_time_;
+  double multiple_rounding_threshold_; // control solve_multiple_rounding()
+  double max_time_; // control the time limit for Gurobi and CPLEX (in seconds)
 
   // the actual solver declarations are hidden in the implementation code
   class DirectSolver;
