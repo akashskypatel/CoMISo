@@ -167,7 +167,7 @@ ConstrainedSolver::solve(
 
   DEB_out_if(_show_timings, 1, "Initital dimension: " << nrows << " x " << ncols
     << ", number of constraints: " << ncons << ", number of integer variables: " << _idx_to_round.size()
-    << ", use reordering: " << (use_constraint_reordering() ? "yes" : "no") << "\n")
+    << ", use reordering: " << (use_constraint_reordering ? "yes" : "no") << "\n")
 
     // StopWatch for Timings
     Base::StopWatch sw, sw2; sw.start(); sw2.start();
@@ -177,7 +177,7 @@ ConstrainedSolver::solve(
   std::vector<int> c_elim(ncons);
 
   // apply sparse gauss elimination to make subsequent _conditions independent
-  if (use_constraint_reordering())
+  if (use_constraint_reordering)
     make_constraints_independent_reordering(_constraints, _idx_to_round, c_elim);
   else
     make_constraints_independent(_constraints, _idx_to_round, c_elim);
