@@ -11,7 +11,6 @@
 
 #include <CoMISo/Utils/gmm.hh>
 #include <deque>
-#include <set>
 
 //== FORWARDDECLARATIONS ======================================================
 
@@ -32,19 +31,21 @@ namespace COMISO
 template <class RealT> class IterativeSolverT
 {
 public:
+  typedef unsigned int uint;
   typedef RealT Real;
   typedef std::vector<Real> Vector;
+  typedef std::vector<uint> IndexVector;
   typedef gmm::csc_matrix<Real> Matrix;
 
-  // local gauss_seidel
+  // local Gauss-Seidel
   bool gauss_seidel_local(const Matrix& _A, Vector& _x, const Vector& _rhs,
-      const std::vector<unsigned int>& _idxs, const int _max_iter,
-      const Real& _tolerance);
+      const IndexVector& _idxs, const int _max_iter, const Real& _tolerance);
 
-  // local gauss_seidel
-  bool gauss_seidel_local2(const Matrix& _A, Vector& _x, const Vector& _rhs,
-      const std::vector<unsigned int>& _idxs, const int _max_iter,
-      const Real& _tolerance);
+  // get the indices of any variables updated during the last local Gauss-Seidel
+  const IndexVector& updated_variable_indices() const
+  {
+    return updt_vrbl_indcs_;
+  }
 
   // conjugate gradient
   bool conjugate_gradient(const Matrix& _A, Vector& _x, const Vector& _rhs,
@@ -55,16 +56,16 @@ private:
   Real vect_norm_rel(const Vector& _v, const Vector& _diag) const;
 
 private:
-  // helper for conjugate gradient
+  // context  for Conjugate Gradient
   Vector p_;
   Vector q_;
   Vector r_;
   Vector d_;
 
-  //  helper for local gauss seidel
-  std::vector<unsigned int> i_temp;
-  std::deque<unsigned int> q;
-  std::set<int> s;
+  // context for local Gauss-Seidel
+  IndexVector indx_temp_;
+  std::deque<uint> indx_queue_;
+  IndexVector updt_vrbl_indcs_; // updated variable indices
 };
 
 //=============================================================================

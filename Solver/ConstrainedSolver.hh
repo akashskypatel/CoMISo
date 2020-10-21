@@ -258,7 +258,7 @@ public:
   void set_noisy( int _noisy) { noisy_ = _noisy;}
 
   // Get/Set whether the constraint reordering is used (default true)
-  bool& use_constraint_reordering() { return miso_.use_constraint_reordering(); }
+  bool use_constraint_reordering = true;
 
   /// Access the MISolver (e.g. to change settings)
   COMISO::MISolver& misolver() { return miso_;}
