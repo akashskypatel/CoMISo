@@ -480,6 +480,9 @@ target_link_libraries (CoMISo
 )
 
 
+find_package(NASOQ REQUIRED)
+target_link_libraries(CoMISo PUBLIC NASOQ::NASOQ)
+
 # display results
 acg_print_configure_header (COMISO "CoMISo")
 
