@@ -1,11 +1,4 @@
 # - Try to find NASOQ based on the NASOQ CMake File
-# Once done this will define
-#  
-#  COMISO_FOUND        - system has COMISO
-#  COMISO_INCLUDE_DIRS - the COMISO include directory
-#  COMISO_LIBRARY_DIR  - where the libraries are
-#  COMISO_LIBRARY      - Link these to use COMISO
-
 
 if (TARGET NASOQ::NASOQ)
   # already found, do nothing
@@ -32,24 +25,27 @@ else()
   set(SUITESPARSE_INCLUDE_DIR_HINTS ${SUITESPARSE_INCLUDE_DIR_HINTS} ${SUITE_ROOT_PATH}/include)
   set(SUITESPARSE_LIBRARY_DIR_HINTS ${SUITESPARSE_LIBRARY_DIR_HINTS} ${SUITE_ROOT_PATH}/lib)
   set(BLA_STATIC TRUE)
-  find_package(SuiteSparse OPTIONAL_COMPONENTS)
+  find_package(SUITESPARSE OPTIONAL_COMPONENTS)
 
   #TODO adding METIS submodule
   find_package(METIS REQUIRED)
 
   find_package (Eigen3 REQUIRED NO_MODULE)
 
-  add_library (NASOQ INTERFACE )
-  add_library(NASOQ::NASOQ ALIAS NASOQ)
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(NASOQ  DEFAULT_MSG
+                                    MKL_INCLUDE_DIR METIS_INCLUDE_DIR)
+
+
+  add_library (NASOQ::NASOQ INTERFACE IMPORTED)
   if(UNIX )
-    target_compile_definitions(NASOQ INTERFACE "m64")
+    target_compile_definitions(NASOQ::NASOQ INTERFACE "m64")
   endif()
 
-  target_include_directories(NASOQ INTERFACE
+  target_include_directories(NASOQ::NASOQ INTERFACE
     ${MKL_INCLUDE_DIR}
     ${SUITESPARSE_INCLUDE_DIRS}
-    ${METIS_INCLUDE_DIR}
-    ${METIS_INCLUDES}
+    ${METIS_INCLUDE_DIRS}
     "${NASOQ_BASE_DIR}/symbolic/"
     "${NASOQ_BASE_DIR}/common/"
     "${NASOQ_BASE_DIR}/ldl/"
@@ -62,10 +58,9 @@ else()
     "${NASOQ_BASE_DIR}/smp-format/"
     "${NASOQ_BASE_DIR}/eigen_interface/")
 
-  target_link_libraries(NASOQ INTERFACE
+  target_link_libraries(NASOQ::NASOQ INTERFACE
     ${MKL_LIBRARIES}
     ${SUITESPARSE_LIBRARIES}
-    ${METIS_LIBRARY}
     ${METIS_LIBRARIES})
 
 endif(TARGET NASOQ::NASOQ)
