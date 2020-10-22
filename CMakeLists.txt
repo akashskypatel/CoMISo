@@ -475,7 +475,7 @@ if ( QT5_FOUND )
 
 endif()
 
-target_link_libraries (CoMISo
+target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
 
