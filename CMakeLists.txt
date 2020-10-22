@@ -479,6 +479,7 @@ target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
 
+set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 
 find_package(NASOQ REQUIRED)
 target_link_libraries(CoMISo PUBLIC NASOQ::NASOQ)
