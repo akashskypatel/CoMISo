@@ -24,11 +24,22 @@ namespace COMISO {
 
 //== IMPLEMENTATION ========================================================== 
 
+void regularize_hessian(NProblemInterface::SMatrixNP& _H)
+{
+  NProblemInterface::SMatrixNP id;
+  id.resize(_H.rows(), _H.cols());
+  id.setIdentity();
+  double reg_factor = 1e-8;
+  auto diag = _H.diagonal();
+  _H = _H + reg_factor * diag.sum()/diag.rows() * id;
+}
+
 NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
 {
   std::vector<double> zero(_problem->n_unknowns(), 0);
   NProblemInterface::SMatrixNP H;
   _problem->eval_hessian(zero.data(), H);
+  regularize_hessian(H);
   return H;
 }
 
