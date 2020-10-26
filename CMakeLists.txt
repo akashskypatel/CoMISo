@@ -484,6 +484,9 @@ set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 find_package(NASOQ REQUIRED)
 target_link_libraries(CoMISo PRIVATE NASOQ::NASOQ)
 
+find_package(osqp REQUIRED)
+target_link_libraries(CoMISo PRIVATE osqp::osqp)
+
 # display results
 acg_print_configure_header (COMISO "CoMISo")
 
