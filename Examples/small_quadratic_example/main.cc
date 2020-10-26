@@ -33,6 +33,7 @@
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/NSolver/GUROBISolver.hh>
 #include <CoMISo/NSolver/NASOQSolver.hh>
+#include <CoMISo/NSolver/OSQPSolver.hh>
 #include <CoMISo/NSolver/LinearConstraint.hh>
 
 /// function to initialize a simple system of linear equations
@@ -220,11 +221,12 @@ void quadratic_example_2()
   int n_tests = 100;
   double t_gurobi = 0.0;
   double t_nasoq = 0.0;
+  double t_osqp = 0.0;
 
   for (int i = 0; i < n_tests; ++i)
   {
 
-    for (auto use_constraints : {false, true})
+    for (auto use_constraints : {false/*, true*/})
     {
 
       std::vector<double> min = use_constraints ? std::vector<double>{3, -2.5} : std::vector<double>{-0.8, -0.6};
@@ -253,7 +255,7 @@ void quadratic_example_2()
         sw.start();
         bool success = solver.solve(&prob,constraints,var_types);
         sw.stop();
-        if (i > 1)
+        if (i > 1 || n_tests == 1)
           t_gurobi += sw.elapsed();
         if (success)
         {
@@ -273,7 +275,7 @@ void quadratic_example_2()
         sw.start();
         bool success = solver.solve(&prob, constraints);
         sw.stop();
-        if (i > 1)
+        if (i > 1 || n_tests == 1)
           t_nasoq += sw.elapsed();
         if (success)
         {
@@ -284,12 +286,32 @@ void quadratic_example_2()
           std::cout << "NASOQ failed" << std::endl;
         }
       }
+
+      //OSQO
+      {
+        COMISO::OSQPSolver solver;
+        Base::StopWatch sw;
+        sw.start();
+        bool success = solver.solve(&prob, constraints);
+        sw.stop();
+        if (i > 1 || n_tests == 1)
+          t_osqp += sw.elapsed();
+        if (success)
+        {
+          std::cout << "OSQP  succeeded in " << sw.elapsed() << "ms. Optimum found at x = " << prob.get_result()[0] << " and y = " << prob.get_result()[1] << " with value " << prob.eval_f(prob.get_result().data()) << std::endl;
+        }
+        else
+        {
+          std::cout << "OSQP failed" << std::endl;
+        }
+      }
     }
 
   }
 
-  std::cout << "avg time gurobi: " << t_gurobi / (2*(n_tests-1)) << "ms." << std::endl;
-  std::cout << "avg time nasoq : " << t_nasoq  / (2*(n_tests-1)) << "ms." << std::endl;
+  std::cout << "avg time gurobi: " << t_gurobi / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
+  std::cout << "avg time nasoq : " << t_nasoq  / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
+  std::cout << "avg time osqp  : " << t_osqp   / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
 
 }
 
