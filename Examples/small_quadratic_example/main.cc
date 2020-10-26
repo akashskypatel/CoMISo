@@ -207,10 +207,11 @@ void quadratic_example_2()
   trips.emplace_back(0,1,2);
   trips.emplace_back(1,0,2);
   trips.emplace_back(1,1,4);
-  H.resize(2,2);
+  H.resize(20,20);
   H.setFromTriplets(trips.begin(), trips.end());
 
-  q.resize(2);
+  q.resize(20);
+  q.Zero(20);
   q[0] = 6;
   q[1] = 4;
 
