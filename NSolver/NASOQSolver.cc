@@ -24,7 +24,7 @@ namespace COMISO {
 
 //== IMPLEMENTATION ========================================================== 
 
-void regularize_hessian(NProblemInterface::SMatrixNP& _H)
+void NASOQSolver::regularize_hessian(NProblemInterface::SMatrixNP& _H)
 {
   NProblemInterface::SMatrixNP id;
   id.resize(_H.rows(), _H.cols());
@@ -34,7 +34,7 @@ void regularize_hessian(NProblemInterface::SMatrixNP& _H)
   _H = _H + reg_factor * diag.sum()/diag.rows() * id;
 }
 
-NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
+NProblemInterface::SMatrixNP NASOQSolver::get_hessian(NProblemInterface* _problem)
 {
   std::vector<double> zero(_problem->n_unknowns(), 0);
   NProblemInterface::SMatrixNP H;
@@ -43,7 +43,7 @@ NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
   return H;
 }
 
-Eigen::VectorXd get_q(NProblemInterface* _problem)
+Eigen::VectorXd NASOQSolver::get_q(NProblemInterface* _problem)
 {
   std::vector<double> zero(_problem->n_unknowns(), 0);
   Eigen::VectorXd q;
@@ -52,7 +52,7 @@ Eigen::VectorXd get_q(NProblemInterface* _problem)
   return q;
 }
 
-void get_equality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _A, Eigen::VectorXd& _rhs)
+void NASOQSolver::get_equality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _A, Eigen::VectorXd& _rhs)
 {
   int n_rows = 0;
   for (auto c : _constraints)
@@ -81,7 +81,7 @@ void get_equality_constraints(int _n_cols, const std::vector<NConstraintInterfac
   _A.setFromTriplets(triplets.begin(), triplets.end());
 }
 
-void get_inequality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _rhs)
+void NASOQSolver::get_inequality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _rhs)
 {
   int n_rows = 0;
   for (auto c : _constraints)

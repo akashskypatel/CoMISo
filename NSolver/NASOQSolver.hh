@@ -54,6 +54,13 @@ protected:
 
 private:
 
+  void regularize_hessian(NProblemInterface::SMatrixNP& _H);
+
+  NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem);
+  Eigen::VectorXd get_q(NProblemInterface* _problem);
+
+  void get_equality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _A, Eigen::VectorXd& _rhs);
+  void get_inequality_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _rhs);
 };
 
 
