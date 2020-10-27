@@ -38,19 +38,29 @@ namespace COMISO {
 class COMISODLLEXPORT OSQPSolver
 {
 public:
+
+  // helper struct to create and destruct OSQP objects
+  struct OSQPStructures;
+
   // ********** SOLVE **************** //
   bool solve(NProblemInterface*                        _problem,                // problem instance
              const std::vector<NConstraintInterface*>& _constraints            // linear constraints
              );
 
-// TODO:
-//  // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
-//  bool solve(NProblemInterface*                        _problem,
-//                    const std::vector<NConstraintInterface*>& _constraints,
-//                    const std::vector<NConstraintInterface*>& _lazy_constraints)
-
+  // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
+  bool solve(NProblemInterface*                        _problem,
+             const std::vector<NConstraintInterface*>& _constraints,
+             const std::vector<NConstraintInterface*>& _lazy_constraints,
+             double _acceptable_tolerance = 1e-8,
+             double _almost_infeasible_threshold = 0.5);
 
 protected:
+
+  bool solve(NProblemInterface*                        _problem,                // problem instance
+             const std::vector<NConstraintInterface*>& _constraints,            // linear constraints
+             OSQPStructures& _osqp_structures
+             );
+
 
 private:
 

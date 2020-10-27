@@ -16,6 +16,7 @@
 
 #include <CoMISo/Utils/CoMISoError.hh>
 #include <CoMISo/Utils/StopWatch.hh>
+#include <CoMISo/NSolver/LazyConstraintSolver.hh>
 
 #include <Base/Debug/DebTime.hh>
 
@@ -26,6 +27,49 @@
 namespace COMISO {
 
 //== IMPLEMENTATION ========================================================== 
+
+
+// helper struct to create and destruct OSQP objects
+struct OSQPSolver::OSQPStructures
+{
+  OSQPStructures()
+    :
+      workspace(nullptr), // will be created by OSQP
+      settings(new OSQPSettings()),
+      data(new OSQPData)
+  {
+    osqp_set_default_settings(settings);
+    data->n = 0;
+    data->m = 0;
+    data->P = nullptr;
+    data->A = nullptr;
+    data->q = nullptr;
+    data->l = nullptr;
+    data->u = nullptr;
+  }
+
+  ~OSQPStructures()
+  {
+    // Cleanup
+    if (workspace != nullptr)
+      delete  workspace;
+    if (data != nullptr)
+    {
+      if (data->A)
+        delete data->A;
+      if (data->P)
+        delete data->P;
+      delete data;
+    }
+    if (settings != nullptr)
+      delete settings;
+  }
+
+  OSQPWorkspace* workspace;
+  OSQPSettings*  settings;
+  OSQPData*      data;
+};
+
 
 void OSQPSolver::regularize_hessian(NProblemInterface::SMatrixNP& _H)
 {
@@ -84,10 +128,12 @@ void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInter
       {
         _lower_bounds[current_row] = -std::numeric_limits<double>::max();
         _upper_bounds[current_row] = -b;
+//        _upper_bounds[current_row] = std::numeric_limits<double>::max();
       }
       else if (c->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
       {
         _lower_bounds[current_row] = -b;
+//        _lower_bounds[current_row] = -std::numeric_limits<double>::max();
         _upper_bounds[current_row] = std::numeric_limits<double>::max();
       }
 
@@ -101,40 +147,33 @@ void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInter
   _C.setFromTriplets(triplets.begin(), triplets.end());
 }
 
-// helper struct to create and destruct OSQP objects
-struct OSQPStructures
-{
-  OSQPStructures()
-    :
-      workspace(nullptr), // will be created by OSQP
-      settings(new OSQPSettings()),
-      data(new OSQPData)
-  {
-  }
 
-  ~OSQPStructures()
-  {
-    // Cleanup
-    if (workspace != nullptr)
-      delete  workspace;
-    if (data != nullptr)
-    {
-      if (data->A)
-        delete data->A;
-      if (data->P)
-        delete data->P;
-      delete data;
-    }
-    if (settings != nullptr)
-      delete settings;
-  }
-
-  OSQPWorkspace* workspace;
-  OSQPSettings*  settings;
-  OSQPData*      data;
-};
 
 bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+{
+  OSQPStructures osqp_structures;
+  return solve(_problem, _constraints, osqp_structures);
+}
+
+
+bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, const std::vector<NConstraintInterface*>& _lazy_constraints, double _acceptable_tolerance, double _almost_infeasible_threshold)
+{
+
+  OSQPStructures osqp_structures;
+  auto solve_function = [this, &osqp_structures](NProblemInterface* _problem, const std::vector<NConstraintInterface*> _constraints)
+  {
+    return solve(_problem, _constraints, osqp_structures);
+  };
+
+  auto get_res_function = [&osqp_structures]()
+  {
+    return osqp_structures.workspace->solution->x;
+  };
+
+  return solve_with_lazy_constraints(solve_function, get_res_function, _problem, _constraints, _lazy_constraints, _acceptable_tolerance, _almost_infeasible_threshold);
+}
+
+bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, OSQPSolver::OSQPStructures& _osqp_structures)
 {
   // Load problem data
 //  c_float P_x[3] = {4.0, 1.0, 2.0, };       // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
@@ -185,17 +224,20 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   c_int exitflag = 0;
 
   // Workspace structures
-  OSQPStructures osqp_structures;
-  OSQPWorkspace *work     = osqp_structures.workspace;
-  OSQPSettings  *settings = osqp_structures.settings;
-  OSQPData      *data     = osqp_structures.data;
+  OSQPWorkspace *& work     = _osqp_structures.workspace;
+  OSQPSettings  *& settings = _osqp_structures.settings;
+  OSQPData      *& data     = _osqp_structures.data;
 
   // Populate data
   if (data) {
     data->n = n;
     data->m = m;
+    if (data->P != nullptr)
+      delete data->P;
     data->P = csc_matrix(data->n, data->n, P_nnz, P_x, P_i, P_p);
     data->q = q;
+    if (data->A != nullptr)
+      delete data->A;
     data->A = csc_matrix(data->m, data->n, A_nnz, A_x, A_i, A_p);
     data->l = l;
     data->u = u;
@@ -205,6 +247,9 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   if (settings) {
     osqp_set_default_settings(settings);
     settings->alpha = 1.0; // Change alpha parameter
+    settings->max_iter = 20000;
+    settings->warm_start = true;
+//    settings->check_termination = 1;
   }
 
   // Setup workspace
@@ -219,16 +264,17 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   // Solve Problem
   exitflag = osqp_solve(work);
 
+  _problem->store_result(work->solution->x);
+
   if (exitflag != 0)
   {
     DEB_error("OSQP failed solving with exit flag " << exitflag);
     return false;
   }
 
-  _problem->store_result(work->solution->x);
-
   return exitflag == 0;
 }
+
 
 
 //-----------------------------------------------------------------------------
