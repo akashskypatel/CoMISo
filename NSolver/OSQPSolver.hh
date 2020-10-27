@@ -11,7 +11,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-//#if COMISO_OSQP_AVAILABLE // TODO
+#if COMISO_OSQP_AVAILABLE // TODO
 
 //== INCLUDES =================================================================
 
@@ -78,7 +78,7 @@ private:
 } // namespace COMISO
 
 //=============================================================================
-//#endif // COMISO_OSQP_AVAILABLE
+#endif // COMISO_OSQP_AVAILABLE
 //=============================================================================
 #endif // COMISO_OSQPSOLVER_HH defined
 //=============================================================================

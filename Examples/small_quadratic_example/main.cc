@@ -244,7 +244,7 @@ void quadratic_example_2()
       for (auto& lc : linear_constraints)
         constraints.push_back(&lc);
 
-    #if COMISO_GUROBI_AVAILABLE
+#if COMISO_GUROBI_AVAILABLE
       {
         COMISO::GUROBISolver solver;
         std::vector<COMISO::PairIndexVtype> var_types;
@@ -265,9 +265,9 @@ void quadratic_example_2()
           std::cout << "Gurobi failed" << std::endl;
         }
       }
-    #endif
+#endif
 
-
+#if COMISO_OSQP_AVAILABLE
       //OSQO
       {
         COMISO::OSQPSolver solver;
@@ -286,6 +286,8 @@ void quadratic_example_2()
           std::cout << "OSQP failed" << std::endl;
         }
       }
+#endif
+
     }
 
   }
