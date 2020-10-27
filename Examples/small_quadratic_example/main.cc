@@ -32,7 +32,6 @@
 #include <CoMISo/Solver/GMM_Tools.hh>
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/NSolver/GUROBISolver.hh>
-#include <CoMISo/NSolver/NASOQSolver.hh>
 #include <CoMISo/NSolver/OSQPSolver.hh>
 #include <CoMISo/NSolver/LinearConstraint.hh>
 
@@ -268,24 +267,6 @@ void quadratic_example_2()
       }
     #endif
 
-      //NASOQ
-      {
-        COMISO::NASOQSolver solver;
-        Base::StopWatch sw;
-        sw.start();
-        bool success = solver.solve(&prob, constraints);
-        sw.stop();
-        if (i > 1 || n_tests == 1)
-          t_nasoq += sw.elapsed();
-        if (success)
-        {
-          std::cout << "NASOQ  succeeded in " << sw.elapsed() << "ms. Optimum found at x = " << prob.get_result()[0] << " and y = " << prob.get_result()[1] << " with value " << prob.eval_f(prob.get_result().data()) << std::endl;
-        }
-        else
-        {
-          std::cout << "NASOQ failed" << std::endl;
-        }
-      }
 
       //OSQO
       {
@@ -310,7 +291,6 @@ void quadratic_example_2()
   }
 
   std::cout << "avg time gurobi: " << t_gurobi / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
-  std::cout << "avg time nasoq : " << t_nasoq  / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
   std::cout << "avg time osqp  : " << t_osqp   / (2*std::max(n_tests-1, 1)) << "ms." << std::endl;
 
 }
