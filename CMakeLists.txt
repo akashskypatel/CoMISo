@@ -356,15 +356,6 @@ if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
-
-find_package(osqp)
-if (TARGET osqp::osqp)
-  list( APPEND COMISO_LINK_LIBRARIES  osqp::osqp )
-  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
-else()
-  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
-endif()
-
 # source code directories
 set (directories
   .
@@ -487,6 +478,14 @@ endif()
 target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
+
+find_package(osqp)
+if (TARGET osqp::osqp)
+  target_link_libraries (CoMISo PRIVATE osqp::osqp )
+  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
+else()
+  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
+endif()
 
 set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 
