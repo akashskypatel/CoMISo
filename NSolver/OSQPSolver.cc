@@ -101,7 +101,7 @@ Eigen::VectorXd OSQPSolver::get_linear_energy_coefficients(NProblemInterface* _p
 
 void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds, Eigen::VectorXd& _upper_bounds)
 {
-  int n_rows = _constraints.size();
+  size_t n_rows = _constraints.size();
   _C.resize(n_rows, _n_cols);
   _lower_bounds.resize(n_rows);
   _upper_bounds.resize(n_rows);
@@ -128,12 +128,10 @@ void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInter
       {
         _lower_bounds[current_row] = -std::numeric_limits<double>::max();
         _upper_bounds[current_row] = -b;
-//        _upper_bounds[current_row] = std::numeric_limits<double>::max();
       }
       else if (c->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
       {
         _lower_bounds[current_row] = -b;
-//        _lower_bounds[current_row] = -std::numeric_limits<double>::max();
         _upper_bounds[current_row] = std::numeric_limits<double>::max();
       }
 
@@ -198,27 +196,23 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   Eigen::VectorXd upper;                  // upper bounds
   get_constraints(_problem->n_unknowns(), _constraints, A, lower, upper);
 
-  Eigen::VectorXd x; // solution vector of primal vars
-  Eigen::VectorXd y; // solution vector of dual vars for equality    // probably, TODO: verify
-  Eigen::VectorXd z; // solution vector of dual vars for inequality  // probably, TODO: verify
-
-  COMISO::NProblemInterface::SMatrixNP HlowerTriangle = H.triangularView<Eigen::Upper>();
-  HlowerTriangle.makeCompressed();
+  COMISO::NProblemInterface::SMatrixNP HupperTriangle = H.triangularView<Eigen::Upper>();
+  HupperTriangle.makeCompressed();
 
 
-  c_float* P_x   = HlowerTriangle.valuePtr();      // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
-  c_int    P_nnz = HlowerTriangle.nonZeros();      // number of non zeros
-  c_int*   P_i   = HlowerTriangle.innerIndexPtr(); // row indices
-  c_int*   P_p   = HlowerTriangle.outerIndexPtr(); // column pointers
-  c_float* q     = lin_q.data();                       // dense array for linear part of cost function (size n)
-  c_float* A_x   = A.valuePtr();                   // linear constraints matrix A in csc format (size m x n)
-  c_int    A_nnz = A.nonZeros();                   // number of non zeros
-  c_int*   A_i   = A.innerIndexPtr();              // number of non z
-  c_int*   A_p   = A.outerIndexPtr();              // row indices
-  c_float* l     = lower.data();                   // dense array for lower bound (size m)
-  c_float* u     = upper.data();                   // dense array for upper bound (size m)
-  c_int    n     = HlowerTriangle.cols();          // number of variables n
-  c_int    m     = A.rows();                       // number of constraints m
+  c_float* P_x   = HupperTriangle.valuePtr();                    // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
+  c_int    P_nnz = static_cast<int>(HupperTriangle.nonZeros());  // number of non zeros
+  c_int*   P_i   = HupperTriangle.innerIndexPtr();               // row indices
+  c_int*   P_p   = HupperTriangle.outerIndexPtr();               // column pointers
+  c_float* q     = lin_q.data();                                 // dense array for linear part of cost function (size n)
+  c_float* A_x   = A.valuePtr();                                 // linear constraints matrix A in csc format (size m x n)
+  c_int    A_nnz = static_cast<int>(A.nonZeros());               // number of non zeros
+  c_int*   A_i   = A.innerIndexPtr();                            // number of non z
+  c_int*   A_p   = A.outerIndexPtr();                            // row indices
+  c_float* l     = lower.data();                                 // dense array for lower bound (size m)
+  c_float* u     = upper.data();                                 // dense array for upper bound (size m)
+  c_int    n     = static_cast<int>(HupperTriangle.cols());      // number of variables n
+  c_int    m     = static_cast<int>(A.rows());                   // number of constraints m
 
   // Exitflag
   c_int exitflag = 0;
@@ -243,13 +237,12 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
     data->u = u;
   }
 
-  // Define solver settings as default
+  // Define solver settings
   if (settings) {
     osqp_set_default_settings(settings);
     settings->alpha = 1.0; // Change alpha parameter
     settings->max_iter = 20000;
     settings->warm_start = true;
-//    settings->check_termination = 1;
   }
 
   // Setup workspace

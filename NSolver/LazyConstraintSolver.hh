@@ -132,7 +132,7 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
   DEB_line(4, "############# lazy constraints statistics ###############");
   DEB_line(4, _lazy_constraints.size() << " lazy constraints in input.");
   DEB_line(4, "#passes     : " << n_infeasible.size() << "( of " << _max_passes << ")");
-  for(int i=0; i<n_infeasible.size(); ++i)
+  for(size_t i=0; i<n_infeasible.size(); ++i)
     DEB_line(5, "pass " << i+1 << " induced " << n_infeasible[i]
       << " infeasible and " << n_almost_infeasible[i] << " almost infeasible");
 
