@@ -11,7 +11,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_OSQP_AVAILABLE // TODO
+#if COMISO_OSQP_AVAILABLE
 
 //== INCLUDES =================================================================
 

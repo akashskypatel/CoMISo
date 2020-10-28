@@ -8,7 +8,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-//#if COMISO_OSQP_AVAILABLE // TODO
+#if COMISO_OSQP_AVAILABLE
 //=============================================================================
 #include "OSQPSolver.hh"
 
@@ -275,5 +275,5 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-//#endif // COMISO_OSQP_AVAILABLE
+#endif // COMISO_OSQP_AVAILABLE
 //=============================================================================
