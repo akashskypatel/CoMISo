@@ -154,7 +154,12 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
 }
 
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, const std::vector<NConstraintInterface*>& _lazy_constraints, double _acceptable_tolerance, double _almost_infeasible_threshold)
+bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
+                       const std::vector<NConstraintInterface*>& _lazy_constraints,
+                       double _acceptable_tolerance,
+                       double _almost_infeasible_threshold,
+                       int _max_passes,
+                       bool _final_step_with_all_constraints)
 {
 
   OSQPStructures osqp_structures;
@@ -168,10 +173,14 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
     return osqp_structures.workspace->solution->x;
   };
 
-  return solve_with_lazy_constraints(solve_function, get_res_function, _problem, _constraints, _lazy_constraints, _acceptable_tolerance, _almost_infeasible_threshold);
+  return solve_with_lazy_constraints(solve_function, get_res_function, _problem,
+                                     _constraints, _lazy_constraints,
+                                     _acceptable_tolerance, _almost_infeasible_threshold,
+                                     _max_passes, _final_step_with_all_constraints);
 }
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints, OSQPSolver::OSQPStructures& _osqp_structures)
+bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
+                       OSQPSolver::OSQPStructures& _osqp_structures)
 {
   // Load problem data
 //  c_float P_x[3] = {4.0, 1.0, 2.0, };       // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).

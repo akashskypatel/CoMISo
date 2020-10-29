@@ -87,7 +87,14 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
 {
   DEB_enter_func;
 
-  auto res = _solve(_problem, _initial_constraints);
+  if (_max_passes <= 0 && !_final_step_with_all_constraints)
+  {
+    DEB_warning(2, "Asking for " << _max_passes << " passes and no final step with all constraints. " <<
+                "Will perform 1 pass instead.");
+    _max_passes = 1;
+  }
+
+  decltype(_solve(_problem, _initial_constraints)) res;
 
   std::vector<NConstraintInterface*> constraints = _initial_constraints;
   std::vector<bool> added(_lazy_constraints.size(), false);
@@ -97,6 +104,8 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
 
   for (int pass = 0; pass < _max_passes; ++pass)
   {
+    res = _solve(_problem, constraints);
+
     n_infeasible.push_back(0);
     n_almost_infeasible.push_back(0);
 
@@ -122,11 +131,22 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
 
     if (n_infeasible.back() == 0)
       break; // if nothing is infeasible we are done
-
-    res = _solve(_problem, constraints);
-//    _almost_infeasible_threshold *= 2;
   }
 
+  bool did_final_step = false;
+  if (n_infeasible.empty() ||             // no initial step without constraints was performed or
+      (n_infeasible.back() != 0 &&        // (the last step was not successfull and
+       _final_step_with_all_constraints)) // we want to do a pass with all constraints)
+  {
+    did_final_step = true;
+
+    // add remaining constraints
+    for (size_t i = 0; i < _lazy_constraints.size(); ++i)
+      if (!added[i])
+        constraints.push_back(_lazy_constraints[i]);
+
+    res = _solve(_problem, constraints);
+  }
 
   // Retrieve some statistics about the solve
   DEB_line(4, "############# lazy constraints statistics ###############");
@@ -135,6 +155,7 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
   for(size_t i=0; i<n_infeasible.size(); ++i)
     DEB_line(5, "pass " << i+1 << " induced " << n_infeasible[i]
       << " infeasible and " << n_almost_infeasible[i] << " almost infeasible");
+  DEB_line_if(did_final_step, 4, "Did final step with all lazy constraints");
 
   return res;
 }
