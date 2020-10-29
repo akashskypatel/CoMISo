@@ -70,11 +70,12 @@ get_parameters()
   initialFullCB     ->setChecked( misolver_.get_inital_full());
   iterFullCB        ->setChecked( misolver_.get_iter_full());
   finalFullCB       ->setChecked( misolver_.get_final_full());
-  directRoundingCB  ->setChecked( misolver_.get_direct_rounding());
-  noRoundingCB      ->setChecked( misolver_.get_no_rounding());
-  multipleRoundingCB->setChecked( misolver_.get_multiple_rounding());
-  gurobiRoundingCB  ->setChecked( misolver_.get_gurobi_rounding());
-  cplexRoundingCB   ->setChecked( misolver_.get_cplex_rounding());
+  auto rounding_type = misolver_.get_rounding_type();
+  directRoundingCB  ->setChecked( rounding_type == MISolver::RoundingType::DIRECT);
+  noRoundingCB      ->setChecked( rounding_type == MISolver::RoundingType::NONE);
+  multipleRoundingCB->setChecked( rounding_type == MISolver::RoundingType::MULTIPLE);
+  gurobiRoundingCB  ->setChecked( rounding_type == MISolver::RoundingType::GUROBI);
+  cplexRoundingCB   ->setChecked( rounding_type == MISolver::RoundingType::CPLEX);
 
   localItersSB ->setValue( misolver_.get_local_iters());
   localErrorDSB->setValue( log(misolver_.get_local_error())/log(10.0f));
@@ -84,11 +85,6 @@ get_parameters()
   gurobiMaxTimeDSB->setValue(misolver_.get_gurobi_max_time());
   
   multipleRoundingDSB->setValue( misolver_.get_multiple_rounding_threshold());
-
-  infoSB->setValue( misolver_.get_noise());
-  solverStatsCheckBox->setChecked( misolver_.get_stats( ));
-
-  use_reordering_cb->setChecked( misolver_.use_constraint_reordering() );
 }
 
 
@@ -102,11 +98,16 @@ set_parameters()
   misolver_.set_inital_full   ( initialFullCB  ->isChecked() );
   misolver_.set_iter_full     ( iterFullCB     ->isChecked() );
   misolver_.set_final_full    ( finalFullCB    ->isChecked() );
-  misolver_.set_direct_rounding( directRoundingCB->isChecked());
-  misolver_.set_no_rounding( noRoundingCB->isChecked());
-  misolver_.set_multiple_rounding( multipleRoundingCB->isChecked());
-  misolver_.set_gurobi_rounding( gurobiRoundingCB->isChecked());
-  misolver_.set_cplex_rounding ( cplexRoundingCB->isChecked());
+  if (directRoundingCB->isChecked())
+    misolver_.set_direct_rounding( );
+  if (noRoundingCB->isChecked())
+    misolver_.set_no_rounding();
+  if ( multipleRoundingCB->isChecked())
+    misolver_.set_multiple_rounding();
+  if (gurobiRoundingCB->isChecked())
+     misolver_.set_gurobi_rounding();
+  if (cplexRoundingCB->isChecked())
+    misolver_.set_cplex_rounding();
 
   misolver_.set_local_iters( localItersSB ->value());
   misolver_.set_local_error( pow(10, localErrorDSB->value()));
@@ -117,11 +118,6 @@ set_parameters()
   misolver_.set_gurobi_max_time(gurobiMaxTimeDSB->value());
 
   misolver_.set_multiple_rounding_threshold( multipleRoundingDSB->value());
-
-  misolver_.set_noise( infoSB->value());
-  misolver_.set_stats( solverStatsCheckBox->isChecked());
-
-  misolver_.use_constraint_reordering() = use_reordering_cb->isChecked();
 }
 
 
