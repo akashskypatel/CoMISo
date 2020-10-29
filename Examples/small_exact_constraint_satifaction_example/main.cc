@@ -126,7 +126,7 @@ int main(void)
   Eigen::SparseMatrix<double> Ad = A.cast<double>();
   Eigen::VectorXd bd = b.cast<double>();
   {
-    Debug::ScopedOutputLevel output_lvl(0); // disable output for solve method
+    DEB_only(Debug::ScopedOutputLevel output_lvl(0)); // disable output for solve method
     nsolver.solve(&problem, Ad, bd);
   }
 
