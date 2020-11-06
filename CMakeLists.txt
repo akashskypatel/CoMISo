@@ -417,7 +417,7 @@ target_include_directories(CoMISo
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
 )
 
-target_include_directories(CoMISo PUBLIC "${COMISO_INCLUDE_DIRECTORIES}")
+target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
 
 #get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
 #get_target_property(INT_INC_DIRS CoMISo INTERFACE_INCLUDE_DIRECTORIES)
