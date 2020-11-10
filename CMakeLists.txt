@@ -590,13 +590,13 @@ if(NOT COMISO_NO_INSTALL)
 
   include(CMakePackageConfigHelpers)
   include(GNUInstallDirs)
-  
+
   target_include_directories(CoMISo
     PUBLIC
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
   )
-  
+
   set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/CoMISo)
 
   write_basic_package_version_file(
@@ -610,7 +610,7 @@ if(NOT COMISO_NO_INSTALL)
 
   # Install library
   install(TARGETS CoMISo EXPORT CoMISoTargets
-          RUNTIME DESTINATION lib
+          RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
 
