@@ -211,10 +211,12 @@ double solve_problem_two_phase(GRBModel& _model, double _time_limit0, double _ga
     _model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit0);
     _model.getEnv().set(GRB_DoubleParam_MIPGap, _gap0);
     _model.optimize();
-    final_gap = _model.get(GRB_DoubleAttr_MIPGap);
+    bool has_mip_gap = _model.get(GRB_IntAttr_NumIntVars) > 0 ||
+                       _model.get(GRB_IntAttr_NumBinVars) > 0;
+    final_gap = has_mip_gap ? _model.get(GRB_DoubleAttr_MIPGap) : 0;
 
     // jump into phase 2?
-    if(_model.get(GRB_DoubleAttr_MIPGap) > _gap1 && _time_limit1 > 0)
+    if(final_gap > _gap1 && _time_limit1 > 0)
     {
       _model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit1);
       _model.getEnv().set(GRB_DoubleParam_MIPGap, _gap1);
