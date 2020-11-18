@@ -75,26 +75,24 @@ namespace detail
 /// SolveFunction should be callable with two arguments: NProblemInterface* and const std::vector<NConstraintInterface*>
 /// Result function should return double* to solution
 template <typename SolveFunction, typename ResultFunction>
-auto solve_with_lazy_constraints(SolveFunction& _solve,
-                                 ResultFunction& _get_result,
-                                 NProblemInterface* _problem,
-                                 const std::vector<NConstraintInterface*>& _initial_constraints,
-                                 const std::vector<NConstraintInterface*>& _lazy_constraints,
-                                 double _acceptable_tolerance = 1e-8,
-                                 double _almost_infeasible_threshold = 0.5,
-                                 int _max_passes = 5,
-                                 bool _final_step_with_all_constraints = false) -> decltype(_solve(_problem, _initial_constraints))
+void solve_with_lazy_constraints(SolveFunction& _solve,
+    ResultFunction& _get_result, NProblemInterface* _problem,
+    const std::vector<NConstraintInterface*>& _initial_constraints,
+    const std::vector<NConstraintInterface*>& _lazy_constraints,
+    double _acceptable_tolerance = 1e-8,
+    double _almost_infeasible_threshold = 0.5, int _max_passes = 5,
+    bool _final_step_with_all_constraints = false)
 {
   DEB_enter_func;
 
   if (_max_passes <= 0 && !_final_step_with_all_constraints)
   {
-    DEB_warning(2, "Asking for " << _max_passes << " passes and no final step with all constraints. " <<
-                "Will perform 1 pass instead.");
+    DEB_warning(2, "Asking for "
+                       << _max_passes
+                       << " passes and no final step with all constraints. "
+                       << "Will perform 1 pass instead.");
     _max_passes = 1;
   }
-
-  decltype(_solve(_problem, _initial_constraints)) res;
 
   std::vector<NConstraintInterface*> constraints = _initial_constraints;
   std::vector<bool> added(_lazy_constraints.size(), false);
@@ -104,7 +102,7 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
 
   for (int pass = 0; pass < _max_passes; ++pass)
   {
-    res = _solve(_problem, constraints);
+    _solve(_problem, constraints);
 
     n_infeasible.push_back(0);
     n_almost_infeasible.push_back(0);
@@ -145,7 +143,7 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
       if (!added[i])
         constraints.push_back(_lazy_constraints[i]);
 
-    res = _solve(_problem, constraints);
+    _solve(_problem, constraints);
   }
 
   // Retrieve some statistics about the solve
@@ -156,8 +154,6 @@ auto solve_with_lazy_constraints(SolveFunction& _solve,
     DEB_line(5, "pass " << i+1 << " induced " << n_infeasible[i]
       << " infeasible and " << n_almost_infeasible[i] << " almost infeasible");
   DEB_line_if(did_final_step, 4, "Did final step with all lazy constraints");
-
-  return res;
 }
 
 

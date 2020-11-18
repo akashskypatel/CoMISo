@@ -39,43 +39,38 @@ class COMISODLLEXPORT OSQPSolver
 {
 public:
 
-  // helper struct to create and destruct OSQP objects
-  struct OSQPStructures;
+  using ContraintVector = std::vector<NConstraintInterface*>;
 
   // ********** SOLVE **************** //
-  bool solve(NProblemInterface*                        _problem,                // problem instance
-             const std::vector<NConstraintInterface*>& _constraints            // linear constraints
-             );
+  void solve(NProblemInterface* _problem, // problem instance
+      const ContraintVector& _constraints // linear constraints
+  );
 
   // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
-  bool solve(NProblemInterface*                        _problem,
-             const std::vector<NConstraintInterface*>& _constraints,
-             const std::vector<NConstraintInterface*>& _lazy_constraints,
+  void solve(NProblemInterface* _problem,
+             const ContraintVector& _constraints,
+             const ContraintVector& _lazy_constraints,
              double _acceptable_tolerance = 1e-8,
              double _almost_infeasible_threshold = 0.5,
              int _max_passes = 5,
              bool _final_step_with_all_constraints = true);
 
-protected:
-
-  bool solve(NProblemInterface*                        _problem,                // problem instance
-             const std::vector<NConstraintInterface*>& _constraints,            // linear constraints
-             OSQPStructures& _osqp_structures);
-
-
 private:
+  // helper struct to create and destruct OSQP objects
+  struct OSQPStructures;
+
+  void solve(NProblemInterface* _problem, const ContraintVector& _constraints,
+      OSQPStructures& _osqp_structures);
 
   void regularize_hessian(NProblemInterface::SMatrixNP& _H);
 
   NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem);
   Eigen::VectorXd get_linear_energy_coefficients(NProblemInterface* _problem);
 
-  void get_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints,
-                       COMISO::NProblemInterface::SMatrixNP& _C,
-                       Eigen::VectorXd& _lower_bounds,
-                       Eigen::VectorXd& _upper_bounds);
+  void get_constraints(int _n_cols, const ContraintVector& _constraints,
+      COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds,
+      Eigen::VectorXd& _upper_bounds);
 };
-
 
 
 //=============================================================================

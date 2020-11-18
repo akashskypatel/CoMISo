@@ -99,7 +99,7 @@ Eigen::VectorXd OSQPSolver::get_linear_energy_coefficients(NProblemInterface* _p
   return q;
 }
 
-void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds, Eigen::VectorXd& _upper_bounds)
+void OSQPSolver::get_constraints(int _n_cols, const ContraintVector& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds, Eigen::VectorXd& _upper_bounds)
 {
   size_t n_rows = _constraints.size();
   _C.resize(n_rows, _n_cols);
@@ -109,61 +109,63 @@ void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInter
   std::vector<double> x(_n_cols, 0.0);
   std::vector<Eigen::Triplet<double>> triplets;
   int current_row = 0;
-  for (auto c : _constraints)
-    if (c->is_linear())
+  for (const auto& c : _constraints)
+  {
+    if (!c->is_linear())
     {
-      NConstraintInterface::SVectorNC gc;
-      c->eval_gradient(x.data(), gc);
-      for(NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
-        triplets.emplace_back(current_row, v_it.index(), v_it.value());
-
-      double b = c->eval_constraint(x.data());
-
-      if (c->constraint_type() == NConstraintInterface::NC_EQUAL)
-      {
-        _lower_bounds[current_row] = -b;
-        _upper_bounds[current_row] = -b;
-      }
-      else if (c->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
-      {
-        _lower_bounds[current_row] = -std::numeric_limits<double>::max();
-        _upper_bounds[current_row] = -b;
-      }
-      else if (c->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
-      {
-        _lower_bounds[current_row] = -b;
-        _upper_bounds[current_row] = std::numeric_limits<double>::max();
-      }
-
-      ++current_row;
+      DEB_error(
+          "OSQP non-linear constraints are not supported and thus ignored.");
+      continue;
     }
-    else
+
+    NConstraintInterface::SVectorNC gc;
+    c->eval_gradient(x.data(), gc);
+    for (NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
+      triplets.emplace_back(current_row, v_it.index(), v_it.value());
+
+    double b = c->eval_constraint(x.data());
+
+    if (c->constraint_type() == NConstraintInterface::NC_EQUAL)
     {
-      DEB_error("OSQP received non linear constraints which is not supported and thus ignored.");
+      _lower_bounds[current_row] = -b;
+      _upper_bounds[current_row] = -b;
     }
+    else if (c->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
+    {
+      _lower_bounds[current_row] = -std::numeric_limits<double>::max();
+      _upper_bounds[current_row] = -b;
+    }
+    else if (c->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
+    {
+      _lower_bounds[current_row] = -b;
+      _upper_bounds[current_row] = std::numeric_limits<double>::max();
+    }
+
+    ++current_row;
+  }
 
   _C.setFromTriplets(triplets.begin(), triplets.end());
 }
 
 
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+void OSQPSolver::solve(
+    NProblemInterface* _problem, const ContraintVector& _constraints)
 {
   OSQPStructures osqp_structures;
-  return solve(_problem, _constraints, osqp_structures);
+  solve(_problem, _constraints, osqp_structures);
 }
 
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
-                       const std::vector<NConstraintInterface*>& _lazy_constraints,
-                       double _acceptable_tolerance,
-                       double _almost_infeasible_threshold,
-                       int _max_passes,
-                       bool _final_step_with_all_constraints)
+void OSQPSolver::solve(NProblemInterface* _problem,
+    const ContraintVector& _constraints,
+    const ContraintVector& _lazy_constraints, double _acceptable_tolerance,
+    double _almost_infeasible_threshold, int _max_passes,
+    bool _final_step_with_all_constraints)
 {
-
   OSQPStructures osqp_structures;
-  auto solve_function = [this, &osqp_structures](NProblemInterface* _problem, const std::vector<NConstraintInterface*> _constraints)
+  auto solve_function = [this, &osqp_structures](
+      NProblemInterface* _problem, const ContraintVector _constraints)
   {
     return solve(_problem, _constraints, osqp_structures);
   };
@@ -174,13 +176,41 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   };
 
   return solve_with_lazy_constraints(solve_function, get_res_function, _problem,
-                                     _constraints, _lazy_constraints,
-                                     _acceptable_tolerance, _almost_infeasible_threshold,
-                                     _max_passes, _final_step_with_all_constraints);
+      _constraints, _lazy_constraints, _acceptable_tolerance,
+      _almost_infeasible_threshold, _max_passes,
+      _final_step_with_all_constraints);
 }
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
-                       OSQPSolver::OSQPStructures& _osqp_structures)
+namespace
+{
+
+void throw_solve_failure(const c_int _status)
+{
+  DEB_enter_func;
+  DEB_warning(1, " IPOPT solve failure code is " << _status);
+  switch (_status)
+  {
+  case OSQP_MAX_ITER_REACHED:
+    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+  //case Ipopt::NonIpopt_Exception_Thrown: // TODO: handle interrupts
+  //  // this could be due to a thrown PROGRESS_ABORTED exception, ...
+  //  PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
+  default:
+    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
+  }
+}
+
+void check_solve_status(const c_int _status)
+{
+  if (_status != OSQP_SOLVED)
+    throw_solve_failure(_status);
+}
+
+}
+
+void OSQPSolver::solve(NProblemInterface* _problem,
+    const ContraintVector& _constraints,
+    OSQPSolver::OSQPStructures& _osqp_structures)
 {
   // Load problem data
 //  c_float P_x[3] = {4.0, 1.0, 2.0, };       // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
@@ -223,9 +253,6 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   c_int    n     = static_cast<int>(HupperTriangle.cols());      // number of variables n
   c_int    m     = static_cast<int>(A.rows());                   // number of constraints m
 
-  // Exitflag
-  c_int exitflag = 0;
-
   // Workspace structures
   OSQPWorkspace *& work     = _osqp_structures.workspace;
   OSQPSettings  *& settings = _osqp_structures.settings;
@@ -250,34 +277,29 @@ bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstrain
   if (settings) {
     osqp_set_default_settings(settings);
     settings->alpha = 1.0; // Change alpha parameter
-    settings->max_iter = 20000;
+    settings->max_iter = 10000;
     settings->warm_start = true;
+    settings->polish = 1;
+    settings->polish_refine_iter = 5;
+    settings->eps_abs = 1e-5;      ///< absolute convergence tolerance
+    settings->eps_rel = 1e-5;      ///< relative convergence tolerance
+    settings->eps_prim_inf = 1e-6; ///< primal infeasibility tolerance
+    settings->eps_dual_inf = 1.; ///< dual infeasibility tolerance
   }
 
   // Setup workspace
-  exitflag = osqp_setup(&work, data, settings);
-
-  if (exitflag != 0)
-  {
-    DEB_error("OSQP Setup failed with exit flag " << exitflag);
-    return false;
-  }
+  auto exitflag = osqp_setup(&work, data, settings);
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
 
   // Solve Problem
   exitflag = osqp_solve(work);
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
+  check_solve_status(work->info->status_val);
 
   _problem->store_result(work->solution->x);
-
-  if (exitflag != 0)
-  {
-    DEB_error("OSQP failed solving with exit flag " << exitflag);
-    return false;
-  }
-
-  return exitflag == 0;
 }
-
-
 
 //-----------------------------------------------------------------------------
 
