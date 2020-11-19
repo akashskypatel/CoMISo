@@ -4,10 +4,8 @@
 //
 //=============================================================================
 
-
 #ifndef COMISO_OSQPSOLVER_HH
 #define COMISO_OSQPSOLVER_HH
-
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
@@ -23,22 +21,21 @@
 
 //== FORWARDDECLARATIONS ======================================================
 
-
 //== NAMESPACES ===============================================================
 
-namespace COMISO {
+namespace COMISO
+{
 
 //== CLASS DEFINITION =========================================================
 
 /** \class OSQP Solver OSQPSolver.hh
 
-    Solver for quadratic problem with linear equality and linear inequality constraints
-    based on OSQP.
+    Solver for quadratic problem with linear equality and linear inequality
+   constraints based on OSQP.
 */
 class COMISODLLEXPORT OSQPSolver
 {
 public:
-
   using ContraintVector = std::vector<NConstraintInterface*>;
 
   // ********** SOLVE **************** //
@@ -46,32 +43,14 @@ public:
       const ContraintVector& _constraints // linear constraints
   );
 
-  // same as above with additional lazy constraints that are only added iteratively to the problem if not satisfied
-  void solve(NProblemInterface* _problem,
-             const ContraintVector& _constraints,
-             const ContraintVector& _lazy_constraints,
-             double _acceptable_tolerance = 1e-8,
-             double _almost_infeasible_threshold = 0.5,
-             int _max_passes = 5,
-             bool _final_step_with_all_constraints = true);
-
-private:
-  // helper struct to create and destruct OSQP objects
-  struct OSQPStructures;
-
+  // same as above with additional lazy constraints that are only added
+  // iteratively to the problem if not satisfied
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints,
-      OSQPStructures& _osqp_structures);
-
-  void regularize_hessian(NProblemInterface::SMatrixNP& _H);
-
-  NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem);
-  Eigen::VectorXd get_linear_energy_coefficients(NProblemInterface* _problem);
-
-  void get_constraints(int _n_cols, const ContraintVector& _constraints,
-      COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds,
-      Eigen::VectorXd& _upper_bounds);
+      const ContraintVector& _lazy_constraints,
+      double _acceptable_tolerance = 1e-8,
+      double _almost_infeasible_threshold = 0.5, int _max_passes = 5,
+      bool _final_step_with_all_constraints = true);
 };
-
 
 //=============================================================================
 } // namespace COMISO
@@ -81,4 +60,3 @@ private:
 //=============================================================================
 #endif // COMISO_OSQPSOLVER_HH defined
 //=============================================================================
-
