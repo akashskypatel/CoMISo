@@ -17,6 +17,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTProblemInstance.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/LazyConstraintSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LeastSquaresProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraint.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintConverter.hh
@@ -32,6 +33,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceADOLC.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceDCO.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/QuadraticProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/TAOSolver.hh
@@ -76,6 +78,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraints.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterface.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TAOSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TapeIDSingleton.cc
    PARENT_SCOPE
