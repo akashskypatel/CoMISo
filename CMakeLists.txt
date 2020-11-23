@@ -503,7 +503,7 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config.hh.in"
 # of the library are already there
 #######################################################################
 
-if(${PROJECT_NAME} MATCHES "CoMISo")
+if(${CMAKE_PROJECT_NAME} MATCHES "CoMISo")
   set (COMISO_BUILD_EXAMPLES TRUE CACHE BOOL "Build CoMISo Examples")
 else()
   set (COMISO_BUILD_EXAMPLES FALSE CACHE BOOL "Build CoMISo Examples")

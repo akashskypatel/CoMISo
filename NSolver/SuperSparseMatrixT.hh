@@ -66,8 +66,8 @@ public:
     iterator& operator++()    { ++m_it_; return(*this);}
     iterator  operator++(int) { return iterator(++m_it_); }
 
-    bool operator== (const iterator& _it) { return (m_it_ == _it.m_it_);}
-    bool operator!= (const iterator& _it) { return (m_it_ != _it.m_it_);}
+    bool operator== (const iterator& _it) const { return (m_it_ == _it.m_it_);}
+    bool operator!= (const iterator& _it) const { return (m_it_ != _it.m_it_);}
 
     // get raw iterator of map
     typename std::map<PII,VType>::iterator& map_iterator() {return m_it_;}

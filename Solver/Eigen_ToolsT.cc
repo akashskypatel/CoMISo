@@ -734,8 +734,8 @@ void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
   {
      RowT row = mat_const_row( _G, i );
 
-     CIter it  = gmm::vect_const_begin( row );
-     CIter ite = gmm::vect_const_end( row );
+     auto it  = gmm::vect_const_begin( row );
+     auto ite = gmm::vect_const_end( row );
      for ( ; it!=ite; ++it )
        triplets.push_back(
          Triplet( static_cast<int>(i), static_cast<int>(it.index()), *it));
