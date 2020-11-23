@@ -28,69 +28,31 @@ namespace COMISO {
 
 //== IMPLEMENTATION ========================================================== 
 
-
-// helper struct to create and destruct OSQP objects
-struct OSQPSolver::OSQPStructures
+namespace
 {
-  OSQPStructures()
-    :
-      workspace(nullptr), // will be created by OSQP
-      settings(new OSQPSettings()),
-      data(new OSQPData)
-  {
-    osqp_set_default_settings(settings);
-    data->n = 0;
-    data->m = 0;
-    data->P = nullptr;
-    data->A = nullptr;
-    data->q = nullptr;
-    data->l = nullptr;
-    data->u = nullptr;
-  }
 
-  ~OSQPStructures()
-  {
-    // Cleanup
-    if (workspace != nullptr)
-      delete  workspace;
-    if (data != nullptr)
-    {
-      if (data->A)
-        delete data->A;
-      if (data->P)
-        delete data->P;
-      delete data;
-    }
-    if (settings != nullptr)
-      delete settings;
-  }
+using ContraintVector = OSQPSolver::ContraintVector;
 
-  OSQPWorkspace* workspace;
-  OSQPSettings*  settings;
-  OSQPData*      data;
-};
-
-
-void OSQPSolver::regularize_hessian(NProblemInterface::SMatrixNP& _H)
+void regularize_hessian(NProblemInterface::SMatrixNP& _H)
 {
   NProblemInterface::SMatrixNP id;
   id.resize(_H.rows(), _H.cols());
   id.setIdentity();
   double reg_factor = 1e-8;
   auto diag = _H.diagonal();
-  _H = _H + reg_factor * diag.sum()/diag.rows() * id;
+  _H = _H + reg_factor * diag.sum() / diag.rows() * id; // perturbation?!
 }
 
-NProblemInterface::SMatrixNP OSQPSolver::get_hessian(NProblemInterface* _problem)
+NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
 {
   std::vector<double> zero(_problem->n_unknowns(), 0);
   NProblemInterface::SMatrixNP H;
   _problem->eval_hessian(zero.data(), H);
-  regularize_hessian(H);
+  regularize_hessian(H); // TODO: some docs why this is needed?
   return H;
 }
 
-Eigen::VectorXd OSQPSolver::get_linear_energy_coefficients(NProblemInterface* _problem)
+Eigen::VectorXd get_linear_energy_coefficients(NProblemInterface* _problem)
 {
   std::vector<double> zero(_problem->n_unknowns(), 0);
   Eigen::VectorXd q;
@@ -99,7 +61,9 @@ Eigen::VectorXd OSQPSolver::get_linear_energy_coefficients(NProblemInterface* _p
   return q;
 }
 
-void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInterface*>& _constraints, COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds, Eigen::VectorXd& _upper_bounds)
+void get_constraints(int _n_cols, const ContraintVector& _constraints,
+    COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds,
+    Eigen::VectorXd& _upper_bounds)
 {
   size_t n_rows = _constraints.size();
   _C.resize(n_rows, _n_cols);
@@ -109,174 +73,193 @@ void OSQPSolver::get_constraints(int _n_cols, const std::vector<NConstraintInter
   std::vector<double> x(_n_cols, 0.0);
   std::vector<Eigen::Triplet<double>> triplets;
   int current_row = 0;
-  for (auto c : _constraints)
-    if (c->is_linear())
+  for (const auto& c : _constraints)
+  {
+    if (!c->is_linear())
     {
-      NConstraintInterface::SVectorNC gc;
-      c->eval_gradient(x.data(), gc);
-      for(NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
-        triplets.emplace_back(current_row, v_it.index(), v_it.value());
-
-      double b = c->eval_constraint(x.data());
-
-      if (c->constraint_type() == NConstraintInterface::NC_EQUAL)
-      {
-        _lower_bounds[current_row] = -b;
-        _upper_bounds[current_row] = -b;
-      }
-      else if (c->constraint_type() == NConstraintInterface::NC_LESS_EQUAL)
-      {
-        _lower_bounds[current_row] = -std::numeric_limits<double>::max();
-        _upper_bounds[current_row] = -b;
-      }
-      else if (c->constraint_type() == NConstraintInterface::NC_GREATER_EQUAL)
-      {
-        _lower_bounds[current_row] = -b;
-        _upper_bounds[current_row] = std::numeric_limits<double>::max();
-      }
-
-      ++current_row;
+      DEB_error(
+          "OSQP non-linear constraints are not supported and thus ignored.");
+      continue;
     }
-    else
+
+    NConstraintInterface::SVectorNC gc;
+    c->eval_gradient(x.data(), gc);
+    for (NConstraintInterface::SVectorNC::InnerIterator v_it(gc); v_it; ++v_it)
+      triplets.emplace_back(current_row, v_it.index(), v_it.value());
+
+    const auto b = c->eval_constraint(x.data());
+    switch (c->constraint_type())
     {
-      DEB_error("OSQP received non linear constraints which is not supported and thus ignored.");
+    case NConstraintInterface::NC_EQUAL:
+      _lower_bounds[current_row] = -b;
+      _upper_bounds[current_row] = -b;
+      break;
+
+    case NConstraintInterface::NC_LESS_EQUAL:
+      _lower_bounds[current_row] = -std::numeric_limits<double>::max();
+      _upper_bounds[current_row] = -b;
+      break;
+
+    case NConstraintInterface::NC_GREATER_EQUAL:
+      _lower_bounds[current_row] = -b;
+      _upper_bounds[current_row] = std::numeric_limits<double>::max();
+      break;
     }
+
+    ++current_row;
+  }
 
   _C.setFromTriplets(triplets.begin(), triplets.end());
 }
 
-
-
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints)
+void throw_solve_failure(const c_int _status)
 {
-  OSQPStructures osqp_structures;
-  return solve(_problem, _constraints, osqp_structures);
+  DEB_enter_func;
+  DEB_warning(1, " IPOPT solve failure code is " << _status);
+  switch (_status)
+  {
+  case OSQP_MAX_ITER_REACHED:
+    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+  // case Ipopt::NonIpopt_Exception_Thrown: // TODO: handle interrupts
+  //  // this could be due to a thrown PROGRESS_ABORTED exception, ...
+  //  PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
+  default:
+    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
+  }
 }
 
-
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
-                       const std::vector<NConstraintInterface*>& _lazy_constraints,
-                       double _acceptable_tolerance,
-                       double _almost_infeasible_threshold,
-                       int _max_passes,
-                       bool _final_step_with_all_constraints)
+void check_solve_status(const c_int _status)
 {
-
-  OSQPStructures osqp_structures;
-  auto solve_function = [this, &osqp_structures](NProblemInterface* _problem, const std::vector<NConstraintInterface*> _constraints)
-  {
-    return solve(_problem, _constraints, osqp_structures);
-  };
-
-  auto get_res_function = [&osqp_structures]()
-  {
-    return osqp_structures.workspace->solution->x;
-  };
-
-  return solve_with_lazy_constraints(solve_function, get_res_function, _problem,
-                                     _constraints, _lazy_constraints,
-                                     _acceptable_tolerance, _almost_infeasible_threshold,
-                                     _max_passes, _final_step_with_all_constraints);
+  if (_status != OSQP_SOLVED)
+    throw_solve_failure(_status);
 }
 
-bool OSQPSolver::solve(NProblemInterface* _problem, const std::vector<NConstraintInterface*>& _constraints,
-                       OSQPSolver::OSQPStructures& _osqp_structures)
+class Impl // manage OSQP objects
 {
-  // Load problem data
-//  c_float P_x[3] = {4.0, 1.0, 2.0, };       // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
-//  c_int P_nnz = 3;                          // number of non zeros
-//  c_int P_i[3] = {0, 0, 1, };               // row indices
-//  c_int P_p[3] = {0, 1, 3, };               // column pointers
-//  c_float q[2] = {1.0, 1.0, };              // dense array for linear part of cost function (size n)
-//  c_float A_x[4] = {1.0, 1.0, 1.0, 1.0, };  // linear constraints matrix A in csc format (size m x n)
-//  c_int A_nnz = 4;                          // number of non zeros
-//  c_int A_i[4] = {0, 1, 0, 2, };            // number of non z
-//  c_int A_p[3] = {0, 2, 4, };               // row indices
-//  c_float l[3] = {1.0, 0.0, 0.0, };         // dense array for lower bound (size m)
-//  c_float u[3] = {1.0, 0.7, 0.7, };         // dense array for upper bound (size m)
-//  c_int n = 2;                              // number of variables n
-//  c_int m = 3;                              // number of constraints m
+public:
 
-  auto H = get_hessian(_problem);
-  auto lin_q = get_linear_energy_coefficients(_problem);
+  Impl()
+  {
+    osqp_set_default_settings(&settings);
+    settings.alpha = 1.0; // this value works better than the default
+    settings.max_iter = 10000;
+    settings.warm_start = true;
+    settings.polish = 1;
+    settings.polish_refine_iter = 5;
+    settings.eps_abs = 1e-5;      // absolute convergence tolerance
+    settings.eps_rel = 1e-5;      // relative convergence tolerance
+    settings.eps_prim_inf = 1e-6; // primal infeasibility tolerance
+    settings.eps_dual_inf = 1.;   // dual infeasibility tolerance
+    // settings.linsys_solver = MKL_PARDISO_SOLVER;
+
+    data.n = 0;
+    data.m = 0;
+    data.P = nullptr;
+    data.A = nullptr;
+    data.q = nullptr;
+    data.l = nullptr;
+    data.u = nullptr;
+  }
+
+  ~Impl()
+  {
+    delete data.P;
+    delete data.A;
+    delete work;
+  }
+
+  void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
+  const double* get_solution() const { return work->solution->x; }
+
+private: 
+  OSQPSettings settings;
+  OSQPData data;
+  OSQPWorkspace* work = nullptr;
+};
+
+void Impl::solve(
+    NProblemInterface* _problem, const ContraintVector& _constraints)
+{
+  const auto H = get_hessian(_problem);
+  const auto lin_q = get_linear_energy_coefficients(_problem);
 
   COMISO::NProblemInterface::SMatrixNP A; // inequality constraints
   Eigen::VectorXd lower;                  // lower bounds
   Eigen::VectorXd upper;                  // upper bounds
   get_constraints(_problem->n_unknowns(), _constraints, A, lower, upper);
 
-  COMISO::NProblemInterface::SMatrixNP HupperTriangle = H.triangularView<Eigen::Upper>();
+  COMISO::NProblemInterface::SMatrixNP HupperTriangle =
+      H.triangularView<Eigen::Upper>();
   HupperTriangle.makeCompressed();
 
+  data.n = static_cast<int>(HupperTriangle.cols()); // number of variables n
+  data.m = static_cast<int>(A.rows());              // number of constraints m
 
-  c_float* P_x   = HupperTriangle.valuePtr();                    // the upper triangular part of the quadratic cost matrix P in csc format (size n x n).
-  c_int    P_nnz = static_cast<int>(HupperTriangle.nonZeros());  // number of non zeros
-  c_int*   P_i   = HupperTriangle.innerIndexPtr();               // row indices
-  c_int*   P_p   = HupperTriangle.outerIndexPtr();               // column pointers
-  c_float* q     = lin_q.data();                                 // dense array for linear part of cost function (size n)
-  c_float* A_x   = A.valuePtr();                                 // linear constraints matrix A in csc format (size m x n)
-  c_int    A_nnz = static_cast<int>(A.nonZeros());               // number of non zeros
-  c_int*   A_i   = A.innerIndexPtr();                            // number of non z
-  c_int*   A_p   = A.outerIndexPtr();                            // row indices
-  c_float* l     = lower.data();                                 // dense array for lower bound (size m)
-  c_float* u     = upper.data();                                 // dense array for upper bound (size m)
-  c_int    n     = static_cast<int>(HupperTriangle.cols());      // number of variables n
-  c_int    m     = static_cast<int>(A.rows());                   // number of constraints m
-
-  // Exitflag
-  c_int exitflag = 0;
-
-  // Workspace structures
-  OSQPWorkspace *& work     = _osqp_structures.workspace;
-  OSQPSettings  *& settings = _osqp_structures.settings;
-  OSQPData      *& data     = _osqp_structures.data;
-
-  // Populate data
-  if (data) {
-    data->n = n;
-    data->m = m;
-    if (data->P != nullptr)
-      delete data->P;
-    data->P = csc_matrix(data->n, data->n, P_nnz, P_x, P_i, P_p);
-    data->q = q;
-    if (data->A != nullptr)
-      delete data->A;
-    data->A = csc_matrix(data->m, data->n, A_nnz, A_x, A_i, A_p);
-    data->l = l;
-    data->u = u;
-  }
-
-  // Define solver settings
-  if (settings) {
-    osqp_set_default_settings(settings);
-    settings->alpha = 1.0; // Change alpha parameter
-    settings->max_iter = 20000;
-    settings->warm_start = true;
-  }
-
-  // Setup workspace
-  exitflag = osqp_setup(&work, data, settings);
-
-  if (exitflag != 0)
   {
-    DEB_error("OSQP Setup failed with exit flag " << exitflag);
-    return false;
+    c_float* P_x =                 // the upper triangular part of the quadratic
+        HupperTriangle.valuePtr(); // cost matrix P in csc format (size n x n).
+    c_int P_nnz =
+        static_cast<int>(HupperTriangle.nonZeros()); // number of non zeros
+    c_int* P_i = HupperTriangle.innerIndexPtr();     // row indices
+    c_int* P_p = HupperTriangle.outerIndexPtr();     // column pointers
+
+    data.P = csc_matrix(data.n, data.n, P_nnz, P_x, P_i, P_p);
   }
+  {
+    c_float* A_x =
+        A.valuePtr(); // linear constraints matrix A in csc format (size m x n)
+    c_int A_nnz = static_cast<int>(A.nonZeros()); // number of non zeros
+    c_int* A_i = A.innerIndexPtr();               // number of non z
+    c_int* A_p = A.outerIndexPtr();               // row indices
+    data.A = csc_matrix(data.m, data.n, A_nnz, A_x, A_i, A_p);
+  }
+
+  data.q = const_cast<c_float*>(
+      lin_q.data()); // dense array for linear part of cost function (size n)
+  data.l = lower.data(); // dense array for lower bound (size m)
+  data.u = upper.data(); // dense array for upper bound (size m)
+
+  auto exitflag = osqp_setup(&work, &data, &settings); // Setup workspace
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
 
   // Solve Problem
   exitflag = osqp_solve(work);
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
+  check_solve_status(work->info->status_val);
 
   _problem->store_result(work->solution->x);
-
-  if (exitflag != 0)
-  {
-    DEB_error("OSQP failed solving with exit flag " << exitflag);
-    return false;
-  }
-
-  return exitflag == 0;
 }
 
+} // namespace
+
+void OSQPSolver::solve(
+    NProblemInterface* _problem, const ContraintVector& _constraints)
+{
+  Impl impl;
+  impl.solve(_problem, _constraints);
+}
+
+void OSQPSolver::solve(NProblemInterface* _problem,
+    const ContraintVector& _constraints,
+    const ContraintVector& _lazy_constraints, double _acceptable_tolerance,
+    double _almost_infeasible_threshold, int _max_passes,
+    bool _final_step_with_all_constraints)
+{
+  Impl impl;
+  const auto solve_function = [&impl](
+      NProblemInterface* _problem, const ContraintVector _constraints)
+  {
+    return impl.solve(_problem, _constraints);
+  };
+  const auto result_function = [&impl]() { return impl.get_solution(); };
+
+  return solve_with_lazy_constraints(solve_function, result_function, _problem,
+      _constraints, _lazy_constraints, _acceptable_tolerance,
+      _almost_infeasible_threshold, _max_passes,
+      _final_step_with_all_constraints);
+}
 
 
 //-----------------------------------------------------------------------------
