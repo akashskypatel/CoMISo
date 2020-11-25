@@ -475,10 +475,19 @@ if ( QT5_FOUND )
 
 endif()
 
-target_link_libraries (CoMISo
+target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
 
+find_package(osqp)
+if (TARGET osqp::osqp)
+  target_link_libraries (CoMISo PRIVATE osqp::osqp )
+  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
+else()
+  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
+endif()
+
+set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 
 # display results
 acg_print_configure_header (COMISO "CoMISo")

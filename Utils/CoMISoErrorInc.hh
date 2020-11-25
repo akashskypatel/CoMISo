@@ -10,21 +10,22 @@ DEFINE_ERROR(UNSPECIFIED_EIGEN_FAILURE, "Unspecified Eigen Failure")
 DEFINE_ERROR(UNSPECIFIED_GUROBI_EXCEPTION, "Unspecified Gurobi Exception")
 DEFINE_ERROR(GUROBI_LICENCE_ABSENT, "Gurobi license absent")
 DEFINE_ERROR(GUROBI_LICENCE_MODEL_TOO_LARGE, "Model too large for current Gurobi license")
-// ERR_MSG(GUROBI_LICENCE_EXPIED, "Gurobi License has expired")
-// ERR_MSG(GUROBI_LICENCE_EXCEEDED, "Gurobi Evaluation Licence Limitations Prohibition")
 
-DEFINE_ERROR(IPOPT_INITIALIZATION_FAILED, "IPOPT initialization failed")
-DEFINE_ERROR(IPOPT_OPTIMIZATION_FAILED, "IPOPT optimization failed")
-DEFINE_ERROR(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED, "IPOPT maximum iterations exceeded")
-DEFINE_ERROR(IPOPT_STEP_FAILURE, "IPOPT step failure")
+DEFINE_ERROR(
+    QP_INITIALIZATION_FAILED, "Quadratic program initialization failed")
+DEFINE_ERROR(QP_OPTIMIZATION_FAILED, "Quadratic program optimization failed")
+DEFINE_ERROR(QP_MAXIMUM_ITERATIONS_EXCEEDED,
+    "Quadratic program maximum iterations exceeded")
+
+// TODO: Obsolete: remove when we can
+DEFINE_ERROR(IPOPT_STEP_FAILURE, "IPOPT step failure") 
 DEFINE_ERROR(IPOPT_UNSPECIFIED_FAILURE, "IPOPT Unspecified failure")
-
 DEFINE_ERROR(UNSPECIFIED_CBC_EXCEPTION, "Unspecified CBC Exception")
 
 DEFINE_ERROR(MIPS_NO_SOLUTION, "Mixed integer problem solver cannot find a solution")
 DEFINE_ERROR(MIPS_SOLUTION_INCORRECT, "Mixed integer problem solution incorrect")
 
-// DOCloud related message
+// DOCloud related message (TODO: Obsolete, remove when we can)
 DEFINE_ERROR(DOCLOUD_REQUEST_INIT_FAILED, 
   "DO cloud request intialization failure [defect]")
 DEFINE_ERROR(DOCLOUD_REQUEST_EXEC_FAILED, 

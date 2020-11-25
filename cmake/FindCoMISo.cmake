@@ -231,15 +231,30 @@ if ( COMISO_INCLUDE_DIR AND COMISO_CONFIG_INCLUDE_DIR )
   STRING(REGEX MATCH "\#define COMISO_DCO_AVAILABLE 1" COMISO_DCO_BUILD_TIME_AVAILABLE ${CURRENT_COMISO_CONFIG} )
 
   if ( COMISO_DCO_BUILD_TIME_AVAILABLE )
-                                                                          
+
    find_package(DCO)
-                                                                          
+
    if ( NOT DCO_FOUND )
      message(ERROR "COMISO configured with DCO but DCO not available")
    endif()
-                                                                          
+
    list (APPEND  COMISO_OPT_DEPS “DCO”)
-                                                                          
+
+  endif()
+
+
+  STRING(REGEX MATCH "\#define COMISO_OSQP_AVAILABLE 1" COMISO_OSQP_BUILD_TIME_AVAILABLE ${CURRENT_COMISO_CONFIG} )
+
+  if ( COMISO_OSQP_BUILD_TIME_AVAILABLE )
+
+   find_package(osqp)
+
+   if ( NOT osqp_FOUND )
+     message(ERROR "COMISO configured with OSQP but OSQP not available")
+   endif()
+
+   list (APPEND  COMISO_OPT_DEPS “OSQP”)
+
   endif()
 
   add_definitions (-DCOMISODLL -DUSECOMISO -DBASEDLL -DUSEBASE )
