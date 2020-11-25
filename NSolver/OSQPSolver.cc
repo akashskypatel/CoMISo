@@ -119,12 +119,12 @@ void throw_solve_failure(const c_int _status)
   switch (_status)
   {
   case OSQP_MAX_ITER_REACHED:
-    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+    COMISO_THROW(QP_MAXIMUM_ITERATIONS_EXCEEDED);
   // case Ipopt::NonIpopt_Exception_Thrown: // TODO: handle interrupts
   //  // this could be due to a thrown PROGRESS_ABORTED exception, ...
   //  PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
   default:
-    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
+    COMISO_THROW(QP_OPTIMIZATION_FAILED);
   }
 }
 
@@ -221,12 +221,12 @@ void Impl::solve(
 
   auto exitflag = osqp_setup(&work, &data, &settings); // Setup workspace
   DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
-  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
+  COMISO_THROW_if(exitflag != 0, QP_INITIALIZATION_FAILED);
 
   // Solve Problem
   exitflag = osqp_solve(work);
   DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
-  COMISO_THROW_if(exitflag != 0, IPOPT_OPTIMIZATION_FAILED);
+  COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
   check_solve_status(work->info->status_val);
 
   _problem->store_result(work->solution->x);

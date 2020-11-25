@@ -313,12 +313,12 @@ throw_ipopt_solve_failure
   switch (status)
   {
   case Ipopt::Maximum_Iterations_Exceeded:
-    COMISO_THROW(IPOPT_MAXIMUM_ITERATIONS_EXCEEDED);
+    COMISO_THROW(QP_MAXIMUM_ITERATIONS_EXCEEDED);
   case Ipopt::NonIpopt_Exception_Thrown:
     // this could be due to a thrown PROGRESS_ABORTED exception, ...
     PROGRESS_RESUME_ABORT; // ... so check if we need to resume it
   default:
-    COMISO_THROW(IPOPT_OPTIMIZATION_FAILED);
+    COMISO_THROW(QP_OPTIMIZATION_FAILED);
   }
 }
 
@@ -376,8 +376,7 @@ solve
 
   // Initialize the IpoptApplication and process the options
   Ipopt::ApplicationReturnStatus status = impl_->app_->Initialize();
-  if (status != Ipopt::Solve_Succeeded)
-    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
+  COMISO_THROW_if(status != Ipopt::Solve_Succeeded, QP_INITIALIZATION_FAILED);
 
   status = impl_->app_->OptimizeTNLP( np);
 
@@ -409,10 +408,8 @@ solve
   //----------------------------------------------------------------------------
 
   // Initialize the IpoptApplication and process the options
-  Ipopt::ApplicationReturnStatus status;
-  status = impl_->app_->Initialize();
-  if (status != Ipopt::Solve_Succeeded)
-    COMISO_THROW(IPOPT_INITIALIZATION_FAILED);
+  auto status = impl_->app_->Initialize();
+  COMISO_THROW_if(status != Ipopt::Solve_Succeeded, QP_INITIALIZATION_FAILED);
 
   bool feasible_point_found = false;
   int  cur_pass = impl_->enbl_all_lzy_cnstr_ ? 1 : 0;
