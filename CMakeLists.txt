@@ -479,9 +479,11 @@ target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
 
-find_package(osqp)
-if (TARGET osqp::osqp)
-  target_link_libraries (CoMISo PRIVATE osqp::osqp )
+if (NOT TARGET osqp)
+  find_package(osqp)
+endif()
+if (TARGET osqp)
+  target_link_libraries (CoMISo PRIVATE osqp)
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
