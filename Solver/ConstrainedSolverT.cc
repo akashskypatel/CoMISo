@@ -285,6 +285,10 @@ ConstrainedSolver::resolve(
   // apply stored updates and eliminations to exchanged rhs
   if (_constraint_rhs)
   {
+    if (!support_constraint_rhs_resolve_) {
+        std::cerr << "ERROR: ConstrainedSolver::resolve: resolve() with modified constraint_rhs requested, but support is disabled." << std::endl;
+        return;
+    }
     // apply linear transformation of Gaussian elimination
     rhs_update_table_.cur_constraint_rhs_.resize(gmm::mat_nrows(rhs_update_table_.D_));
     gmm::mult(rhs_update_table_.D_, *_constraint_rhs, rhs_update_table_.cur_constraint_rhs_);
@@ -338,9 +342,11 @@ ConstrainedSolver::make_constraints_independent(
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
   gmm::size_type nr = gmm::mat_nrows(_constraints);
-  gmm::resize(rhs_update_table_.D_, nr, nr);
-  gmm::clear(rhs_update_table_.D_);
-  for (gmm::size_type i = 0; i < nr; ++i) rhs_update_table_.D_(i, i) = 1.0;
+  if (support_constraint_rhs_resolve_) {
+      gmm::resize(rhs_update_table_.D_, nr, nr);
+      gmm::clear(rhs_update_table_.D_);
+      for (gmm::size_type i = 0; i < nr; ++i) rhs_update_table_.D_(i, i) = 1.0;
+    }
 
   //  Base::StopWatch sw;
   // number of variables
@@ -499,9 +505,11 @@ ConstrainedSolver::make_constraints_independent(
           _constraints(c_it.index(), elim_j) = 0;
           constraints_c(c_it.index(), elim_j) = 0;
 
-          // update linear transition of rhs
-          gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
-            gmm::mat_row(rhs_update_table_.D_, c_it.index()));
+          if (support_constraint_rhs_resolve_) {
+            // update linear transition of rhs
+            gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
+              gmm::mat_row(rhs_update_table_.D_, c_it.index()));
+          }
         }
       }
     }
@@ -522,11 +530,13 @@ ConstrainedSolver::make_constraints_independent_reordering(
   DEB_enter_func;
   // setup linear transformation for rhs, start with identity
   gmm::size_type nr = gmm::mat_nrows(_constraints);
-  gmm::resize(rhs_update_table_.D_, nr, nr);
-  gmm::clear(rhs_update_table_.D_);
+  if (support_constraint_rhs_resolve_) {
+    gmm::resize(rhs_update_table_.D_, nr, nr);
+    gmm::clear(rhs_update_table_.D_);
 
-  for (gmm::size_type i = 0; i < nr; ++i)
-    rhs_update_table_.D_(i, i) = 1.0;
+    for (gmm::size_type i = 0; i < nr; ++i)
+      rhs_update_table_.D_(i, i) = 1.0;
+  }
 
   //  Base::StopWatch sw;
   // number of variables
@@ -716,9 +726,11 @@ ConstrainedSolver::make_constraints_independent_reordering(
           queue.update(static_cast<int>(cur_idx),
             static_cast<int>(cur_nnz));
 
-          // update linear transition of rhs
-          gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
-            gmm::mat_row(rhs_update_table_.D_, c_it.index()));
+          if (support_constraint_rhs_resolve_) {
+            // update linear transition of rhs
+            gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
+              gmm::mat_row(rhs_update_table_.D_, c_it.index()));
+          }
         }
       }
     }
@@ -732,7 +744,7 @@ ConstrainedSolver::make_constraints_independent_reordering(
   RMatrixT c_tmp(gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
   gmm::copy(_constraints, c_tmp);
   RowMatrix d_tmp(gmm::mat_nrows(rhs_update_table_.D_), gmm::mat_ncols(rhs_update_table_.D_));
-  gmm::copy(rhs_update_table_.D_, d_tmp);
+  rhs_update_table_.D_.swap(d_tmp);
 
   // std::vector<int> elim_temp2(_c_elim);
   // std::sort(elim_temp2.begin(), elim_temp2.end());
@@ -744,7 +756,9 @@ ConstrainedSolver::make_constraints_independent_reordering(
   for (unsigned int i = 0; i < nr; ++i)
   {
     gmm::copy(gmm::mat_row(c_tmp, row_ordering[i]), gmm::mat_row(_constraints, i));
-    gmm::copy(gmm::mat_row(d_tmp, row_ordering[i]), gmm::mat_row(rhs_update_table_.D_, i));
+    if (support_constraint_rhs_resolve_) {
+      gmm::mat_row(d_tmp, row_ordering[i]).swap(gmm::mat_row(rhs_update_table_.D_, i));
+    }
 
     _c_elim[i] = elim_temp[row_ordering[i]];
   }
