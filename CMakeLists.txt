@@ -21,6 +21,11 @@ set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
 
 if( WANT_COMISO_QT )
 
+  set(QT5_REQUIRED_PACKAGES
+    Qt5Core
+    Qt5Widgets
+    )
+
   acg_qt5 ()
 
   if( QT5_FOUND)
