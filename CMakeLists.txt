@@ -34,6 +34,7 @@ endif( WANT_COMISO_QT )
 acg_get_version ()
 
 include (ACGOutput)
+include(ACGQt)
 
 set(COMISO_INCLUDE_DIRECTORIES "")
 set(COMISO_LINK_DIRECTORIES "")
