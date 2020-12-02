@@ -14,6 +14,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set (CMAKE_DEBUG_POSTFIX "d")
 
 include (ACGCommon)
+include(ACGQt)
 
 # Flag to enable or disable QT widgets in CoMISo
 set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
@@ -34,7 +35,6 @@ endif( WANT_COMISO_QT )
 acg_get_version ()
 
 include (ACGOutput)
-include(ACGQt)
 
 set(COMISO_INCLUDE_DIRECTORIES "")
 set(COMISO_LINK_DIRECTORIES "")
