@@ -26,7 +26,7 @@ namespace COMISO {
 
 
 	      
-/** \class LinearConstraintHandler LinearConstraintHandler.hh <ACG/.../LinearConstraintHandler.hh>
+/** \class LinearConstraintHandler LinearConstraintHandler.hh <COMISO/.../LinearConstraintHandler.hh>
 
     Brief Description.
   

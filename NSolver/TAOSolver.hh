@@ -33,7 +33,7 @@ namespace COMISO {
 
 	      
 
-/** \class TAOSolver TAOSolver.hh <ACG/.../TAOSolver.hh>
+/** \class TAOSolver TAOSolver.hh <COMISO/.../TAOSolver.hh>
 
     Brief Description.
   

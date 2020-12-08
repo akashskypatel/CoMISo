@@ -32,7 +32,7 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-/** \class NProblemmInterfaceAD NProblemInterfaceADOC.hh <ACG/.../NProblemInterfaceADOLC.hh>
+/** \class NProblemmInterfaceAD NProblemInterfaceADOC.hh <COMISO/.../NProblemInterfaceADOLC.hh>
 
  Brief Description.
 

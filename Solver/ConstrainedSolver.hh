@@ -47,7 +47,7 @@ namespace COMISO
 {
 //== CLASS DEFINITION =========================================================
 
-/** \class ConstrainedSolver ConstrainedSolver.hh <ACG/.../ConstrainedSolver.hh>
+/** \class ConstrainedSolver ConstrainedSolver.hh <COMISO/.../ConstrainedSolver.hh>
 
   Takes a linear (symmetric) system of equations and a set of linear constraints and solves it.
  */
