@@ -214,6 +214,6 @@ inline double NPDerivativeChecker::getCoeff(const NProblemGmmInterface::SMatrixN
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif // ACG_NPDERIVATIVECHECKER defined
+#endif // COMISO_NPDERIVATIVECHECKER defined
 //=============================================================================
 

@@ -1,6 +1,6 @@
 include (CoMISoExample)
 
-acg_add_executable (small_cplex_soc ${sources} ${headers} )
+vci_add_executable (small_cplex_soc ${sources} ${headers} )
 
 
 # enable rpath linking

@@ -26,7 +26,7 @@ namespace COMISO {
 
 	      
 
-/** \class NProblemGmmInterface NProblemGmmInterface.hh <ACG/.../NProblemGmmInterface.hh>
+/** \class NProblemGmmInterface NProblemGmmInterface.hh <COMISO/.../NProblemGmmInterface.hh>
 
     Brief Description.
   

@@ -120,10 +120,10 @@ private:
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_NSOLVERGMMINTERFACE_C)
-#define ACG_NSOLVERGMMINTERFACE_TEMPLATES
+#define COMISO_NSOLVERGMMINTERFACE_TEMPLATES
 #include "NPLinearConstraintsT.cc"
 #endif
 //=============================================================================

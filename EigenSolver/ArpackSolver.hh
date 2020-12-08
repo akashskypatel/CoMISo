@@ -73,7 +73,7 @@ public:
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_ARPACKSOLVER_C)
 #define COMISO_ARPACKSOLVER_TEMPLATES
@@ -82,6 +82,6 @@ public:
 //=============================================================================
 #endif // COMISO_SUITESPARSE_AVAILABLE
 //=============================================================================
-#endif // ACG_ARPACKSOLVER_HH defined
+#endif // COMISO_ARPACKSOLVER_HH defined
 //=============================================================================
 

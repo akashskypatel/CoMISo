@@ -111,6 +111,6 @@ void LinearConstraint::eval_hessian    ( const double* _x, SMatrixNC& _h      )
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif // ACG_LINEARCONSTRAINT_HH defined
+#endif // COMISO_LINEARCONSTRAINT_HH defined
 //=============================================================================
 

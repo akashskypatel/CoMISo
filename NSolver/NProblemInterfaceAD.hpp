@@ -45,7 +45,7 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-/** \class NProblemmInterfaceAD NProblemInterfaceAD.hpp <ACG/.../NProblemInterfaceAD.hh>
+/** \class NProblemmInterfaceAD NProblemInterfaceAD.hpp <COMISO/.../NProblemInterfaceAD.hh>
 
  Brief Description.
 

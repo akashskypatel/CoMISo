@@ -1,7 +1,7 @@
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
-include (ACGCommon)
+include (VCICommon)
 find_package(CoMISo)
 
 #find_package(MUMPS)
@@ -157,8 +157,8 @@ set (directories
 # collect all header and source files
 set(headers "")
 set(sources "")
-acg_append_files (headers "*.hh" ${directories})
-acg_append_files (sources "*.cc" ${directories})
+vci_append_files (headers "*.hh" ${directories})
+vci_append_files (sources "*.cc" ${directories})
 
 # remove template cc files from source file list
-acg_drop_templates (sources)
+vci_drop_templates (sources)
