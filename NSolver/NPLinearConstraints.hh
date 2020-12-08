@@ -120,7 +120,7 @@ private:
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_NSOLVERGMMINTERFACE_C)
 #define ACG_NSOLVERGMMINTERFACE_TEMPLATES
