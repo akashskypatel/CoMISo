@@ -102,8 +102,8 @@ private:
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(ACG_LINEARCONSTRAINTHANDLERPENALTY_C)
-#define ACG_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
+#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_LINEARCONSTRAINTHANDLERPENALTY_C)
+#define COMISO_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
 #include "LinearConstraintHandlerPenaltyT.cc"
 #endif
 //=============================================================================
