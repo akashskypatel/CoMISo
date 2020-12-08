@@ -372,10 +372,6 @@ void eliminate_var( const unsigned int _j,
                     VectorT&      _x,
                     VectorT&      _rhs )
 {
-   //ACG::StopWatch sw1;
-
-   //sw1.start();
-
    typedef typename gmm::linalg_traits< gmm::col_matrix< SVT > >::const_sub_col_type ColT;
    typedef typename gmm::linalg_traits<ColT>::const_iterator CIter;
 
@@ -396,7 +392,6 @@ void eliminate_var( const unsigned int _j,
    _rhs.erase( _rhs.begin() + _j );
    _x.erase( _x.begin() + _j );
 
-   //std::cerr << " FIRST BLOCK " << sw1.stop()/1000.0 << std::endl;
    /*
    for(unsigned int i=_j; i<m-1; ++i)
    {
@@ -442,7 +437,6 @@ void eliminate_var( const unsigned int _j,
 
    gmm::resize( _A, m-1, n-1);
    */
-   //sw1.start();
 
    typedef typename gmm::linalg_traits<SVT>::const_iterator SIter;
 
@@ -485,11 +479,8 @@ void eliminate_var( const unsigned int _j,
          delete cur_col;
       }
    }
-   //std::cerr << " BLOCK TWO " << sw1.stop()/1000.0 << std::endl;
-   //sw1.start();
 
    gmm::resize( _A, m-1, n-1 );
-   //std::cerr << "RESIZE " << sw1.stop()/1000.0 << std::endl;
 }
 
 //-----------------------------------------------------------------------------
