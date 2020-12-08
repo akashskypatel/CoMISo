@@ -125,6 +125,6 @@ void ConeConstraint::eval_hessian    ( const double* _x, SMatrixNC& _h      )
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif // ACG_ConeConstraint_HH defined
+#endif // COMISO_ConeConstraint_HH defined
 //=============================================================================
 

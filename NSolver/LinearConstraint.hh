@@ -90,6 +90,6 @@ private:
 // support std vectors
 EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(COMISO::LinearConstraint)
 //=============================================================================
-#endif // ACG_LINEARCONSTRAINT_HH defined
+#endif // COMISO_LINEARCONSTRAINT_HH defined
 //=============================================================================
 

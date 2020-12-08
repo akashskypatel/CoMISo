@@ -82,6 +82,6 @@ private:
 // support std vectors
 EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(COMISO::ConeConstraint)
 //=============================================================================
-#endif // ACG_CONECONSTRAINT_HH defined
+#endif // COMISO_CONECONSTRAINT_HH defined
 //=============================================================================
 

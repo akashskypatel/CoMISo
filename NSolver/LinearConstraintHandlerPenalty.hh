@@ -107,6 +107,6 @@ private:
 #include "LinearConstraintHandlerPenaltyT.cc"
 #endif
 //=============================================================================
-#endif // ACG_LINEARCONSTRAINTHANDLERPENALTY_HH defined
+#endif // COMISO_LINEARCONSTRAINTHANDLERPENALTY_HH defined
 //=============================================================================
 
