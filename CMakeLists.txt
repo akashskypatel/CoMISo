@@ -131,7 +131,7 @@ if (GMM_FOUND)
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
   list (APPEND NEED_LAPACK "GMM")
 
-  target_include_directories(CoMISo PRIVATE ${GMM_INCLUDE_DIR})
+  target_include_directories(CoMISo PUBLIC ${GMM_INCLUDE_DIR})
 else()
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
 endif ()
