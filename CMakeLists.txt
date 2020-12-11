@@ -1,7 +1,4 @@
-cmake_minimum_required (VERSION 3.9)
-if (WIN32)
-  cmake_minimum_required (VERSION 3.13)
-endif()
+cmake_minimum_required (VERSION 3.13)
 
 project(CoMISo VERSION 1.1.0)
 
@@ -14,6 +11,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${
 set (CMAKE_DEBUG_POSTFIX "d")
 
 include (VCICommon)
+
 include(VCIQt)
 
 # Flag to enable or disable QT widgets in CoMISo
@@ -35,7 +33,53 @@ if( WANT_COMISO_QT )
     set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 0" )
   endif()
 
+  if ( QT5_FOUND )
+    # Enable automoc
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTOUIC ON)
+  endif()
+
 endif( WANT_COMISO_QT )
+
+# source code directories
+set (directories
+  .
+  Base/Code
+  Base/Debug
+  Base/Security
+  Base/Utils
+  Solver
+  NSolver
+  EigenSolver
+  Config
+  Utils
+  QtWidgets
+)
+
+# collect all header,source and ui files
+vci_append_files (headers "*.hh" ${directories})
+vci_append_files (sources "*.cc" ${directories})
+
+if( QT5_FOUND )
+vci_append_files (ui "*.ui" ${directories})
+endif()
+
+# remove template cc files from source file list
+vci_drop_templates (sources)
+
+vci_add_library (CoMISo SHARED ${ui} ${sources} ${headers} )
+add_library(CoMISo::CoMISo ALIAS CoMISo)
+
+target_include_directories(CoMISo
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
+)
+
+if ( QT5_FOUND )
+  target_link_libraries     (CoMISo PUBLIC ${QT_LIBRARIES})
+endif()
 
 vci_get_version ()
 
@@ -54,6 +98,10 @@ if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES    ${Boost_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${Boost_LIBRARIES} )
+
+  target_include_directories(CoMISo PRIVATE ${Boost_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PRIVATE ${Boost_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${Boost_LIBRARIES})
 
   option(Boost_USE_STATIC_LIBS "Link with static Boost libraries" OFF)
   mark_as_advanced(Boost_USE_STATIC_LIBS)
@@ -80,6 +128,8 @@ if (GMM_FOUND)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
   list (APPEND NEED_LAPACK "GMM")
+
+  target_include_directories(CoMISo PRIVATE ${GMM_INCLUDE_DIR})
 else()
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
 endif ()
@@ -93,6 +143,10 @@ if (BLAS_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${BLAS_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${BLAS_LIBRARY_DIRS} ${BLAS_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${BLAS_LIBRARIES} )
+
+  target_include_directories(CoMISo PRIVATE ${BLAS_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PRIVATE ${BLAS_LIBRARY_DIRS} ${BLAS_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${BLAS_LIBRARIES})
 else()
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 0" )
   message (STATUS "BLAS not found!")
@@ -105,6 +159,9 @@ if (ADOLC_FOUND)
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${ADOLC_INCLUDE_DIR} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${ADOLC_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${ADOLC_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${ADOLC_INCLUDE_DIR})
+  target_link_directories   (CoMISo PRIVATE ${ADOLC_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${ADOLC_LIBRARIES})
 else ()
   set (COMISO_ADOLC_CONFIG_FILE_SETTINGS "#define COMISO_ADOLC_AVAILABLE 0" )
   message (STATUS "ADOLC not found!")
@@ -119,6 +176,9 @@ if (SUITESPARSE_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${SUITESPARSE_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
+  target_include_directories(CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PUBLIC ${SUITESPARSE_LIBRARY_DIRS})
+  target_link_libraries     (CoMISo PUBLIC ${SUITESPARSE_LIBRARIES})
 
   # special handling, since spqr is incorrect in several distributions
   if(SUITESPARSE_SPQR_VALID)
@@ -140,6 +200,8 @@ if(NOT DISABLE_MPI)
     set (COMISO_MPI_CONFIG_FILE_SETTINGS "#define COMISO_MPI_AVAILABLE 1" )
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${MPI_INCLUDE_PATH} )
     list( APPEND COMISO_LINK_LIBRARIES  ${MPI_CXX_LIBRARIES} )
+    target_include_directories(CoMISo PRIVATE ${MPI_INCLUDE_PATH})
+    target_link_libraries     (CoMISo PRIVATE ${MPI_CXX_LIBRARIES})
   else ()
     message (STATUS "MPI not found!")
     set (COMISO_MPI_CONFIG_FILE_SETTINGS "#define COMISO_MPI_AVAILABLE 0" )
@@ -155,6 +217,8 @@ if(NOT DISABLE_PETSC)
     set (COMISO_PETSC_CONFIG_FILE_SETTINGS "#define COMISO_PETSC_AVAILABLE 1" )
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${PETSC_INCLUDE_DIRS} )
     list( APPEND COMISO_LINK_LIBRARIES  ${PETSC_LIBRARY} )
+    target_include_directories(CoMISo PRIVATE ${PETSC_INCLUDE_DIRS})
+    target_link_libraries     (CoMISo PRIVATE ${PETSC_LIBRARY})
   else ()
     message (STATUS "PETSC or MPI not found!")
     set (COMISO_PETSC_CONFIG_FILE_SETTINGS "#define COMISO_PETSC_AVAILABLE 0" )
@@ -172,6 +236,9 @@ if(NOT DISABLE_TAO)
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAO_INCLUDE_DIRS} )
     list( APPEND COMISO_LINK_DIRECTORIES ${TAO_LIBRARY_DIR} )
     list( APPEND COMISO_LINK_LIBRARIES  ${TAO_LIBRARY} )
+    target_include_directories(CoMISo PRIVATE ${TAO_INCLUDE_DIRS})
+    target_link_directories   (CoMISo PRIVATE ${TAO_LIBRARY_DIR})
+    target_link_libraries     (CoMISo PRIVATE ${TAO_LIBRARY})
   else ()
     message (STATUS "TAO or PETSC or MPI not found!")
     set (COMISO_TAO_CONFIG_FILE_SETTINGS "#define COMISO_TAO_AVAILABLE 0" )
@@ -188,6 +255,9 @@ if (METIS_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${METIS_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES   ${METIS_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${METIS_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${METIS_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PRIVATE ${METIS_LIBRARY_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${METIS_LIBRARIES})
 else()
   set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 0" )
   message (STATUS "METIS not found!")
@@ -198,6 +268,8 @@ if (MUMPS_FOUND )
   set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${MUMPS_INCLUDE_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES ${MUMPS_LIBRARY} )
+  target_include_directories(CoMISo PRIVATE ${MUMPS_INCLUDE_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${MUMPS_LIBRARY})
 else ()
   message (STATUS "MUMPS not found!")
   set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 0" )
@@ -209,6 +281,9 @@ if (IPOPT_FOUND)
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${IPOPT_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES ${IPOPT_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${IPOPT_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PRIVATE ${IPOPT_LIBRARY_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${IPOPT_LIBRARIES})
   if ( IPOPT_HSL_LIBRARY_DIR )
     set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 1" )
   else ()
@@ -224,6 +299,7 @@ find_package (EIGEN3)
 if (EIGEN3_FOUND )
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${EIGEN3_INCLUDE_DIR} )
+  target_include_directories   (CoMISo PUBLIC ${EIGEN3_INCLUDE_DIR})
 else ()
   message (FATAL_ERROR "EIGEN3 not found!")
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 0" )
@@ -233,6 +309,7 @@ find_package (DCO)
 if (DCO_FOUND )
   set (COMISO_DCO_CONFIG_FILE_SETTINGS "#define COMISO_DCO_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${DCO_INCLUDE_DIR} )
+  target_include_directories   (CoMISo PUBLIC ${DCO_INCLUDE_DIR})
 else ()
   message (STATUS "DCO not found!")
   set (COMISO_DCO_CONFIG_FILE_SETTINGS "#define COMISO_DCO_AVAILABLE 0" )
@@ -243,6 +320,8 @@ if (CBC_FOUND )
   set (COMISO_CBC_CONFIG_FILE_SETTINGS "#define COMISO_CBC_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${CBC_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${CBC_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${CBC_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${CBC_LIBRARIES})
 else ()
   message (STATUS "CBC not found!")
   set (COMISO_CBC_CONFIG_FILE_SETTINGS "#define COMISO_CBC_AVAILABLE 0" )
@@ -253,6 +332,8 @@ if (CLP_FOUND )
   set (COMISO_CLP_CONFIG_FILE_SETTINGS "#define COMISO_CLP_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${CLP_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${CLP_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${CLP_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${CLP_LIBRARIES})
 else ()
   message (STATUS "CLP not found!")
   set (COMISO_CLP_CONFIG_FILE_SETTINGS "#define COMISO_CLP_AVAILABLE 0" )
@@ -263,6 +344,8 @@ if (CGL_FOUND )
   set (COMISO_CGL_CONFIG_FILE_SETTINGS "#define COMISO_CGL_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${CGL_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${CGL_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${CGL_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${CGL_LIBRARIES})
 else ()
   message (STATUS "CGL not found!")
   set (COMISO_CGL_CONFIG_FILE_SETTINGS "#define COMISO_CGL_AVAILABLE 0" )
@@ -273,6 +356,8 @@ if (COINUTILS_FOUND )
   set (COMISO_COINUTILS_CONFIG_FILE_SETTINGS "#define COMISO_COINUTILS_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${COINUTILS_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${COINUTILS_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${COINUTILS_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${COINUTILS_LIBRARIES})
 else ()
   message (STATUS "COINUTILS not found!")
   set (COMISO_COINUTILS_CONFIG_FILE_SETTINGS "#define COMISO_COINUTILS_AVAILABLE 0" )
@@ -283,6 +368,8 @@ if (OSI_FOUND )
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${OSI_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${OSI_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${OSI_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${OSI_LIBRARIES})
 else ()
   message (STATUS "OSI not found!")
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
@@ -295,6 +382,8 @@ if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
   set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAUCS_INCLUDE_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${TAUCS_LIBRARY} )
+  target_include_directories(CoMISo PRIVATE ${TAUCS_INCLUDE_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${TAUCS_LIBRARY})
 
 else ()
   message (STATUS "TAUCS not found!")
@@ -307,6 +396,9 @@ if (GUROBI_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${GUROBI_INCLUDE_DIRS} )
 #  list( APPEND COMISO_LINK_DIRECTORIES    ${GUROBI_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${GUROBI_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${GUROBI_INCLUDE_DIRS})
+#  target_link_directories   (CoMISo PRIVATE ${GUROBI_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${GUROBI_LIBRARIES})
 else ()
   message (STATUS "GUROBI not found!")
   set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
@@ -318,6 +410,9 @@ if (MOSEK_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${MOSEK_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES    ${MOSEK_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${MOSEK_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${MOSEK_INCLUDE_DIRS})
+  target_link_directories   (CoMISo PRIVATE ${MOSEK_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${MOSEK_LIBRARIES})
 else ()
   message (STATUS "MOSEK not found!")
   set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 0" )
@@ -330,6 +425,9 @@ if (ARPACK_FOUND )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${ARPACK_INCLUDE_DIR} )
 #  list( APPEND COMISO_LINK_DIRECTORIES    ${ARPACK_LIBRARY_DIR} )
   list( APPEND COMISO_LINK_LIBRARIES  ${ARPACK_LIBRARY} )
+  target_include_directories(CoMISo PRIVATE ${ARPACK_INCLUDE_DIR})
+#  target_link_directories   (CoMISo PRIVATE ${ARPACK_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PRIVATE ${ARPACK_LIBRARY})
 else ()
   message (STATUS "ARPACK not found!")
   set (COMISO_ARPACK_CONFIG_FILE_SETTINGS "#define COMISO_ARPACK_AVAILABLE 0" )
@@ -340,6 +438,8 @@ if (CPLEX_FOUND )
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${CPLEX_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${CPLEX_LIBRARIES} )
+  target_include_directories(CoMISo PRIVATE ${CPLEX_INCLUDE_DIRS})
+  target_link_libraries     (CoMISo PRIVATE ${CPLEX_LIBRARIES})
 
   #enable c++ support
    add_definitions(-DIL_STD)
@@ -356,74 +456,17 @@ if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
     list( APPEND COMISO_INCLUDE_DIRECTORIES ${LAPACK_INCLUDE_DIR} )
     list( APPEND COMISO_LINK_DIRECTORIES    ${LAPACK_LIBRARY_DIR} )
     list( APPEND COMISO_LINK_LIBRARIES  ${LAPACK_LIBRARIES} )
+    target_include_directories(CoMISo PRIVATE ${LAPACK_INCLUDE_DIR})
+    target_link_directories   (CoMISo PRIVATE ${LAPACK_LIBRARY_DIR})
+    target_link_libraries     (CoMISo PRIVATE ${LAPACK_LIBRARIES})
   else()
     message(STATUS "LAPACK not found!")
   endif()
 endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
-# source code directories
-set (directories
-  .
-  Base/Code
-  Base/Debug
-  Base/Security
-  Base/Utils
-  Solver
-  NSolver
-  EigenSolver
-  Config
-  Utils
-  QtWidgets
-)
 
-# collect all header,source and ui files
-vci_append_files (headers "*.hh" ${directories})
-vci_append_files (sources "*.cc" ${directories})
-
-if( QT5_FOUND )
-vci_append_files (ui "*.ui" ${directories})
-endif()
-
-macro (of_list_filter _list)
-  if (WIN32)
-   foreach (_element ${${_list}})
-     if (_element MATCHES "gnuplot_i\\.(cc|hh)$")
-       list (REMOVE_ITEM ${_list} ${_element})
-     endif ()
-   endforeach ()
-  endif ()
-endmacro ()
-
-of_list_filter  ( headers )
-of_list_filter  ( sources )
-
-# remove template cc files from source file list
-vci_drop_templates (sources)
-
-if ( QT5_FOUND )
-  # Enable automoc
-  set(CMAKE_AUTOMOC ON)
-  set(CMAKE_AUTOUIC ON)
-
-  list (APPEND COMISO_LINK_LIBRARIES ${QT_LIBRARIES})
-endif()
-
-# TODO: remove this line when we can assume people have a cmake 3.13.
-# Then link directories is set as target property below.
-link_directories(${COMISO_LINK_DIRECTORIES})
-
-vci_add_library (CoMISo SHARED ${ui} ${sources} ${headers} )
-add_library(CoMISo::CoMISo ALIAS CoMISo)
-
-target_include_directories(CoMISo
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
-)
-
-target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
+#target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
 
 #get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
 #get_target_property(INT_INC_DIRS CoMISo INTERFACE_INCLUDE_DIRECTORIES)
@@ -431,14 +474,6 @@ target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
 #message("Target CoMISo int include dirs: ${INT_INC_DIRS}")
 #message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
 #message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
-
-if (COMISO_LINK_DIRECTORIES)
-  set_target_properties(CoMISo PROPERTIES LINK_DIRECTORIES "${COMISO_LINK_DIRECTORIES}")
-endif()
-if (WIN32)
-#TODO: do this also for non windows platforms as soon as we can require cmake 3.13
-  target_link_directories(CoMISo PUBLIC ${COMISO_LINK_DIRECTORIES})
-endif()
 
 # generate dllexport macros on windows
 if (WIN32)
