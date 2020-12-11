@@ -1,6 +1,6 @@
 include (CoMISoExample)
 
-acg_add_executable (small_nleast_squares ${sources} ${headers} )
+vci_add_executable (small_nleast_squares ${sources} ${headers} )
 
 # enable rpath linking
 set_target_properties(small_nleast_squares PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)

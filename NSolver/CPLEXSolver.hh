@@ -144,6 +144,6 @@ private:
 
 //=============================================================================
 #endif // COMISO_CPLEX_AVAILABLE
-#endif // ACG_CPLEXSOLVER_HH defined
+#endif // COMISO_CPLEXSOLVER_HH defined
 //=============================================================================
 

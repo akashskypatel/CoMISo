@@ -1,5 +1,5 @@
 git submodule init
-git submodule update --remote
+git submodule update
 
 
 :: set up Libraty Paths

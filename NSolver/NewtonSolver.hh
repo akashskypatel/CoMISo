@@ -40,7 +40,7 @@ namespace COMISO {
 
 	      
 
-/** \class NewtonSolver NewtonSolver.hh <ACG/.../NewtonSolver.hh>
+/** \class NewtonSolver NewtonSolver.hh <COMISO/.../NewtonSolver.hh>
 
     Brief Description.
   
@@ -164,6 +164,6 @@ private:
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif // ACG_NEWTONSOLVER_HH defined
+#endif // COMISO_NEWTONSOLVER_HH defined
 //=============================================================================
 

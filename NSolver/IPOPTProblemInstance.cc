@@ -287,14 +287,15 @@ bool IPOPTProblemInstance::eval_jac_g(Index n, const Number* x, bool new_x,
   DEB_enter_func;
   if (values == NULL)
   {
-    // get x for evaluation (arbitrary position should be ok)
-    std::vector<double> x_rnd(problem_->n_unknowns(), 0.0);
+    // get x for evaluation (make sure to use same x as in get_nlp_info)
+    std::vector<double> x_init(problem_->n_unknowns());
+    problem_->initial_x(P(x_init));
 
     int gi = 0;
     SVectorNC g;
     for( int i=0; i<m; ++i)
     {
-      constraints_[i]->eval_gradient(&(x_rnd[0]), g);
+      constraints_[i]->eval_gradient(&(x_init[0]), g);
       SVectorNC::InnerIterator v_it(g);
       for( ; v_it; ++v_it)
       {
@@ -348,14 +349,15 @@ bool IPOPTProblemInstance::eval_h(Index n, const Number* x, bool new_x,
   {
     // return structure
 
-    // get x for evaluation (arbitrary position should be ok)
-    std::vector<double> x_rnd(problem_->n_unknowns(), 0.0);
+    // get x for evaluation (make sure to use same x as in get_nlp_info)
+    std::vector<double> x_init(problem_->n_unknowns());
+    problem_->initial_x(P(x_init));
 
      // global index
      int gi = 0;
      // get hessian of problem
      SMatrixNP HP;
-     problem_->eval_hessian(&(x_rnd[0]), HP);
+     problem_->eval_hessian(&(x_init[0]), HP);
 
      for(int i=0; i<HP.outerSize(); ++i)
        for (SMatrixNP::InnerIterator it(HP,i); it; ++it)
@@ -374,7 +376,7 @@ bool IPOPTProblemInstance::eval_h(Index n, const Number* x, bool new_x,
     for(unsigned int j=0; j<constraints_.size(); ++j)
     {
       SMatrixNC H;
-      constraints_[j]->eval_hessian(&(x_rnd[0]), H);
+      constraints_[j]->eval_hessian(&(x_init[0]), H);
 
       SMatrixNC::iterator m_it  = H.begin();
       SMatrixNC::iterator m_end = H.end();

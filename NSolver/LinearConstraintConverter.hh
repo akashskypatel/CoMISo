@@ -33,7 +33,7 @@ namespace COMISO {
 
 	      
 
-/** \class NProblemGmmInterface NProblemGmmInterface.hh <ACG/.../NPRoblemGmmInterface.hh>
+/** \class NProblemGmmInterface NProblemGmmInterface.hh <COMISO/.../NPRoblemGmmInterface.hh>
 
     Brief Description.
   
@@ -108,6 +108,6 @@ private:
 } // namespace COMISO
 //=============================================================================
 //=============================================================================
-#endif // ACG_LINEARCONSTRAINTCONVERTER_HH defined
+#endif // COMISO_LINEARCONSTRAINTCONVERTER_HH defined
 //=============================================================================
 
