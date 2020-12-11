@@ -658,7 +658,7 @@ if(NOT COMISO_NO_INSTALL)
 
   # Install library
   install(TARGETS CoMISo EXPORT CoMISoTargets
-          RUNTIME DESTINATION bin
+          RUNTIME DESTINATION lib
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
 
