@@ -117,7 +117,7 @@ public:
 
   /// show Qt-Options-Dialog for setting algorithm parameters
   /** Requires a Qt Application running and COMISO_GUI to be defined */
-  void show_options_dialog() const;
+  void show_options_dialog();
 
   /// Set the solve type
   void set_rounding_type(const RoundingType _rt) { rounding_type_ = _rt; }
