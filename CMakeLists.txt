@@ -297,13 +297,18 @@ else ()
   set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
 endif ()
 
-find_package (EIGEN3)
-if (EIGEN3_FOUND )
+# Maybe CoMISo was added using add_subdirectory and Eigen is already available?
+if (NOT TARGET Eigen3::Eigen)
+    find_package (Eigen3)
+endif()
+
+if (TARGET Eigen3::Eigen)
+  message (STATUS "Found Eigen3")
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${EIGEN3_INCLUDE_DIR} )
-  target_include_directories   (CoMISo PUBLIC ${EIGEN3_INCLUDE_DIR})
+  list( APPEND COMISO_LINK_LIBRARIES Eigen3::Eigen)
+  target_link_libraries(Eigen3::Eigen)
 else ()
-  message (FATAL_ERROR "EIGEN3 not found!")
+  message (FATAL_ERROR "Eigen3 not found!")
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 0" )
 endif ()
 
