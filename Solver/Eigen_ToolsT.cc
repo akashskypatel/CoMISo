@@ -703,8 +703,8 @@ void f(const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
   {
      ColT col = mat_const_col( _G, i );
 
-     CIter it  = gmm::vect_const_begin( col );
-     CIter ite = gmm::vect_const_end( col );
+     auto it  = gmm::vect_const_begin( col );
+     auto ite = gmm::vect_const_end( col );
      for ( ; it!=ite; ++it )
        triplets.push_back( Triplet( it.index(), i, *it));
 
