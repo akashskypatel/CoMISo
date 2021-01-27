@@ -472,10 +472,10 @@ endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 
-find_package (lpsolve)
+find_package (LPSolve)
 if (TARGET lpsolve::lpsolve )
   set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 1" )
-  target_link_libraries     (CoMISo PRIVATE lpsolve::lpsolve)
+  target_link_libraries     (CoMISo PUBLIC lpsolve::lpsolve)
 else ()
   message (STATUS "lpsolve not found!")
   set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
