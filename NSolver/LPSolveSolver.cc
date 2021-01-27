@@ -64,6 +64,8 @@ bool solve_impl(
   if(lp == nullptr)
     ret = 1; /* couldn't construct a new model... */
 
+  set_timeout(lp, _time_limit);
+
   std::vector<int> col_idxs;
   col_idxs.reserve(Ncol);
   std::vector<REAL> row_coefficients;
