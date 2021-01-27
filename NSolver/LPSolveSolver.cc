@@ -105,8 +105,7 @@ bool solve_impl(
   // add constraints
   {
     set_add_rowmode(lp, TRUE);  /* makes building the model faster if it is done rows by row */
-    std::vector<REAL> all_row_coefficients; // including zeros
-    all_row_coefficients.reserve(Ncol);
+    std::vector<REAL> all_row_coefficients(Ncol); // including zeros
     NConstraintInterface::SVectorNC gc;
 
     for (auto c : _constraints)
@@ -164,7 +163,7 @@ bool solve_impl(
     /* write_lp(lp, "model.lp"); */
 
     /* I only want to see important messages on screen while solving */
-    set_verbose(lp, IMPORTANT);
+    set_verbose(lp, SEVERE);
 
     /* Now let lpsolve calculate a solution */
     ret = solve(lp);
