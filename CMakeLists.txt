@@ -83,8 +83,6 @@ if ( QT5_FOUND )
   target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
 endif()
 
-vci_get_version ()
-
 include (VCIOutput)
 
 set(COMISO_INCLUDE_DIRECTORIES "")
