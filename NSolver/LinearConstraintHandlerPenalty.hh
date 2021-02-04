@@ -26,7 +26,7 @@ namespace COMISO {
 
 
 	      
-/** \class LinearConstraintHandler LinearConstraintHandler.hh <ACG/.../LinearConstraintHandler.hh>
+/** \class LinearConstraintHandler LinearConstraintHandler.hh <COMISO/.../LinearConstraintHandler.hh>
 
     Brief Description.
   
@@ -102,11 +102,11 @@ private:
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(ACG_LINEARCONSTRAINTHANDLERPENALTY_C)
-#define ACG_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
+#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_LINEARCONSTRAINTHANDLERPENALTY_C)
+#define COMISO_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
 #include "LinearConstraintHandlerPenaltyT.cc"
 #endif
 //=============================================================================
-#endif // ACG_LINEARCONSTRAINTHANDLERPENALTY_HH defined
+#endif // COMISO_LINEARCONSTRAINTHANDLERPENALTY_HH defined
 //=============================================================================
 

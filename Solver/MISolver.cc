@@ -704,10 +704,10 @@ void MISolver::solve_gurobi(
 
 //----------------------------------------------------------------------------
 
-void MISolver::show_options_dialog() const
+void MISolver::show_options_dialog()
 {
   DEB_enter_func;
-#if (COMISO_QT4_AVAILABLE)
+#if (COMISO_QT_AVAILABLE)
   MISolverDialog* pd = new MISolverDialog(*this);
   pd->exec();
 #else

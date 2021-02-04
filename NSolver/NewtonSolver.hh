@@ -40,7 +40,7 @@ namespace COMISO {
 
 	      
 
-/** \class NewtonSolver NewtonSolver.hh <ACG/.../NewtonSolver.hh>
+/** \class NewtonSolver NewtonSolver.hh <COMISO/.../NewtonSolver.hh>
 
     Brief Description.
   

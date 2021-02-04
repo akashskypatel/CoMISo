@@ -26,7 +26,7 @@ namespace COMISO {
 
 	      
 
-/** \class BaseTaoGmmInterface BaseTaoGmmInterface.hh <ACG/.../BaseTaoGmmInterface.hh>
+/** \class BaseTaoGmmInterface BaseTaoGmmInterface.hh <COMISO/.../BaseTaoGmmInterface.hh>
 
     Brief Description.
   

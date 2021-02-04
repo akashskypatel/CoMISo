@@ -149,7 +149,7 @@ public:
     settings.eps_abs = 1e-5;      // absolute convergence tolerance
     settings.eps_rel = 1e-5;      // relative convergence tolerance
     settings.eps_prim_inf = 1e-6; // primal infeasibility tolerance
-    settings.eps_dual_inf = 1.;   // dual infeasibility tolerance
+    settings.eps_dual_inf = 1e-6; // dual infeasibility tolerance
     // settings.linsys_solver = MKL_PARDISO_SOLVER;
 
     data.n = 0;

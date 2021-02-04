@@ -43,7 +43,7 @@ void NPLinearConstraintsPenalty::initialize_constraints( const MatrixT& _C, cons
 
 
 //=============================================================================
-} // namespace ACG
+} // namespace COMISO
 //=============================================================================
 
 
