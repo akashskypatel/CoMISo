@@ -83,8 +83,6 @@ if ( QT5_FOUND )
   target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
 endif()
 
-vci_get_version ()
-
 include (VCIOutput)
 
 set(COMISO_INCLUDE_DIRECTORIES "")
@@ -297,13 +295,17 @@ else ()
   set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
 endif ()
 
-find_package (EIGEN3)
-if (EIGEN3_FOUND )
+# Maybe CoMISo was added using add_subdirectory and Eigen is already available?
+if (NOT TARGET Eigen3::Eigen)
+    find_package (Eigen3)
+endif()
+
+if (TARGET Eigen3::Eigen)
+  message (STATUS "Found Eigen3")
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${EIGEN3_INCLUDE_DIR} )
-  target_include_directories   (CoMISo PUBLIC ${EIGEN3_INCLUDE_DIR})
+  list( APPEND COMISO_LINK_LIBRARIES Eigen3::Eigen)
 else ()
-  message (FATAL_ERROR "EIGEN3 not found!")
+  message (FATAL_ERROR "Eigen3 not found!")
   set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 0" )
 endif ()
 
@@ -468,6 +470,16 @@ endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 
+find_package (LPSolve)
+if (TARGET lpsolve::lpsolve )
+  set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 1" )
+  target_link_libraries     (CoMISo PUBLIC lpsolve::lpsolve)
+  target_link_directories   (CoMISo PUBLIC ${LPSOLVE_LIBRARY_DIR})
+else ()
+  message (STATUS "lpsolve not found!")
+  set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
+endif ()
+
 #target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
 
 #get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
@@ -484,7 +496,7 @@ if (WIN32)
   add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
   # ignore "... needs to have dll-interface to be used by clients"
   #add_definitions(/wd4251)
-  target_compile_definitions(CoMISo PRIVATE /wd4251)
+  target_compile_options(CoMISo PRIVATE /wd4251)
 endif ()
 
 # enable debug stuff
@@ -525,8 +537,8 @@ target_link_libraries (CoMISo PUBLIC
 if (NOT TARGET osqp)
   find_package(osqp)
 endif()
-if (TARGET osqp)
-  target_link_libraries (CoMISo PRIVATE osqp)
+if (TARGET osqpstatic)
+  target_link_libraries (CoMISo PRIVATE osqpstatic)
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )

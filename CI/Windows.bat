@@ -86,7 +86,7 @@ ECHO "CMAKE_CONFIGURATION : %CMAKE_CONFIGURATION%"
 ECHO "============================================================="
 ECHO "============================================================="
 
-"C:\Program Files\CMake\bin\cmake.exe" -DGTEST_PREFIX="%LIBPATH%\%ARCHITECTURE%\%GTESTVERSION%" -G "%GENERATOR%"  -DCMAKE_BUILD_TYPE=Release -DOPENFLIPPER_BUILD_UNIT_TESTS=TRUE -DCMAKE_WINDOWS_LIBS_DIR=%CMAKE_WINDOWS_LIBS_DIR% %CMAKE_CONFIGURATION% ..
+"C:\Program Files\CMake\bin\cmake.exe" -DGTEST_PREFIX="%LIBPATH%\%ARCHITECTURE%\%GTESTVERSION%" -G "%GENERATOR%"  -DCMAKE_BUILD_TYPE=Release -DOPENFLIPPER_BUILD_UNIT_TESTS=TRUE -DCMAKE_WINDOWS_LIBS_DIR=%CMAKE_WINDOWS_LIBS_DIR% -DEigen3_DIR="e:\libs\general\Eigen3.3.9\share\eigen3\cmake" %CMAKE_CONFIGURATION% ..
 
 IF %errorlevel% NEQ 0 exit /b %errorlevel%
 
