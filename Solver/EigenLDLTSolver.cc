@@ -22,7 +22,7 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-#include "EigenLDLTSolverT.cc"
+#include "EigenLDLTSolverT_impl.hh"
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #if (COMISO_EIGEN3_AVAILABLE)

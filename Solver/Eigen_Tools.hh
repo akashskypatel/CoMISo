@@ -120,7 +120,7 @@ void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_Eigen_TOOLS_C)
 #define COMISO_Eigen_TOOLS_TEMPLATES
-#include "Eigen_ToolsT.cc"
+#include "Eigen_ToolsT_impl.hh"
 #endif
 
 //=============================================================================

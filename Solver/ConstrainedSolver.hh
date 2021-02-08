@@ -418,7 +418,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_CONSTRAINEDSOLVER_C)
 #define COMISO_CONSTRAINEDSOLVER_TEMPLATES
-#include "ConstrainedSolverT.cc"
+#include "ConstrainedSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_CONSTRAINEDSOLVER_HH defined
