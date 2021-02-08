@@ -114,7 +114,7 @@ class COMISODLLEXPORT TaucsSolver
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_TAUCS_SOLVER_TEMPLATES_C)
 #define COMISO_TAUCS_SOLVER_TEMPLATES
-#include "TaucsSolverT.cc"
+#include "TaucsSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_TAUCS_AVAILABLE
