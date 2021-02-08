@@ -117,7 +117,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_EIGENARPACKMATRIXT_C)
 #define COMISO_EIGENARPACKMATRIXT_TEMPLATES
-#include "EigenArpackMatrixT.cc"
+#include "EigenArpackMatrixT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_SUITESPARSE_AVAILABLE

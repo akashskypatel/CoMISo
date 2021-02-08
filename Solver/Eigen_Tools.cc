@@ -31,7 +31,7 @@
 //=============================================================================
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
-#include "Eigen_ToolsT.cc"
+#include "Eigen_ToolsT_impl.hh"
 #if COMISO_EIGEN3_AVAILABLE
 
 //== NAMESPACES ===============================================================

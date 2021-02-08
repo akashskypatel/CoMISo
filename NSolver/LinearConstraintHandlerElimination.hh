@@ -122,7 +122,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_LINEARCONSTRAINTHANDLERELIMINATION_C)
 #define COMISO_LINEARCONSTRAINTHANDLERELIMINATION_TEMPLATES
-#include "LinearConstraintHandlerEliminationT.cc"
+#include "LinearConstraintHandlerEliminationT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_LINEARCONSTRAINTHANDLERELIMINATION_HH defined

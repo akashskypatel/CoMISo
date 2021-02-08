@@ -190,7 +190,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_SUPERSPARSEMATRIXT_C)
 #define COMISO_SUPERSPARSEMATRIXT_TEMPLATES
-#include "SuperSparseMatrixT.cc"
+#include "SuperSparseMatrixT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_SUPERSPARSEMATRIXT_HH defined

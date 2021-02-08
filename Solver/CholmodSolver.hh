@@ -136,7 +136,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_CHOLMOD_SOLVER_TEMPLATES_C)
 #define COMISO_CHOLMOD_SOLVER_TEMPLATES
-#include "CholmodSolverT.cc"
+#include "CholmodSolverT_impl.hh"
 #endif
 //=============================================================================
 #else  // COMISO_SUITESPARSE_AVAILABLE
