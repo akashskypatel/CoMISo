@@ -23,7 +23,7 @@
 \*===========================================================================*/ 
 
 
-#include "ConstrainedSolverT.cc"
+#include "ConstrainedSolverT_impl.hh"
 
 namespace COMISO {
 

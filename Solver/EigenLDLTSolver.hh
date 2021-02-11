@@ -110,7 +110,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_EIGEN_LDLT_SOLVER_TEMPLATES_C)
 #define COMISO_EIGEN_LDLT_SOLVER_TEMPLATES
-#include "EigenLDLTSolverT.cc"
+#include "EigenLDLTSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE

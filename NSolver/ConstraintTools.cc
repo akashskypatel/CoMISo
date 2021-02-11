@@ -184,7 +184,7 @@ find_max_abs_coeff(SVectorGMM& _v)
       if(std::abs(*c_it) > vmax)
       {
         imax = c_it.index();
-        vmax = *c_it;
+        vmax = std::abs(*c_it);
       }
 
   return imax;

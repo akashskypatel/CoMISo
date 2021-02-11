@@ -280,7 +280,7 @@ inline std::ostream& operator <<(std::ostream &o, const std::vector<int>& m)    
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_GMM_TOOLS_C)
 #define COMISO_GMM_TOOLS_TEMPLATES
-#include "GMM_ToolsT.cc"
+#include "GMM_ToolsT_impl.hh"
 #endif
 //=============================================================================
 #endif // GMM_GMM_TOOLS_HH defined
