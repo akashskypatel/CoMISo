@@ -257,6 +257,17 @@ public:
   /// Set noise-level (how much std output is given) 0 basically none, 1 important stuff (warning/timing, is default), 2+ not so important
   void set_noisy( int _noisy) { noisy_ = _noisy;}
 
+  /// Support changing the RHS of the constraint system in resolve(). Enabled by default.
+  /// If this is needed, it must be enabled for the initial solve, not just before the resolve!
+  /// Warning: This can impose substantial memory overhead for large sparse constraint systems.
+  void set_support_constraint_rhs_resolve( bool _val) {
+      support_constraint_rhs_resolve_ = _val;
+      if (!_val) {
+          // Disabling support means we don't need the content of D_ anymore.
+          this->rhs_update_table_.D_ = {};
+      }
+  }
+
   // Get/Set whether the constraint reordering is used (default true)
   bool use_constraint_reordering = true;
 
@@ -326,6 +337,9 @@ private:
   double epsilon_;
   int    noisy_;
   bool   do_gcd_;
+
+  // User-configurable, whether to store information for constraint-rhs resolve:
+  bool   support_constraint_rhs_resolve_ = true;
 
   // --------------- Update by Marcel to enable efficient re-solve with changed rhs ----------------------
   // Store for symbolic elimination information for rhs
