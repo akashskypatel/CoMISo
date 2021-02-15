@@ -1,6 +1,5 @@
 // (C) Copyright 2014 by Autodesk, Inc.
 
-//!\ReForm_SDK
 #include <Base/Utils/BaseErrorInc.hh>
 
 DEFINE_ERROR(UNSPECIFIED_COMISO_FAILURE, "Unspecified CoMISo Failure")
