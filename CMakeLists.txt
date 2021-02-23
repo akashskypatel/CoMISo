@@ -17,6 +17,9 @@ include(VCIQt)
 # Flag to enable or disable QT widgets in CoMISo
 set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
 
+# Flag to enable or disable IPOPT
+set( ENABLE_IPOPT ON CACHE BOOL "Build with IPOPT (if found)" )
+
 if( WANT_COMISO_QT )
 
   set(QT5_REQUIRED_PACKAGES
@@ -275,8 +278,11 @@ else ()
   set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 0" )
 endif ()
 
-find_package (IPOPT)
-if (IPOPT_FOUND)
+if ( ENABLE_IPOPT)
+  find_package (IPOPT)
+endif()
+
+if (ENABLE_IPOPT AND IPOPT_FOUND)
   set (COMISO_IPOPT_CONFIG_FILE_SETTINGS "#define COMISO_IPOPT_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${IPOPT_INCLUDE_DIRS} )
   list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIRS} )
