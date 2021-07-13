@@ -15,6 +15,7 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Config/StdTypes.hh>
 
 #include <array>
 #include <memory>
@@ -42,35 +43,10 @@ namespace COMISO
 */
 
 template <size_t DIM>
-class COMISODLLEXPORT EigenLSQConstrainedSolverT
+class COMISODLLEXPORT EigenLSQConstrainedSolverT : public COMISO_STD::SolverBaseT<DIM>
 {
 public:
-  using Point = std::array<double, DIM>; // Object to minimize
-  struct Value // It means that X_name_ = val_. 
-               // Used to get the results and to set the fixed variables
-  {
-    size_t var_name; // Variable name.
-    Point point; // Value of the variable
-    bool operator<(const Value& _vl) const { return var_name < _vl.var_name; }
-    bool operator==(const Value& _vl) const { return var_name == _vl.var_name; }
-  };
   using ValueVector = std::vector<Value>;
-  struct LinearTerm // It means that coeff_ * X_name_
-  {
-    size_t var_name; // Variable name.
-    double coeff;
-    bool operator<(const LinearTerm& _lt) const
-    {
-      return var_name < _lt.var_name;
-    }
-  };
-  using LinearTermVector = std::vector<LinearTerm>;
-  struct LinearEquation // a linear equation in the form Sum(c_i * x_i) =
-                        // constant_term
-  {
-    LinearTermVector linear_terms;
-    Point const_term;
-  };
 
   /** \constructor
    * _var_nmbr: the number of points to optimize.
@@ -85,8 +61,7 @@ public:
                  variable to optimize. Can be not sequential.
    * _fixed: vector of fixed positions in the form (var_name, point)
    */
-  EigenLSQConstrainedSolverT(
-      std::vector<size_t>&& _var_names, ValueVector&& _fixed);
+  EigenLSQConstrainedSolverT(std::vector<size_t>&& _var_names, ValueVector&& _fixed);
 
   ~EigenLSQConstrainedSolverT();
 

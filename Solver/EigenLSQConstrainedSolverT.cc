@@ -43,8 +43,7 @@ template <size_t DIM> class EigenLSQConstrainedSolverT<DIM>::Impl
 public:
   Impl(std::vector<size_t>&& _var_names,
       EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed);
-  Impl(size_t _var_nmbr,
-      EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
+  Impl(size_t _var_nmbr, EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
       : Impl(make_sequence_vector(_var_nmbr), std::move(_fixed))
   {
   }
@@ -256,7 +255,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
     // We may want to try a different factorization here, for example SparseLU
     // is to be able to find a result. Nevertheless if we are here the
     // minimization problem has multiple solutions and randomly picking one of
-    // them is dangerous, for example the solution may have unpleasent
+    // them is dangerous, for example the solution may have unpleasant
     // oscillations.
     COMISO_THROW(LSQC_SINGULAR);
   }

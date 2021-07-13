@@ -2,6 +2,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolver.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQConstrainedSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_Tools.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GMM_Tools.hh
@@ -17,6 +18,7 @@ SET(my_t_impls
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQConstrainedSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_ToolsT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GMM_ToolsT.cc
@@ -31,6 +33,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQConstrainedSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_Tools.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/GMM_Tools.cc
