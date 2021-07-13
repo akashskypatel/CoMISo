@@ -46,6 +46,13 @@ template <size_t DIM>
 class COMISODLLEXPORT EigenLSQConstrainedSolverT : public COMISO_STD::SolverBaseT<DIM>
 {
 public:
+  using Point = typename COMISO_STD::SolverBaseT<DIM>::Point;
+  using PointVector = typename COMISO_STD::SolverBaseT<DIM>::PointVector;
+  using Value = typename COMISO_STD::SolverBaseT<DIM>::Value;
+  using LinearTerm = typename COMISO_STD::SolverBaseT<DIM>::LinearTerm;
+  using LinearTermVector = typename COMISO_STD::SolverBaseT<DIM>::LinearTermVector;
+  using LinearEquation = typename COMISO_STD::SolverBaseT<DIM>::LinearEquation;
+
   using ValueVector = std::vector<Value>;
 
   /** \constructor

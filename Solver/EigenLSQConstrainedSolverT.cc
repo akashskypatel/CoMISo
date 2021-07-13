@@ -41,17 +41,17 @@ template <class vectT> static void sort_and_compact(vectT& _v)
 template <size_t DIM> class EigenLSQConstrainedSolverT<DIM>::Impl
 {
 public:
-  Impl(std::vector<size_t>&& _var_names,
-      EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed);
-  Impl(size_t _var_nmbr, EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
+  Impl(std::vector<size_t>&& _var_names, ValueVector&& _fixed);
+  Impl(size_t _var_nmbr, ValueVector&& _fixed)
       : Impl(make_sequence_vector(_var_nmbr), std::move(_fixed))
   {
   }
 
-  void add_equation(const LinearEquation& _lin_eq);
+  void add_equation(
+      const LinearEquation& _lin_eq);
 
   void add_linear_constraint(
-      EigenLSQConstrainedSolverT<DIM>::LinearEquation&& lin_condtr)
+      LinearEquation&& lin_condtr)
   {
     cnstrs_.emplace_back(lin_condtr);
   }
@@ -65,13 +65,11 @@ public:
 
 private:
 
-  bool fixed_variable(size_t _var_name, Point* _pt = nullptr) const
+  bool fixed_variable(size_t _var_name,
+      Point* _pt = nullptr) const
   {
     auto it = std::lower_bound(fixed_.begin(), fixed_.end(), _var_name,
-        [](const EigenLSQConstrainedSolverT<DIM>::Value& _val, size_t _var)
-        {
-          return _val.var_name < _var;
-        });
+        [](const Value& _val, size_t _var) { return _val.var_name < _var; });
     auto res = it != fixed_.end() && it->var_name == _var_name;
     if (_pt != nullptr && res)
       *_pt = it->point;
@@ -109,8 +107,8 @@ private:
 };
 
 template <size_t DIM>
-EigenLSQConstrainedSolverT<DIM>::Impl::Impl(std::vector<size_t>&& _var_names,
-    EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
+EigenLSQConstrainedSolverT<DIM>::Impl::Impl(
+    std::vector<size_t>&& _var_names, ValueVector&& _fixed)
     : fixed_(std::move(_fixed)), var_names_(std::move(_var_names))
 {
   sort_and_compact(fixed_);
@@ -122,7 +120,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::Impl(std::vector<size_t>&& _var_names,
 
 template <size_t DIM>
 void EigenLSQConstrainedSolverT<DIM>::Impl::add_equation(
-    const EigenLSQConstrainedSolverT<DIM>::LinearEquation& _lin_eq)
+    const LinearEquation& _lin_eq)
 {
   B_coeff_.resize(row_nmbr_ + 1);
   auto& b = B_coeff_[row_nmbr_];
@@ -272,18 +270,15 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
 
 template <size_t DIM>
 EigenLSQConstrainedSolverT<DIM>::EigenLSQConstrainedSolverT(
-    size_t _var_nmbr, EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
-    : impl_(std::make_unique<EigenLSQConstrainedSolverT<DIM>::Impl>(
-          _var_nmbr, std::move(_fixed)))
+    size_t _var_nmbr, ValueVector&& _fixed)
+    : impl_(std::make_unique<Impl>(_var_nmbr, std::move(_fixed)))
 {
 }
 
 template <size_t DIM>
 EigenLSQConstrainedSolverT<DIM>::EigenLSQConstrainedSolverT(
-    std::vector<size_t>&& _var_names,
-    EigenLSQConstrainedSolverT<DIM>::ValueVector&& _fixed)
-    : impl_(std::make_unique<EigenLSQConstrainedSolverT<DIM>::Impl>(
-          std::move(_var_names), std::move(_fixed)))
+    std::vector<size_t>&& _var_names, ValueVector&& _fixed)
+    : impl_(std::make_unique<Impl>(std::move(_var_names), std::move(_fixed)))
 {
 }
 
@@ -292,14 +287,14 @@ EigenLSQConstrainedSolverT<DIM>::~EigenLSQConstrainedSolverT() = default;
 
 template <size_t DIM>
 void EigenLSQConstrainedSolverT<DIM>::add_equation(
-    const EigenLSQConstrainedSolverT<DIM>::LinearEquation& _lin_eq)
+    const LinearEquation& _lin_eq)
 {
   impl_->add_equation(_lin_eq);
 }
 
 template <size_t DIM>
 void EigenLSQConstrainedSolverT<DIM>::add_linear_constraint(
-    EigenLSQConstrainedSolverT<DIM>::LinearEquation&& _lin_cnstr)
+    LinearEquation&& _lin_cnstr)
 {
   impl_->add_linear_constraint(std::move(_lin_cnstr));
 }
