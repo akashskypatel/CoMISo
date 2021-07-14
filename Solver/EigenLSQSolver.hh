@@ -14,6 +14,8 @@
 #if (COMISO_EIGEN3_AVAILABLE)
 //== INCLUDES =================================================================
 
+#include "SolverBaseT.hh"
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/StdTypes.hh>
 
@@ -37,29 +39,28 @@ namespace COMISO
 */
 
 template <size_t DIM>
-class COMISODLLEXPORT EigenLSQSolverT : public COMISO_STD::SolverBaseT<DIM>
+class COMISODLLEXPORT EigenLSQSolverT : public SolverBaseT<DIM>
 {
 public:
-  using Point = typename COMISO_STD::SolverBaseT<DIM>::Point;
-  using PointVector = typename COMISO_STD::SolverBaseT<DIM>::PointVector;
-  using Value = typename COMISO_STD::SolverBaseT<DIM>::Value;
-  using LinearTerm = typename COMISO_STD::SolverBaseT<DIM>::LinearTerm;
-  using LinearTermVector = typename COMISO_STD::SolverBaseT<DIM>::LinearTermVector;
-  using LinearEquation = typename COMISO_STD::SolverBaseT<DIM>::LinearEquation;
+  using Point = typename SolverBaseT<DIM>::Point;
+  using PointVector = typename SolverBaseT<DIM>::PointVector;
+  using LinearTerm = typename SolverBaseT<DIM>::LinearTerm;
+  using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
+  using LinearEquation = typename SolverBaseT<DIM>::LinearEquation;
 
-  using ValueVector = PointVector;
+  using Result = PointVector;
 
   void add_equation(LinearEquation&& _lin_eq)
   {
     lin_eqs_.emplace_back(std::move(_lin_eq));
   }
 
-  const ValueVector& solve();
+  const Result& solve();
 
 private:
   std::vector<LinearEquation> lin_eqs_;
   // System solution
-  ValueVector result_;
+  PointVector result_;
 };
 
 //=============================================================================

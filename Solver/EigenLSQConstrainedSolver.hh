@@ -14,6 +14,8 @@
 #if (COMISO_EIGEN3_AVAILABLE)
 //== INCLUDES =================================================================
 
+#include "SolverBaseT.hh"
+
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/StdTypes.hh>
 
@@ -43,17 +45,26 @@ namespace COMISO
 */
 
 template <size_t DIM>
-class COMISODLLEXPORT EigenLSQConstrainedSolverT : public COMISO_STD::SolverBaseT<DIM>
+class COMISODLLEXPORT EigenLSQConstrainedSolverT : public SolverBaseT<DIM>
 {
 public:
-  using Point = typename COMISO_STD::SolverBaseT<DIM>::Point;
-  using PointVector = typename COMISO_STD::SolverBaseT<DIM>::PointVector;
-  using Value = typename COMISO_STD::SolverBaseT<DIM>::Value;
-  using LinearTerm = typename COMISO_STD::SolverBaseT<DIM>::LinearTerm;
-  using LinearTermVector = typename COMISO_STD::SolverBaseT<DIM>::LinearTermVector;
-  using LinearEquation = typename COMISO_STD::SolverBaseT<DIM>::LinearEquation;
+  using Point = typename SolverBaseT<DIM>::Point;
+  using PointVector = typename SolverBaseT<DIM>::PointVector;
+  using LinearTerm = typename SolverBaseT<DIM>::LinearTerm;
+  using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
+  using LinearEquation = typename SolverBaseT<DIM>::LinearEquation;
+
+  struct Value // It means that X_name_ = val_.
+               // Used to get the results and to set the fixed variables
+  {
+    size_t var_name; // Variable name.
+    Point point;     // Value of the variable
+    bool operator<(const Value& _vl) const { return var_name < _vl.var_name; }
+    bool operator==(const Value& _vl) const { return var_name == _vl.var_name; }
+  }; // struct Value
 
   using ValueVector = std::vector<Value>;
+  using Result = ValueVector;
 
   /** \constructor
    * _var_nmbr: the number of points to optimize.
@@ -95,7 +106,7 @@ public:
    * the valid range or if the system is under-constraint, i.e., it does not
    * have a unique minimum.
    */
-  const ValueVector& solve();
+  const Result& solve();
 
 private:
   class Impl;

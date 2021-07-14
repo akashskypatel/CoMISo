@@ -18,7 +18,7 @@ namespace COMISO
 {
 
 template <size_t DIM>
-const typename EigenLSQSolverT<DIM>::ValueVector& EigenLSQSolverT<DIM>::solve()
+const typename EigenLSQSolverT<DIM>::Result& EigenLSQSolverT<DIM>::solve()
 {
   using SparseMatrix = Eigen::SparseMatrix<double>;
   using ColumnMatrix = Eigen::Matrix<double, Eigen::Dynamic, DIM>;

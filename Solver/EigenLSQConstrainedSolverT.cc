@@ -307,7 +307,7 @@ EigenLSQConstrainedSolverT<DIM>::fixed_points() const
 }
 
 template <size_t DIM>
-const typename EigenLSQConstrainedSolverT<DIM>::ValueVector&
+const typename EigenLSQConstrainedSolverT<DIM>::Result&
 EigenLSQConstrainedSolverT<DIM>::solve()
 {
   return impl_->solve();

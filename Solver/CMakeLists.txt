@@ -9,6 +9,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolver.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/SolverBaseT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolver.hh
    PARENT_SCOPE
