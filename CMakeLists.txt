@@ -10,7 +10,6 @@ my_add_subdir(Utils)
 
 include_directories(${PROJECT_SOURCE_DIR}/..)
 inc_3p_dir(Boost)
-inc_3p_dir(Gmm)
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
@@ -18,6 +17,7 @@ target_link_libraries(CoMISo
 	PUBLIC Eigen
 	PUBLIC Base
 	PRIVATE Ipopt
+	PUBLIC Gmm
 #  PRIVATE OSQP
 	)
 
