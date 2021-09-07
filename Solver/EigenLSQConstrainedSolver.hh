@@ -88,13 +88,19 @@ public:
   * The solution will minimize the sum of the square of all the added
    * equations: min Sum((Sum_i(a_i * x_i) - b_i)^2)
    */
-  void add_equation(const LinearEquation& _lin_eq);
+  void add_equation(const LinearEquation& _lnr_eq);
 
-  /** \Add a linear constraint
-  * The solution must satisfy it.
-  * The input data is consumed by the function.
-  */
-  void add_linear_constraint(LinearEquation&& _lin_cnstr);
+  /** \Add a set of linear constraints that can be linearly dependent
+   * The solution must satisfy it.
+   * The input data can be modified by the function.
+   * This class assumes that sets of constraints added with different calls to
+   * add_linear_constraints do not have common variables.
+   * 
+   * Warning: adding a large number of constraints in one call makes
+   * performances unacceptable. 
+   * The expectation is that _lnr_cnstrs.size() < 100.
+   */
+  void add_linear_constraints(std::vector<LinearEquation>& _lnr_cnstrs);
 
   /** \Return the list of fixed points, without duplications
    */

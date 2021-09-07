@@ -50,6 +50,17 @@ template <size_t DIM> struct SolverBaseT
     // Construction must create an equation 'nothing' = 0, so const_term is
     // initialized with zeros.
     Point const_term{};
+
+    // The constraint is in the form "noting" = "something != 0"
+    bool infeasible(double _tol) const
+    {
+      if (!linear_terms.empty())
+        return false;
+      double sq_len = 0;
+      for (auto term : const_term)
+        sq_len += term * term;
+      return sq_len > _tol * _tol;
+    }
   }; // struct LinearEquation
 
 }; // struct Types

@@ -47,14 +47,9 @@ public:
   {
   }
 
-  void add_equation(
-      const LinearEquation& _lin_eq);
+  void add_equation(const LinearEquation& _lnr_eq);
 
-  void add_linear_constraint(
-      LinearEquation&& lin_condtr)
-  {
-    cnstrs_.emplace_back(lin_condtr);
-  }
+  void add_linear_constraints(std::vector<LinearEquation>& _lnr_cnstrs);
 
   const EigenLSQConstrainedSolverT<DIM>::ValueVector& fixed() const
   {
@@ -84,8 +79,6 @@ private:
       _var_idx = it - var_names_.begin();
     return res;
   }
-
-  void remove_linearly_dependent_constraints();
 
 private:
   // Fixed position points [x_i, position]
@@ -120,13 +113,13 @@ EigenLSQConstrainedSolverT<DIM>::Impl::Impl(
 
 template <size_t DIM>
 void EigenLSQConstrainedSolverT<DIM>::Impl::add_equation(
-    const LinearEquation& _lin_eq)
+    const LinearEquation& _lnr_eq)
 {
   B_coeff_.resize(row_nmbr_ + 1);
   auto& b = B_coeff_[row_nmbr_];
-  b = _lin_eq.const_term;
+  b = _lnr_eq.const_term;
   bool relevant_equation = false;
-  for (auto& lnr_trm : _lin_eq.linear_terms)
+  for (auto& lnr_trm : _lnr_eq.linear_terms)
   {
     size_t var_ind;
     Point pt;
@@ -147,69 +140,92 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_equation(
     ++row_nmbr_;
 }
 
-// Remove linearly dependent constraints.
-// Method: create a matrix with all constraints in a column all equation
-// constraints. The constant terms are in the last DIM rows of the equation. In
-// order to remove the dependent constraints, we factorize the matrix using
-// FullPivLU, then, if the detected rank is less than the number of original
-// constraints (so some of them are linearly dependent), we use the image method
-// to get a set of linearly independent columns and we convert back into a
-// reduced set of linear constraints.
 template <size_t DIM>
-void EigenLSQConstrainedSolverT<
-    DIM>::Impl::remove_linearly_dependent_constraints()
+void EigenLSQConstrainedSolverT<DIM>::Impl::add_linear_constraints(
+    std::vector<LinearEquation>& _lnr_cnstrs)
 {
-  if (cnstrs_.empty())
+  if (_lnr_cnstrs.empty())
     return;
-  std::vector<size_t> var_name_to_idx;
-  for (const auto& cnstr : cnstrs_)
+  // Collect the variables used by the set of constraints and substitute fixed
+  // variables with their value.
+  std::vector<size_t> idx_to_var_name;
+  for (auto& cnstr : _lnr_cnstrs)
   {
-    for (const auto& lnr_trm : cnstr.linear_terms)
-      var_name_to_idx.push_back(lnr_trm.var_name);
-  }
-  sort_and_compact(var_name_to_idx);
-  auto get_index = [&var_name_to_idx](size_t var_name)
-  {
-    return std::lower_bound(
-               var_name_to_idx.begin(), var_name_to_idx.end(), var_name) -
-           var_name_to_idx.begin();
-  };
-  Eigen::MatrixXd M(var_name_to_idx.size() + DIM, cnstrs_.size());
-  M.setZero();
-  for (size_t i = 0; i < cnstrs_.size(); ++i)
-  {
-    for (const auto& monm : cnstrs_[i].linear_terms)
-      M(get_index(monm.var_name), i) = monm.coeff;
-    const auto& pt = cnstrs_[i].const_term;
-    auto j = var_name_to_idx.size();
-    for (const auto coord : pt)
-      M(j++, i) = coord;
-  }
-  Eigen::FullPivLU<Eigen::MatrixXd> lu(M);
-  auto rank = lu.rank();
-  if (static_cast<size_t>(rank) >= cnstrs_.size())
-    return;
-  Eigen::MatrixXd CxD = lu.image(M);
-  cnstrs_.resize(CxD.cols());
-  for (size_t j = 0; j < static_cast<size_t>(CxD.cols()); ++j)
-  {
-    cnstrs_[j].linear_terms.clear();
-    for (size_t i = 0; i < var_name_to_idx.size(); ++i)
+    for (auto& lnr_trm : cnstr.linear_terms)
     {
-      if (CxD(i, j) != 0)
-        cnstrs_[j].linear_terms.push_back({var_name_to_idx[i], CxD(i, j)});
+      Point pos;
+      if (!fixed_variable(lnr_trm.var_name, &pos))
+        idx_to_var_name.push_back(lnr_trm.var_name);
+      else
+      {
+        for (size_t i = 0; i < DIM; ++i)
+          cnstr.const_term[i] -= lnr_trm.coeff * pos[i];
+        lnr_trm.coeff = 0;
+      }
     }
-    auto k = var_name_to_idx.size();
-    for (auto& coord : cnstrs_[j].const_term)
-      coord = CxD(k++, j);
+    cnstr.linear_terms.erase(
+        std::remove_if(cnstr.linear_terms.begin(), cnstr.linear_terms.end(),
+            [](const LinearTerm& _term) { return _term.coeff == 0; }),
+        cnstr.linear_terms.end());
+    COMISO_THROW_if(cnstr.infeasible(1.e-6), LSQC_INFEASIBLE);
   }
+  // Remove empty constraints
+  _lnr_cnstrs.erase(std::remove_if(_lnr_cnstrs.begin(), _lnr_cnstrs.end(),
+                        [](const LinearEquation& _lnr_eq)
+                        { return _lnr_eq.linear_terms.empty(); }),
+      _lnr_cnstrs.end());
+  if (_lnr_cnstrs.size() > 1)
+  {
+    // Check for linearly dependent constraints
+    sort_and_compact(idx_to_var_name);
+    auto get_index = [&idx_to_var_name](size_t _var_name)
+    {
+      return std::lower_bound(
+                 idx_to_var_name.begin(), idx_to_var_name.end(), _var_name) -
+             idx_to_var_name.begin();
+    };
+    Eigen::MatrixXd M(idx_to_var_name.size() + DIM, _lnr_cnstrs.size());
+    M.setZero();
+    for (size_t i = 0; i < _lnr_cnstrs.size(); ++i)
+    {
+      for (const auto& monm : _lnr_cnstrs[i].linear_terms)
+        M(get_index(monm.var_name), i) = monm.coeff;
+      const auto& pt = _lnr_cnstrs[i].const_term;
+      auto j = idx_to_var_name.size();
+      for (const auto coord : pt)
+        M(j++, i) = coord;
+    }
+    Eigen::FullPivLU<Eigen::MatrixXd> lu(M);
+    auto rank = lu.rank();
+    if (static_cast<size_t>(rank) < _lnr_cnstrs.size())
+    {
+      // Add as constraints only the linear independent ones
+      Eigen::MatrixXd CxD = lu.image(M);
+      for (size_t j = 0; j < static_cast<size_t>(CxD.cols()); ++j)
+      {
+        cnstrs_.emplace_back();
+        auto& new_cnstr = cnstrs_.back();
+        for (size_t i = 0; i < idx_to_var_name.size(); ++i)
+        {
+          if (CxD(i, j) != 0)
+            new_cnstr.linear_terms.push_back({idx_to_var_name[i], CxD(i, j)});
+        }
+        auto k = idx_to_var_name.size();
+        for (auto& coord : new_cnstr.const_term)
+          coord = CxD(k++, j);
+      }
+      return; // Job done
+    }
+  }
+  // Add all the constraints because the are linearly independent
+  cnstrs_.insert(cnstrs_.end(), std::make_move_iterator(_lnr_cnstrs.begin()),
+      std::make_move_iterator(_lnr_cnstrs.end()));
 }
 
 template <size_t DIM>
 const typename EigenLSQConstrainedSolverT<DIM>::ValueVector&
 EigenLSQConstrainedSolverT<DIM>::Impl::solve()
 {
-  remove_linearly_dependent_constraints();
   using SparseMatrix = Eigen::SparseMatrix<double>;
   using ColumnMatrix = Eigen::Matrix<double, Eigen::Dynamic, DIM>;
   const auto size_M = var_names_.size() + cnstrs_.size();
@@ -225,26 +241,26 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
       B(i, j) = B_coeff_[i][j];
   }
   ColumnMatrix N = A.transpose() * B;
+  std::vector<Eigen::Triplet<double, size_t>> cnstr_trplt;
   for (auto i = 0; i != cnstrs_.size(); ++i)
   {
     auto b_var_idx = i + var_names_.size();
     const auto& pt = cnstrs_[i].const_term;
     for (int j = 0; j < DIM; ++j)
       N(b_var_idx, j) = pt[j];
-    for (const auto& lin_trm : cnstrs_[i].linear_terms)
+    for (const auto& lnr_trm : cnstrs_[i].linear_terms)
     {
       size_t idx;
-      Point pos;
-      if (indexed_variable(lin_trm.var_name, idx))
-        M.coeffRef(i + var_names_.size(), idx) += lin_trm.coeff;
-      else if (fixed_variable(lin_trm.var_name, &pos))
-      {
-        for (int j = 0; j < DIM; ++j)
-          N(b_var_idx, j) -= lin_trm.coeff * pos[j];
-      }
+      if (indexed_variable(lnr_trm.var_name, idx))
+        cnstr_trplt.push_back({i + var_names_.size(), idx, lnr_trm.coeff});
       else
         COMISO_THROW(LSQC_UNEXPECTED_VARIABLE);
     }
+  }
+  {
+    SparseMatrix M_constr(M.rows(), M.cols());
+    M_constr.setFromTriplets(cnstr_trplt.begin(), cnstr_trplt.end());
+    M += M_constr;
   }
   Eigen::SimplicialLDLT<SparseMatrix> solver(M);
   ColumnMatrix X = solver.solve(N);
@@ -287,16 +303,16 @@ EigenLSQConstrainedSolverT<DIM>::~EigenLSQConstrainedSolverT() = default;
 
 template <size_t DIM>
 void EigenLSQConstrainedSolverT<DIM>::add_equation(
-    const LinearEquation& _lin_eq)
+    const LinearEquation& _lnr_eq)
 {
-  impl_->add_equation(_lin_eq);
+  impl_->add_equation(_lnr_eq);
 }
 
 template <size_t DIM>
-void EigenLSQConstrainedSolverT<DIM>::add_linear_constraint(
-    LinearEquation&& _lin_cnstr)
+void EigenLSQConstrainedSolverT<DIM>::add_linear_constraints(
+    std::vector<LinearEquation>& _lnr_cnstrs)
 {
-  impl_->add_linear_constraint(std::move(_lin_cnstr));
+  impl_->add_linear_constraints(_lnr_cnstrs);
 }
 
 template <size_t DIM>

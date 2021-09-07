@@ -48,6 +48,7 @@ DEFINE_ERROR(DOCLOUD_CPLEX_SOLUTION_MISMATCH,
 // LSQ constrained solver related messages
 DEFINE_ERROR(LSQC_UNEXPECTED_VARIABLE, "A variable is not in the expected set")
 DEFINE_ERROR(LSQC_SINGULAR, "LSQ constrained problem resulted in a singular system")
+DEFINE_ERROR(LSQC_INFEASIBLE, "LSQ problem does not have solution")
 
 // DEFINE_ERROR(DOCLOUD_ROOT_URL_INVALID, "DO cloud root URL invalid")
 //DEFINE_ERROR(DOCLOUD_API_KEY_INVALID, "DO cloud API key invalid")
