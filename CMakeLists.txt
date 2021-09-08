@@ -9,7 +9,6 @@ my_add_subdir(Solver)
 my_add_subdir(Utils)
 
 include_directories(${PROJECT_SOURCE_DIR}/..)
-inc_3p_dir(Boost)
 
 # message(STATUS "${SOURCES}" "${HEADES}")
 add_library(CoMISo ${SOURCES} ${HEADERS})
@@ -18,6 +17,7 @@ target_link_libraries(CoMISo
 	PUBLIC Base
 	PRIVATE Ipopt
 	PUBLIC Gmm
+	PRIVATE Boost
 #  PRIVATE OSQP
 	)
 
