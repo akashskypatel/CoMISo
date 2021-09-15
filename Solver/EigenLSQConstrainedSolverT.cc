@@ -193,103 +193,89 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_linear_constraints(
                idx_to_var_name.begin(), idx_to_var_name.end(), _var_name) -
            idx_to_var_name.begin();
   };
-  if (_lnr_cnstrs.size() > 1)
-  {
-    // Check for linearly dependent constraints
-    Eigen::MatrixXd M(idx_to_var_name.size() + DIM, _lnr_cnstrs.size());
-    M.setZero();
-    for (size_t i = 0; i < _lnr_cnstrs.size(); ++i)
-    {
-      for (const auto& monm : _lnr_cnstrs[i].linear_terms)
-        M(get_index(monm.var_name), i) = monm.coeff;
-      const auto& pt = _lnr_cnstrs[i].const_term;
-      auto j = idx_to_var_name.size();
-      for (const auto coord : pt)
-        M(j++, i) = coord;
-    }
-    Eigen::FullPivLU<Eigen::MatrixXd> lu(M);
-    auto rank = lu.rank();
-    if (static_cast<size_t>(rank) < _lnr_cnstrs.size())
-    {
-      // Add as constraints only the linear independent ones
-      _lnr_cnstrs.clear();
-      Eigen::MatrixXd CxD = lu.image(M);
-      for (size_t j = 0; j < static_cast<size_t>(CxD.cols()); ++j)
-      {
-        _lnr_cnstrs.emplace_back();
-        auto& new_cnstr = _lnr_cnstrs.back();
-        for (size_t i = 0; i < idx_to_var_name.size(); ++i)
-        {
-          if (CxD(i, j) != 0)
-            new_cnstr.linear_terms.push_back({idx_to_var_name[i], CxD(i, j)});
-        }
-        auto k = idx_to_var_name.size();
-        for (auto& coord : new_cnstr.const_term)
-          coord = CxD(k++, j);
-      }
-    }
-  }
-  {
-    // Compute 2 matrices C and D that can express the linear constraints as
-    // C * X = D
-    // Here X is the unknown vector. X(i) is the variable with name idx_to_var_name(i).
-    // Then compute the QR factorization of C (C = Q * R *P_inv), with 
-    // Q a unit matrix (Q' = inverse(Q))
-    // P_inv is the inverse of a permutation matrix P provided by the factorization
-    // R an upper trapezoidal matrix. R can be split into two matrices:
-    // R = [R1 R2], with R1 square and upper triangular.
-    // So C * X = D  ==>  Q * R * P_inv * X = D ==> ...
-    // Define Y = P_inv * X = |Y1|  (Y is split into 2 parts of dimension (rank, n - rank))
-    //                        |Y2|
-    // ... ==> R1 * Y1 + R2 * Y2 = Q' * D  (Remember Q' = Q_inverse)
-    // R1 * Y1 = -R2 * Y2 + Q' * D
-    // Y1 = -R1_inverse * R2 * Y2 + R1_inverse * Q' * D
-    // Y1 = Y2_coeff * Y2 + Y_cnst_term
-    // So we can replace the variable in Y1 in the LSQ problem.
-    Eigen::MatrixXd C(_lnr_cnstrs.size(), idx_to_var_name.size()),
-        D(_lnr_cnstrs.size(), DIM);
-    C.setZero();
-    D.setZero();
-    for (size_t i = 0; i < _lnr_cnstrs.size(); ++i)
-    {
-      for (const auto& monm : _lnr_cnstrs[i].linear_terms)
-        C(i, get_index(monm.var_name)) = monm.coeff;
-      const auto& pt = _lnr_cnstrs[i].const_term;
-      for (auto j = 0; j < DIM; ++j)
-        D(i, j) = pt[j];
-    }
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qr_dec(C);
-    COMISO_THROW_if(qr_dec.rank() < C.rows(), LSQC_INFEASIBLE);
-    auto P = qr_dec.colsPermutation();
-    Eigen::MatrixXd Q = qr_dec.matrixQ();
-    Eigen::MatrixXd R1 = qr_dec.matrixR()
-                             .leftCols(_lnr_cnstrs.size())
-                             .template triangularView<Eigen::Upper>();
-    Eigen::MatrixXd R1_inv = R1.inverse();
-    Eigen::MatrixXd R2 =
-        qr_dec.matrixR().rightCols(idx_to_var_name.size() - _lnr_cnstrs.size());
-    Eigen::MatrixXd Y_cnst_term = R1_inv * Q.transpose() * D;
-    Eigen::MatrixXd Y2_coeff = -R1_inv * R2;
 
-    // Move the equation into a map of linear equations that uses the original
-    // variable names.
-    for (auto i = 0; i < C.rows(); ++i)
+  // Compute 2 matrices C and D that can express the linear constraints as
+  // C * X = D (dimensions C(n, m), X(n, 1), D(n, DIM)
+  // Here X is the unknown vector. X(i) is the variable with name idx_to_var_name(i).
+  Eigen::MatrixXd C(_lnr_cnstrs.size(), idx_to_var_name.size()),
+      D(_lnr_cnstrs.size(), DIM);
+  C.setZero();
+  D.setZero();
+  for (size_t i = 0; i < _lnr_cnstrs.size(); ++i)
+  {
+    for (const auto& monm : _lnr_cnstrs[i].linear_terms)
+      C(i, get_index(monm.var_name)) = monm.coeff;
+    const auto& pt = _lnr_cnstrs[i].const_term;
+    for (auto j = 0; j < DIM; ++j)
+      D(i, j) = pt[j];
+  }
+
+  // Compute the QR factorization of C (C = Q * R * P_inv), with
+  // Q a unit matrix (Q' = inverse(Q))
+  // P_inv is the inverse of a permutation matrix P provided by the
+  // factorization. R an upper trapezoidal matrix. R is 0 in last (n - rank)
+  // rows if rank < n. R can be split into 4 matrices: 
+  // R = [R1 R2]
+  //     [ 0  0]
+  // with R1(rank, rank) square and upper triangular.
+  // Q can be split in Q = [Q1 Q2], with Q1(n, rank), Q2(n, n - rank)
+  // Note: Q1 * Q1' = I, Q1' * Q1 = I, ... 
+  // Note: Q2 is multiplied by 0, so disappear (is the null space of C * P)
+  // So: C * X = D  ==>  Q * R * P_inv * X = D ==> ... 
+  // Define:
+  //   Y = P_inv * X = |Y1|  (Y1(rank, DIM), Y2(n - rank, DIM))
+  //                   |Y2|
+  // ... ==> Q1 * (R1 * Y1 + R2 * Y2) = D  (Remember Q1' = Q1_inverse)
+  // R1 * Y1 + R2 * Y2 = Q1' * D
+  // R1 * Y1 = -R2 * Y2 + Q1' * D
+  // Y1 = -R1_inverse * R2 * Y2 + R1_inverse * Q1' * D
+  // Y1 = Y2_coeff * Y2 + Y_cnst_term
+  // So we can find the substitution for the variables in Y1 in the LSQ problem.
+
+  Eigen::ColPivHouseholderQR<Eigen::Ref<Eigen::MatrixXd>> qr_dec(C);
+  Eigen::MatrixXd Q = qr_dec.matrixQ();
+  const auto rank = qr_dec.rank();
+  const auto tol = qr_dec.threshold();
+  if (rank < C.rows())
+  {
+    // Q.rightCols(C.rows() - rank) is the null space  (or kernel) of C * P.
+    // If the projection of D on this null space is not zero, the system is
+    // infeasible.
+    // The projection can be computed as a dot product because the columns of Q
+    // are orthonormal vectors.
+    COMISO_THROW_if(
+        !(Q.rightCols(C.rows() - rank).transpose() * D).isZero(tol),
+        LSQC_INFEASIBLE);
+    Q = Q.leftCols(rank).eval();
+  }
+  auto P = qr_dec.colsPermutation();
+  Eigen::MatrixXd R1 = qr_dec.matrixR()
+                            .topLeftCorner(rank, rank)
+                            .template triangularView<Eigen::Upper>();
+  Eigen::MatrixXd R1_inv = R1.inverse();
+  Eigen::MatrixXd R2 = qr_dec.matrixR()
+                           .topRightCorner(rank, idx_to_var_name.size() - rank);
+  Eigen::MatrixXd Y_cnst_term = R1_inv * Q.transpose() * D;
+  Eigen::MatrixXd Y2_coeff = -R1_inv * R2;
+
+  // Move the equation into a map of linear equations that uses the original
+  // variable names.
+  for (auto i = 0; i < rank; ++i)
+  {
+    auto var_name = idx_to_var_name[P.indices()[i]];
+    auto& lnr_eq = subst_vars_[var_name];
+    for (auto j = 0; j < Y_cnst_term.cols(); ++j)
+      lnr_eq.const_term[j] = Y_cnst_term(i, j);
+    for (auto j = 0; j < Y2_coeff.cols(); ++j)
     {
-      auto var_name = idx_to_var_name[P.indices()[i]];
-      auto& lnr_eq = subst_vars_[var_name];
-      for (auto j = 0; j < Y_cnst_term.cols(); ++j)
-        lnr_eq.const_term[j] = Y_cnst_term(i, j);
-      for (auto j = 0; j < Y2_coeff.cols(); ++j)
+      // If the coefficient is smaller than the threshold used by the QR
+      // decomposition to find the rank, we ignore the term. This will reduce
+      // the number of coefficients in the sparse matrix inside the
+      // EigenLSQConstrainedSolverT::solve
+      if (std::fabs(Y2_coeff(i, j)) > tol)
       {
-        // If the coefficient is smaller than the threshold used by the QR
-        // decomposition to find the rank, we ignore the term. This will reduce
-        // the number of coefficients in the sparse matrix inside the
-        // EigenLSQConstrainedSolverT::solve
-        if (std::fabs(Y2_coeff(i, j)) > qr_dec.threshold())
-        {
-          lnr_eq.linear_terms.push_back(LinearTerm(
-              {idx_to_var_name[P.indices()[j + C.rows()]], Y2_coeff(i, j)}));
-        }
+        lnr_eq.linear_terms.push_back(LinearTerm(
+            {idx_to_var_name[P.indices()[j + rank]], Y2_coeff(i, j)}));
       }
     }
   }
