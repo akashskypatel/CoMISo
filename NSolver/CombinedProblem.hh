@@ -30,7 +30,7 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
+
 
 /** \class CombinedProblem CombinedProblem.hh <CoMISo/NSolver/CombinedProblem.hh>
 
@@ -38,16 +38,16 @@ namespace COMISO {
     of two other problems (specified in the constructor).
 
     Note: the initial_x is taken from _p1! And the result is stored for both _p1 and _p2
-  
+
     A more elaborate description follows.
 */
 class COMISODLLEXPORT CombinedProblem : public NProblemInterface
 {
 public:
-  
+
   /// Default constructor
   CombinedProblem (NProblemInterface* _p1, NProblemInterface* _p2, const double _c1 = 1.0, const double _c2 = 1.0);
- 
+
   // problem definition
   virtual int    n_unknowns();
 
@@ -85,6 +85,6 @@ private:
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
 //=============================================================================
-#endif // COMISO_NPROBLEMGMMINTERFACE_HH defined
+#endif // COMISO_COMBINEDPROBLEM_HH defined
 //=============================================================================
 

@@ -37,12 +37,12 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
 
-/** \class NProblemInterface NProblemGmmInterface.hh <COMISO/NSolver/NPRoblemInterface.hh>
+
+/** \class NProblemInterface NProblemInterface.hh <COMISO/NSolver/NProblemInterface.hh>
 
     Brief Description.
-  
+
     A more elaborate description follows.
 */
 class COMISODLLEXPORT NProblemInterface
@@ -50,15 +50,15 @@ class COMISODLLEXPORT NProblemInterface
 public:
 
   // Sparse Matrix Type
- #if EIGEN_VERSION_AT_LEAST(3,1,0)  
+ #if EIGEN_VERSION_AT_LEAST(3,1,0)
   typedef Eigen::SparseMatrix<double,Eigen::ColMajor> SMatrixNP;
  #else
   typedef Eigen::DynamicSparseMatrix<double,Eigen::ColMajor> SMatrixNP;
  #endif
-  
+
   /// Default constructor
   NProblemInterface();
- 
+
   /// Destructor
   virtual ~NProblemInterface();
 
@@ -82,6 +82,6 @@ public:
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
 //=============================================================================
-#endif // COMISO_NPROBLEMGMMINTERFACE_HH defined
+#endif // COMISO_NPROBLEMINTERFACE_HH defined
 //=============================================================================
 

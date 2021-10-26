@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -41,6 +41,7 @@
 #include <Base/Debug/DebOut.hh>
 #include <gmm/gmm_lapack_interface.h>
 #include <queue>
+#include <CoMISo/Solver/Eigen_Tools.hh>
 
 //== NAMESPACES ===============================================================
 
@@ -172,7 +173,6 @@ void eliminate_csc_vars2(
     VectorT&                          _rhs )
 {
   typedef unsigned int uint;
-  typedef typename gmm::csc_matrix<RealT> MatrixT;
 
   gmm::size_type nc = _A.nc;
   gmm::size_type nr = _A.nr;
@@ -188,10 +188,13 @@ void eliminate_csc_vars2(
     //    uint n_elem = _A.jc[i+1]-_A.jc[i];
     uint r_idx  = 0;
     RealT entry = 0.0;
+    // iterate over elements of column i
     for( uint i_elem = _A.jc[i]; i_elem < _A.jc[i+1]; ++i_elem)
     {
+      // get row and value of current element
       r_idx = _A.ir[i_elem];
       entry = _A.pr[i_elem];
+      // update right hand side
       _rhs[r_idx] -= _eval[k]*( entry );
     }
   }
@@ -202,8 +205,9 @@ void eliminate_csc_vars2(
   evar.push_back( std::numeric_limits<IntegerT>::max() );
 
   // build subindex set and update rhs
-  std::vector<size_t> si( n_new );
-  int cur_evar_idx=0;
+  // i.e. actually remove the elements from the vectors _rhs and _x
+  std::vector<size_t> si( n_new ); // maps from new index to original index
+  IntegerT cur_evar_idx = 0;
   for ( unsigned int i=0; i<nc; ++i )
   {
 
@@ -227,7 +231,8 @@ void eliminate_csc_vars2(
   _rhs.resize( n_new );
   _x.resize( n_new );
 
-  std::vector< int > new_row_idx_map( nr, -1);
+  std::vector< int > new_row_idx_map( nr, -1); // maps from old row index to
+                                               // new row index
   // build re-indexing map
   // -1 means deleted
   {
@@ -275,7 +280,7 @@ void eliminate_csc_vars2(
     _A.jc[c+1-evar_col] = write;
   }
 
-  _A.nc = nc - evar.size()+1;
+  _A.nc = nc - evar.size()+1; // why +1?
   _A.nr = nr - evar.size()+1;
 }
 
@@ -418,7 +423,7 @@ void eliminate_var( const unsigned int _j,
 
      CIter it  = gmm::vect_const_begin(col);
      CIter ite = gmm::vect_const_end(col);
-     
+
      // compute new index
      unsigned int i_new = i;
      if( i>_j) --i_new;
@@ -736,7 +741,7 @@ void eliminate_vars( const std::vector<IntegerT>&     _evar,
 template<class IntegerT, class IntegerT2>
 void eliminate_vars_idx( const std::vector<IntegerT >&     _evar,
                          std::vector<IntegerT2>&     _idx,
-                         IntegerT2                   _dummy, 
+                         IntegerT2                   _dummy,
 			 IntegerT2                   _range )
 {
    // sort input
@@ -820,12 +825,16 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
   // update x
   _x[_i] = _xi;
 
+  // collect non-zero rows for faster update of row _i
   std::vector<unsigned int> idx;
   idx.reserve(16);
 
   // clear i-th column and collect non-zeros
+  // "clear" means set all values to zero, except for the diagonal element
+  // which is set to one. Also, the right hand side is updated by
+  // subtracting the current matrix value times the fixed value.
   for (unsigned int iv = _A.jc[_i]; iv < _A.jc[_i + 1]; ++iv)
-  { 
+  {
     if (_A.ir[iv] == _i)
     {
       _A.pr[iv] = 1.0;
@@ -839,6 +848,10 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
     }
   }
 
+
+  // set row _i to zeros except for diagonal element which has already been set to 1.
+  // Due to symmetry of _A we only need to look at the columns in idx, i.e. the
+  // non-zero rows of column _i.
   for (std::size_t i = 0; i < idx.size(); ++i)
   {
     unsigned int col = idx[i];
@@ -987,6 +1000,15 @@ void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs)
   MatrixT Q(n, n);
   //  gmm::mult(Ft,_F,Q);
   gmm::mult(gmm::transposed(_F), _F, Q);
+
+  //Eigen::SparseMatrix<double, Eigen::RowMajor> RM(m, n);
+  //COMISO_EIGEN::gmm_to_eigen(_F, RM);
+  //Eigen::SparseMatrix<double, Eigen::RowMajor> RMres = RM.transpose() * RM;
+
+  //Eigen::SparseMatrix<double, Eigen::RowMajor> CM(m, n);
+  //COMISO_EIGEN::gmm_to_eigen(_F, CM);
+  //Eigen::SparseMatrix<double, Eigen::RowMajor> CMres = CM.transpose() * CM;
+
   PROGRESS_TICK;
   // extract rhs
   gmm::copy(gmm::scaled(gmm::mat_const_row(Q, n - 1), -1.0), _rhs);
@@ -995,10 +1017,10 @@ void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs)
   gmm::resize(Q, n - 1, n - 1);
   _rhs.resize(n - 1);
   PROGRESS_TICK;
-  gmm::copy(Q, _Q); 
+  gmm::copy(Q, _Q);
 }
-  
-  
+
+
 //-----------------------------------------------------------------------------
 
 
@@ -1007,16 +1029,16 @@ void factored_to_quadratic_rhs_only( MatrixT& _F, VectorT& _rhs)
 {
   unsigned int m = gmm::mat_nrows(_F);
   unsigned int n = gmm::mat_ncols(_F);
-  
+
   gmm::resize(_rhs, n);
-  
+
   // compute quadratic matrix
   MatrixT Q(n,n);
   gmm::mult(gmm::transposed(_F),_F,Q);
-  
+
   // extract rhs
   gmm::copy( gmm::scaled(gmm::mat_const_row( Q, n - 1),-1.0), _rhs);
-  
+
   _rhs.resize( n - 1);
 }
 
@@ -1029,7 +1051,7 @@ template<class MatrixT>
 void inspect_matrix( const MatrixT& _A)
 {
   typedef typename MatrixT::value_type VType;
-  
+
   int m = gmm::mat_nrows(_A);
   int n = gmm::mat_ncols(_A);
 
@@ -1065,7 +1087,7 @@ void inspect_matrix( const MatrixT& _A)
 
   int n_nan = 0;
   int n_inf = 0;
-  
+
   // inspect elements
   for(int i=0; i<n; ++i)
   {
@@ -1075,7 +1097,7 @@ void inspect_matrix( const MatrixT& _A)
     ColT col = mat_const_col( Acol, i );
     CIter it  = gmm::vect_const_begin( col );
     CIter ite = gmm::vect_const_end( col );
-    
+
     for(; it != ite; ++it)
     {
       if( *it < vmin ) vmin = *it;
@@ -1088,14 +1110,14 @@ void inspect_matrix( const MatrixT& _A)
       if( std::isinf(*it)) ++n_inf;
     }
   }
-  
+
   std::cerr << "min  val     : " << vmin << std::endl;
   std::cerr << "max  val     : " << vmax << std::endl;
   std::cerr << "min |val|    : " << vmin_abs << std::endl;
   std::cerr << "max |val|    : " << vmax_abs << std::endl;
   std::cerr << "#nan         : " << n_nan << std::endl;
   std::cerr << "#inf         : " << n_inf << std::endl;
-  
+
   std::cerr << "min eval     : " << "..." << std::endl;
   std::cerr << "max eval     : " << "..." << std::endl;
   std::cerr << "min|eval|    : " << "..." << std::endl;
@@ -1267,6 +1289,95 @@ void gmm_to_cholmod( const MatrixT& _A, cholmod_sparse* &_AC, cholmod_common* _c
   }
 }
 #endif
+
+
+template <typename MatrixT>
+void write_gmm_matrix_ascii(const std::string& _filename, const MatrixT& _m)
+{
+  CSCMatrix csc_matrix;
+  gmm::copy(_m, csc_matrix);
+  write_gmm_matrix_ascii(_filename, csc_matrix);
+}
+
+template <typename MatrixT>
+void read_gmm_matrix_ascii(const std::string& _filename, MatrixT& _m)
+{
+  WSColMatrix wsc_matrix;
+  read_gmm_matrix_ascii(_filename, wsc_matrix);
+  gmm::resize(_m, gmm::mat_nrows(wsc_matrix), gmm::mat_ncols(wsc_matrix));
+  gmm::copy(wsc_matrix, _m);
+}
+
+template <typename VectorT>
+void write_gmm_vector_ascii(const std::string& _filename, const VectorT& _v)
+{
+  auto v = gmm::col_vector(_v);
+  WSColMatrix m(gmm::mat_nrows(v), 1);
+  gmm::copy(v, m);
+  write_gmm_matrix_ascii(_filename, m);
+}
+
+template <typename T>
+void read_gmm_vector_ascii(const std::string& _filename, std::vector<T>& _v)
+{
+  WSColMatrix wsc_matrix;
+  read_gmm_matrix_ascii(_filename, wsc_matrix);
+
+  size_t n = gmm::mat_nrows(wsc_matrix);
+  _v.resize(n);
+
+  for (size_t i = 0; i < n; ++i)
+    _v[i] = static_cast<T>(wsc_matrix(i, 0));
+}
+
+template <typename MatrixT>
+void write_gmm_matrix(const std::string& _filename, const MatrixT& _m)
+{
+  using Scalar = typename gmm::linalg_traits<MatrixT>::value_type;
+
+  Eigen::SparseMatrix<Scalar> m;
+  COMISO_EIGEN::gmm_to_eigen(_m, m);
+  COMISO_EIGEN::write_eigen_matrix(_filename, m);
+}
+
+template <typename MatrixT>
+void read_gmm_matrix(const std::string& _filename, MatrixT& _m)
+{
+  using Scalar = typename gmm::linalg_traits<MatrixT>::value_type;
+
+  Eigen::SparseMatrix<Scalar> m;
+  COMISO_EIGEN::read_eigen_matrix(_filename, m);
+
+  gmm::resize(_m, m.rows(), m.cols());
+
+  for (int i = 0; i < m.outerSize(); ++i)
+  {
+    for (typename Eigen::SparseMatrix<Scalar>::InnerIterator it(m, i); it; ++it)
+      _m(it.row(), it.col()) = it.value();
+  }
+}
+
+template <typename VectorT>
+void write_gmm_vector(const std::string& _filename, const VectorT& _v)
+{
+  using Scalar = typename VectorT::value_type;
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> v(_v.size());
+  for (size_t i = 0; i < _v.size(); ++i)
+    v(i) = _v[i];
+  COMISO_EIGEN::write_eigen_matrix(_filename, v);
+}
+
+template <typename T>
+void read_gmm_vector(const std::string& _filename, std::vector<T>& _v)
+{
+  Eigen::Matrix<T, Eigen::Dynamic, 1> v;
+  COMISO_EIGEN::read_eigen_matrix(_filename, v);
+
+  _v.resize(v.rows());
+  for (int i = 0; i < v.rows(); ++i)
+    _v[i] = static_cast<T>(v(i));
+}
+
 
 //=============================================================================
 } // namespace COMISO_GMM

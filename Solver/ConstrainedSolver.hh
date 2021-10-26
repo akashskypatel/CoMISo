@@ -52,6 +52,9 @@ namespace COMISO
   Takes a linear (symmetric) system of equations and a set of linear constraints and solves it.
  */
 
+
+//#define COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
+
 class COMISODLLEXPORT ConstrainedSolver
 {
 public:
@@ -326,6 +329,11 @@ private:
   double epsilon_;
   int    noisy_;
   bool   do_gcd_;
+
+#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
+  // count number of resolves
+  int n_resolves_ = 0;
+#endif
 
   // --------------- Update by Marcel to enable efficient re-solve with changed rhs ----------------------
   // Store for symbolic elimination information for rhs

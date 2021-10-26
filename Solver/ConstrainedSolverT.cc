@@ -47,6 +47,7 @@
 
 namespace COMISO {
 
+
 //== IMPLEMENTATION ==========================================================
 
 // cf. issue #3 - gmm5.2 compat
@@ -55,7 +56,7 @@ using linalg_traits = typename gmm::linalg_traits<typename std::remove_const<typ
 
 
 template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
-void 
+void
 ConstrainedSolver::solve_const(const RMatrixT& _constraints,
   const CMatrixT& _A,
   VectorT&  _x,
@@ -92,7 +93,7 @@ ConstrainedSolver::solve_const(const RMatrixT& _constraints,
 
 
 template<class RMatrixT, class VectorT, class VectorIT >
-void 
+void
 ConstrainedSolver::solve_const(const RMatrixT& _constraints,
   const RMatrixT& _B,
   VectorT&  _x,
@@ -157,6 +158,14 @@ ConstrainedSolver::solve(
   bool      _show_timings)
 {
   DEB_enter_func;
+
+#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
+  write_gmm_matrix("ConstrainedSolver_constraints.mtx", _constraints);
+  write_gmm_matrix("ConstrainedSolver_system.mtx", _A);
+  write_gmm_vector("ConstrainedSolver_rhs.vec", _rhs);
+  write_gmm_vector("ConstrainedSolver_idx_to_round.vec", _idx_to_round);
+#endif
+
   // show options dialog
   if (_show_miso_settings)
     miso_.show_options_dialog();
@@ -169,8 +178,8 @@ ConstrainedSolver::solve(
     << ", number of constraints: " << ncons << ", number of integer variables: " << _idx_to_round.size()
     << ", use reordering: " << (use_constraint_reordering ? "yes" : "no") << "\n")
 
-    // StopWatch for Timings
-    Base::StopWatch sw, sw2; sw.start(); sw2.start();
+  // StopWatch for Timings
+  Base::StopWatch sw, sw2; sw.start(); sw2.start();
 
   // c_elim[i] = index of variable which is eliminated in condition i
   // or -1 if condition is invalid
@@ -185,7 +194,7 @@ ConstrainedSolver::solve(
   double time_gauss = sw.stop() / 1000.0; sw.start();
 
   // re-indexing vector
-  std::vector<int>                          new_idx;
+  std::vector<int> new_idx;
 
   gmm::csc_matrix< double > Acsc;
   eliminate_constraints(_constraints, _A, _x, _rhs, _idx_to_round, c_elim, new_idx, Acsc);
@@ -193,7 +202,7 @@ ConstrainedSolver::solve(
 
   /// TODO: temporary disable this since it was causing performance issues
   //DEB_out_if( _show_timings, 2,
-  //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc 
+  //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc
   //  << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
 
   sw.start();
@@ -212,6 +221,10 @@ ConstrainedSolver::solve(
     "\tMi-Solver          " << time_miso << " s\n\t" <<
     "\tResubstitution     " << time_resubstitute << " s\n\t" <<
     "\tTotal              " << time_total << "\n\n");
+
+#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
+  write_gmm_vector("ConstrainedSolver_solution.vec", _x);
+#endif
 }
 
 
@@ -322,6 +335,12 @@ ConstrainedSolver::resolve(
     "\tMi-Solver          " << time_miso << " s\n\t" <<
     "\tResubstitution     " << time_resubstitute << " s\n\t" <<
     "\tTotal              " << time_total << "\n\n");
+
+
+#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
+  write_gmm_vector("ConstrainedSolver_solution_resolve_" +
+                       std::to_string(n_resolves_++) + ".vec", _x);
+#endif
 }
 
 
@@ -346,7 +365,7 @@ ConstrainedSolver::make_constraints_independent(
   // number of variables
   const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
 
-  // TODO Check: HZ added 14.08.09 
+  // TODO Check: HZ added 14.08.09
   _c_elim.clear();
   _c_elim.resize(gmm::mat_nrows(_constraints), -1);
 
@@ -412,8 +431,8 @@ ConstrainedSolver::make_constraints_independent(
           double cur_row_val(fabs(*row_it));
           // gcd
           // If the coefficient of an integer variable is not an integer, then
-          // the variable most probably will not be. This is expected if all 
-          // coeffs are the same, e.g. 0.5). 
+          // the variable most probably will not be. This is expected if all
+          // coeffs are the same, e.g. 0.5).
           // This happens quite often in some ReForm test cases, so downgrading
           // the warning below to DEB_line at high verbosity.
           if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
@@ -533,7 +552,7 @@ ConstrainedSolver::make_constraints_independent_reordering(
   // AF: Why was n_vars signed? Can it be zero? Later we subtract 1
   const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
 
-  // TODO Check: HZ added 14.08.09 
+  // TODO Check: HZ added 14.08.09
   _c_elim.clear();
   _c_elim.resize(gmm::mat_nrows(_constraints), -1);
 
@@ -622,8 +641,8 @@ ConstrainedSolver::make_constraints_independent_reordering(
           double cur_row_val(fabs(*row_it));
           // gcd
           // If the coefficient of an integer variable is not an integer, then
-          // the variable most probably will not be. This is expected if all 
-          // coeffs are the same, e.g. 0.5). 
+          // the variable most probably will not be. This is expected if all
+          // coeffs are the same, e.g. 0.5).
           // This happens quite often in some ReForm test cases, so downgrading
           // the warning below to DEB_line at high verbosity.
           if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
@@ -869,9 +888,9 @@ ConstrainedSolver::eliminate_constraints(
   std::sort(_idx_to_round.begin(), _idx_to_round.end());
   _idx_to_round.resize(std::unique(_idx_to_round.begin(), _idx_to_round.end()) - _idx_to_round.begin());
 
-  DEB_line_if((noisy_ > 2), 2, "remaining         variables: " << 
+  DEB_line_if((noisy_ > 2), 2, "remaining         variables: " <<
     gmm::mat_ncols(_Bcol));
-  DEB_line_if((noisy_ > 2), 2, "remaining integer variables: " << 
+  DEB_line_if((noisy_ > 2), 2, "remaining integer variables: " <<
     _idx_to_round.size());
 }
 
@@ -920,7 +939,7 @@ ConstrainedSolver::eliminate_constraints(
       // copy col
       SVector2T col(_A.col(cur_j));
 
-      // get a reference to current constraint vector 
+      // get a reference to current constraint vector
       SVector1T& constraint(_constraints.row(i));
 
       // add cur_j-th row multiplied with constraint[k] to each row k
@@ -1212,7 +1231,7 @@ ConstrainedSolver::restore_eliminated_vars(
 template<class CMatrixT>
 void
 ConstrainedSolver::eliminate_columns(
-  CMatrixT& _M, 
+  CMatrixT& _M,
   const std::vector< int >& _columns)
 {
   // nothing to do?

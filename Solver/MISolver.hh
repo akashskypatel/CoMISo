@@ -97,8 +97,6 @@ public:
    *  @param _x vector holding solution at the end
    *  @param _rhs right hand side of system Ax=rhs (Will be \b destroyed!)
    *  @param _to_round vector with variable indices to round to integers
-   *  @param _fixed_order specifies if _to_round indices shall be rounded in the
-   *  given order (\b true) or be greedily selected (\b false)
    *  */
   void solve(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
 
@@ -204,8 +202,6 @@ private:
       CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
   void solve_multiple_rounding(
       CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
-  void solve_iterative(
-      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round, bool _fixed_order);
   void solve_gurobi(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
   void solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
 

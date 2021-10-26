@@ -31,12 +31,12 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
 
-/** \class NProblemGmmInterface NProblemGmmInterface.hh <COMISO/.../NPRoblemGmmInterface.hh>
+
+/** \class LinearConstraintConverter LinearConstraintConverter.hh <COMISO/.../LinearConstraintConverter.hh>
 
     Brief Description.
-  
+
     A more elaborate description follows.
 */
 class COMISODLLEXPORT LinearConstraintConverter

@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -56,11 +56,94 @@ template void eliminate_csc_vars2(const IntVector&, const DoubleVector&,
 template void eliminate_csc_vars2(const UIntVector&, const DoubleVector&,
   CSCMatrix&, DoubleVector&, DoubleVector&);
 
-template double residuum_norm(CSCMatrix& , DoubleVector&, DoubleVector&);
+template double residuum_norm(CSCMatrix&, DoubleVector&, DoubleVector&);
+
+template double residuum_norm(WSColMatrix&, DoubleVector&, DoubleVector&);
 
 template void fix_var_csc_symmetric(const unsigned int, const double,
   CSCMatrix&, DoubleVector&, DoubleVector&);
 
 template void eliminate_vars_idx(const IntVector&, IntVector&, int, int);
+
+
+template void write_gmm_matrix_ascii(
+    const std::string& _filename, const WSRowMatrix& _m);
+
+template void write_gmm_matrix_ascii(
+    const std::string& _filename, const WSColMatrix& _m);
+
+template void write_gmm_matrix_ascii(
+    const std::string& _filename, const RSRowMatrix& _m);
+
+template void write_gmm_matrix_ascii(
+    const std::string& _filename, const RSColMatrix& _m);
+
+template void read_gmm_matrix_ascii(
+    const std::string& _filename, WSRowMatrix& _m);
+
+template void write_gmm_vector_ascii(
+    const std::string& _filename, const std::vector<double>& _v);
+
+template void write_gmm_vector_ascii(
+    const std::string& _filename, const std::vector<int>& _v);
+
+template void read_gmm_vector_ascii(
+    const std::string& _filename, std::vector<double>& _v);
+
+template void read_gmm_vector_ascii(
+    const std::string& _filename, std::vector<int>& _v);
+
+
+template void write_gmm_matrix(
+    const std::string& _filename, const WSRowMatrix& _m);
+
+template void write_gmm_matrix(
+    const std::string& _filename, const WSColMatrix& _m);
+
+template void write_gmm_matrix(
+    const std::string& _filename, const RSRowMatrix& _m);
+
+template void write_gmm_matrix(
+    const std::string& _filename, const RSColMatrix& _m);
+
+template void read_gmm_matrix(
+    const std::string& _filename, WSRowMatrix& _m);
+
+template void read_gmm_matrix(
+    const std::string& _filename, WSColMatrix& _m);
+
+template void write_gmm_vector(
+    const std::string& _filename, const std::vector<double>& _v);
+
+template void write_gmm_vector(
+    const std::string& _filename, const std::vector<int>& _v);
+
+template void read_gmm_vector(
+    const std::string& _filename, std::vector<double>& _v);
+
+template void read_gmm_vector(
+    const std::string& _filename, std::vector<int>& _v);
+
+
+
+// specializations
+
+template <>
+void write_gmm_matrix_ascii(
+    const std::string& _filename, const CSCMatrix& _m)
+{
+  if (_m.ncols() == 0 || _m.nrows() == 0)
+    return;
+  gmm::MatrixMarket_save(_filename.c_str(), _m);
+}
+
+
+template <>
+void read_gmm_matrix_ascii(
+    const std::string& _filename, WSColMatrix& _m)
+{
+  gmm::MatrixMarket_load(_filename.c_str(), _m);
+}
+
 
 }//namespace COMISO_GMM

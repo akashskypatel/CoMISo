@@ -9,6 +9,9 @@
 //== INCLUDES =================================================================
 
 #include <Base/Code/Quality.hh>
+
+#include <CoMISo/Solver/Eigen_Tools.hh>
+
 LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Core>
 #include <Eigen/LU>
@@ -22,6 +25,8 @@ LOW_CODE_QUALITY_SECTION_END
 
 namespace COMISO
 {
+
+//#define COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
 
 namespace
 {
@@ -73,6 +78,18 @@ private:
     return res;
   }
 
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  bool fixed_variable_index(size_t _var_name, size_t& _var_idx) const
+  {
+    auto it = std::lower_bound(fixed_.begin(), fixed_.end(), _var_name,
+        [](const Value& _val, size_t _var) { return _val.var_name < _var; });
+    auto res = it != fixed_.end() && it->var_name == _var_name;
+    if (res)
+      _var_idx = var_names_.size() + (it - fixed_.begin());
+    return res;
+  }
+#endif
+
   bool indexed_variable(size_t _var_name, size_t& _var_idx) const
   {
     auto it = std::lower_bound(var_names_.begin(), var_names_.end(), _var_name);
@@ -106,6 +123,19 @@ private:
   std::vector<Point> B_coeff_;
   size_t row_nmbr_ = 0;
 
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  // count number of constraint sets (used for output filenames)
+  int n_constraint_sets_ = 0;
+  // id for writing out multiple systems to individual files
+  int solver_id_;
+
+  // add equation reshapes the input to eliminate fixed variables.
+  // store original coefficients for debug output
+  std::vector<Eigen::Triplet<double, size_t>> A_coeff_with_fixed_;
+  std::vector<Point> B_coeff_with_fixed_;
+#endif
+
   // System solution
   ValueVector result_;
 };
@@ -120,6 +150,26 @@ EigenLSQConstrainedSolverT<DIM>::Impl::Impl(
   auto new_end = std::remove_if(var_names_.begin(), var_names_.end(),
       [this](size_t _var_name) { return fixed_variable(_var_name); });
   var_names_.erase(new_end, var_names_.end());
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  static int solver_id = 0;
+  solver_id_ = solver_id++;
+
+  // write vector of fixed variables
+  {
+    std::vector<Eigen::Triplet<double>> trips;
+    for (int i = 0; i < fixed_.size(); ++i)
+    {
+      for (int j = 0; j < DIM; ++j)
+        trips.emplace_back(i, j, fixed_[i].point[j]);
+    }
+    Eigen::SparseMatrix<double> fixed(fixed_.size(), 3);
+    fixed.setFromTriplets(trips.begin(), trips.end());
+    std::string filename = "EigenLSQConstrainedSolver_" +
+                           std::to_string(solver_id_) + "_fixed.mtx";
+    COMISO_EIGEN::write_eigen_matrix(filename, fixed);
+  }
+#endif
 }
 
 template <size_t DIM>
@@ -130,6 +180,11 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_equation(
   auto& b = B_coeff_[row_nmbr_];
   b = _lnr_eq.const_term;
   bool relevant_equation = false;
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  B_coeff_with_fixed_.push_back(_lnr_eq.const_term);
+  size_t A_coeff_with_fixed_size_before = A_coeff_with_fixed_.size();
+#endif
   for (auto& lnr_trm : _lnr_eq.linear_terms)
   {
     size_t var_ind;
@@ -137,18 +192,34 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_equation(
     if (indexed_variable(lnr_trm.var_name, var_ind))
     {
       A_coeff_.push_back({row_nmbr_, var_ind, lnr_trm.coeff});
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+      A_coeff_with_fixed_.push_back({row_nmbr_, var_ind, lnr_trm.coeff});
+#endif
       relevant_equation = true;
     }
     else if (fixed_variable(lnr_trm.var_name, &pt))
     {
       for (auto i = 0; i < pt.size(); ++i)
         b[i] -= lnr_trm.coeff * pt[i];
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+      fixed_variable_index(lnr_trm.var_name, var_ind);
+      A_coeff_with_fixed_.push_back({row_nmbr_, var_ind, lnr_trm.coeff});
+#endif
     }
     else
       COMISO_THROW(LSQC_UNEXPECTED_VARIABLE);
   }
   if (relevant_equation)
     ++row_nmbr_;
+  else
+  {
+    B_coeff_.resize(row_nmbr_);
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+    B_coeff_with_fixed_.resize(B_coeff_with_fixed_.size() - 1);
+    A_coeff_with_fixed_.resize(A_coeff_with_fixed_size_before);
+#endif
+  }
 }
 
 template <size_t DIM>
@@ -157,6 +228,43 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_linear_constraints(
 {
   if (_lnr_cnstrs.empty())
     return;
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  // write out data
+  {
+    int n = static_cast<int>(var_names_.size() + fixed_.size());
+    Eigen::SparseMatrix<double, Eigen::RowMajor> C(_lnr_cnstrs.size(), n);
+    Eigen::SparseMatrix<double, Eigen::ColMajor> rhs(n, DIM);
+    std::vector<Eigen::Triplet<double>> trips_C;
+    std::vector<Eigen::Triplet<double>> trips_rhs;
+    for (int i = 0; i < _lnr_cnstrs.size(); ++i)
+    {
+      const auto& eq = _lnr_cnstrs[i];
+      for (const auto& term : eq.linear_terms)
+      {
+        size_t var_idx = 0;
+        if (indexed_variable(term.var_name, var_idx) ||
+            fixed_variable_index(term.var_name, var_idx))
+        {
+          trips_C.emplace_back(i, static_cast<int>(var_idx), term.coeff);
+        }
+      }
+      for (int j = 0; j < DIM; ++j)
+        trips_rhs.emplace_back(i, j, eq.const_term[j]);
+    }
+    C.setFromTriplets(trips_C.begin(), trips_C.end());
+    rhs.setFromTriplets(trips_rhs.begin(), trips_rhs.end());
+
+    std::string filename = "EigenLSQConstrainedSolver_" +
+                           std::to_string(solver_id_) +
+                           "_constraint_set_";
+    filename += std::to_string(n_constraint_sets_++);
+    COMISO_EIGEN::write_eigen_matrix(filename + "_C.mtx", C);
+    COMISO_EIGEN::write_eigen_matrix(filename + "_rhs.mtx", rhs);
+  }
+#endif
+
+
   // Collect the variables used by the set of constraints and substitute fixed
   // variables with their value.
   std::vector<size_t> idx_to_var_name;
@@ -214,14 +322,14 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_linear_constraints(
   // Q a unit matrix (Q' = inverse(Q))
   // P_inv is the inverse of a permutation matrix P provided by the
   // factorization. R an upper trapezoidal matrix. R is 0 in last (n - rank)
-  // rows if rank < n. R can be split into 4 matrices: 
+  // rows if rank < n. R can be split into 4 matrices:
   // R = [R1 R2]
   //     [ 0  0]
   // with R1(rank, rank) square and upper triangular.
   // Q can be split in Q = [Q1 Q2], with Q1(n, rank), Q2(n, n - rank)
-  // Note: Q1 * Q1' = I, Q1' * Q1 = I, ... 
+  // Note: Q1 * Q1' = I, Q1' * Q1 = I, ...
   // Note: Q2 is multiplied by 0, so disappear (is the null space of C * P)
-  // So: C * X = D  ==>  Q * R * P_inv * X = D ==> ... 
+  // So: C * X = D  ==>  Q * R * P_inv * X = D ==> ...
   // Define:
   //   Y = P_inv * X = |Y1|  (Y1(rank, DIM), Y2(n - rank, DIM))
   //                   |Y2|
@@ -289,31 +397,52 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
   // are eliminated by a set of equality constraints CX = D
   // (see \ref set_linear_constraints) and substituted with linear combinations
   // of the other {x_i} not in Xc
-  // 
+  //
   // Method:
   // Find a permutation matrix such that Y = P * X = [Y1 Y2]'. Here we assume Y2
   // contains all the substituted variables (in subst_vars_) ==> Y2 = F * y1 + G.
-  // 
+  //
   // The algorithm compute Y1 as LSQ unconstrained problem and then Y2 by
   // back substitution.
-  // 
+  //
   // The expression A * X - B can be simplified as follow:
-  // A * X - B = A * P_inv * P * X - B = A * P_inv * Y - B = 
+  // A * X - B = A * P_inv * P * X - B = A * P_inv * Y - B =
   // = A * P_inv * [Y1 Y2]' - B = ...
   // ( Let's call AP = A * P_inv = [AP1 AP2] )
   // ... = AP * [Y1 Y2]' - B = [AP1 AP2] * [Y1 Y2]' = AP1 * Y1 + AP2 * Y2 - B =
-  // = AP1 * Y1 + AP2 * (F * y1 + G) - B = 
+  // = AP1 * Y1 + AP2 * (F * y1 + G) - B =
   // = (AP1 + AP2 * F) * Y1 - (B - AP2 * G)
   // In the end we can find Y2 solving the unconstrained LSQ problem:
-  // min ||A_reduced * Y1 - B_reduced||^2, with 
-  //                      A_reduced = AP1 + AP2 * F and 
+  // min ||A_reduced * Y1 - B_reduced||^2, with
+  //                      A_reduced = AP1 + AP2 * F and
   //                      B_reduced = B0 - AP2 * G
   // Then Y2 = F * Y1 + G;    X = P_inv * [Y1 Y2]'
-  // 
+  //
   // Matrices size:
   //   A(m, n), B(m, DIM), subst_vars_(k, n-k)
   //   Y1(n-k, DIM), Y2(k, DIM), AP1(m, n-k), AP2(m, k), F(k, n-k), G(k, DIM)
   //   A_reduced(m, n-k), B_reduced(m, DIM)
+
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  // write data for tests
+  {
+
+    int n = static_cast<int>(var_names_.size() + fixed_.size());
+    Eigen::SparseMatrix<double> A(row_nmbr_, n);
+    A.setFromTriplets(A_coeff_with_fixed_.begin(), A_coeff_with_fixed_.end());
+    auto flnm_prfx = "EigenLSQConstrainedSolver_" + std::to_string(solver_id_);
+    COMISO_EIGEN::write_eigen_matrix(flnm_prfx + "_A.mtx", A);
+
+    Eigen::MatrixXd B(row_nmbr_, DIM);
+    for (int i = 0; i < DIM; ++i)
+    {
+      for (int j = 0; j < B_coeff_with_fixed_.size(); ++j)
+        B(j, i) = B_coeff_with_fixed_[j][i];
+    }
+    COMISO_EIGEN::write_eigen_matrix(flnm_prfx + "_b.mtx", B);
+  }
+#endif
 
   using PermutationMatrix =
       Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic, size_t>;
@@ -416,6 +545,45 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
     for (auto j = 0; j < DIM; ++j)
       result_[i].point[j] = (*Y_ptr)(idx, j);
   }
+
+#ifdef COMISO_EIGENLSQCONSTRAINEDSOLVER_DUMP_SYSTEMS
+  // write solution to file
+  {
+    int n = static_cast<int>(var_names_.size() + fixed_.size());
+    Eigen::MatrixXd sol(n, DIM);
+    size_t var_idx = 0;
+    for (const auto& val : result_)
+    {
+      if (indexed_variable(val.var_name, var_idx))
+      {
+        for (int i = 0; i < DIM; ++i)
+          sol(static_cast<int>(var_idx), i) = val.point[i];
+      }
+      else
+      {
+        COMISO_THROW_TODO("Shouldn't all solution values be in the set of"
+                          "indexed variables?");
+      }
+    }
+
+    for (const auto& val : fixed_)
+    {
+      if (fixed_variable_index(val.var_name, var_idx))
+      {
+        for (int i = 0; i < DIM; ++i)
+          sol(static_cast<int>(var_idx), i) = val.point[i];
+      }
+      else
+      {
+        COMISO_THROW_TODO(
+            "Shouldn't all fixed values be in the set of fixed variables?");
+      }
+    }
+    auto filename =
+        "EigenLSQConstrainedSolver_" + std::to_string(solver_id_) + "_sol.mtx";
+    COMISO_EIGEN::write_eigen_matrix(filename, sol);
+  }
+#endif
 
   return result_;
 }

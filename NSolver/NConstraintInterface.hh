@@ -35,7 +35,7 @@ namespace COMISO {
 
 
 
-/** \class NProblemGmmInterface NProblemGmmInterface.hh <COMISO/.../NPRoblemGmmInterface.hh>
+/** \class NConstraintInterface NConstraintInterface.hh <COMISO/.../NConstraintInterface.hh>
 
     Brief Description.
 

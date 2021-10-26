@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 #ifndef COMISO_Eigen_TOOLS_HH
@@ -67,11 +67,11 @@ namespace COMISO_EIGEN
 //== FUNCTION DEFINITION ======================================================
 
 /// Get matrix data (CSC matrix format) from matrix
-/** Used by Cholmod wrapper  
+/** Used by Cholmod wrapper
  *  @param _mat matrix
  *  @param _c uplo parameter (l, L, u, U, c, C)
  *  @param _values values vector
- *  @param _rowind row indices 
+ *  @param _rowind row indices
  *  @param _colptr column pointer  */
 template<class MatrixT, class REALT, class INTT>
 void get_ccs_symmetric_data( const MatrixT&      _mat,
@@ -87,7 +87,7 @@ template<class MatrixT>
 void inspect_matrix( const MatrixT& _A);
 
 /** checks for symmetry
-  * @param _A matrix 
+  * @param _A matrix
   * @return symmetric? (bool)*/
 template<class MatrixT>
 bool is_symmetric( const MatrixT& _A);
@@ -115,13 +115,53 @@ template <class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 
 
+// Write a matrix in MatrixMarket format
+template <typename MatrixT>
+void write_eigen_matrix_ascii(const std::string& _filename, const MatrixT& _m);
+
+// Load a matrix from MatrixMarket format
+template <typename MatrixT>
+void read_eigen_matrix_ascii(const std::string& _filename, MatrixT& _m);
+
+// Load a sparse matrix from MatrixMarket format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void read_eigen_matrix_ascii(const std::string& _filename,
+    Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Write a vector in MatrixMarket format
+template <typename VectorT>
+void write_eigen_vector_ascii(const std::string& _filename, const VectorT& _v);
+
+// Load a vector from MatrixMarket format
+template <typename VectorT>
+void read_eigen_vector_ascii(const std::string& _filename, VectorT& _v);
+
+// Write a sparse matrix in our custom compact storage file format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void write_eigen_matrix(const std::string& _filename,
+    const Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Load a sparse matrix from our custom compact storage file format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void read_eigen_matrix(const std::string& _filename,
+    Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Write a dense matrix in our custom file format
+template <typename ScalarT, int ROWS, int COLS>
+void write_eigen_matrix(const std::string& _filename,
+    const Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
+
+// Load a dense matrix in our custom file format
+template <typename ScalarT, int ROWS, int COLS>
+void read_eigen_matrix(const std::string& _filename,
+    Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
+
+
 //=============================================================================
 } // namespace COMISO_Eigen
 //=============================================================================
-#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_Eigen_TOOLS_C)
 #define COMISO_Eigen_TOOLS_TEMPLATES
 #include "Eigen_ToolsT.cc"
-#endif
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
