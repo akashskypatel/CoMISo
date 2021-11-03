@@ -562,7 +562,7 @@ void MISolver::solve_multiple_rounding(
       const auto rnd_x = double_round(_x[tr_indx]); // store rounded value
       to_round_indx[tr_indx].clear(); // clear pointer
 
-      // compute neighbors
+      // compute neighbors (i.e. row indices of non zero elements in col)
       const Col col = gmm::mat_const_col(_A, tr_indx);
       for (auto it = gmm::vect_const_begin(col), ite = gmm::vect_const_end(col);
            it != ite; ++it)

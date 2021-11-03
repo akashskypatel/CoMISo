@@ -42,6 +42,7 @@
 #include "Eigen_Tools.hh"
 #include <CoMISo/Utils/gmm.hh>
 #include <CoMISo/Utils/CoMISoError.hh>
+#include <Base/Debug/DebOut.hh>
 #include <unsupported/Eigen/SparseExtra>
 #include <queue>
 
@@ -61,8 +62,8 @@ void get_ccs_symmetric_data(const MatrixT& _mat, const char _uplo,
 {
   // Assumes col major
 
-  int m = _mat.innerSize();
-  int n = _mat.outerSize();
+  const int m = _mat.innerSize();
+  const int n = _mat.outerSize();
 
   _values.resize(0);
   _rowind.resize(0);
@@ -141,7 +142,7 @@ void get_ccs_symmetric_data(const MatrixT& _mat, const char _uplo,
     break;
 
   default:
-    std::cerr << "ERROR: parameter uplo must bei either 'U' or 'L' or 'C'!!!\n";
+    DEB_error("ERROR: parameter uplo must be either 'U' or 'L' or 'C'!!!");
     break;
   }
 }
@@ -152,16 +153,16 @@ void get_ccs_symmetric_data(const MatrixT& _mat, const char _uplo,
 // max_abs, min_abs, NAN, INF
 template <class MatrixT> void inspect_matrix(const MatrixT& _A)
 {
+  DEB_enter_func;
 
-  std::cerr << "################### INSPECT MATRIX ##################\n";
-  std::cerr << "#outer size  : " << _A.outerSize() << std::endl;
-  std::cerr << "#inner size  : " << _A.innerSize() << std::endl;
-  std::cerr << "#rows        : " << _A.rows() << std::endl;
-  std::cerr << "#cols        : " << _A.cols() << std::endl;
-  std::cerr << "#nonzeros    : " << _A.nonZeros() << std::endl;
-  std::cerr << "#nonzeros/row: " << (double(_A.nonZeros()) / double(_A.rows()))
-            << std::endl;
-  std::cerr << "symmetric    : " << is_symmetric(_A) << std::endl;
+  DEB_line(2, "################### INSPECT MATRIX ##################");
+  DEB_line(2, "#outer size  : " << _A.outerSize());
+  DEB_line(2, "#inner size  : " << _A.innerSize());
+  DEB_line(2, "#rows        : " << _A.rows());
+  DEB_line(2, "#cols        : " << _A.cols());
+  DEB_line(2, "#nonzeros    : " << _A.nonZeros());
+  DEB_line(2, "#nonzeros/row: " << (double(_A.nonZeros()) / double(_A.rows())));
+  DEB_line(2, "symmetric    : " << is_symmetric(_A));
 
   MatrixT trans(_A.transpose());
 
@@ -182,8 +183,8 @@ template <class MatrixT> void inspect_matrix(const MatrixT& _A)
       ++zero_cols;
   }
 
-  std::cerr << "zero rows    : " << zero_rows << std::endl;
-  std::cerr << "zero cols    : " << zero_cols << std::endl;
+  DEB_line(2, "zero rows    : " << zero_rows);
+  DEB_line(2, "zero cols    : " << zero_cols);
 
   typedef typename MatrixT::Scalar Scalar;
   Scalar vmin = std::numeric_limits<Scalar>::max();
@@ -218,21 +219,17 @@ template <class MatrixT> void inspect_matrix(const MatrixT& _A)
     }
   }
 
-  std::cerr << "min  val     : " << vmin << std::endl;
-  std::cerr << "max  val     : " << vmax << std::endl;
-  std::cerr << "min |val|    : " << vmin_abs << std::endl;
-  std::cerr << "max |val|    : " << vmax_abs << std::endl;
-  std::cerr << "#nan         : " << n_nan << std::endl;
-  std::cerr << "#inf         : " << n_inf << std::endl;
+  DEB_line(2, "min  val     : " << vmin);
+  DEB_line(2, "max  val     : " << vmax);
+  DEB_line(2, "min |val|    : " << vmin_abs);
+  DEB_line(2, "max |val|    : " << vmax_abs);
+  DEB_line(2, "#nan         : " << n_nan);
+  DEB_line(2, "#inf         : " << n_inf);
 
-  std::cerr << "min eval     : "
-            << "..." << std::endl;
-  std::cerr << "max eval     : "
-            << "..." << std::endl;
-  std::cerr << "min|eval|    : "
-            << "..." << std::endl;
-  std::cerr << "max|eval|    : "
-            << "..." << std::endl;
+  DEB_line(2, "min eval     : ...");
+  DEB_line(2, "max eval     : ...");
+  DEB_line(2, "min|eval|    : ...");
+  DEB_line(2, "max|eval|    : ...");
 }
 
 //-----------------------------------------------------------------------------
@@ -243,8 +240,8 @@ template <class MatrixT> bool is_symmetric(const MatrixT& _A)
   typedef typename MatrixT::InnerIterator It;
   typedef typename MatrixT::Scalar Scalar;
 
-  int nouter(_A.outerSize());
-  int ninner(_A.innerSize());
+  const int nouter(_A.outerSize());
+  const int ninner(_A.innerSize());
 
   if (nouter != ninner)
     return false;
@@ -295,8 +292,8 @@ void permute(
 {
   typedef typename Eigen_MatrixT::Scalar Scalar;
 
-  int m = _QR.innerSize();
-  int n = _QR.outerSize();
+  const int m = _QR.innerSize();
+  const int n = _QR.outerSize();
 
   if (_Pvec.size() == 0)
   {
@@ -304,13 +301,8 @@ void permute(
     return;
   }
 
-  if (_Pvec.size() != (size_t)_QR.cols() && _Pvec.size() != 0)
-  {
-    std::cerr << __FUNCTION__
-              << " wrong size of permutation vector, should have #cols length "
-                 "(or zero)"
-              << std::endl;
-  }
+  DEB_error_if(_Pvec.size() != (size_t)_QR.cols() && _Pvec.size() != 0,
+      "wrong size of permutation vector, should have #cols length (or zero)");
 
   // build sparse permutation matrix
   typedef Eigen::Triplet<Scalar> Triplet;
@@ -337,6 +329,264 @@ void permute(
 }
 
 //-----------------------------------------------------------------------------
+
+template <class ScalarT, int OPTIONS1, class Storage1T, int OPTIONS2,
+    class Storage2T>
+void factored_to_quadratic(
+    const Eigen::SparseMatrix<ScalarT, OPTIONS1, Storage1T>& _F,
+    Eigen::SparseMatrix<ScalarT, OPTIONS2, Storage2T>& _Q,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs)
+{
+  DEB_enter_func;
+  const auto m = _F.rows();
+  const auto n = _F.cols();
+
+  const auto Q = (_F.transpose() * _F).eval();
+
+  PROGRESS_TICK;
+  // extract negative last column (without bottom right corner) as rhs
+  _rhs = -Q.block(0, n - 1, n - 1, 1);
+
+  // extract top left part of matrix as quadratic matrix
+  _Q = Q.block(0, 0, n - 1, n - 1);
+  PROGRESS_TICK;
+}
+
+
+//-----------------------------------------------------------------------------
+
+template <class ScalarT, class IntegerT>
+void eliminate_csc_vars(const std::vector<IntegerT>& _elmn_vars,
+    const std::vector<ScalarT>& _elmn_vals,
+    Eigen::SparseMatrix<ScalarT, Eigen::ColMajor>& _A,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _x,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs)
+{
+  if (!_A.isCompressed())
+    _A.makeCompressed();
+
+  const auto cols = static_cast<int>(_A.cols());
+
+  const size_t n_new = cols - _elmn_vars.size();
+
+  DEB_error_if(cols != _A.rows(), "We are expecting square matrices but got "
+                                      << static_cast<int>(_A.rows())
+                                      << " rows and " << cols << " cols");
+
+  // update rhs
+  for (size_t i = 0; i < _elmn_vars.size(); ++i)
+    _rhs -= _elmn_vals[i] * _A.col(_elmn_vars[i]);
+
+  // sort index vector
+  std::vector<IntegerT> elmn_vars(_elmn_vars);
+  std::sort(elmn_vars.begin(), elmn_vars.end());
+  elmn_vars.push_back(std::numeric_limits<IntegerT>::max());
+
+  // actually remove the elements from the vectors _rhs and _x
+  auto cur_elmn_var_idx = static_cast<IntegerT>(0);
+  for (IntegerT i = 0; i < static_cast<IntegerT>(cols); ++i)
+  {
+    const auto next_i = elmn_vars[cur_elmn_var_idx];
+
+    if (i != next_i)
+    {
+      _rhs(i - cur_elmn_var_idx) = _rhs(i);
+      _x(i - cur_elmn_var_idx) = _x(i);
+    }
+    else
+    {
+      ++cur_elmn_var_idx;
+    }
+  }
+
+  // delete last elements
+  _rhs.conservativeResize(n_new);
+  _x.conservativeResize(n_new);
+
+
+  // create temporary matrix to store result of row and col removal, because
+  // we haven't figured out yet how to do this in place. In particular, we
+  // cannot change the internally stored size of _A.
+  Eigen::SparseMatrix<ScalarT, Eigen::ColMajor> B(n_new, n_new);
+  B.reserve(_A.nonZeros());
+
+  eliminate_csc_vars(elmn_vars, cols, _A.valuePtr(), _A.innerIndexPtr(),
+      _A.outerIndexPtr(), B.valuePtr(), B.innerIndexPtr(), B.outerIndexPtr());
+
+  B.data().resize(B.nonZeros());
+  _A = std::move(B);
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+template <class IntegerT>
+std::vector<int> make_new_index_map(
+    const std::vector<IntegerT>& _elmn_vars, int _n_vars)
+{
+  // create sorted version of _elmn_vars without duplicates
+  auto elmn_vars = _elmn_vars;
+  std::sort(elmn_vars.begin(), elmn_vars.end());
+  elmn_vars.erase(
+      std::unique(elmn_vars.begin(), elmn_vars.end()), elmn_vars.end());
+
+  std::vector<int> new_idx_map(_n_vars, -1);
+
+  // build re-indexing map
+  // -1 means deleted
+  int next_elmn_var_idx(0);
+  int offset(0);
+  for (int i = 0; i < _n_vars; ++i)
+  {
+    if (next_elmn_var_idx < elmn_vars.size() &&
+        i == (int)elmn_vars[next_elmn_var_idx])
+    {
+      ++next_elmn_var_idx;
+      ++offset;
+    }
+    else
+    {
+      new_idx_map[i] = i - offset;
+    }
+  }
+  return new_idx_map;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+template <class ScalarT, class Integer1T, class Integer2T>
+void eliminate_csc_vars(const std::vector<Integer1T>& _elmn_vars,
+    const int _rows, const ScalarT* const _val_src,
+    const Integer2T* const _rows_src, const Integer2T* const _cols_src,
+    ScalarT* const _val_dst, Integer2T* const _rows_dst,
+    Integer2T* const _cols_dst)
+{
+  auto new_row_idx_map = make_new_index_map(_elmn_vars, _rows);
+
+  size_t nc = _rows; // we expect square matrices
+  // csc erasing rows and columns
+  size_t read_pos(0), write_pos(0), elmn_var_col(0), last_col(0);
+  for (size_t c = 0; c < nc; ++c)
+  {
+    if (c == static_cast<size_t>(_elmn_vars[elmn_var_col]))
+    {
+      ++elmn_var_col;
+      read_pos += _cols_src[c + 1] - last_col; // skip reading this column
+    }
+    else
+    {
+      while (read_pos < static_cast<size_t>(_cols_src[c + 1]))
+      {
+        int new_idx = new_row_idx_map[_rows_src[read_pos]];
+        if (new_idx != -1)
+        {
+          _val_dst[write_pos] = _val_src[read_pos];
+          _rows_dst[write_pos] = new_idx;
+          ++write_pos;
+        }
+        ++read_pos;
+      }
+    }
+    last_col = _cols_src[c + 1];
+
+    _cols_dst[c + 1 - elmn_var_col] = static_cast<Integer2T>(write_pos);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+template <class ScalarT, class Integer1T, class Integer2T>
+void eliminate_csc_vars(const std::vector<Integer1T>& _elmn_vars,
+    const int _n_rows, ScalarT* const _val, Integer2T* const _rows,
+    Integer2T* const _cols)
+{
+  eliminate_csc_vars(
+      _elmn_vars, _n_rows, _val, _rows, _cols, _val, _rows, _cols);
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+template <class ScalarT, class RealT>
+void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
+    Eigen::SparseMatrix<RealT, Eigen::ColMajor>& _A,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _x,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs)
+{
+  if (_A.isCompressed())
+    _A.makeCompressed();
+
+  fix_var_csc_symmetric(static_cast<int>(_A.rows()), _i, _xi,
+      _A.valuePtr(), _A.innerIndexPtr(), _A.outerIndexPtr(), _x.data(),
+      _rhs.data());
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+template <class ScalarT, class IntegerT, class RealT>
+void fix_var_csc_symmetric(const int _size, const unsigned int _i,
+    const ScalarT _xi, RealT* const _val, IntegerT* const _rows,
+    IntegerT* const _cols, ScalarT* const _x, ScalarT* const _rhs)
+{
+  const auto n = _size;
+
+  // update x
+  _x[_i] = _xi;
+
+  // collect non-zero rows for faster update of row _i
+  std::vector<IntegerT> idx;
+  idx.reserve(16);
+
+  // clear i-th column and collect non-zeros
+  // "clear" means set all values to zero, except for the diagonal element
+  // which is set to one. Also, the right hand side is updated by
+  // subtracting the current matrix value times the fixed value.
+  for (auto iv = _cols[_i]; iv < _cols[_i + 1]; ++iv)
+  {
+    if (_rows[iv] == _i)
+    {
+      _val[iv] = static_cast<RealT>(1.0);
+      _rhs[_i] = _xi;
+    }
+    else
+    {
+      _rhs[_rows[iv]] -= _val[iv] * _xi;  // update rhs
+      _val[iv] = static_cast<RealT>(0.0); // clear entry
+      idx.push_back(_rows[iv]);           // store index
+    }
+  }
+
+  // set row _i to zeros except for diagonal element which has already been set
+  // to 1. Due to symmetry of _A we only need to look at the columns in idx,
+  // i.e. the non-zero rows of column _i.
+  for (size_t i = 0; i < idx.size(); ++i)
+  {
+    const auto col = idx[i];
+
+    for (auto j = _cols[col]; j < _cols[col + 1]; ++j)
+    {
+      if (_rows[j] == _i)
+      {
+        _val[j] = static_cast<RealT>(0.0);
+        // move to next
+        break;
+      }
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+
+
 
 #if COMISO_SUITESPARSE_AVAILABLE
 
@@ -462,7 +712,7 @@ void eigen_to_cholmod(const MatrixT& _A, cholmod_sparse*& _AC,
     std::vector<SuiteSparse_long> colptr;
 
     // get data of gmm matrix
-    COMISO_EIGEN::get_ccs_symmetric_data(_A, uplo, values, rowind, colptr);
+    get_ccs_symmetric_data(_A, uplo, values, rowind, colptr);
 
     // allocate cholmod matrix
     _AC = cholmod_l_allocate_sparse(
@@ -485,7 +735,7 @@ void eigen_to_cholmod(const MatrixT& _A, cholmod_sparse*& _AC,
     std::vector<int> colptr;
 
     // get data of gmm matrix
-    COMISO_EIGEN::get_ccs_symmetric_data(_A, uplo, values, rowind, colptr);
+    get_ccs_symmetric_data(_A, uplo, values, rowind, colptr);
 
     // allocate cholmod matrix
     _AC = cholmod_allocate_sparse(
@@ -613,7 +863,7 @@ cholmod_common* _common, bool _long_int)
     std::vector<SuiteSparse_long> colptr;
 
     // get data of gmm matrix
-    COMISO_EIGEN::get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
+    get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
 
     // allocate cholmod matrix
     _AC = cholmod_l_allocate_sparse(m,n,values.size(),true,true,_sparsity_type,
@@ -636,7 +886,7 @@ cholmod_common* _common, bool _long_int)
      std::vector<int> colptr;
 
      // get data of gmm matrix
-     COMISO_EIGEN::get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
+     get_ccs_symmetric_data( _A, uplo, values, rowind, colptr);
 
      // allocate cholmod matrix
      _AC = cholmod_allocate_sparse(m,n,values.size(),true,true,_sparsity_type,
@@ -806,14 +1056,106 @@ void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E)
   gmm_to_eigen_impl::f(_G, _E);
 }
 
+template <class GMM_VectorT, class EIGEN_VectorT>
+void to_eigen_vec(const GMM_VectorT& _G, EIGEN_VectorT& _E)
+{
+  using EigenScalar = typename EIGEN_VectorT::Scalar;
+  _E.setZero();
+  const auto it_end = gmm::vect_const_end(_G);
+  for (auto it = gmm::vect_const_begin(_G); it != it_end; ++it)
+    _E(it.index()) = static_cast<EigenScalar>(*it);
+}
+
+template <class ScalarT, class EIGEN_VectorT>
+void to_eigen_vec(const std::vector<ScalarT>& _v, EIGEN_VectorT& _E)
+{
+  using EigenScalar = typename EIGEN_VectorT::Scalar;
+  _E.setZero();
+  _E.resize(_v.size());
+  for (size_t i = 0; i < _v.size(); ++i)
+    _E(i) = static_cast<EigenScalar>(_v[i]);
+}
+
+
+template <class EigenScalarT, int E_OPTIONS, typename EStorageT, class GMM_MatrixT>
+void eigen_to_gmm(const Eigen::SparseMatrix<EigenScalarT, E_OPTIONS, EStorageT>& _E,
+    GMM_MatrixT& _G)
+{
+  using GMMScalar = typename gmm::linalg_traits<GMM_MatrixT>::value_type;
+  gmm::resize(_G, _E.rows(), _E.cols());
+  gmm::clear(_G);
+
+  for (int i = 0; i < _E.outerSize(); ++i)
+  {
+    for (typename Eigen::SparseMatrix<EigenScalarT>::InnerIterator it(_E, i); it; ++it)
+      _G(it.row(), it.col()) = static_cast<GMMScalar>(it.value());
+  }
+}
+
+
+template <class EIGEN_MatrixT, class GMM_CSC_MatrixT>
+void eigen_to_gmm_csc(const EIGEN_MatrixT& _E, GMM_CSC_MatrixT& _G)
+{
+  using GMMScalar = typename gmm::linalg_traits<GMM_CSC_MatrixT>::value_type;
+  gmm::col_matrix<gmm::wsvector<GMMScalar>> G;
+  eigen_to_gmm(_E, G);
+  gmm::copy(G, _G);
+}
+
+
+template <class ScalarT, class GMM_CSC_MatrixT>
+void eigen_to_gmm_csc(
+    const Eigen::SparseMatrix<ScalarT, Eigen::ColMajor>& _E,
+    GMM_CSC_MatrixT& _G)
+{
+  using Scalar = typename gmm::linalg_traits<GMM_CSC_MatrixT>::value_type;
+  using Index = typename GMM_CSC_MatrixT::IND_TYPE;
+
+  const auto nnz = static_cast<size_t>(_E.nonZeros());
+  const auto nc = static_cast<size_t>(_E.cols());
+
+  DEB_error_if(_G.pr.size() < nnz, "Buffer of GMM matrix not large enough.");
+  DEB_error_if(_G.ir.size() < nnz, "Buffer of GMM matrix not large enough.");
+  DEB_error_if(_G.jc.size() < nc + 1, "Buffer of GMM matrix not large enough.");
+
+  DEB_error_if(!_E.isCompressed(), "Eigen Matrix is not in compressed format");
+
+  _G.nr = _E.rows();
+  _G.nc = _E.cols();
+  for (size_t i = 0; i < nnz; ++i)
+    _G.pr[i] = static_cast<Scalar>(_E.valuePtr()[i]);
+  for (size_t i = 0; i < nnz; ++i)
+    _G.ir[i] = static_cast<Index>(_E.innerIndexPtr()[i]);
+  for (size_t i = 0; i < nc+1; ++i)
+    _G.jc[i] = static_cast<Index>(_E.outerIndexPtr()[i]);
+}
+
+
+template <class EIGEN_VectorT, class GMM_VectorT>
+void from_eigen_vec(const EIGEN_VectorT& _E, const GMM_VectorT& _G)
+{
+  gmm::resize(_G, _E.rows());
+  for (int i = 0; i < _E.rows(); ++i)
+    _G[i] = _E(i);
+}
+
+template <class EIGEN_VectorT, class ScalarT>
+void from_eigen_vec(const EIGEN_VectorT& _E, std::vector<ScalarT>& _v)
+{
+  _v.resize(_E.rows());
+  for (int i = 0; i < _E.rows(); ++i)
+    _v[i] = _E(i);
+}
+
+
 template <typename MatrixT>
-void write_eigen_matrix_ascii(const std::string& _filename, const MatrixT& _m)
+void write_matrix_ascii(const std::string& _filename, const MatrixT& _m)
 {
   Eigen::saveMarket(_m, _filename);
 }
 
 template <typename MatrixT>
-void read_eigen_matrix_ascii(const std::string& _filename, MatrixT& _m)
+void read_matrix_ascii(const std::string& _filename, MatrixT& _m)
 {
   Eigen::SparseMatrix<double> m;
   Eigen::loadMarket(m, _filename);
@@ -821,20 +1163,20 @@ void read_eigen_matrix_ascii(const std::string& _filename, MatrixT& _m)
 }
 
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void read_eigen_matrix_ascii(const std::string& _filename,
+void read_matrix_ascii(const std::string& _filename,
     Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m)
 {
   Eigen::loadMarket(_m, _filename);
 }
 
 template <typename VectorT>
-void write_eigen_vector_ascii(const std::string& _filename, const VectorT& _v)
+void write_vector_ascii(const std::string& _filename, const VectorT& _v)
 {
   Eigen::saveMarketVector(_v, _filename);
 }
 
 template <typename VectorT>
-void read_eigen_vector_ascii(const std::string& _filename, VectorT& _v)
+void read_vector_ascii(const std::string& _filename, VectorT& _v)
 {
   Eigen::loadMarketVector(_v, _filename);
 }
@@ -866,7 +1208,7 @@ static constexpr DensityId DENSE_ID = 'D'; // used to indicate a dense matrix is
 } // namespace
 
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void write_eigen_matrix(const std::string& _filename,
+void write_matrix(const std::string& _filename,
     const Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m)
 {
   using Matrix = Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>;
@@ -921,11 +1263,11 @@ template <typename T> void read_simple(std::istream& _is, T& _t)
 
 // Actual method that loads a matrix from a file
 template <typename CallScalarT, int CALL_OPTIONS, typename CallStorageIndexT,
-          typename FileScalarT, int FILE_OPTIONS, typename FileStorageIndexT>
-void read_eigen_matrix_storage(std::istream& _is,
+          typename FilEigenScalarT, int FILE_OPTIONS, typename FileStorageIndexT>
+void read_matrix_storage(std::istream& _is,
     Eigen::SparseMatrix<CallScalarT, CALL_OPTIONS, CallStorageIndexT>& _m)
 {
-  using Matrix = Eigen::SparseMatrix<FileScalarT, FILE_OPTIONS, FileStorageIndexT>;
+  using Matrix = Eigen::SparseMatrix<FilEigenScalarT, FILE_OPTIONS, FileStorageIndexT>;
   // read matrix dimensions
   typename Matrix::Index outerSize;
   typename Matrix::Index innerSize;
@@ -935,10 +1277,10 @@ void read_eigen_matrix_storage(std::istream& _is,
   read_simple(_is, nonZeros);
 
   // read matrix data
-  std::vector<FileScalarT> values(nonZeros);
+  std::vector<FilEigenScalarT> values(nonZeros);
   std::vector<FileStorageIndexT> inner_indices(nonZeros);
   std::vector<FileStorageIndexT> outer_indices(outerSize+1);
-  _is.read((char*)values.data(), values.size() * sizeof(FileScalarT));
+  _is.read((char*)values.data(), values.size() * sizeof(FilEigenScalarT));
   _is.read((char*)inner_indices.data(),
       inner_indices.size() * sizeof(FileStorageIndexT));
   _is.read((char*)outer_indices.data(),
@@ -972,8 +1314,8 @@ void read_eigen_matrix_storage(std::istream& _is,
 
 // Helper method to get correct storage index type from EigenTypeID argument
 template <typename CallScalarT, int CALL_OPTIONS, typename CallStorageIndexT,
-          typename FileScalarT, int FILE_OPTIONS>
-void read_eigen_matrix_options(std::istream& _is,
+          typename FilEigenScalarT, int FILE_OPTIONS>
+void read_matrix_options(std::istream& _is,
     Eigen::SparseMatrix<CallScalarT, CALL_OPTIONS, CallStorageIndexT>& _m,
     TypeIndex _storage_index_id)
 {
@@ -981,8 +1323,8 @@ void read_eigen_matrix_options(std::istream& _is,
   switch (_storage_index_id)
   {
   case ScalarTypeIndexT<int>::VALUE:
-    read_eigen_matrix_storage<CallScalarT, CALL_OPTIONS, CallStorageIndexT,
-        FileScalarT, FILE_OPTIONS, int>(_is, _m);
+    read_matrix_storage<CallScalarT, CALL_OPTIONS, CallStorageIndexT,
+        FilEigenScalarT, FILE_OPTIONS, int>(_is, _m);
     break;
   default:
     COMISO_THROW_TODO("Undexpected storage id: " << _storage_index_id);
@@ -992,21 +1334,22 @@ void read_eigen_matrix_options(std::istream& _is,
 
 // Helper method to get correct ordering type from int argument
 template <typename CallScalarT, int CALL_OPTIONS, typename CallStorageIndexT,
-          typename FileScalarT>
-void read_eigen_matrix_scalar(std::istream& _is,
+          typename FilEigenScalarT>
+void read_matrix_scalar(std::istream& _is,
     Eigen::SparseMatrix<CallScalarT, CALL_OPTIONS, CallStorageIndexT>& _m,
     int _options, TypeIndex _storage_index_is)
 {
   // dispatch to load method with correct storage ordering
   if (_options == Eigen::RowMajor)
   {
-    read_eigen_matrix_options<CallScalarT, CALL_OPTIONS, CallStorageIndexT,
-        FileScalarT, Eigen::RowMajor>(_is, _m, _storage_index_is);
+    read_matrix_options<CallScalarT, CALL_OPTIONS,
+        CallStorageIndexT,
+        FilEigenScalarT, Eigen::RowMajor>(_is, _m, _storage_index_is);
   }
   else if (_options == Eigen::ColMajor)
   {
-    read_eigen_matrix_options<CallScalarT, CALL_OPTIONS, CallStorageIndexT,
-        FileScalarT, Eigen::ColMajor>(_is, _m, _storage_index_is);
+    read_matrix_options<CallScalarT, CALL_OPTIONS, CallStorageIndexT,
+        FilEigenScalarT, Eigen::ColMajor>(_is, _m, _storage_index_is);
   }
   else
     COMISO_THROW_TODO("Read unexpected options: " << _options);
@@ -1015,7 +1358,7 @@ void read_eigen_matrix_scalar(std::istream& _is,
 }
 
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void read_eigen_matrix(const std::string& _filename,
+void read_matrix(const std::string& _filename,
     Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m)
 {
   // open file
@@ -1045,15 +1388,15 @@ void read_eigen_matrix(const std::string& _filename,
   switch (sclr_id)
   {
   case detail::ScalarTypeIndexT<double>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, double>(
+    detail::read_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, double>(
         in_file, _m, options, strg_index_id);
     break;
   case detail::ScalarTypeIndexT<float>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, float>(
+    detail::read_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, float>(
         in_file, _m, options, strg_index_id);
     break;
   case detail::ScalarTypeIndexT<int>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, int>(
+    detail::read_matrix_scalar<ScalarT, OPTIONS, StorageIndexT, int>(
         in_file, _m, options, strg_index_id);
     break;
   default:
@@ -1065,7 +1408,7 @@ void read_eigen_matrix(const std::string& _filename,
 
 // Write a dense matrix in our custom file format
 template <typename ScalarT, int ROWS, int COLS>
-void write_eigen_matrix(
+void write_matrix(
     const std::string& _filename, const Eigen::Matrix<ScalarT, ROWS, COLS>& _m)
 {
   using Matrix = Eigen::Matrix<ScalarT, ROWS, COLS>;
@@ -1104,11 +1447,11 @@ namespace detail
 {
 
 template <typename CallScalarT, int ROWS, int COLS,
-    typename FileScalarT>
-void read_eigen_matrix_scalar(
+    typename FilEigenScalarT>
+void read_matrix_scalar(
     std::istream& _is, Eigen::Matrix<CallScalarT, ROWS, COLS>& _m)
 {
-  using Matrix = Eigen::Matrix<FileScalarT, Eigen::Dynamic, Eigen::Dynamic>;
+  using Matrix = Eigen::Matrix<FilEigenScalarT, Eigen::Dynamic, Eigen::Dynamic>;
   // read matrix dimensions
   typename Matrix::Index rows;
   typename Matrix::Index cols;
@@ -1134,7 +1477,7 @@ void read_eigen_matrix_scalar(
   {
     for (typename Matrix::Index col = 0; col < _m.cols(); ++col)
     {
-      FileScalarT val;
+      FilEigenScalarT val;
       detail::read_simple(_is, val);
       _m(row, col) = static_cast<CallScalarT>(val);
     }
@@ -1146,7 +1489,7 @@ void read_eigen_matrix_scalar(
 
 // Load a dense matrix in our custom file format
 template <typename ScalarT, int ROWS, int COLS>
-void read_eigen_matrix(
+void read_matrix(
     const std::string& _filename, Eigen::Matrix<ScalarT, ROWS, COLS>& _m)
 {
   // open file
@@ -1172,13 +1515,13 @@ void read_eigen_matrix(
   switch (sclr_id)
   {
   case detail::ScalarTypeIndexT<double>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, ROWS, COLS, double>(in_file, _m);
+    detail::read_matrix_scalar<ScalarT, ROWS, COLS, double>(in_file, _m);
     break;
   case detail::ScalarTypeIndexT<float>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, ROWS, COLS, float>(in_file, _m);
+    detail::read_matrix_scalar<ScalarT, ROWS, COLS, float>(in_file, _m);
     break;
   case detail::ScalarTypeIndexT<int>::VALUE:
-    detail::read_eigen_matrix_scalar<ScalarT, ROWS, COLS, int>(in_file, _m);
+    detail::read_matrix_scalar<ScalarT, ROWS, COLS, int>(in_file, _m);
     break;
   default:
     COMISO_THROW_TODO("Unexpected scalar id: " << sclr_id);

@@ -95,6 +95,73 @@ bool is_symmetric( const MatrixT& _A);
 template< class Eigen_MatrixT, class IntT >
 void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_MatrixT& _A);
 
+/// Convert factored LSE to quadratic representation
+/** Conversion is done by computing _F^t _F where the last column is the _rhs
+ * @param _F Factored Matrix (input)
+ * @param _Q Quadratic Matrix (output)
+ * @param _rhs right hand side (output) */
+template <class ScalarT, int OPTIONS1, class Storage1T, int OPTIONS2,
+    class Storage2T>
+void factored_to_quadratic(
+    const Eigen::SparseMatrix<ScalarT, OPTIONS1, Storage1T>& _F,
+          Eigen::SparseMatrix<ScalarT, OPTIONS2, Storage2T>& _Q,
+          Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs);
+
+/// Eliminate multiple variables from a CSC matrix.
+/**
+ *  @param _elmn_vars indices of variables to be eliminated
+ *  @param _elmn_vals values c_i of x_i to be eliminated, x_i = c_i
+ *  @param _A CSC Matrix of the equation system
+ *  @param _x variable vector of equation system
+ *  @param _rhs right-hand side vector of equation system  */
+template <class ScalarT, class IntegerT>
+void eliminate_csc_vars(const std::vector<IntegerT>& _elmn_vars,
+    const std::vector<ScalarT>& _elmn_vals,
+    Eigen::SparseMatrix<ScalarT, Eigen::ColMajor>& _A,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _x,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs);
+
+/// Same as above but operate on data buffers
+template <class ScalarT, class Integer1T, class Integer2T>
+void eliminate_csc_vars(const std::vector<Integer1T>& _elmn_vars,
+    const int _rows, const ScalarT* const _val_src,
+    const Integer2T* const _rows_src, const Integer2T* const _cols_src,
+    ScalarT* const _val_dst, Integer2T* const _rows_dst,
+    Integer2T* const _cols_dst);
+
+/// Same as above but input and output buffers are the same, i.e. work in-place.
+template <class ScalarT, class Integer1T, class Integer2T>
+void eliminate_csc_vars(const std::vector<Integer1T>& _elmn_vars,
+    const int _n_rows, ScalarT* const _val, Integer2T* const _rows,
+    Integer2T* const _cols);
+
+/// Create a map for _n_vars variables to their new position if variables in
+/// _elmn_vars are eliminated
+template <class IntegerT>
+std::vector<int> make_new_index_map(
+    const std::vector<IntegerT>& _elmn_vars, int _n_vars);
+
+
+/// do in-place elimination in CSC format by setting row and column to zero and
+/// diagonal entry to one
+/**
+ *  @param _i index of variable to be eliminated
+ *  @param _xi value the eliminated variable to set to
+ *  @param _A CSC Matrix of the equation system
+ *  @param _x variable vector of equation system
+ *  @param _rhs right-hand side vector of equation system */
+template <class ScalarT, class RealT>
+void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
+    Eigen::SparseMatrix<RealT, Eigen::ColMajor>& _A,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _x,
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs);
+
+// same as above but operate directly on csc storage buffers
+template <class ScalarT, class IntegerT, class RealT>
+void fix_var_csc_symmetric(const int _size, const unsigned int _i,
+    const ScalarT _xi, RealT* const _val, IntegerT* const _rows,
+    IntegerT* const _cols, ScalarT* const _x, ScalarT* const _rhs);
+
 
 #if COMISO_SUITESPARSE_AVAILABLE
 
@@ -114,46 +181,113 @@ void eigen_to_cholmod( const MatrixT&  _A,
 template <class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 
+template <class GMM_VectorT, class EIGEN_VectorT>
+void to_eigen_vec(const GMM_VectorT& _G, EIGEN_VectorT& _E);
+
+template <class ScalarT, class EIGEN_VectorT>
+void to_eigen_vec(const std::vector<ScalarT>& _G, EIGEN_VectorT& _E);
+
+// convert an Eigen sparse matrix into a gmm sparse matrix
+template <class EIGEN_MatrixT, class GMM_MatrixT>
+void eigen_to_gmm(const EIGEN_MatrixT& _E, GMM_MatrixT& _G);
+
+// convert an Eigen sparse matrix into a gmm csc matrix
+template <class EIGEN_MatrixT, class GMM_CSC_MatrixT>
+void eigen_to_gmm_csc(const EIGEN_MatrixT& _E, GMM_CSC_MatrixT& _G);
+
+// convert an Eigen csc matrix into a gmm csc matrix
+// Expects that the buffers of the gmm csc matrix are already big enough
+template <class ScalarT, class GMM_CSC_MatrixT>
+void eigen_to_gmm_csc(const Eigen::SparseMatrix<ScalarT, Eigen::ColMajor>& _E, GMM_CSC_MatrixT& _G);
+
+template <class EIGEN_VectorT, class GMM_VectorT>
+void from_eigen_vec(const EIGEN_VectorT& _E, const GMM_VectorT& _G);
+
+template <class EIGEN_VectorT, class ScalarT>
+void from_eigen_vec(const EIGEN_VectorT& _E, std::vector<ScalarT>& _v);
+
 
 // Write a matrix in MatrixMarket format
 template <typename MatrixT>
-void write_eigen_matrix_ascii(const std::string& _filename, const MatrixT& _m);
+void write_matrix_ascii(const std::string& _filename, const MatrixT& _m);
 
 // Load a matrix from MatrixMarket format
 template <typename MatrixT>
-void read_eigen_matrix_ascii(const std::string& _filename, MatrixT& _m);
+void read_matrix_ascii(const std::string& _filename, MatrixT& _m);
 
 // Load a sparse matrix from MatrixMarket format
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void read_eigen_matrix_ascii(const std::string& _filename,
+void read_matrix_ascii(const std::string& _filename,
     Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
 
 // Write a vector in MatrixMarket format
 template <typename VectorT>
-void write_eigen_vector_ascii(const std::string& _filename, const VectorT& _v);
+void write_vector_ascii(const std::string& _filename, const VectorT& _v);
 
 // Load a vector from MatrixMarket format
 template <typename VectorT>
-void read_eigen_vector_ascii(const std::string& _filename, VectorT& _v);
+void read_vector_ascii(const std::string& _filename, VectorT& _v);
 
 // Write a sparse matrix in our custom compact storage file format
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void write_eigen_matrix(const std::string& _filename,
+void write_matrix(const std::string& _filename,
     const Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
 
 // Load a sparse matrix from our custom compact storage file format
 template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void read_eigen_matrix(const std::string& _filename,
+void read_matrix(const std::string& _filename,
     Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
 
 // Write a dense matrix in our custom file format
 template <typename ScalarT, int ROWS, int COLS>
-void write_eigen_matrix(const std::string& _filename,
+void write_matrix(const std::string& _filename,
     const Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
 
 // Load a dense matrix in our custom file format
 template <typename ScalarT, int ROWS, int COLS>
-void read_eigen_matrix(const std::string& _filename,
+void read_matrix(const std::string& _filename,
+    Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
+
+
+// Write a matrix in MatrixMarket format
+template <typename MatrixT>
+void write_matrix_ascii(const std::string& _filename, const MatrixT& _m);
+
+// Load a matrix from MatrixMarket format
+template <typename MatrixT>
+void read_matrix_ascii(const std::string& _filename, MatrixT& _m);
+
+// Load a sparse matrix from MatrixMarket format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void read_matrix_ascii(const std::string& _filename,
+    Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Write a vector in MatrixMarket format
+template <typename VectorT>
+void write_vector_ascii(const std::string& _filename, const VectorT& _v);
+
+// Load a vector from MatrixMarket format
+template <typename VectorT>
+void read_vector_ascii(const std::string& _filename, VectorT& _v);
+
+// Write a sparse matrix in our custom compact storage file format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void write_matrix(const std::string& _filename,
+    const Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Load a sparse matrix from our custom compact storage file format
+template <typename ScalarT, int OPTIONS, typename StorageIndexT>
+void read_matrix(const std::string& _filename,
+    Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m);
+
+// Write a dense matrix in our custom file format
+template <typename ScalarT, int ROWS, int COLS>
+void write_matrix(const std::string& _filename,
+    const Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
+
+// Load a dense matrix in our custom file format
+template <typename ScalarT, int ROWS, int COLS>
+void read_matrix(const std::string& _filename,
     Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
 
 

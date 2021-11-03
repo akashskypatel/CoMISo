@@ -52,11 +52,14 @@
 namespace COMISO_GMM
 {
 
+// temporary flag to indicate that we want to use Eigen instead of GMM
+inline bool& use_eigen() { static bool use = false; return use; }
+
+
 /** \class GMMTools GMM_Tools.hh
 
     A collection of helper functions for manipulating (gmm) matrices.
 */
-
 
 //== FUNCTION DEFINITION ======================================================
 
@@ -71,15 +74,15 @@ namespace COMISO_GMM
 /// Eliminate multiple variables from a CSC matrix.
 /**
  *  \note eliminate_csc_vars2 is probably more efficient
- *  @param _evar indices of variables to be eliminated
- *  @param _eval values c_i of x_i to be eliminated, x_i = c_i
+ *  @param _elmn_vars indices of variables to be eliminated
+ *  @param _elmn_vals values c_i of x_i to be eliminated, x_i = c_i
  *  @param _A CSC Matrix of the equation system
  *  @param _x variable vector of equation system
  *  @param _rhs right-hand side vector of equation system  */
 template<class ScalarT, class VectorT, class RealT, class IntegerT>
 void eliminate_csc_vars(
-    const std::vector<IntegerT>&     _evar,
-    const std::vector<ScalarT>&      _eval,
+    const std::vector<IntegerT>&     _elmn_vars,
+    const std::vector<ScalarT>&      _elmn_vals,
     typename gmm::csc_matrix<RealT>&  _A,
     VectorT&                          _x,
     VectorT&                          _rhs );
@@ -87,8 +90,17 @@ void eliminate_csc_vars(
 /// Eliminate variables from a CSC matric.
 template<class ScalarT, class VectorT, class RealT, class IntegerT>
 void eliminate_csc_vars2(
-    const std::vector<IntegerT>&     _evar,
-    const std::vector<ScalarT>&      _eval,
+    const std::vector<IntegerT>&     _elmn_vars,
+    const std::vector<ScalarT>&      _elmn_vals,
+    typename gmm::csc_matrix<RealT>&  _A,
+    VectorT&                          _x,
+    VectorT&                          _rhs );
+
+/// Eliminate variables from a CSC matric.
+template<class ScalarT, class VectorT, class RealT, class IntegerT>
+void eliminate_csc_vars2_eigen(
+    const std::vector<IntegerT>&     _elmn_vars,
+    const std::vector<ScalarT>&      _elmn_vals,
     typename gmm::csc_matrix<RealT>&  _A,
     VectorT&                          _x,
     VectorT&                          _rhs );
@@ -112,15 +124,15 @@ void eliminate_var(
 
 /// eliminate multiple variables from a (NON CSC) linear system by fixin x[j] = _value_j
 /**
- *  @param _evar indices of variables to be eliminated
- *  @param _eval values c_i of x_i to be eliminated, x_i = c_i
+ *  @param _elmn_vars indices of variables to be eliminated
+ *  @param _elmn_vals values c_i of x_i to be eliminated, x_i = c_i
  *  @param _A (non-CSC) Matrix of the equation system
  *  @param _x variable vector of equation system
  *  @param _rhs right-hand side vector of equation system */
 template<class IntegerT, class ScalarT, class VectorT, class MatrixT>
 void eliminate_vars(
-    const std::vector<IntegerT>& _evar,
-    const std::vector<ScalarT>&  _eval,
+    const std::vector<IntegerT>& _elmn_vars,
+    const std::vector<ScalarT>&  _elmn_vals,
     MatrixT&                     _A,
     VectorT&                     _x,
     VectorT&                     _rhs );
@@ -140,32 +152,9 @@ void eliminate_var(
     VectorT&               _x,
     VectorT&               _rhs );
 
-/// update indices of eliminated variables
-/**
- *  @param _evar indices of variables that were eliminated
- *  @param _idx index map to be changed.
- *  @param _dummy value to which eliminated entries of _idx are set.  */
-template<class IntegerT, class IntegerT2>
-void eliminate_vars_idx(
-    const std::vector<IntegerT >&  _evar,
-    std::vector<IntegerT2>&        _idx,
-    IntegerT2                      _dummy = -1,
-    IntegerT2                      _range = -1);
-
-/// update index of eliminated variable
-/**  Specialization to update only one eliminated variable
- *  @param _evar index of variable that was eliminated
- *  @param _idx index map to be changed.
- *  @param _dummy value to which eliminated entry of _idx is set.  */
-template<class IntegerT, class IntegerT2>
-void eliminate_var_idx(
-    const IntegerT          _evar,
-    std::vector<IntegerT2>& _idx,
-    IntegerT2               _dummy = -1 );
-
 
 /// do in-place elimination in CSC format by setting row and column to zero and
-/// diagonal entry to zero
+/// diagonal entry to one
 /**
  *  @param _j index of variable to be eliminated
  *  @param _value_j value c of x_i to be eliminated, x_i = c
@@ -174,6 +163,14 @@ void eliminate_var_idx(
  *  @param _rhs right-hand side vector of equation system */
 template<class ScalarT, class VectorT, class RealT>
 void fix_var_csc_symmetric( const unsigned int                _j,
+			    const ScalarT                     _value_j,
+			    typename gmm::csc_matrix<RealT>&  _A,
+			    VectorT&                          _x,
+			    VectorT&                          _rhs );
+
+// Same as above but use Eigen internally
+template<class ScalarT, class VectorT, class RealT>
+void fix_var_csc_symmetric_eigen( const unsigned int                _j,
 			    const ScalarT                     _value_j,
 			    typename gmm::csc_matrix<RealT>&  _A,
 			    VectorT&                          _x,
@@ -240,8 +237,12 @@ double residuum_norm( MatrixT& _A, VectorT& _x, VectorT& _rhs );
   * @param _F Factored Matrix (input)
   * @param _Q Quadratic Matrix (output)
   * @param _rhs right hand side (output) */
-template<class MatrixT, class MatrixT2, class VectorT>
-void factored_to_quadratic( MatrixT& _F, MatrixT2& _Q, VectorT& _rhs);
+template <class MatrixT, class MatrixT2, class VectorT>
+void factored_to_quadratic(const MatrixT& _F, MatrixT2& _Q, VectorT& _rhs);
+
+// same as above but internally uses Eigen
+template <class MatrixT, class MatrixT2, class VectorT>
+void factored_to_quadratic_eigen(const MatrixT& _F, MatrixT2& _Q, VectorT& _rhs);
 
 template<class MatrixT, class VectorT>
   void factored_to_quadratic_rhs_only( MatrixT& _F, VectorT& _rhs);
@@ -284,46 +285,49 @@ inline std::ostream& operator <<(std::ostream &o, const std::vector<int>& m)    
 
 // Write a gmm matrix in MatrixMarket format
 template <typename MatrixT>
-void write_gmm_matrix_ascii(const std::string& _filename, const MatrixT& _m);
+void write_matrix_ascii(const std::string& _filename, const MatrixT& _m);
 
 // Specialization of method above for csc matrices
 template <>
-void write_gmm_matrix_ascii(const std::string& _filename, const CSCMatrix& _m);
+void write_matrix_ascii(const std::string& _filename, const CSCMatrix& _m);
 
 // Load a gmm matrix from MatrixMarket format
 template <typename MatrixT>
-void read_gmm_matrix_ascii(const std::string& _filename, MatrixT& _m);
+void read_matrix_ascii(const std::string& _filename, MatrixT& _m);
 
 // Specialization of method above for WSColMatrix
 template <>
-void read_gmm_matrix_ascii(const std::string& _filename, WSColMatrix& _m);
+void read_matrix_ascii(const std::string& _filename, WSColMatrix& _m);
 
 // Write a gmm vector as a nx1 matrix in MatrixMarket format
 template <typename VectorT>
-void write_gmm_vector_ascii(const std::string& _filename, const VectorT& _v);
+void write_vector_ascii(const std::string& _filename, const VectorT& _v);
 
 // Load a vector (or rather a nx1 matrix, see write_gmm_vector_ascii) from
 // MatrixMarket format
 template <typename T>
-void read_gmm_vector_ascii(const std::string& _filename, std::vector<T>& _v);
+void read_vector_ascii(const std::string& _filename, std::vector<T>& _v);
 
 
 // Write a gmm matrix in our custom binary format
 template <typename MatrixT>
-void write_gmm_matrix(const std::string& _filename, const MatrixT& _m);
+void write_matrix(const std::string& _filename, const MatrixT& _m);
 
 // Load a gmm matrix from our custom binary format
 template <typename MatrixT>
-void read_gmm_matrix(const std::string& _filename, MatrixT& _m);
+void read_matrix(const std::string& _filename, MatrixT& _m);
+
+template <>
+void read_matrix(const std::string& _filename, CSCMatrix& _m);
 
 // Write a gmm vector as a nx1 matrix in our custom binary format
 template <typename VectorT>
-void write_gmm_vector(const std::string& _filename, const VectorT& _v);
+void write_vector(const std::string& _filename, const VectorT& _v);
 
 // Load a vector (or rather a nx1 matrix, see write_eigen_vector) from
 // our custom binary format
 template <typename T>
-void read_gmm_vector(const std::string& _filename, std::vector<T>& _v);
+void read_vector(const std::string& _filename, std::vector<T>& _v);
 
 
 //=============================================================================

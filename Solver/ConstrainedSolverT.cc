@@ -34,7 +34,8 @@
 
 #include "ConstrainedSolver.hh"
 #include <CoMISo/Utils/gmm.hh>
-#include "GMM_Tools.hh"
+#include <CoMISo/Solver/GMM_Tools.hh>
+#include <CoMISo/Solver/Eigen_Tools.hh>
 #include <float.h>
 #include <CoMISo/Utils/MutablePriorityQueueT.hh>
 
@@ -160,10 +161,10 @@ ConstrainedSolver::solve(
   DEB_enter_func;
 
 #ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_gmm_matrix("ConstrainedSolver_constraints.mtx", _constraints);
-  write_gmm_matrix("ConstrainedSolver_system.mtx", _A);
-  write_gmm_vector("ConstrainedSolver_rhs.vec", _rhs);
-  write_gmm_vector("ConstrainedSolver_idx_to_round.vec", _idx_to_round);
+  write_matrix("ConstrainedSolver_constraints.mtx", _constraints);
+  write_matrix("ConstrainedSolver_system.mtx", _A);
+  write_vector("ConstrainedSolver_rhs.vec", _rhs);
+  write_vector("ConstrainedSolver_idx_to_round.vec", _idx_to_round);
 #endif
 
   // show options dialog
@@ -861,14 +862,8 @@ ConstrainedSolver::eliminate_constraints(
   // eliminate columns
   eliminate_columns(_Bcol, elim_cols);
 
-  // TODO FIXME Size -1 ?!?!
-  // init _new_idx vector
-  _new_idx.resize(gmm::mat_ncols(_constraints));
-  for (unsigned int i = 0; i < _new_idx.size(); ++i)
-    _new_idx[i] = i;
-
-  // update _new_idx w.r.t. eliminated cols
-  COMISO_GMM::eliminate_vars_idx(elim_cols, _new_idx, -1);
+  _new_idx =
+      COMISO_EIGEN::make_new_index_map(elim_cols, gmm::mat_ncols(_constraints));
 
   // update _idx_to_round (in place)
   std::vector<int> round_old(_idx_to_round);
@@ -1019,14 +1014,9 @@ ConstrainedSolver::eliminate_constraints(
 
   DEB_out_if(noisy_ > 2, 2, " Constraints eliminated " << sw.stop() / 1000.0 << "\n");
   sw.start();
-  // init _new_idx vector
-//  _new_idx.resize( gmm::mat_ncols(_constraints));
-  _new_idx.resize(gmm::mat_ncols(_A) + 1);
-  for (unsigned int i = 0; i < _new_idx.size(); ++i)
-    _new_idx[i] = i;
 
-  // update _new_idx w.r.t. eliminated cols
-  COMISO_GMM::eliminate_vars_idx(elim_varids, _new_idx, -1);
+  _new_idx = COMISO_EIGEN::make_new_index_map(
+      elim_varids, static_cast<int>(gmm::mat_ncols(_A) + 1));
 
   // update _idx_to_round (in place)
   unsigned int wi = 0;

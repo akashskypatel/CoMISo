@@ -282,6 +282,7 @@ private:
 			       CMatrixT& _cmat );
 
 
+  // TODO: this method is never used?
   template<class CMatrixT, class VectorT, class VectorIT>
   double setup_and_solve_system( CMatrixT& _B,
 			       VectorT&  _x,

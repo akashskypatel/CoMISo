@@ -91,7 +91,7 @@ bool IterativeSolverT<RealT>::conjugate_gradient(const Matrix& _A, Vector& _x,
   q_.resize(_x.size());
   r_.resize(_x.size());
   d_.resize(_x.size());
-  gmm::copy(_x, p_);
+  gmm::copy(_x, p_); // gets overwritten before being used?
 
   // initialize diagonal (for relative norm)
   for (unsigned int i = 0; i < _x.size(); ++i)
@@ -100,7 +100,7 @@ bool IterativeSolverT<RealT>::conjugate_gradient(const Matrix& _A, Vector& _x,
   // start with iteration 0
   int cur_iter(0);
 
-  gmm::mult(_A, gmm::scaled(_x, Real(-1)), _rhs, r_);
+  gmm::mult(_A, gmm::scaled(_x, Real(-1)), _rhs, r_); // r_ = _A * -_x + _rhs
   rho = gmm::vect_sp(r_, r_);
   gmm::copy(r_, p_);
 

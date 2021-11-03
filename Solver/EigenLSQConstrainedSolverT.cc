@@ -167,7 +167,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::Impl(
     fixed.setFromTriplets(trips.begin(), trips.end());
     std::string filename = "EigenLSQConstrainedSolver_" +
                            std::to_string(solver_id_) + "_fixed.mtx";
-    COMISO_EIGEN::write_eigen_matrix(filename, fixed);
+    COMISO_EIGEN::write_matrix(filename, fixed);
   }
 #endif
 }
@@ -259,8 +259,8 @@ void EigenLSQConstrainedSolverT<DIM>::Impl::add_linear_constraints(
                            std::to_string(solver_id_) +
                            "_constraint_set_";
     filename += std::to_string(n_constraint_sets_++);
-    COMISO_EIGEN::write_eigen_matrix(filename + "_C.mtx", C);
-    COMISO_EIGEN::write_eigen_matrix(filename + "_rhs.mtx", rhs);
+    COMISO_EIGEN::write_matrix(filename + "_C.mtx", C);
+    COMISO_EIGEN::write_matrix(filename + "_rhs.mtx", rhs);
   }
 #endif
 
@@ -432,7 +432,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
     Eigen::SparseMatrix<double> A(row_nmbr_, n);
     A.setFromTriplets(A_coeff_with_fixed_.begin(), A_coeff_with_fixed_.end());
     auto flnm_prfx = "EigenLSQConstrainedSolver_" + std::to_string(solver_id_);
-    COMISO_EIGEN::write_eigen_matrix(flnm_prfx + "_A.mtx", A);
+    COMISO_EIGEN::write_matrix(flnm_prfx + "_A.mtx", A);
 
     Eigen::MatrixXd B(row_nmbr_, DIM);
     for (int i = 0; i < DIM; ++i)
@@ -440,7 +440,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
       for (int j = 0; j < B_coeff_with_fixed_.size(); ++j)
         B(j, i) = B_coeff_with_fixed_[j][i];
     }
-    COMISO_EIGEN::write_eigen_matrix(flnm_prfx + "_b.mtx", B);
+    COMISO_EIGEN::write_matrix(flnm_prfx + "_b.mtx", B);
   }
 #endif
 
@@ -581,7 +581,7 @@ EigenLSQConstrainedSolverT<DIM>::Impl::solve()
     }
     auto filename =
         "EigenLSQConstrainedSolver_" + std::to_string(solver_id_) + "_sol.mtx";
-    COMISO_EIGEN::write_eigen_matrix(filename, sol);
+    COMISO_EIGEN::write_matrix(filename, sol);
   }
 #endif
 

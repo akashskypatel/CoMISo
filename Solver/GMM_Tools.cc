@@ -43,9 +43,13 @@ namespace COMISO_GMM
 {
 using namespace COMISO_STD;
 
-template void factored_to_quadratic(WSRowMatrix&, WSColMatrix&, DoubleVector&);
-template void factored_to_quadratic(WSRowMatrix&, RSColMatrix&, DoubleVector&);
-template void factored_to_quadratic(RSRowMatrix&, RSColMatrix&, DoubleVector&);
+template void factored_to_quadratic(const WSRowMatrix&, WSColMatrix&, DoubleVector&);
+template void factored_to_quadratic(const WSRowMatrix&, RSColMatrix&, DoubleVector&);
+template void factored_to_quadratic(const RSRowMatrix&, RSColMatrix&, DoubleVector&);
+
+template void factored_to_quadratic_eigen(const WSRowMatrix&, WSColMatrix&, DoubleVector&);
+template void factored_to_quadratic_eigen(const WSRowMatrix&, RSColMatrix&, DoubleVector&);
+template void factored_to_quadratic_eigen(const RSRowMatrix&, RSColMatrix&, DoubleVector&);
 
 template void eliminate_csc_vars(const IntVector&, const DoubleVector&,
   CSCMatrix&, DoubleVector&, DoubleVector&);
@@ -60,76 +64,78 @@ template double residuum_norm(CSCMatrix&, DoubleVector&, DoubleVector&);
 
 template double residuum_norm(WSColMatrix&, DoubleVector&, DoubleVector&);
 
-template void fix_var_csc_symmetric(const unsigned int, const double,
-  CSCMatrix&, DoubleVector&, DoubleVector&);
+template void fix_var_csc_symmetric(
+    const unsigned int, const double, CSCMatrix&, DoubleVector&, DoubleVector&);
 
-template void eliminate_vars_idx(const IntVector&, IntVector&, int, int);
+template void fix_var_csc_symmetric_eigen(
+    const unsigned int, const double, CSCMatrix&, DoubleVector&, DoubleVector&);
 
 
-template void write_gmm_matrix_ascii(
+template void write_matrix_ascii(
     const std::string& _filename, const WSRowMatrix& _m);
 
-template void write_gmm_matrix_ascii(
+template void write_matrix_ascii(
     const std::string& _filename, const WSColMatrix& _m);
 
-template void write_gmm_matrix_ascii(
+template void write_matrix_ascii(
     const std::string& _filename, const RSRowMatrix& _m);
 
-template void write_gmm_matrix_ascii(
+template void write_matrix_ascii(
     const std::string& _filename, const RSColMatrix& _m);
 
-template void read_gmm_matrix_ascii(
+template void read_matrix_ascii(
     const std::string& _filename, WSRowMatrix& _m);
 
-template void write_gmm_vector_ascii(
+template void write_vector_ascii(
     const std::string& _filename, const std::vector<double>& _v);
 
-template void write_gmm_vector_ascii(
+template void write_vector_ascii(
     const std::string& _filename, const std::vector<int>& _v);
 
-template void read_gmm_vector_ascii(
+template void read_vector_ascii(
     const std::string& _filename, std::vector<double>& _v);
 
-template void read_gmm_vector_ascii(
+template void read_vector_ascii(
     const std::string& _filename, std::vector<int>& _v);
 
 
-template void write_gmm_matrix(
+template void write_matrix(
     const std::string& _filename, const WSRowMatrix& _m);
 
-template void write_gmm_matrix(
+template void write_matrix(
     const std::string& _filename, const WSColMatrix& _m);
 
-template void write_gmm_matrix(
+template void write_matrix(
     const std::string& _filename, const RSRowMatrix& _m);
 
-template void write_gmm_matrix(
+template void write_matrix(
     const std::string& _filename, const RSColMatrix& _m);
 
-template void read_gmm_matrix(
-    const std::string& _filename, WSRowMatrix& _m);
+template void read_matrix(const std::string& _filename, WSRowMatrix& _m);
 
-template void read_gmm_matrix(
-    const std::string& _filename, WSColMatrix& _m);
+template void read_matrix(const std::string& _filename, WSColMatrix& _m);
 
-template void write_gmm_vector(
+template void write_vector(
     const std::string& _filename, const std::vector<double>& _v);
 
-template void write_gmm_vector(
+template void write_vector(
     const std::string& _filename, const std::vector<int>& _v);
 
-template void read_gmm_vector(
+template void read_vector(
     const std::string& _filename, std::vector<double>& _v);
 
-template void read_gmm_vector(
+template void read_vector(
     const std::string& _filename, std::vector<int>& _v);
+
+template void read_vector(
+    const std::string& _filename, std::vector<unsigned int>& _v);
 
 
 
 // specializations
 
 template <>
-void write_gmm_matrix_ascii(
+void write_matrix_ascii(
     const std::string& _filename, const CSCMatrix& _m)
 {
   if (_m.ncols() == 0 || _m.nrows() == 0)
@@ -139,10 +145,20 @@ void write_gmm_matrix_ascii(
 
 
 template <>
-void read_gmm_matrix_ascii(
+void read_matrix_ascii(
     const std::string& _filename, WSColMatrix& _m)
 {
   gmm::MatrixMarket_load(_filename.c_str(), _m);
+}
+
+template <>
+void read_matrix(const std::string& _filename, CSCMatrix& _m)
+{
+  using Scalar = typename gmm::linalg_traits<CSCMatrix>::value_type;
+
+  Eigen::SparseMatrix<Scalar> m;
+  COMISO_EIGEN::read_matrix(_filename, m);
+  COMISO_EIGEN::eigen_to_gmm_csc(m, _m);
 }
 
 
