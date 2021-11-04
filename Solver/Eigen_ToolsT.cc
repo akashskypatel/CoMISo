@@ -1132,7 +1132,7 @@ void eigen_to_gmm_csc(
 
 
 template <class EIGEN_VectorT, class GMM_VectorT>
-void from_eigen_vec(const EIGEN_VectorT& _E, const GMM_VectorT& _G)
+void from_eigen_vec(const EIGEN_VectorT& _E, GMM_VectorT& _G)
 {
   gmm::resize(_G, _E.rows());
   for (int i = 0; i < _E.rows(); ++i)
