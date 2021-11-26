@@ -84,10 +84,11 @@ public:
   bool update_system_eigen(const Eigen_MatrixT& _mat);
 
 
-  bool solve(double *             _x0, double *             _b);
+  bool solve(double *             _x, double *             _b);
 
+  bool solve(std::vector<double>& _x, std::vector<double>& _b);
 
-  bool solve(std::vector<double>& _x0, std::vector<double>& _b);
+  bool solve(Eigen::VectorXd& _x, const Eigen::VectorXd& _b);
 
 
   bool& show_timings();

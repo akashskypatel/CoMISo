@@ -42,6 +42,7 @@
 #include "Eigen_Tools.hh"
 #include <CoMISo/Utils/gmm.hh>
 #include <CoMISo/Utils/CoMISoError.hh>
+#include <CoMISo/Utils/Tools.hh>
 #include <Base/Debug/DebOut.hh>
 #include <unsupported/Eigen/SparseExtra>
 #include <queue>
@@ -330,6 +331,20 @@ void permute(
 
 //-----------------------------------------------------------------------------
 
+template <class MatrixT, class VectorT>
+double residuum_norm(const MatrixT& _A, const VectorT& _x, const VectorT& _rhs)
+{
+  DEB_error_if(
+      _A.cols() != _x.rows(), "Matrix and vectors dimonsions don't fit");
+  DEB_error_if(
+      _A.rows() != _rhs.rows(), "Matrix and vectors dimonsions don't fit");
+
+  return (_A * _x - _rhs).norm();
+}
+
+
+//-----------------------------------------------------------------------------
+
 template <class ScalarT, int OPTIONS1, class Storage1T, int OPTIONS2,
     class Storage2T>
 void factored_to_quadratic(
@@ -425,11 +440,7 @@ template <class IntegerT>
 std::vector<int> make_new_index_map(
     const std::vector<IntegerT>& _elmn_vars, int _n_vars)
 {
-  // create sorted version of _elmn_vars without duplicates
-  auto elmn_vars = _elmn_vars;
-  std::sort(elmn_vars.begin(), elmn_vars.end());
-  elmn_vars.erase(
-      std::unique(elmn_vars.begin(), elmn_vars.end()), elmn_vars.end());
+  const auto elmn_vars = make_sorted_unique(_elmn_vars);
 
   std::vector<int> new_idx_map(_n_vars, -1);
 
@@ -522,9 +533,8 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
   if (_A.isCompressed())
     _A.makeCompressed();
 
-  fix_var_csc_symmetric(static_cast<int>(_A.rows()), _i, _xi,
-      _A.valuePtr(), _A.innerIndexPtr(), _A.outerIndexPtr(), _x.data(),
-      _rhs.data());
+  fix_var_csc_symmetric(_i, _xi, _A.valuePtr(), _A.innerIndexPtr(),
+      _A.outerIndexPtr(), _x.data(), _rhs.data());
 }
 
 
@@ -532,12 +542,10 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
 
 
 template <class ScalarT, class IntegerT, class RealT>
-void fix_var_csc_symmetric(const int _size, const unsigned int _i,
-    const ScalarT _xi, RealT* const _val, IntegerT* const _rows,
-    IntegerT* const _cols, ScalarT* const _x, ScalarT* const _rhs)
+void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
+    RealT* const _val, IntegerT* const _rows, IntegerT* const _cols,
+    ScalarT* const _x, ScalarT* const _rhs)
 {
-  const auto n = _size;
-
   // update x
   _x[_i] = _xi;
 
@@ -549,6 +557,7 @@ void fix_var_csc_symmetric(const int _size, const unsigned int _i,
   // "clear" means set all values to zero, except for the diagonal element
   // which is set to one. Also, the right hand side is updated by
   // subtracting the current matrix value times the fixed value.
+  // Note: in CSC format, _cols should contain n_cols + 1 elements.
   for (auto iv = _cols[_i]; iv < _cols[_i + 1]; ++iv)
   {
     if (_rows[iv] == _i)

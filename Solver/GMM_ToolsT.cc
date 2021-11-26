@@ -721,8 +721,8 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
     fix_var_csc_symmetric_eigen(_i, _xi, _A, _x, _rhs);
   else
   {
-    COMISO_EIGEN::fix_var_csc_symmetric(static_cast<int>(_A.nc), _i,
-        _xi, _A.pr.data(), _A.ir.data(), _A.jc.data(), _x.data(), _rhs.data());
+    COMISO_EIGEN::fix_var_csc_symmetric(_i, _xi, _A.pr.data(), _A.ir.data(),
+        _A.jc.data(), _x.data(), _rhs.data());
   }
 }
 

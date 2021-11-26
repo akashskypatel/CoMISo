@@ -95,6 +95,16 @@ bool is_symmetric( const MatrixT& _A);
 template< class Eigen_MatrixT, class IntT >
 void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_MatrixT& _A);
 
+
+/// Residuum norm of linear system
+/** residuum = Ax-b
+ * @param _A Matrix
+ * @param _x Variables
+ * @param _rhs right hand side
+ * @return norm Ax-rhs */
+template <class MatrixT, class VectorT>
+double residuum_norm(const MatrixT& _A, const VectorT& _x, const VectorT& _rhs);
+
 /// Convert factored LSE to quadratic representation
 /** Conversion is done by computing _F^t _F where the last column is the _rhs
  * @param _F Factored Matrix (input)
@@ -157,10 +167,12 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
     Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs);
 
 // same as above but operate directly on csc storage buffers
+// See https://en.wikipedia.org/wiki/Sparse_matrix
+// for description of csc format.
 template <class ScalarT, class IntegerT, class RealT>
-void fix_var_csc_symmetric(const int _size, const unsigned int _i,
-    const ScalarT _xi, RealT* const _val, IntegerT* const _rows,
-    IntegerT* const _cols, ScalarT* const _x, ScalarT* const _rhs);
+void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
+    RealT* const _val, IntegerT* const _rows, IntegerT* const _cols,
+    ScalarT* const _x, ScalarT* const _rhs);
 
 
 #if COMISO_SUITESPARSE_AVAILABLE
