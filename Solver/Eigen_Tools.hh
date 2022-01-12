@@ -34,6 +34,8 @@
 //== INCLUDES =================================================================
 
 #include <Base/Code/Quality.hh>
+#include <Base/Debug/DebError.hh>
+#include <Base/Debug/DebOut.hh>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -62,6 +64,133 @@ namespace COMISO_EIGEN
 
     A collection of helper functions for manipulating (Eigen) matrices.
 */
+
+
+// A matrix class based on Eigen that stores a matrix as an std::vector of
+// Eigen::SparseVector. This class is meant to be used when one works on a
+// sparse matrix but wants to often change elements, e.g. performing gaussian
+// elimination. One Eigen::SparseMatrix classes such operations are slow as
+// elements are ordered and element insertion thus requires frequent memory
+// reallocation and shifting of elements. With this class, these effects are
+// limited to individual rows/columns and is therefore a lot faster.
+// This class supports some of the functions to access elements that
+// that Eigen::SparseMatrix also offers, but it does not support many other
+// operations such as multiplication, transpose, etc.
+template <typename ScalarT, int OPTIONS, typename StorageT>
+class HalfSparseMatrixBase
+{
+public:
+  static constexpr int ORDERING = OPTIONS;
+  static constexpr int OTHER_ORDERING = 1 - ORDERING;
+  using Matrix      = Eigen::SparseMatrix<ScalarT, ORDERING, StorageT>;
+  using OtherMatrix = Eigen::SparseMatrix<ScalarT, OTHER_ORDERING, StorageT>;
+  using SparseVector = Eigen::SparseVector<ScalarT>;
+  using Index = Eigen::Index;
+
+  HalfSparseMatrixBase() { inner_size_ = 0; }
+  HalfSparseMatrixBase(const Matrix& _mat);
+  HalfSparseMatrixBase(const OtherMatrix& _mat);
+
+  template <typename Scalar2T, typename Storage2T>
+  HalfSparseMatrixBase(
+      const HalfSparseMatrixBase<Scalar2T, OTHER_ORDERING, Storage2T>& _mat);
+
+  HalfSparseMatrixBase operator=(const Matrix& _mat)
+  {
+    std::swap(HalfSparseMatrixBase(_mat), *this);
+    return *this;
+  }
+
+  operator Matrix() const;
+
+  const SparseVector& innerVector(Index _index) const { return mat_[_index]; }
+
+  int outerSize() const { return (int)mat_.size(); }
+  int innerSize() const { return inner_size_; }
+
+  void outerResize(size_t _size) { mat_.resize(_size); }
+
+  void innerResize(size_t _size)
+  {
+    for (auto& v : mat_)
+      v.resize(_size);
+  }
+
+  void prune(double _eps)
+  {
+    for (auto& vec : mat_)
+      vec.prune(_eps);
+  }
+
+protected:
+  std::vector<SparseVector> mat_;
+  int inner_size_;
+};
+
+// forward declaration
+template <typename ScalarT> class HalfSparseRowMatrix;
+
+template <typename ScalarT>
+class HalfSparseColMatrix: public HalfSparseMatrixBase<ScalarT, Eigen::ColMajor, int>
+{
+public:
+
+  using Base = HalfSparseMatrixBase<ScalarT, Eigen::ColMajor, int>;
+  using SparseVector = typename Base::SparseVector;
+  using Index = typename Base::Index;
+  using Matrix = Eigen::SparseMatrix<ScalarT, Eigen::ColMajor, int>;
+  using OtherMatrix = Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, int>;
+
+  HalfSparseColMatrix() : Base() {}
+  HalfSparseColMatrix(const Matrix& _m) : Base(_m) {}
+  HalfSparseColMatrix(const OtherMatrix& _m) : Base(_m) {}
+  HalfSparseColMatrix(const HalfSparseRowMatrix<ScalarT>& _m) : Base(_m) {}
+
+        SparseVector& col(Index _col)       { return this->mat_[_col]; }
+  const SparseVector& col(Index _col) const { return this->mat_[_col]; }
+
+  ScalarT& coeffRef(Index _row, Index _col)       { return this->mat_[_col].coeffRef(_row); }
+  ScalarT  coeff   (Index _row, Index _col) const { return this->mat_[_col].coeff   (_row); }
+
+  int cols() const { return (int)this->mat_.size(); }
+  int rows() const { return this->inner_size_; }
+};
+
+
+template <typename ScalarT>
+class HalfSparseRowMatrix : public HalfSparseMatrixBase<ScalarT, Eigen::RowMajor, int>
+{
+public:
+  using Base = HalfSparseMatrixBase<ScalarT, Eigen::RowMajor, int>;
+  using SparseVector = typename Base::SparseVector;
+  using Index = typename Base::Index;
+  using Matrix = Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, int>;
+  using OtherMatrix = Eigen::SparseMatrix<ScalarT, Eigen::ColMajor, int>;
+
+  HalfSparseRowMatrix() : Base() {}
+  HalfSparseRowMatrix(const Matrix& _m) : Base(_m) {}
+  HalfSparseRowMatrix(const OtherMatrix& _m) : Base(_m) {}
+  HalfSparseRowMatrix(const HalfSparseColMatrix<ScalarT>& _m) : Base(_m) {}
+
+  Eigen::Matrix<ScalarT, Eigen::Dynamic, 1> col(Index _col) const
+  {
+    const auto size = this->mat_.size();
+    Eigen::Matrix<ScalarT, Eigen::Dynamic, 1> vec(size);
+    for (size_t i = 0; i < size; ++i)
+      vec[i] = this->mat_[i].coeff(_col);
+    return vec;
+  }
+
+        SparseVector& row(Index _row)       { return this->mat_[_row]; }
+  const SparseVector& row(Index _row) const { return this->mat_[_row]; }
+
+  ScalarT& coeffRef(Index _row, Index _col)       { return this->mat_[_row].coeffRef(_col); }
+  ScalarT  coeff   (Index _row, Index _col) const { return this->mat_[_row].coeff   (_col); }
+
+  int cols() const { return this->inner_size_; }
+  int rows() const { return (int)this->mat_.size(); }
+};
+
 
 
 //== FUNCTION DEFINITION ======================================================
@@ -94,6 +223,24 @@ bool is_symmetric( const MatrixT& _A);
 
 template< class Eigen_MatrixT, class IntT >
 void permute( const Eigen_MatrixT& _QR, const std::vector< IntT>& _Pvec, Eigen_MatrixT& _A);
+
+// Count non zero elements in row of a matrix.
+// This operation is linear in time, but ignores all zero values.
+// In contrast, Eigen's nonZeros method is constant time, but includes all
+// entries stored in the matrix, also zero entries (e.g. after adding and
+// subtracting 1 from a coefficient)
+// _ignore_last_element allows to ignore the last element which in CoMISo
+// often represents the rhs of an equation and may not need to be included in
+// the count.
+template <class ScalarT, class StorageT>
+int count_non_zeros_in_row(
+    const Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, StorageT>& _mat,
+    int _row, bool _ignore_last_element);
+
+// same as above but on a sparse vector
+template <class ScalarT>
+int count_non_zeros(
+    const Eigen::SparseVector<ScalarT>& _vec, bool _ignore_last_element);
 
 
 /// Residuum norm of linear system
@@ -303,6 +450,7 @@ void read_matrix(const std::string& _filename,
     Eigen::Matrix<ScalarT, ROWS, COLS>& _m);
 
 
+
 //=============================================================================
 } // namespace COMISO_Eigen
 //=============================================================================
@@ -311,7 +459,7 @@ void read_matrix(const std::string& _filename,
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE
-//=============================================================================//=============================================================================
+//=============================================================================
 #endif // Eigen_TOOLS_HH defined
 //=============================================================================
 

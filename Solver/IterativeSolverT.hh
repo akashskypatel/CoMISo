@@ -9,7 +9,6 @@
 
 //== INCLUDES =================================================================
 
-#include <CoMISo/Utils/gmm.hh>
 #include <Eigen/Sparse>
 #include <deque>
 
@@ -34,20 +33,12 @@ template <class RealT> class IterativeSolverT
 public:
   typedef unsigned int uint;
   typedef RealT Real;
-  typedef std::vector<Real> Vector;
   typedef std::vector<uint> IndexVector;
-  typedef gmm::csc_matrix<Real> Matrix;
-  typedef Eigen::SparseMatrix<Real, Eigen::ColMajor> EigenMatrix;
-  typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> EigenVector;
+  typedef Eigen::SparseMatrix<Real, Eigen::ColMajor> Matrix;
+  typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> Vector;
 
   // local Gauss-Seidel
   bool gauss_seidel_local(const Matrix& _A, Vector& _x, const Vector& _rhs,
-      const IndexVector& _idxs, const int _max_iter, const Real& _tolerance);
-
-  bool gauss_seidel_local_eigen(const Matrix& _A, Vector& _x, const Vector& _rhs,
-      const IndexVector& _idxs, const int _max_iter, const Real& _tolerance);
-
-  bool gauss_seidel_local(const EigenMatrix& _A, EigenVector& _x, const EigenVector& _rhs,
       const IndexVector& _idxs, const int _max_iter, const Real& _tolerance);
 
   // get the indices of any variables updated during the last local Gauss-Seidel
@@ -60,20 +51,9 @@ public:
   bool conjugate_gradient(const Matrix& _A, Vector& _x, const Vector& _rhs,
       int& _max_iter, Real& _tolerance);
 
-  // conjugate gradient
-  bool conjugate_gradient_eigen(const Matrix& _A, Vector& _x, const Vector& _rhs,
-      int& _max_iter, Real& _tolerance);
-
-  // conjugate gradient
-  bool conjugate_gradient(const EigenMatrix& _A, EigenVector& _x, const EigenVector& _rhs,
-      int& _max_iter, Real& _tolerance);
-
 private:
   // compute relative norm
   Real vect_norm_rel(const Vector& _v, const Vector& _diag) const;
-
-  // compute relative norm
-  Real vect_norm_rel(const EigenVector& _v, const EigenVector& _diag) const;
 
 private:
   // context  for Conjugate Gradient
@@ -81,11 +61,6 @@ private:
   Vector q_;
   Vector r_;
   Vector d_;
-
-  EigenVector ep_;
-  EigenVector eq_;
-  EigenVector er_;
-  EigenVector ed_;
 
   // context for local Gauss-Seidel
   IndexVector indx_temp_;

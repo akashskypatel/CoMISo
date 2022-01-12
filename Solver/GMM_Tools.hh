@@ -52,10 +52,6 @@
 namespace COMISO_GMM
 {
 
-// temporary flag to indicate that we want to use Eigen instead of GMM
-inline bool& use_eigen() { static bool use = false; return use; }
-
-
 /** \class GMMTools GMM_Tools.hh
 
     A collection of helper functions for manipulating (gmm) matrices.

@@ -101,7 +101,7 @@ private:
   // dimension n_
   unsigned int n_;
 
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldlt_;
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> ldlt_;
 
   bool show_timings_;
 };

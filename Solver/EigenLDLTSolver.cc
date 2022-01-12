@@ -115,6 +115,9 @@ namespace COMISO
 template bool EigenLDLTSolver::update_system_gmm(const gmm::csc_matrix<double>&);
 template bool EigenLDLTSolver::calc_system_gmm(const gmm::csc_matrix<double>&);
 
+template bool EigenLDLTSolver::update_system_eigen(const Eigen::SparseMatrix<double>&);
+template bool EigenLDLTSolver::calc_system_eigen(const Eigen::SparseMatrix<double>&);
+
 }//namespace COMISO
 
 //=============================================================================

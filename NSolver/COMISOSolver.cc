@@ -17,7 +17,7 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ========================================================== 
+//== IMPLEMENTATION ==========================================================
 
 
 // ********** SOLVE **************** //
@@ -27,8 +27,7 @@ solve(NProblemInterface*                  _problem,
       std::vector<NConstraintInterface*>& _constraints,
       std::vector<PairUiV>&               _discrete_constraints,
       double                              _reg_factor,
-      bool                                _show_miso_settings,
-      bool                                _show_timings        )
+      bool                                _show_miso_settings)
 {
 
   //----------------------------------------------
@@ -115,7 +114,7 @@ solve(NProblemInterface*                  _problem,
   //----------------------------------------------
 
   cs_.solve(C,A,x,rhs,round_idxs,
-            _reg_factor, _show_miso_settings, _show_timings);
+            _reg_factor, _show_miso_settings);
 
   //  void solve(
   //      RMatrixT& _constraints,
@@ -124,8 +123,7 @@ solve(NProblemInterface*                  _problem,
   //      VectorT&  _rhs,
   //      VectorIT& _idx_to_round,
   //      double    _reg_factor = 0.0,
-  //      bool      _show_miso_settings = true,
-  //      bool      _show_timings = true );
+  //      bool      _show_miso_settings = true );
 
   //----------------------------------------------
   // 5. store result

@@ -44,6 +44,7 @@
 #include <CoMISo/Utils/CoMISoError.hh>
 #include <CoMISo/Utils/Tools.hh>
 #include <Base/Debug/DebOut.hh>
+#include <Base/Debug/DebTime.hh>
 #include <unsupported/Eigen/SparseExtra>
 #include <queue>
 
@@ -53,6 +54,85 @@ namespace COMISO_EIGEN
 {
 
 //== IMPLEMENTATION ==========================================================
+
+
+template <typename ScalarT, int OPTIONS, typename StorageT>
+HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::HalfSparseMatrixBase(
+    const Matrix& _mat)
+{
+  const auto outer_size = _mat.outerSize();
+  inner_size_ = (int)_mat.innerSize();
+  mat_.resize(outer_size);
+  for (int i = 0; i < outer_size; ++i)
+    mat_[i] = _mat.innerVector(i);
+}
+
+template <typename ScalarT, int OPTIONS, typename StorageT>
+inline HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::HalfSparseMatrixBase(
+    const OtherMatrix& _mat)
+{
+  const auto outer_size = _mat.innerSize(); // note switch due to other ordering
+  inner_size_ = (int)_mat.outerSize();
+  mat_.resize(outer_size);
+  innerResize(inner_size_);
+  for (int i = 0; i < inner_size_; ++i)
+  {
+    for (typename OtherMatrix::InnerIterator it(_mat, i); it; ++it)
+      coeffRef(it.row(), it.col()) = it.value();
+  }
+}
+
+template <typename ScalarT, int OPTIONS, typename StorageT>
+template <typename Scalar2T, typename Storage2T>
+inline HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::HalfSparseMatrixBase(
+    const HalfSparseMatrixBase<Scalar2T, OTHER_ORDERING, Storage2T>& _mat)
+{
+  const auto outer_size = _mat.innerSize();
+  inner_size_ = _mat.outerSize();
+  mat_.resize(outer_size);
+  innerResize(inner_size_);
+  for (int i = 0; i < inner_size_; ++i)
+  {
+    for (typename SparseVector::InnerIterator it(_mat.innerVector(i)); it; ++it)
+      mat_[it.index()].coeffRef(i) = it.value();
+  }
+}
+
+template <typename ScalarT, int OPTIONS, typename StorageT>
+HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::operator Matrix() const
+{
+  Matrix _mat;
+  const size_t outer_size = mat_.size();
+  if (outer_size == 0)
+    return _mat;
+
+  int ordering = ORDERING; // TODO: if constexpr
+  if (ordering == Eigen::ColMajor)
+    _mat.resize(inner_size_, outer_size);
+  else
+    _mat.resize(outer_size, inner_size_);
+
+  std::vector<int> sizes;
+  for (size_t i = 0; i < outer_size; ++i)
+    sizes.push_back(COMISO_EIGEN::count_non_zeros(mat_[i], false));
+
+  _mat.reserve(sizes);
+  for (int i = 0; i < outer_size; ++i)
+  {
+    for (Eigen::SparseVector<double>::InnerIterator it(mat_[i]); it; ++it)
+    {
+      if (it.value() != 0)
+      {
+        if (ordering == Eigen::ColMajor) // TODO: if constexpr
+          _mat.insert(it.index(), i) = it.value();
+        else
+          _mat.insert(i, it.index()) = it.value();
+      }
+    }
+  }
+
+  return _mat;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -331,6 +411,51 @@ void permute(
 
 //-----------------------------------------------------------------------------
 
+template <class ScalarT, class StorageT>
+int count_non_zeros_in_row(
+    const Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, StorageT>& _mat,
+    int _row, bool _ignore_last_element)
+{
+  using Matrix = Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, StorageT>;
+  int count = 0;
+  const auto cols = _mat.cols();
+  for (typename Matrix::InnerIterator it(_mat, _row); it; ++it)
+  {
+    if (it.value() != 0 &&
+        !(_ignore_last_element &&
+            it.index() == cols - 1)) // ignores last element (rhs)
+    {
+      ++count;
+    }
+  }
+  return count;
+}
+
+
+//-----------------------------------------------------------------------------
+
+template <class ScalarT>
+int count_non_zeros(
+    const Eigen::SparseVector<ScalarT>& _vec, bool _ignore_last_element)
+{
+  using Vector = Eigen::SparseVector<ScalarT>;
+  int count = 0;
+  const auto size = _vec.innerSize();
+  for (typename Vector::InnerIterator it(_vec); it; ++it)
+  {
+    if (it.value() != 0 &&
+        !(_ignore_last_element &&
+            it.index() == size - 1)) // ignores last element (rhs)
+    {
+      ++count;
+    }
+
+  }
+  return count;
+}
+
+//-----------------------------------------------------------------------------
+
 template <class MatrixT, class VectorT>
 double residuum_norm(const MatrixT& _A, const VectorT& _x, const VectorT& _rhs)
 {
@@ -352,18 +477,19 @@ void factored_to_quadratic(
     Eigen::SparseMatrix<ScalarT, OPTIONS2, Storage2T>& _Q,
     Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>& _rhs)
 {
-  DEB_enter_func;
-  const auto m = _F.rows();
+  DEB_time_func_def;
+
   const auto n = _F.cols();
 
-  const auto Q = (_F.transpose() * _F).eval();
+  _Q = (_F.transpose() * _F).eval();
 
   PROGRESS_TICK;
   // extract negative last column (without bottom right corner) as rhs
-  _rhs = -Q.block(0, n - 1, n - 1, 1);
+  _rhs = -_Q.block(0, n - 1, n - 1, 1);
 
   // extract top left part of matrix as quadratic matrix
-  _Q = Q.block(0, 0, n - 1, n - 1);
+  _Q.conservativeResize(n - 1, n - 1);
+
   PROGRESS_TICK;
 }
 
@@ -967,10 +1093,6 @@ void f(const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 {
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
-  typedef typename gmm::col_matrix<GMM_VectorT> GMM_MatrixT;
-  typedef typename gmm::linalg_traits<GMM_MatrixT>::const_sub_col_type ColT;
-  typedef typename gmm::linalg_traits<ColT>::const_iterator CIter;
-
   // build matrix triplets
   typedef Eigen::Triplet<Scalar> Triplet;
   std::vector<Triplet> triplets;
@@ -978,7 +1100,7 @@ void f(const gmm::col_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 
   for (unsigned int i = 0; i < gmm::mat_ncols(_G); ++i)
   {
-    ColT col = mat_const_col(_G, i);
+    const auto col = mat_const_col(_G, i);
 
     auto it = gmm::vect_const_begin(col);
     auto ite = gmm::vect_const_end(col);
@@ -1000,10 +1122,6 @@ void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 {
   typedef typename EIGEN_MatrixT::Scalar Scalar;
 
-  typedef typename gmm::row_matrix<GMM_VectorT> GMM_MatrixT;
-  typedef typename gmm::linalg_traits<GMM_MatrixT>::const_sub_row_type RowT;
-  typedef typename gmm::linalg_traits<RowT>::const_iterator CIter;
-
   // build matrix triplets
   typedef Eigen::Triplet<Scalar> Triplet;
   std::vector<Triplet> triplets;
@@ -1011,7 +1129,7 @@ void f(const gmm::row_matrix<GMM_VectorT>& _G, EIGEN_MatrixT& _E)
 
   for (gmm::size_type i = 0; i < gmm::mat_nrows(_G); ++i)
   {
-    RowT row = mat_const_row(_G, i);
+    const auto row = mat_const_row(_G, i);
 
     auto it = gmm::vect_const_begin(row);
     auto ite = gmm::vect_const_end(row);
@@ -1091,12 +1209,13 @@ void eigen_to_gmm(const Eigen::SparseMatrix<EigenScalarT, E_OPTIONS, EStorageT>&
     GMM_MatrixT& _G)
 {
   using GMMScalar = typename gmm::linalg_traits<GMM_MatrixT>::value_type;
+  using EigenMatrix = Eigen::SparseMatrix<EigenScalarT, E_OPTIONS, EStorageT>;
   gmm::resize(_G, _E.rows(), _E.cols());
   gmm::clear(_G);
 
   for (int i = 0; i < _E.outerSize(); ++i)
   {
-    for (typename Eigen::SparseMatrix<EigenScalarT>::InnerIterator it(_E, i); it; ++it)
+    for (typename EigenMatrix::InnerIterator it(_E, i); it; ++it)
       _G(it.row(), it.col()) = static_cast<GMMScalar>(it.value());
   }
 }
@@ -1122,6 +1241,10 @@ void eigen_to_gmm_csc(
 
   const auto nnz = static_cast<size_t>(_E.nonZeros());
   const auto nc = static_cast<size_t>(_E.cols());
+
+  _G.pr.resize(nnz);
+  _G.ir.resize(nnz);
+  _G.jc.resize(nc + 1);
 
   DEB_error_if(_G.pr.size() < nnz, "Buffer of GMM matrix not large enough.");
   DEB_error_if(_G.ir.size() < nnz, "Buffer of GMM matrix not large enough.");

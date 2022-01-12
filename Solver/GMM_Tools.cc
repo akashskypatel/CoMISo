@@ -67,9 +67,6 @@ template double residuum_norm(WSColMatrix&, DoubleVector&, DoubleVector&);
 template void fix_var_csc_symmetric(
     const unsigned int, const double, CSCMatrix&, DoubleVector&, DoubleVector&);
 
-template void fix_var_csc_symmetric_eigen(
-    const unsigned int, const double, CSCMatrix&, DoubleVector&, DoubleVector&);
-
 
 template void write_matrix_ascii(
     const std::string& _filename, const WSRowMatrix& _m);

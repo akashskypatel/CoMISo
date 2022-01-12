@@ -13,7 +13,7 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ========================================================== 
+//== IMPLEMENTATION ==========================================================
 
 
 // solve
@@ -22,9 +22,9 @@ NewtonSolver::
 solve(NProblemGmmInterface* _problem)
 {
   DEB_enter_func;
-#if COMISO_SUITESPARSE_AVAILABLE  
+#if COMISO_SUITESPARSE_AVAILABLE
   converged_ = true;
-  
+
   // get problem size
   int n = _problem->n_unknowns();
 
@@ -113,14 +113,14 @@ solve(NProblemGmmInterface* _problem)
   DEB_warning(1,"NewtonSolver requires not-available CholmodSolver");
   converged_ = false;
   return false;
-#endif	    
+#endif
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A, 
+int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
   const VectorD& _b)
 {
   DEB_time_func_def;
@@ -227,7 +227,7 @@ int NewtonSolver::solve(NProblemInterface* _problem, const SMatrixD& _A,
     }
 
     // get maximal reasonable step
-    double t_max  = std::min(1.0, 
+    double t_max  = std::min(1.0,
       0.5 * _problem->max_feasible_step(x.data(), dx.data()));
 
     // perform line-search
@@ -316,8 +316,8 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 
   // regularize constraints
 //  if(_regularize_constraints != 0.0)
-    for( int i=0; i<m; ++i)
-      trips.push_back(Triplet(n+i,n+i,_regularize_constraints));
+  for( int i=0; i<m; ++i)
+    trips.push_back(Triplet(n+i,n+i,_regularize_constraints));
 
   // regularize Hessian
 //  if(_regularize_hessian != 0.0)
@@ -345,8 +345,8 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 //-----------------------------------------------------------------------------
 
 
-double NewtonSolver::backtracking_line_search(NProblemInterface* _problem, 
-  VectorD& _x, VectorD& _g, VectorD& _dx, double& _newton_decrement, 
+double NewtonSolver::backtracking_line_search(NProblemInterface* _problem,
+  VectorD& _x, VectorD& _g, VectorD& _dx, double& _newton_decrement,
   double& _fx, const double _t_start)
 {
   DEB_enter_func;
@@ -411,15 +411,15 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
   switch(solver_type_)
   {
     case LS_EigenLU:
-      lu_solver_.factorize(_KKT); 
+      lu_solver_.factorize(_KKT);
       return (lu_solver_.info() == Eigen::Success);
 #if COMISO_SUITESPARSE_AVAILABLE
     case LS_Umfpack:
-      umfpack_solver_.factorize(_KKT); 
+      umfpack_solver_.factorize(_KKT);
       return (umfpack_solver_.info() == Eigen::Success);
 #endif
-    default: 
-      DEB_warning(1, "selected linear solver not availble!"); 
+    default:
+      DEB_warning(1, "selected linear solver not availble!");
       return false;
   }
 }

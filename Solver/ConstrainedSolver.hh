@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //=============================================================================
@@ -39,11 +39,12 @@
 
 #include "GMM_Tools.hh"
 #include "MISolver.hh"
+#include <CoMISo/Config/StdTypes.hh>
 #include <vector>
 
 //== NAMESPACES ===============================================================
 
-namespace COMISO 
+namespace COMISO
 {
 //== CLASS DEFINITION =========================================================
 
@@ -55,125 +56,208 @@ namespace COMISO
 
 //#define COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
 
+
 class COMISODLLEXPORT ConstrainedSolver
 {
 public:
-  typedef gmm::csc_matrix<double>                    CSCMatrix;
-  typedef gmm::row_matrix< gmm::wsvector< double > > RowMatrix;
+  typedef Eigen::SparseMatrix<double, Eigen::ColMajor> ColMatrix;
+  typedef Eigen::SparseMatrix<double, Eigen::RowMajor> RowMatrix;
+  typedef Eigen::VectorXd                              Vector;
+  typedef Eigen::SparseVector<double>                  SparseVector;
+  typedef COMISO_EIGEN::HalfSparseColMatrix<double>    HalfSparseColMatrix;
+  typedef COMISO_EIGEN::HalfSparseRowMatrix<double>    HalfSparseRowMatrix;
 
 
   /// default Constructor
-  /** _do_gcd specifies if a greatest common devisor correction should be used when no (+-)1-coefficient is found*/
-  ConstrainedSolver( bool _do_gcd = true): do_gcd_(_do_gcd)
-  { epsilon_ = 1e-8; noisy_ = 1; }
+  /** _do_gcd specifies if a greatest common divisor correction should be used when no (+-)1-coefficient is found*/
+  ConstrainedSolver(bool _do_gcd = true): do_gcd_(_do_gcd) { epsilon_ = 1e-8; }
 
-/** @name Contrained solvers
- * Functions to solve constrained linear systems of the form Ax=b (stemming from quadratic energies). 
- * The constraints can be linear constraints of the form \f$ x_1*c_1+ \cdots +x_n*c_n=c \f$ as well as integer constraints \f$x_i\in \mathbf{Z}\f$. 
- * The system is then solved with these constraints in mind. For solving the system the Mixed-Integer Solver \a MISolver is used. 
+/** @name Constrained solvers
+ * Functions to solve constrained linear systems of the form Ax=b (stemming from quadratic energies).
+ * The constraints can be linear constraints of the form \f$ x_1*c_1+ \cdots +x_n*c_n=c \f$ as well as integer constraints \f$x_i\in \mathbf{Z}\f$.
+ * The system is then solved with these constraints in mind. For solving the system the Mixed-Integer Solver \a MISolver is used.
  */
 /*@{*/
 
 /// Quadratic matrix constrained solver
-/**  
+/**
   *  Takes a system of the form Ax=b, a constraint matrix C and a set of variables _to_round to be rounded to integers. \f$ A\in \mathbf{R}^{n\times n}\f$
   *  @param _constraints row matrix with rows of the form \f$ [ c_1, c_2, \cdots, c_n, c_{n+1} ] \f$ corresponding to the linear equation \f$ c_1*x_1+\cdots+c_n*x_n + c_{n+1}=0 \f$.
-  *  @param _A nxn-dimensional column matrix of the system 
+  *  @param _A nxn-dimensional column matrix of the system
   *  @param _x n-dimensional variable vector
   *  @param _rhs n-dimensional right hand side.
   *  @param _idx_to_round indices i of variables x_i that shall be rounded
   *  @param _reg_factor regularization factor. Helps unstable, low rank system to become solvable. Adds \f$ \_reg\_factor*mean(trace(_A))*Id \f$ to A.
   *  @param _show_miso_settings should the (QT) dialog of the Mixed-Integer solver pop up?
-  *  @param _show_timings shall some timings be printed?
   */
+  void solve(
+      const RowMatrix&        _constraints,
+      const ColMatrix&        _A,
+            Vector&           _x,
+            Vector&           _rhs,
+            std::vector<int>& _idx_to_round,
+      const double            _reg_factor = 0.0,
+      const bool              _show_miso_settings = true);
+
+  // const version of above
+  void solve_const(
+      const RowMatrix&        _constraints,
+      const ColMatrix&        _A,
+            Vector&           _x,
+      const Vector&           _rhs,
+      const std::vector<int>& _idx_to_round,
+      const double            _reg_factor = 0.0,
+      const bool              _show_miso_settings = true);
+
+  // same as above but HalfSparse matrices as input
+  void solve(
+      HalfSparseRowMatrix& _constraints,
+      HalfSparseColMatrix& _A,
+      Vector&              _x,
+      Vector&              _rhs,
+      std::vector<int>&    _idx_to_round,
+      double               _reg_factor = 0.0,
+      bool                 _show_miso_settings = true);
+
+  // same as above but gmm matrices as input.
+  // This is deprecated. Please use Eigen interface
   template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
   void solve(
-      RMatrixT& _constraints,
-      CMatrixT& _A, 
-      VectorT&  _x,
-      VectorT&  _rhs,
-      VectorIT& _idx_to_round,
-      double    _reg_factor = 0.0,
-      bool      _show_miso_settings = true,
-      bool      _show_timings = true );
+      const RMatrixT& _constraints,
+      const CMatrixT& _A,
+            VectorT&  _x,
+      const VectorT&  _rhs,
+            VectorIT& _idx_to_round,
+      const double    _reg_factor = 0.0,
+      const bool      _show_miso_settings = true);
 
   // const version of above function
   template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
   void solve_const(
       const RMatrixT& _constraints,
-      const CMatrixT& _A, 
+      const CMatrixT& _A,
             VectorT&  _x,
       const VectorT&  _rhs,
       const VectorIT& _idx_to_round,
-            double    _reg_factor = 0.0,
-            bool      _show_miso_settings = true,
-            bool      _show_timings = true );
+      const double    _reg_factor = 0.0,
+      const bool      _show_miso_settings = true);
 
-  // efficent re-solve with modified _constraint_rhs and/or _rhs (if not modified use 0 pointer)
-  // by keeping previous _constraints and _A fixed
+
+  // efficient re-solve with modified _constraint_rhs and/or _rhs (if not
+  //  modified use 0 pointer) by keeping previous _constraints and _A fixed
   // _constraint_rhs and _rhs are constant, i.e. not changed
-  template<class VectorT >
   void resolve(
-       VectorT&  _x,
-       VectorT*  _constraint_rhs = 0,
-       VectorT*  _rhs            = 0,
-       bool      _show_timings = true );
+            Vector&  _x,
+      const Vector*  _constraint_rhs = nullptr,
+      const Vector*  _rhs            = nullptr);
+
+  // same as above but gmm interface.
+  // This is deprecated. Please use Eigen interface
+  template <class VectorT>
+  void resolve(
+            VectorT& _x,
+      const VectorT* _constraint_rhs = nullptr,
+      const VectorT* _rhs            = nullptr);
 
 
 /// Non-Quadratic matrix constrained solver
-/**  
+/**
   *  Same as above, but performs the elimination of the constraints directly on the B matrix of \f$ x^\top B^\top Bx \f$, where B has m rows (equations) and (n+1) columns \f$ [ x_1, x_2, \cdots, x_n, -rhs ] \f$.
   *  \note This function might be more efficient in some cases, but generally the solver for the quadratic matrix above is a safer bet. Needs further testing.
   *  \note Internally the \f$ A=B^\top B \f$ matrix is formed.
   *  @param _constraints row matrix with rows of the form \f$ [ c_1, c_2, \cdots, c_n, c_{n+1} ] \f$ corresponding to the linear equation \f$ c_1*x_1+\cdots+c_n*x_n + c_{n+1}=0 \f$.
-  *  @param _B mx(n+1)-dimensional column matrix of the system 
+  *  @param _B mx(n+1)-dimensional column matrix of the system
   *  @param _x n-dimensional variable vector
   *  @param _idx_to_round indices i of variables x_i that shall be rounded
   *  @param _reg_factor regularization factor. Helps unstable, low rank system to become solvable.
   *  @param _show_miso_settings should the (QT) dialog of the Mixed-Integer solver pop up?
-  *  @param _show_timings shall some timings be printed?
   */
+  void solve(
+      const RowMatrix&        _constraints,
+      const RowMatrix&        _B,
+            Vector&           _x,
+            std::vector<int>& _idx_to_round,
+      const double            _reg_factor = 0.0,
+      const bool              _show_miso_settings = true);
+
+  // same as above but work on HalfSparse matrices
+  void solve(
+      HalfSparseRowMatrix& _constraints,
+      HalfSparseColMatrix& _B,
+      Vector&              _x,
+      std::vector<int>&    _idx_to_round,
+      const double         _reg_factor = 0.0,
+      const bool           _show_miso_settings = true);
+
+  // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT, class VectorIT >
   void solve(
-      RMatrixT& _constraints,
-      RMatrixT& _B, 
-      VectorT&  _x,
-      VectorIT& _idx_to_round,
-      double    _reg_factor = 0.0,
-      bool      _show_miso_settings = true,
-      bool      _show_timings = true );
+      const RMatrixT& _constraints,
+      const RMatrixT& _B,
+            VectorT&  _x,
+            VectorIT& _idx_to_round,
+      const double    _reg_factor = 0.0,
+      const bool      _show_miso_settings = true);
+
 
   // const version of above function
+  void solve_const(
+      const RowMatrix&        _constraints,
+      const RowMatrix&        _B,
+            Vector&           _x,
+      const std::vector<int>& _idx_to_round,
+      const double            _reg_factor = 0.0,
+      const bool              _show_miso_settings = true);
+
+
+  // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT, class VectorIT >
   void solve_const(
       const RMatrixT& _constraints,
       const RMatrixT& _B,
-      VectorT&  _x,
+            VectorT&  _x,
       const VectorIT& _idx_to_round,
-      double    _reg_factor = 0.0,
-      bool      _show_miso_settings = true,
-      bool      _show_timings = true );
+      const double    _reg_factor = 0.0,
+      const bool      _show_miso_settings = true);
 
-  // efficent re-solve with modified _rhs by keeping previous _constraints and _A fixed
+  // efficient re-solve with modified _rhs by keeping previous _constraints and _A fixed
   // ATTENTION: only the rhs resulting from B^TB can be changed!!! otherwise use solve
+  void resolve(
+    const RowMatrix& _B,
+          Vector&    _x,
+    const Vector*    _constraint_rhs = 0);
+
+  // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT >
-    void resolve(
-      const RMatrixT& _B,
-      VectorT&  _x,
-      VectorT*  _constraint_rhs = 0,
-      bool      _show_timings = true );
+  void resolve(
+    const RMatrixT& _B,
+          VectorT&  _x,
+    const VectorT*  _constraint_rhs = 0);
 
 /*@}*/
 
+  /// Set numerical epsilon for valid constraint coefficient
+  void set_epsilon(double _epsilon) { epsilon_ = _epsilon; }
 
-/** @name Eliminate constraints
+  // Set whether the constraint reordering is used (default true)
+  void set_use_constraint_reordering(bool _use)
+  {
+    use_constraint_reordering_ = _use;
+  }
+
+  /// Access the MISolver (e.g. to change settings)
+  COMISO::MISolver& misolver() { return miso_; }
+
+private:
+
+  /** @name Eliminate constraints
  * Functions to eliminate (or integrate) linear constraints from an equation system. These functions are used internally by the \a solve functions.
  */
 /*@{*/
 
 /// Make constraints independent
-/**  
-  *  This function performs a Gauss elimination on the constraint matrix making the constraints easier to eliminate. 
+/**
+  *  This function performs a Gauss elimination on the constraint matrix making the constraints easier to eliminate.
   *  \note A certain amount of independence of the constraints is assumed.
   *  \note contradicting constraints will be ignored.
   *  \warning care must be taken when non-trivial constraints occur where some of the variables contain integer-variables (to be rounded) as the optimal result might not always occur.
@@ -181,42 +265,62 @@ public:
   *  @param _idx_to_round indices of variables to be rounded (these must be considered.)
   *  @param _c_elim the "returned" vector of variable indices and the order in which the can be eliminated.
   */
-  template<class RMatrixT, class VectorIT >
   void make_constraints_independent(
-      RMatrixT&         _constraints,
-			VectorIT&         _idx_to_round,
-			std::vector<int>& _c_elim );
+            HalfSparseRowMatrix& _constraints,
+			const std::vector<int>&    _idx_to_round,
+			      std::vector<int>&    _c_elim );
 
-  template<class RMatrixT, class VectorIT >
+  // same as above but reordering
   void make_constraints_independent_reordering(
-      RMatrixT&         _constraints,
-			VectorIT&         _idx_to_round,
-			std::vector<int>& _c_elim );
+            HalfSparseRowMatrix& _constraints,
+			const std::vector<int>&    _idx_to_round,
+			      std::vector<int>&    _c_elim );
+
+
+  // adjust _constraints such that col _col is zero except in row _row and
+  // and those rows that should be ignored.
+  // col will be chosen automatically.
+  // _changed_rows returns the rows that were changed.
+  void make_constraint_independent(
+            HalfSparseRowMatrix& _constraints,
+            HalfSparseColMatrix& _constraints_c,
+      const int                  _row,
+            int&                 _col,
+      const std::vector<bool>&   _integer,
+      const std::vector<bool>&   _ignore,
+            std::vector<int>&    _changed_rows);
+
+  // same as above but without returning changed rows
+  void make_constraint_independent(
+            HalfSparseRowMatrix& _constraints,
+            HalfSparseColMatrix& _constraints_c,
+      const int                  _row,
+            int&                 _col,
+      const std::vector<bool>&   _integer,
+      const std::vector<bool>&   _ignore);
 
 /// Eliminate constraints on a factored matrix B
-/**  
+/**
   *  \note Constraints are assumed to have been made independent by \a make_constraints_independent.
-  *  @param _constraints row matrix with constraints (n+1 columns) 
+  *  @param _constraints row matrix with constraints (n+1 columns)
   *  @param _B system row matrix mx(n+1)
   *  @param _idx_to_round indices to be rounded
   *  @param _c_elim the indices of the variables to be eliminated.
   *  @param _new_idx the created re-indexing map. new_idx[i] = -1 means x_i eliminated, new_idx[i] = j means x_i is now at index j.
   *  @param _Bcol resulting (smaller) column matrix to be used for future computations. (e.g. convert to CSC and solve)
   */
-  template<class SVector1T, class SVector2T, class VectorIT, class SVector3T>
   void eliminate_constraints(
-      gmm::row_matrix<SVector1T>& _constraints,
-			gmm::row_matrix<SVector2T>& _B, 
-			VectorIT&                   _idx_to_round,
-			std::vector<int>&           _c_elim,
-			std::vector<int>&           _new_idx,
-			gmm::col_matrix<SVector3T>& _Bcol);
+      const HalfSparseRowMatrix& _constraints,
+            HalfSparseColMatrix& _Bcol,
+			      std::vector<int>&    _idx_to_round,
+			const std::vector<int>&    _c_elim,
+			      std::vector<int>&    _new_idx);
 
 /// Eliminate constraints on a quadratic matrix A
-/**  
+/**
   *  \note Constraints are assumed to have been made independent by \a make_constraints_independent.
   *  \note _x must have correct size (same as _rhs)
-  *  @param _constraints row matrix with constraints (n+1 columns) 
+  *  @param _constraints row matrix with constraints (n+1 columns)
   *  @param _A system row matrix nxn)
   *  @param _x variable vector
   *  @param _rhs right hand side
@@ -225,76 +329,54 @@ public:
   *  @param _new_idx the created re-indexing map. new_idx[i] = -1 means x_i eliminated, new_idx[i] = j means x_i is now at index j.
   *  @param _Acsc resulting (smaller) column (csc) matrix to be used for future computations.
   */
- 
-  template<class SVector1T, class SVector2T, class VectorIT, class CSCMatrixT>
   void eliminate_constraints(
-      gmm::row_matrix<SVector1T>& _constraints,
-      gmm::col_matrix<SVector2T>& _A, 
-      std::vector<double>&        _x, 
-      std::vector<double>&        _rhs, 
-      VectorIT&                   _idx_to_round,
-      std::vector<int>&           _c_elim,
-      std::vector<int>&           _new_idx,
-      CSCMatrixT&                 _Acsc);
+      const HalfSparseRowMatrix& _constraints,
+            HalfSparseColMatrix& _A,
+            Vector&              _x,
+            Vector&              _rhs,
+            std::vector<int>&    _idx_to_round,
+      const std::vector<int>&    _c_elim,
+            std::vector<int>&    _new_idx,
+            ColMatrix&           _Acsc);
 
 /// Restore a solution vector to the un-eliminated size
-/**  
-  *  @param _constraints row matrix with constraints (n+1 columns) 
+/**
+  *  @param _constraints row matrix with constraints (n+1 columns)
   *  @param _x solution vector to reduced/eliminated system (result will also be written here)
-  *  @param _c_elim vector of eliminated indices 
+  *  @param _c_elim vector of eliminated indices
   *  @param _new_idx re-indexing vector
   */
- 
-  template<class RMatrixT, class VectorT >
-  void restore_eliminated_vars( RMatrixT&         _constraints,
-				VectorT&          _x,
-				std::vector<int>& _c_elim,
-				std::vector<int>& _new_idx);
-
+  void restore_eliminated_vars(
+        const HalfSparseRowMatrix& _constraints,
+				      Vector&               _x,
+				const std::vector<int>&    _c_elim,
+				const std::vector<int>&    _new_idx);
 
 /*@}*/
 
-  /// Set numerical epsilon for valid constraint coefficient
-  void set_epsilon( double _epsilon) { epsilon_ = _epsilon; }
 
-  /// Set noise-level (how much std output is given) 0 basically none, 1 important stuff (warning/timing, is default), 2+ not so important
-  void set_noisy( int _noisy) { noisy_ = _noisy;}
+  // add _coeff * (_source_row of _source_mat)  to _target_row of _target_mat
+  void add_row(
+          Eigen::Index  _target_row,
+          double        _coeff,
+    const RowMatrix&    _source_mat,
+          Eigen::Index  _source_row,
+          ColMatrix&    _target_mat );
 
-  // Get/Set whether the constraint reordering is used (default true)
-  bool use_constraint_reordering = true;
-
-  /// Access the MISolver (e.g. to change settings)
-  COMISO::MISolver& misolver() { return miso_;}
-
-private:
-
-  template<class RowT, class MatrixT>
-    void add_row( gmm::size_type _row_i,
-		double         _coeff,
-		RowT           _row, 
-		MatrixT&       _mat );
-
-  template<class RowT, class RMatrixT, class CMatrixT>
-    void add_row_simultaneously( gmm::size_type       _row_i,
-			       double    _coeff,
-			       RowT      _row, 
-			       RMatrixT& _rmat,
-			       CMatrixT& _cmat );
-
-
-  // TODO: this method is never used?
-  template<class CMatrixT, class VectorT, class VectorIT>
-  double setup_and_solve_system( CMatrixT& _B,
-			       VectorT&  _x,
-			       VectorIT& _idx_to_round,
-			       double    _reg_factor,
-			       bool      _show_miso_settings);
+  // add _coeff * (_source_row of _source_mat)  to _target_row of _target_rmat and target_cmat.
+  // set element in _zero_col to 0 if it exists
+  void add_row_simultaneously(
+    const Eigen::Index         _target_row,
+    const double               _coeff,
+    const HalfSparseRowMatrix& _source_mat,
+    const Eigen::Index         _source_row,
+          HalfSparseRowMatrix& _target_rmat,
+          HalfSparseColMatrix& _target_cmat,
+    const Eigen::Index         _zero_col = -1);
 
 
   // warning: order of replacement not the same as in _columns (internal sort)
-  template<class CMatrixT>
-  void eliminate_columns( CMatrixT& _M,
-			  const std::vector< int >& _columns);
+  void eliminate_columns(HalfSparseColMatrix& _M, const std::vector<int>& _columns);
 
   inline int gcd( int _a, int _b)
   {
@@ -308,13 +390,24 @@ private:
   }
 
   int find_gcd(std::vector<int>& _v_gcd, int& _n_ints);
+
+
   // TODO if no gcd correction was possible, at least use a variable divisible by 2 as new elim_j (to avoid in-exactness e.g. 1/3)
-  template<class RMatrixT>
-  bool update_constraint_gcd( RMatrixT& _constraints, 
-                              int _row_i,
-                              int& _elim_j,
-                              std::vector<int>& _v_gcd,
-                              int& _n_ints);
+  bool update_constraint_gcd(
+          RowMatrix&        _constraints,
+    const Eigen::Index      _row_i,
+    const int               _elim_j,
+          std::vector<int>& _v_gcd,
+          int&              _n_ints);
+
+
+  // same as above but on a sparse vector
+  bool update_constraint_gcd(
+          SparseVector&     _row,
+    const int               _elim_j,
+          std::vector<int>& _v_gcd,
+          int&              _n_ints);
+
 
 private:
 
@@ -328,8 +421,8 @@ private:
   COMISO::MISolver miso_;
 
   double epsilon_;
-  int    noisy_;
   bool   do_gcd_;
+  bool   use_constraint_reordering_ = true;
 
 #ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
   // count number of resolves
@@ -337,88 +430,81 @@ private:
 #endif
 
   // --------------- Update by Marcel to enable efficient re-solve with changed rhs ----------------------
-  // Store for symbolic elimination information for rhs
-  class rhsUpdateTable {
+    // Store for symbolic elimination information for rhs
+  class RHSUpdateTable
+  {
   public:
+    RHSUpdateTable()
+        : c_elim_(), new_idx_(), constraints_(), D_(), cur_rhs_(),
+          cur_constraint_rhs_(), update_D_()
+    {}
 
     void append(int _i, double _f, int _j, bool _flag)
     {
-//      std::cerr << "append " << _i << ", " << _j << ", " << _f << ", " << int(_flag) << std::endl;
-      table_.push_back(rhsUpdateTableEntry(_i, _j, _f, _flag));
+      if (_f != 0.0)
+        table_.emplace_back(_i, _j, _f, _flag);
     }
+
     void add_elim_id(int _i) { elim_var_ids_.push_back(_i); }
-    void clear() { table_.clear(); elim_var_ids_.clear(); }
+
+    void clear()
+    {
+      table_.clear();
+      elim_var_ids_.clear();
+    }
+
     // apply stored transformations to _rhs
-    void apply(std::vector<double>& _constraint_rhs, std::vector<double>& _rhs)
-    {
-      std::vector<rhsUpdateTableEntry>::const_iterator t_it, t_end;
-      t_end = table_.end();
-      int cur_j = -1;
-      double cur_rhs = 0.0;
-      for(t_it = table_.begin(); t_it != t_end; ++t_it)
-      {
-        if(t_it->rhs_flag)
-            _rhs[t_it->i] += t_it->f*_constraint_rhs[t_it->j];
-        else
-        {
-          if(t_it->j != cur_j) { cur_j = t_it->j; cur_rhs = _rhs[cur_j]; }
-          _rhs[t_it->i] += t_it->f * cur_rhs;
-        }
-      }
-    }
+    void apply(Vector& _constraint_rhs, Vector& _rhs);
+
     // remove eliminated elements from _rhs
-    void eliminate(std::vector<double>& _rhs)
-    {
-      std::vector<int> evar( elim_var_ids_ );
-      std::sort( evar.begin(), evar.end() );
-      evar.push_back( std::numeric_limits<int>::max() );
+    void eliminate(Vector& _rhs);
 
-      int cur_evar_idx=0;
-      size_t nc = _rhs.size();
-      for (size_t i = 0; i < nc; ++i)
-      {
-        size_t next_i = evar[cur_evar_idx];
-
-        if ( i != next_i ) _rhs[i-cur_evar_idx] = _rhs[i];
-        else ++cur_evar_idx;
-      }
-      _rhs.resize( nc - cur_evar_idx );
-    }
-    // store transformed constraint matrix and index map to allow for later re-substitution
-    template<class RMatrixT>
-    void store(const RMatrixT& _constraints, const std::vector<int>& _c_elim, const std::vector<int>& _new_idx)
+    // store transformed constraint matrix and index map to allow for later
+    // re-substitution
+    void store(
+      const HalfSparseRowMatrix& _constraints,
+      const std::vector<int>&    _c_elim,
+      const std::vector<int>&    _new_idx)
     {
-      constraints_p_.resize( gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-      gmm::copy(_constraints, constraints_p_);
+      constraints_ = _constraints;
       c_elim_ = _c_elim;
       new_idx_ = _new_idx;
     }
 
   private:
-    class rhsUpdateTableEntry {
+    class RHSUpdateTableEntry
+    {
     public:
-      rhsUpdateTableEntry(int _i, int _j, double _f, bool _rhs_flag) : i(_i), j(_j), f(_f), rhs_flag(_rhs_flag) {}
+      RHSUpdateTableEntry(int _i, int _j, double _f, bool _rhs_flag)
+          : i(_i), j(_j), f(_f), rhs_flag(_rhs_flag)
+      {
+      }
+
       int i;
       int j;
       double f;
       bool rhs_flag;
     };
 
-    std::vector<rhsUpdateTableEntry> table_;
+    std::vector<RHSUpdateTableEntry> table_;
     std::vector<int> elim_var_ids_;
 
   public:
     std::vector<int> c_elim_;
     std::vector<int> new_idx_;
-    RowMatrix constraints_p_;
+    HalfSparseRowMatrix constraints_;
 
-    // cache current rhs_ and constraint_rhs_ and linear transformation of constraint_rhs_ D_
+    // cache current rhs_ and constraint_rhs_ and linear transformation of
+    // constraint_rhs_ D_
     RowMatrix D_;
-    std::vector<double> cur_rhs_;
+    Vector cur_rhs_;
     // constraint_rhs after Gaussian elimination update D*constraint_rhs_orig_
-    std::vector<double> cur_constraint_rhs_;
-  } rhs_update_table_;
+    Vector cur_constraint_rhs_;
 
+    // For better performance use this instead of D_ when updating and assign to
+    // D_ when done
+    HalfSparseRowMatrix update_D_;
+  } rhs_update_table_;
 };
 
 

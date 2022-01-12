@@ -46,6 +46,7 @@
 
 //== NAMESPACES ===============================================================
 
+
 namespace COMISO {
 
 
@@ -57,36 +58,26 @@ using linalg_traits = typename gmm::linalg_traits<typename std::remove_const<typ
 
 
 template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
-void
-ConstrainedSolver::solve_const(const RMatrixT& _constraints,
+void ConstrainedSolver::solve_const(
+  const RMatrixT& _constraints,
   const CMatrixT& _A,
-  VectorT&  _x,
+        VectorT&  _x,
   const VectorT&  _rhs,
   const VectorIT& _idx_to_round,
-  double    _reg_factor,
-  bool      _show_miso_settings,
-  bool      _show_timings)
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
-  // copy matrices
-  RMatrixT constraints(gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-  gmm::copy(_constraints, constraints);
-
-  CMatrixT A(gmm::mat_nrows(_A), gmm::mat_ncols(_A));
-  gmm::copy(_A, A);
-
-  // ... and vectors
-  VectorT  rhs(_rhs);
+  // copy and vectors
   VectorIT idx_to_round(_idx_to_round);
 
   // call non-const function
-  solve(constraints,
-    A,
+  solve(_constraints,
+    _A,
     _x,
-    rhs,
+    _rhs,
     idx_to_round,
     _reg_factor,
-    _show_miso_settings,
-    _show_timings);
+    _show_miso_settings);
 }
 
 
@@ -97,30 +88,21 @@ template<class RMatrixT, class VectorT, class VectorIT >
 void
 ConstrainedSolver::solve_const(const RMatrixT& _constraints,
   const RMatrixT& _B,
-  VectorT&  _x,
+        VectorT&  _x,
   const VectorIT& _idx_to_round,
-  double    _reg_factor,
-  bool      _show_miso_settings,
-  bool      _show_timings)
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
-  // copy matrices
-  RMatrixT constraints(gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-  gmm::copy(_constraints, constraints);
-
-  RMatrixT B(gmm::mat_nrows(_B), gmm::mat_ncols(_B));
-  gmm::copy(_B, B);
-
-  // ... and vectors
+  // copy vector
   VectorIT idx_to_round(_idx_to_round);
 
   // call non-const function
-  solve(constraints,
-    B,
+  solve(_constraints,
+    _B,
     _x,
     idx_to_round,
     _reg_factor,
-    _show_miso_settings,
-    _show_timings);
+    _show_miso_settings);
 }
 
 
@@ -128,18 +110,24 @@ ConstrainedSolver::solve_const(const RMatrixT& _constraints,
 
 
 template <class RMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve(RMatrixT& _constraints, RMatrixT& _B, VectorT& _x,
-    VectorIT& _idx_to_round, double _reg_factor, bool _show_miso_settings,
-    bool _show_timings)
+void ConstrainedSolver::solve(
+  const RMatrixT& _constraints,
+  const RMatrixT& _B,
+        VectorT&  _x,
+        VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
-  // convert into quadratic system
-  VectorT rhs;
-  gmm::col_matrix<gmm::rsvector<double>> A;
-  COMISO_GMM::factored_to_quadratic(_B, A, rhs);
+  RowMatrix constraints;
+  RowMatrix B;
+  Vector x;
+  COMISO_EIGEN::gmm_to_eigen(_constraints, constraints);
+  COMISO_EIGEN::gmm_to_eigen(_B, B);
+  COMISO_EIGEN::to_eigen_vec(_x, x);
 
-  // solve
-  solve(_constraints, A, _x, rhs, _idx_to_round, _reg_factor,
-      _show_miso_settings, _show_timings);
+  solve(constraints, B, x, _idx_to_round, _reg_factor, _show_miso_settings);
+
+  COMISO_EIGEN::from_eigen_vec(x, _x);
 }
 
 
@@ -149,83 +137,27 @@ void ConstrainedSolver::solve(RMatrixT& _constraints, RMatrixT& _B, VectorT& _x,
 template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
 void
 ConstrainedSolver::solve(
-  RMatrixT& _constraints,
-  CMatrixT& _A,
-  VectorT&  _x,
-  VectorT&  _rhs,
-  VectorIT& _idx_to_round,
-  double    _reg_factor,
-  bool      _show_miso_settings,
-  bool      _show_timings)
+  const RMatrixT& _constraints,
+  const CMatrixT& _A,
+        VectorT&  _x,
+  const VectorT&  _rhs,
+        VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
-  DEB_enter_func;
+  RowMatrix constraints;
+  ColMatrix A;
+  COMISO_EIGEN::gmm_to_eigen(_constraints, constraints);
+  COMISO_EIGEN::gmm_to_eigen(_A, A);
+  Vector x;
+  Vector rhs;
+  COMISO_EIGEN::to_eigen_vec(_x, x);
+  COMISO_EIGEN::to_eigen_vec(_rhs, rhs);
 
-#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_matrix("ConstrainedSolver_constraints.mtx", _constraints);
-  write_matrix("ConstrainedSolver_system.mtx", _A);
-  write_vector("ConstrainedSolver_rhs.vec", _rhs);
-  write_vector("ConstrainedSolver_idx_to_round.vec", _idx_to_round);
-#endif
+  solve(
+      constraints, A, x, rhs, _idx_to_round, _reg_factor, _show_miso_settings);
 
-  // show options dialog
-  if (_show_miso_settings)
-    miso_.show_options_dialog();
-
-  gmm::size_type nrows = gmm::mat_nrows(_A);
-  gmm::size_type ncols = gmm::mat_ncols(_A);
-  gmm::size_type ncons = gmm::mat_nrows(_constraints);
-
-  DEB_out_if(_show_timings, 1, "Initital dimension: " << nrows << " x " << ncols
-    << ", number of constraints: " << ncons << ", number of integer variables: " << _idx_to_round.size()
-    << ", use reordering: " << (use_constraint_reordering ? "yes" : "no") << "\n")
-
-  // StopWatch for Timings
-  Base::StopWatch sw, sw2; sw.start(); sw2.start();
-
-  // c_elim[i] = index of variable which is eliminated in condition i
-  // or -1 if condition is invalid
-  std::vector<int> c_elim(ncons);
-
-  // apply sparse gauss elimination to make subsequent _conditions independent
-  if (use_constraint_reordering)
-    make_constraints_independent_reordering(_constraints, _idx_to_round, c_elim);
-  else
-    make_constraints_independent(_constraints, _idx_to_round, c_elim);
-
-  double time_gauss = sw.stop() / 1000.0; sw.start();
-
-  // re-indexing vector
-  std::vector<int> new_idx;
-
-  gmm::csc_matrix< double > Acsc;
-  eliminate_constraints(_constraints, _A, _x, _rhs, _idx_to_round, c_elim, new_idx, Acsc);
-  double time_eliminate = sw.stop() / 1000.0;
-
-  /// TODO: temporary disable this since it was causing performance issues
-  //DEB_out_if( _show_timings, 2,
-  //  "Eliminated dimension: " << Acsc.nr << " x " << Acsc.nc
-  //  << "\n#nonzeros: " << gmm::nnz(Acsc) << "\n");
-
-  sw.start();
-  miso_.solve(Acsc, _x, _rhs, _idx_to_round);
-  double time_miso = sw.stop() / 1000.0; sw.start();
-
-  rhs_update_table_.store(_constraints, c_elim, new_idx);
-  // restore eliminated vars to fulfill the given conditions
-  restore_eliminated_vars(_constraints, _x, c_elim, new_idx);
-
-  double time_resubstitute = sw.stop() / 1000.0; sw.start();
-  double time_total = time_gauss + time_eliminate + time_miso + time_resubstitute;
-  DEB_out_if(_show_timings, 1, "Timings: \n\t" <<
-    "\tGauss Elimination  " << time_gauss << " s\n\t" <<
-    "\tSystem Elimination " << time_eliminate << " s\n\t" <<
-    "\tMi-Solver          " << time_miso << " s\n\t" <<
-    "\tResubstitution     " << time_resubstitute << " s\n\t" <<
-    "\tTotal              " << time_total << "\n\n");
-
-#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_gmm_vector("ConstrainedSolver_solution.vec", _x);
-#endif
+  COMISO_EIGEN::from_eigen_vec(x, _x);
 }
 
 
@@ -236,47 +168,22 @@ template<class RMatrixT, class VectorT >
 void
 ConstrainedSolver::resolve(
   const RMatrixT& _B,
-  VectorT&  _x,
-  VectorT*  _constraint_rhs,
-  bool      _show_timings)
+        VectorT&  _x,
+  const VectorT*  _constraint_rhs)
 {
-  // extract rhs from quadratic system
-  VectorT rhs;
-  // gmm::col_matrix< gmm::rsvector< double > > A;
-  // COMISO_GMM::factored_to_quadratic(_B, A, rhs);
-    //TODO only compute rhs, not complete A for efficiency
-
-  gmm::size_type m = gmm::mat_nrows(_B);
-  gmm::size_type n = gmm::mat_ncols(_B);
-
-  typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-  typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
-  typedef typename linalg_traits<CRowT>::const_iterator        RIter;
-  typedef typename linalg_traits<CRowT>::value_type            VecValT;
-
-  gmm::resize(rhs, n - 1);
-  gmm::clear(rhs);
-  for (unsigned int i = 0; i < m; ++i)
+  RowMatrix B;
+  Vector x;
+  Vector constraint_rhs;
+  Vector* constraint_rhs_ptr = nullptr;
+  COMISO_EIGEN::gmm_to_eigen(_B, B);
+  COMISO_EIGEN::to_eigen_vec(_x, x);
+  if (_constraint_rhs != nullptr)
   {
-    // get current condition row
-    CRowT row = gmm::mat_const_row(_B, i);
-    RIter row_it = gmm::vect_const_begin(row);
-    RIter row_end = gmm::vect_const_end(row);
-
-    if (row_end == row_it) continue;
-    --row_end;
-    if (row_end.index() != n - 1) continue;
-    VecValT n_i = *row_end;
-    while (row_end != row_it)
-    {
-      --row_end;
-      rhs[row_end.index()] -= (*row_end) * n_i;
-    }
+    COMISO_EIGEN::to_eigen_vec(*_constraint_rhs, constraint_rhs);
+    constraint_rhs_ptr = &constraint_rhs;
   }
-
-  // solve
-  resolve(_x, _constraint_rhs, &rhs,
-    _show_timings);
+  resolve(B, x, constraint_rhs_ptr);
+  COMISO_EIGEN::from_eigen_vec(x, _x);
 }
 
 
@@ -286,969 +193,30 @@ ConstrainedSolver::resolve(
 template<class VectorT >
 void
 ConstrainedSolver::resolve(
-  VectorT&  _x,
-  VectorT*  _constraint_rhs,
-  VectorT*  _rhs,
-  bool      _show_timings)
+        VectorT& _x,
+  const VectorT* _constraint_rhs,
+  const VectorT* _rhs)
 {
-  DEB_enter_func;
-  // StopWatch for Timings
-  Base::StopWatch sw;
-
-  sw.start();
-  // apply stored updates and eliminations to exchanged rhs
-  if (_constraint_rhs)
+  Vector x;
+  Vector constraint_rhs;
+  Vector rhs;
+  Vector* constraint_rhs_ptr = nullptr;
+  Vector* rhs_ptr = nullptr;
+  COMISO_EIGEN::to_eigen_vec(_x, x);
+  if (_constraint_rhs != nullptr)
   {
-    // apply linear transformation of Gaussian elimination
-    rhs_update_table_.cur_constraint_rhs_.resize(gmm::mat_nrows(rhs_update_table_.D_));
-    gmm::mult(rhs_update_table_.D_, *_constraint_rhs, rhs_update_table_.cur_constraint_rhs_);
-
-    // update rhs of stored constraints
-    gmm::size_type nc = gmm::mat_ncols(rhs_update_table_.constraints_p_);
-    for (gmm::size_type i = 0; i < rhs_update_table_.cur_constraint_rhs_.size(); ++i)
-      rhs_update_table_.constraints_p_(i, nc - 1) = -rhs_update_table_.cur_constraint_rhs_[i];
+    COMISO_EIGEN::to_eigen_vec(*_constraint_rhs, constraint_rhs);
+    constraint_rhs_ptr = &constraint_rhs;
   }
-  if (_rhs)
-    rhs_update_table_.cur_rhs_ = *_rhs;
-
-  std::vector<double> rhs_red = rhs_update_table_.cur_rhs_;
-
-  rhs_update_table_.apply(rhs_update_table_.cur_constraint_rhs_, rhs_red);
-  rhs_update_table_.eliminate(rhs_red);
-
-  //  std::cerr << "############### Resolve info ##############" << std::endl;
-  //  std::cerr << rhs_update_table_.D_ << std::endl;
-  //  std::cerr << rhs_update_table_.cur_rhs_ << std::endl;
-  //  std::cerr << rhs_update_table_.cur_constraint_rhs_ << std::endl;
-  //  std::cerr << rhs_update_table_.table_.size() << std::endl;
-  //  std::cerr << "rhs_red: " << rhs_red << std::endl;
-
-  miso_.resolve(_x, rhs_red);
-
-  double time_miso = sw.stop() / 1000.0; sw.start();
-
-  // restore eliminated vars to fulfill the given conditions
-  restore_eliminated_vars(rhs_update_table_.constraints_p_, _x, rhs_update_table_.c_elim_, rhs_update_table_.new_idx_);
-
-  double time_resubstitute = sw.stop() / 1000.0; sw.start();
-  double time_total = time_miso + time_resubstitute;
-  DEB_out_if(_show_timings, 1, "Timings: \n\t" <<
-    "\tMi-Solver          " << time_miso << " s\n\t" <<
-    "\tResubstitution     " << time_resubstitute << " s\n\t" <<
-    "\tTotal              " << time_total << "\n\n");
-
-
-#ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_gmm_vector("ConstrainedSolver_solution_resolve_" +
-                       std::to_string(n_resolves_++) + ".vec", _x);
-#endif
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class VectorIT >
-void
-ConstrainedSolver::make_constraints_independent(
-  RMatrixT&         _constraints,
-  VectorIT&         _idx_to_round,
-  std::vector<int>& _c_elim)
-{
-  DEB_enter_func;
-  // setup linear transformation for rhs, start with identity
-  gmm::size_type nr = gmm::mat_nrows(_constraints);
-  gmm::resize(rhs_update_table_.D_, nr, nr);
-  gmm::clear(rhs_update_table_.D_);
-  for (gmm::size_type i = 0; i < nr; ++i) rhs_update_table_.D_(i, i) = 1.0;
-
-  //  Base::StopWatch sw;
-  // number of variables
-  const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
-
-  // TODO Check: HZ added 14.08.09
-  _c_elim.clear();
-  _c_elim.resize(gmm::mat_nrows(_constraints), -1);
-
-  // build round map
-  std::vector<bool> roundmap(n_vars, false);
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-    roundmap[_idx_to_round[i]] = true;
-
-  // copy constraints into column matrix (for faster update via iterators)
-  typedef gmm::wsvector<double>      CVector;
-  typedef gmm::col_matrix< CVector > CMatrix;
-  CMatrix constraints_c;
-  gmm::resize(constraints_c, gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-  gmm::copy(_constraints, constraints_c);
-
-  // for all conditions
-  for (unsigned int i = 0; i < gmm::mat_nrows(_constraints); ++i)
+  if (_rhs != nullptr)
   {
-    // get elimination variable
-    int elim_j = -1;
-    int elim_int_j = -1;
-
-    // iterate over current row, until variable found
-    // first search for real valued variable
-    // if not found for integers with value +-1
-    // and finally take the smallest integer variable
-
-    typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-    typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
-    typedef typename linalg_traits<CRowT>::const_iterator        RIter;
-
-    // get current condition row
-    CRowT row = gmm::mat_const_row(_constraints, i);
-    RIter row_it = gmm::vect_const_begin(row);
-    RIter row_end = gmm::vect_const_end(row);
-    double elim_val = FLT_MAX;
-    double max_elim_val = -FLT_MAX;
-
-    // new: gcd
-    std::vector<int> v_gcd;
-    v_gcd.resize(gmm::nnz(row), -1);
-    int n_ints(0);
-    bool gcd_update_valid(true);
-
-    for (; row_it != row_end; ++row_it)
-    {
-      int cur_j = static_cast<int>(row_it.index());
-      // do not use the constant part
-      if (cur_j != (int)n_vars - 1)
-      {
-        // found real valued var? -> finished (UPDATE: no not any more, find biggest real value to avoid x/1e-13)
-        if (!roundmap[cur_j])
-        {
-          if (fabs(*row_it) > max_elim_val)
-          {
-            elim_j = (int)cur_j;
-            max_elim_val = fabs(*row_it);
-          }
-          //break;
-        }
-        else
-        {
-          double cur_row_val(fabs(*row_it));
-          // gcd
-          // If the coefficient of an integer variable is not an integer, then
-          // the variable most probably will not be. This is expected if all
-          // coeffs are the same, e.g. 0.5).
-          // This happens quite often in some ReForm test cases, so downgrading
-          // the warning below to DEB_line at high verbosity.
-          if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
-          {
-            DEB_line(11, "coefficient of integer variable is NOT integer : " <<
-              cur_row_val);
-            gcd_update_valid = false;
-          }
-
-          v_gcd[n_ints] = static_cast<int>(cur_row_val);
-          ++n_ints;
-
-          // store integer closest to 1, must be greater than epsilon_
-          if (fabs(cur_row_val - 1.0) < elim_val && cur_row_val > epsilon_)
-          {
-            elim_int_j = cur_j;
-            elim_val = fabs(cur_row_val - 1.0);
-          }
-        }
-      }
-    }
-
-    // first try to eliminate a valid (>epsilon_) real valued variable (safer)
-    if (max_elim_val <= epsilon_)
-      elim_j = elim_int_j; // use the best found integer
-
-    // if no integer or real valued variable greater than epsilon_ existed, then
-    // elim_j is now -1 and this row is not considered as a valid constraint
-
-    // store result
-    _c_elim[i] = elim_j;
-    // error check result
-    if (elim_j == -1)
-    {// redundant or incompatible?
-      DEB_warning_if((noisy_ > 0) &&
-        (fabs(gmm::mat_const_row(_constraints, i)[n_vars - 1]) > epsilon_), 1,
-        "incompatible condition: " <<
-        fabs(gmm::mat_const_row(_constraints, i)[n_vars - 1]));
-    }
-    else if (roundmap[elim_j] && elim_val > 1e-6)
-    {
-      if (do_gcd_ && gcd_update_valid)
-      {
-        // perform gcd update
-        bool gcd_ok = update_constraint_gcd(_constraints, i, elim_j, v_gcd, n_ints);
-        DEB_warning_if((noisy_ > 0) && !gcd_ok, 1, " GCD update failed! "
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)));
-      }
-      else
-      {
-        DEB_warning_if((noisy_ > 0) && !do_gcd_, 1,
-          "NO +-1 coefficient found, integer rounding cannot be guaranteed. "
-          "Try using the GCD option! "
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)));
-        DEB_warning_if((noisy_ > 0) && do_gcd_, 1,
-          "GCD of non-integer cannot be computed! "
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)));
-      }
-    }
-
-    // is this condition dependent?
-    if (elim_j != -1)
-    {
-      // get elim variable value
-      double elim_val_cur = _constraints(i, elim_j);
-
-      // copy col
-      CVector col = constraints_c.col(elim_j);
-
-      // iterate over column
-      typename linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
-
-      for (; c_it != c_end; ++c_it)
-      {
-        if (c_it.index() > i)
-        {
-          //          sw.start();
-          double val = -(*c_it) / elim_val_cur;
-
-          add_row_simultaneously((int)c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
-          // make sure the eliminated entry is 0 on all other rows and not 1e-17
-          _constraints(c_it.index(), elim_j) = 0;
-          constraints_c(c_it.index(), elim_j) = 0;
-
-          // update linear transition of rhs
-          gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
-            gmm::mat_row(rhs_update_table_.D_, c_it.index()));
-        }
-      }
-    }
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class VectorIT >
-void
-ConstrainedSolver::make_constraints_independent_reordering(
-  RMatrixT&         _constraints,
-  VectorIT&         _idx_to_round,
-  std::vector<int>& _c_elim)
-{
-  DEB_enter_func;
-  // setup linear transformation for rhs, start with identity
-  gmm::size_type nr = gmm::mat_nrows(_constraints);
-  gmm::resize(rhs_update_table_.D_, nr, nr);
-  gmm::clear(rhs_update_table_.D_);
-
-  for (gmm::size_type i = 0; i < nr; ++i)
-    rhs_update_table_.D_(i, i) = 1.0;
-
-  //  Base::StopWatch sw;
-  // number of variables
-  // AF: Why was n_vars signed? Can it be zero? Later we subtract 1
-  const gmm::size_type n_vars = gmm::mat_ncols(_constraints);
-
-  // TODO Check: HZ added 14.08.09
-  _c_elim.clear();
-  _c_elim.resize(gmm::mat_nrows(_constraints), -1);
-
-  // build round map
-  std::vector<bool> roundmap(n_vars, false);
-  for (size_t i = 0; i < _idx_to_round.size(); ++i)
-    roundmap[_idx_to_round[i]] = true;
-
-  // copy constraints into column matrix (for faster update via iterators)
-  typedef gmm::wsvector<double>      CVector;
-  typedef gmm::col_matrix< CVector > CMatrix;
-  CMatrix constraints_c;
-  gmm::resize(constraints_c, gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-  gmm::copy(_constraints, constraints_c);
-
-  // init priority queue
-  MutablePriorityQueueT<unsigned int, unsigned int> queue;
-  queue.clear(static_cast<int>(nr));
-  for (unsigned int i = 0; i < nr; ++i)
-  {
-    gmm::size_type cur_nnz = gmm::nnz(gmm::mat_row(_constraints, i));
-    if (_constraints(i, n_vars - 1) != 0.0)
-      --cur_nnz;
-
-    queue.update(i, static_cast<int>(cur_nnz));
+    COMISO_EIGEN::to_eigen_vec(*_rhs, rhs);
+    rhs_ptr = &rhs;
   }
 
-  std::vector<bool> row_visited(nr, false);
-  std::vector<gmm::size_type> row_ordering;
-  row_ordering.reserve(nr);
+  resolve(x, constraint_rhs_ptr, rhs_ptr);
 
-
-  // for all conditions
-  //  for(unsigned int i=0; i<gmm::mat_nrows(_constraints); ++i)
-  while (!queue.empty())
-  {
-    // get next row
-    unsigned int i = queue.get_next();
-    row_ordering.push_back(i);
-    row_visited[i] = true;
-
-    // get elimination variable
-    int elim_j = -1;
-    int elim_int_j = -1;
-
-    // iterate over current row, until variable found
-    // first search for real valued variable
-    // if not found for integers with value +-1
-    // and finally take the smallest integer variable
-
-    typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-    typedef typename linalg_traits<RMatrixT>::sub_row_type       RowT;
-    typedef typename linalg_traits<CRowT>::const_iterator        RIter;
-
-    // get current condition row
-    CRowT row = gmm::mat_const_row(_constraints, i);
-    RIter row_it = gmm::vect_const_begin(row);
-    RIter row_end = gmm::vect_const_end(row);
-    double elim_val = FLT_MAX;
-    double max_elim_val = -FLT_MAX;
-
-    // new: gcd
-    std::vector<int> v_gcd;
-    v_gcd.resize(gmm::nnz(row), -1);
-    int n_ints(0);
-    bool gcd_update_valid(true);
-
-    for (; row_it != row_end; ++row_it)
-    {
-      int cur_j = static_cast<int>(row_it.index());
-      // do not use the constant part
-      if (cur_j != (int)n_vars - 1)
-      {
-        // found real valued var? -> finished (UPDATE: no not any more, find biggest real value to avoid x/1e-13)
-        if (!roundmap[cur_j])
-        {
-          if (fabs(*row_it) > max_elim_val)
-          {
-            elim_j = (int)cur_j;
-            max_elim_val = fabs(*row_it);
-          }
-          //break;
-        }
-        else
-        {
-          double cur_row_val(fabs(*row_it));
-          // gcd
-          // If the coefficient of an integer variable is not an integer, then
-          // the variable most probably will not be. This is expected if all
-          // coeffs are the same, e.g. 0.5).
-          // This happens quite often in some ReForm test cases, so downgrading
-          // the warning below to DEB_line at high verbosity.
-          if ((double(int(cur_row_val)) - cur_row_val) != 0.0)
-          {
-            DEB_line(11, "coefficient of integer variable is NOT integer : " <<
-              cur_row_val);
-            gcd_update_valid = false;
-          }
-
-          v_gcd[n_ints] = static_cast<int>(cur_row_val);
-          ++n_ints;
-
-          // store integer closest to 1, must be greater than epsilon_
-          if (fabs(cur_row_val - 1.0) < elim_val && cur_row_val > epsilon_)
-          {
-            elim_int_j = (int)cur_j;
-            elim_val = fabs(cur_row_val - 1.0);
-          }
-        }
-      }
-    }
-
-    // first try to eliminate a valid (>epsilon_) real valued variable (safer)
-    if (max_elim_val <= epsilon_)
-      elim_j = elim_int_j; // use the best found integer
-
-    // if no integer or real valued variable greater than epsilon_ existed, then
-    // elim_j is now -1 and this row is not considered as a valid constraint
-
-    // store result
-    _c_elim[i] = elim_j;
-    // error check result
-    if (elim_j == -1)
-    {
-      DEB_warning_if(noisy_ > 0 && // redundant or incompatible?
-        (fabs(gmm::mat_const_row(_constraints, i)[n_vars - 1]) > epsilon_), 1,
-        "incompatible condition: " <<
-        fabs(gmm::mat_const_row(_constraints, i)[n_vars - 1]))
-    }
-    else if (roundmap[elim_j] && elim_val > 1e-6)
-    {
-      if (do_gcd_ && gcd_update_valid)
-      {
-        // perform gcd update
-        bool gcd_ok = update_constraint_gcd(_constraints, (int)i, elim_j, v_gcd, n_ints);
-        DEB_warning_if(!gcd_ok && (noisy_ > 0), 1, " GCD update failed! "
-          << DEB_os_str(gmm::mat_const_row(_constraints, i)));
-      }
-      else if (noisy_ > 0)
-      {
-        if (!do_gcd_)
-          DEB_warning(1, "NO +-1 coefficient found, integer rounding cannot be guaranteed. Try using the GCD option! "
-            << DEB_os_str(gmm::mat_const_row(_constraints, i)))
-        else
-          DEB_warning(1, "GCD of non-integer cannot be computed! "
-            << DEB_os_str(gmm::mat_const_row(_constraints, i)))
-      }
-    }
-
-    // is this condition dependent?
-    if (elim_j != -1)
-    {
-      // get elim variable value
-      double elim_val_cur = _constraints(i, elim_j);
-
-      // copy col
-      CVector col = constraints_c.col(elim_j);
-
-      // iterate over column
-      typename linalg_traits<CVector>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename linalg_traits<CVector>::const_iterator c_end = gmm::vect_const_end(col);
-
-      for (; c_it != c_end; ++c_it)
-      {
-        //        if( c_it.index() > i)
-        if (!row_visited[c_it.index()])
-        {
-          //          sw.start();
-          double val = -(*c_it) / elim_val_cur;
-          add_row_simultaneously((int)c_it.index(), val, gmm::mat_row(_constraints, i), _constraints, constraints_c);
-          // make sure the eliminated entry is 0 on all other rows and not 1e-17
-          _constraints(c_it.index(), elim_j) = 0;
-          constraints_c(c_it.index(), elim_j) = 0;
-
-          gmm::size_type cur_idx = c_it.index();
-          gmm::size_type cur_nnz = gmm::nnz(gmm::mat_row(_constraints, cur_idx));
-          if (_constraints(cur_idx, n_vars - 1) != 0.0)
-            --cur_nnz;
-
-          queue.update(static_cast<int>(cur_idx),
-            static_cast<int>(cur_nnz));
-
-          // update linear transition of rhs
-          gmm::add(gmm::scaled(gmm::mat_row(rhs_update_table_.D_, i), val),
-            gmm::mat_row(rhs_update_table_.D_, c_it.index()));
-        }
-      }
-    }
-  }
-  // // check result
-  // for(unsigned int i=0; i<row_visited.size(); ++i)
-  //   if( !row_visited[i])
-  //     std::cerr <<"FAT ERROR: row " << i << " not visited...\n";
-
-  // correct ordering
-  RMatrixT c_tmp(gmm::mat_nrows(_constraints), gmm::mat_ncols(_constraints));
-  gmm::copy(_constraints, c_tmp);
-  RowMatrix d_tmp(gmm::mat_nrows(rhs_update_table_.D_), gmm::mat_ncols(rhs_update_table_.D_));
-  gmm::copy(rhs_update_table_.D_, d_tmp);
-
-  // std::vector<int> elim_temp2(_c_elim);
-  // std::sort(elim_temp2.begin(), elim_temp2.end());
-  // std::cerr << elim_temp2 << std::endl;
-
-  std::vector<int> elim_temp(_c_elim);
-  _c_elim.resize(0); _c_elim.resize(elim_temp.size(), -1);
-
-  for (unsigned int i = 0; i < nr; ++i)
-  {
-    gmm::copy(gmm::mat_row(c_tmp, row_ordering[i]), gmm::mat_row(_constraints, i));
-    gmm::copy(gmm::mat_row(d_tmp, row_ordering[i]), gmm::mat_row(rhs_update_table_.D_, i));
-
-    _c_elim[i] = elim_temp[row_ordering[i]];
-  }
-
-  // // hack
-  // elim_temp = _c_elim;
-  // std::sort(elim_temp.begin(), elim_temp.end());
-  // std::cerr << elim_temp << std::endl;
-
-  // std::sort(row_ordering.begin(), row_ordering.end());
-  // std::cerr << "row ordering: " << row_ordering << std::endl;
-}
-
-
-//-----------------------------------------------------------------------------
-
-template<class RMatrixT>
-bool
-ConstrainedSolver::update_constraint_gcd(RMatrixT& _constraints,
-  int _row_i,
-  int& _elim_j,
-  std::vector<int>& _v_gcd,
-  int& _n_ints)
-{
-  DEB_enter_func;
-  // find gcd
-  double i_gcd = find_gcd(_v_gcd, _n_ints);
-
-  if (fabs(i_gcd) == 1.0)
-    return false;
-
-  // divide by gcd
-  typedef typename linalg_traits<RMatrixT>::const_sub_row_type CRowT;
-  typedef typename linalg_traits<CRowT>::const_iterator        RIter;
-
-  // get current constraint row
-  RIter row_it = gmm::vect_const_begin(gmm::mat_const_row(_constraints, _row_i));
-  RIter row_end = gmm::vect_const_end(gmm::mat_const_row(_constraints, _row_i));
-
-  for (; row_it != row_end; ++row_it)
-  {
-    gmm::size_type cur_j = row_it.index();
-    _constraints(_row_i, cur_j) = (*row_it) / i_gcd;
-  }
-  gmm::size_type elim_coeff = static_cast<gmm::size_type>(std::abs(_constraints(_row_i, _elim_j)));
-  DEB_error_if(elim_coeff != 1, "elimination coefficient " << elim_coeff
-    << " will (most probably) NOT lead to an integer solution!");
-  return true;
-}
-
-//-----------------------------------------------------------------------------
-
-template<class SVector1T, class SVector2T, class VectorIT, class SVector3T>
-void
-ConstrainedSolver::eliminate_constraints(
-  gmm::row_matrix<SVector1T>& _constraints,
-  gmm::row_matrix<SVector2T>& _B,
-  VectorIT&                   _idx_to_round,
-  std::vector<int>&           _c_elim,
-  std::vector<int>&           _new_idx,
-  gmm::col_matrix<SVector3T>& _Bcol)
-{
-  DEB_enter_func;
-  // copy into column matrix
-  gmm::resize(_Bcol, gmm::mat_nrows(_B), gmm::mat_ncols(_B));
-  gmm::copy(_B, _Bcol);
-
-  // store columns which should be eliminated
-  std::vector<int> elim_cols;
-  elim_cols.reserve(_c_elim.size());
-
-  for (unsigned int i = 0; i < _c_elim.size(); ++i)
-  {
-    int cur_j = _c_elim[i];
-
-    if (cur_j != -1)
-    {
-      double cur_val = _constraints(i, cur_j);
-
-      // store index
-      elim_cols.push_back(_c_elim[i]);
-
-      // copy col
-      SVector3T col = _Bcol.col(cur_j);
-
-      // iterate over column
-      typename linalg_traits<SVector3T>::const_iterator c_it = gmm::vect_const_begin(col);
-      typename linalg_traits<SVector3T>::const_iterator c_end = gmm::vect_const_end(col);
-
-      for (; c_it != c_end; ++c_it)
-        add_row(c_it.index(), -(*c_it) / cur_val, gmm::mat_row(_constraints, i), _Bcol);
-    }
-  }
-
-  // eliminate columns
-  eliminate_columns(_Bcol, elim_cols);
-
-  _new_idx =
-      COMISO_EIGEN::make_new_index_map(elim_cols, gmm::mat_ncols(_constraints));
-
-  // update _idx_to_round (in place)
-  std::vector<int> round_old(_idx_to_round);
-  unsigned int wi = 0;
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-  {
-    if (_new_idx[_idx_to_round[i]] != -1)
-    {
-      _idx_to_round[wi] = _new_idx[_idx_to_round[i]];
-      ++wi;
-    }
-  }
-
-  // resize, sort and make unique
-  _idx_to_round.resize(wi);
-
-  std::sort(_idx_to_round.begin(), _idx_to_round.end());
-  _idx_to_round.resize(std::unique(_idx_to_round.begin(), _idx_to_round.end()) - _idx_to_round.begin());
-
-  DEB_line_if((noisy_ > 2), 2, "remaining         variables: " <<
-    gmm::mat_ncols(_Bcol));
-  DEB_line_if((noisy_ > 2), 2, "remaining integer variables: " <<
-    _idx_to_round.size());
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class SVector1T, class SVector2T, class VectorIT, class CSCMatrixT>
-void
-ConstrainedSolver::eliminate_constraints(
-  gmm::row_matrix<SVector1T>& _constraints,
-  gmm::col_matrix<SVector2T>& _A,
-  std::vector<double>&        _x,
-  std::vector<double>&        _rhs,
-  VectorIT&                   _idx_to_round,
-  std::vector<int>&           _v_elim,
-  std::vector<int>&           _new_idx,
-  CSCMatrixT&                 _Acsc)
-{
-  DEB_enter_func;
-  Base::StopWatch sw;
-  sw.start();
-  // define iterator on matrix A and on constraints C
-  typedef typename linalg_traits<SVector2T>::const_iterator  AIter;
-  typedef typename linalg_traits<SVector1T>::const_iterator  CIter;
-
-  // store variable indices to be eliminated
-  std::vector<int> elim_varids;
-  elim_varids.reserve(_v_elim.size());
-
-  rhs_update_table_.clear();
-  std::vector<double> constraint_rhs_vec(_constraints.nrows());
-
-  for (unsigned int i = 0; i < _v_elim.size(); ++i)
-  {
-    int cur_j = _v_elim[i];
-
-    if (cur_j != -1)
-    {
-      double cur_val = _constraints(i, cur_j);
-
-      // store index
-      elim_varids.push_back(cur_j);
-      rhs_update_table_.add_elim_id(cur_j);
-
-      // copy col
-      SVector2T col(_A.col(cur_j));
-
-      // get a reference to current constraint vector
-      SVector1T& constraint(_constraints.row(i));
-
-      // add cur_j-th row multiplied with constraint[k] to each row k
-      // iterator of matrix column
-      AIter col_it, col_end;
-
-      // constraint rhs
-      double constraint_rhs = constraint[constraint.size() - 1];
-      constraint_rhs_vec[i] = -constraint_rhs;
-
-      //std::cerr << "constraint_rhs " << constraint_rhs << std::endl;
-      // temporarliy set last element to zero (to avoid iterator finding it)
-      constraint[constraint.size() - 1] = 0;
-
-      double cur_rhs = _rhs[cur_j];
-
-      // iterator of constraint
-      CIter con_it = gmm::vect_const_begin(constraint);
-      CIter con_end = gmm::vect_const_end(constraint);
-
-      // loop over all constraint entries over all column entries
-      // should not hit last element (rhs) since set to zero
-      for (; con_it != con_end; ++con_it)
-      {
-        col_it = gmm::vect_const_begin(col);
-        col_end = gmm::vect_const_end(col);
-        for (; col_it != col_end; ++col_it) {
-          // FIXME: gmm complains that this subtraction is inefficient.
-          _A(con_it.index(), col_it.index()) -= (*col_it)*((*con_it) / cur_val);
-        }
-
-        //_rhs[con_it.index()] -= cur_rhs * (( *con_it )/cur_val);
-//        rhs_update_table_.append(con_it.index(), -1.0 * (( *con_it )/cur_val), cur_j);
-        rhs_update_table_.append(static_cast<int>(con_it.index()), -1.0 * ((*con_it) / cur_val), static_cast<int>(cur_j), false);
-        //std::cerr << con_it.index() << " += " << -1.0*(( *con_it )/cur_val) << " * " << cur_rhs << " (["<<cur_j<<"] = "<<_rhs[cur_j]<<") " << std::endl;
-      }
-
-      // TODO FIXME must use copy col (referens sometimes yields infinite loop below no col_it++?!?)
-      SVector2T col_ref = _A.col(cur_j);
-
-      // add cur_j-th col multiplied with condition[k] to each col k
-      col_it = gmm::vect_const_begin(col_ref);
-      col_end = gmm::vect_const_end(col_ref);
-
-      // loop over all column entries and over all constraint entries
-      for (; col_it != col_end; ++col_it)
-      {
-        con_it = gmm::vect_const_begin(constraint);
-        con_end = gmm::vect_const_end(constraint);
-
-        for (; con_it != con_end; ++con_it)
-          _A(col_it.index(), con_it.index()) -= (*col_it)*((*con_it) / cur_val);
-        //_rhs[col_it.index()] += constraint_rhs*( *col_it )/cur_val;
-//        rhs_update_table_.append(col_it.index(), constraint_rhs*( *col_it )/cur_val);
-        rhs_update_table_.append(static_cast<int>(col_it.index()), -(*col_it) / cur_val, i, true);
-        //std::cerr << col_it.index() << " += " << constraint_rhs*( *col_it )/cur_val << std::endl;
-      }
-
-      // reset last constraint entry to real value
-      constraint[constraint.size() - 1] = constraint_rhs;
-    }
-  }
-
-  // cache current rhs's
-  rhs_update_table_.cur_constraint_rhs_ = constraint_rhs_vec;
-  rhs_update_table_.cur_rhs_ = _rhs;
-  // apply transformation due to elimination
-  rhs_update_table_.apply(constraint_rhs_vec, _rhs);
-
-  DEB_out_if(noisy_ > 2, 2, " Constraints integrated " << sw.stop() / 1000.0 << "\n");
-
-  // eliminate vars
-  _Acsc.init_with_good_format(_A);
-  sw.start();
-  std::vector< double > elim_varvals(elim_varids.size(), 0);
-  COMISO_GMM::eliminate_csc_vars2(elim_varids, elim_varvals, _Acsc, _x, _rhs);
-
-  DEB_out_if(noisy_ > 2, 2, " Constraints eliminated " << sw.stop() / 1000.0 << "\n");
-  sw.start();
-
-  _new_idx = COMISO_EIGEN::make_new_index_map(
-      elim_varids, static_cast<int>(gmm::mat_ncols(_A) + 1));
-
-  // update _idx_to_round (in place)
-  unsigned int wi = 0;
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-  {
-    if (_new_idx[_idx_to_round[i]] != -1)
-    {
-      _idx_to_round[wi] = _new_idx[_idx_to_round[i]];
-      ++wi;
-    }
-  }
-
-  // resize, sort and make unique
-  _idx_to_round.resize(wi);
-
-  std::sort(_idx_to_round.begin(), _idx_to_round.end());
-  _idx_to_round.resize(std::unique(_idx_to_round.begin(), _idx_to_round.end()) - _idx_to_round.begin());
-
-  DEB_out_if(noisy_ > 2, 2, "Indices reindexed " << sw.stop() / 1000.0 << "\n\n")
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RowT, class MatrixT>
-void
-ConstrainedSolver::add_row(gmm::size_type       _row_i,
-  double    _coeff,
-  RowT      _row,
-  MatrixT&  _mat)
-{
-  typedef typename linalg_traits<RowT>::const_iterator RIter;
-  RIter r_it = gmm::vect_const_begin(_row);
-  RIter r_end = gmm::vect_const_end(_row);
-
-  for (; r_it != r_end; ++r_it)
-    _mat(_row_i, r_it.index()) += _coeff*(*r_it);
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RowT, class RMatrixT, class CMatrixT>
-void
-ConstrainedSolver::add_row_simultaneously(gmm::size_type _row_i,
-  double         _coeff,
-  RowT           _row,
-  RMatrixT&      _rmat,
-  CMatrixT&      _cmat)
-{
-  typedef typename linalg_traits<RowT>::const_iterator RIter;
-  RIter r_it = gmm::vect_const_begin(_row);
-  RIter r_end = gmm::vect_const_end(_row);
-
-  for (; r_it != r_end; ++r_it)
-  {
-    _rmat(_row_i, r_it.index()) += _coeff*(*r_it);
-    _cmat(_row_i, r_it.index()) += _coeff*(*r_it);
-    //    if( _rmat(_row_i, r_it.index())*_rmat(_row_i, r_it.index()) < epsilon_squared_ )
-    if (fabs(_rmat(_row_i, r_it.index())) < epsilon_)
-    {
-      _rmat(_row_i, r_it.index()) = 0.0;
-      _cmat(_row_i, r_it.index()) = 0.0;
-    }
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class CMatrixT, class VectorT, class VectorIT>
-double
-ConstrainedSolver::setup_and_solve_system(CMatrixT& _B,
-  VectorT&  _x,
-  VectorIT& _idx_to_round,
-  double    _reg_factor,
-  bool      _show_miso_settings)
-{
-  DEB_enter_func;
-  // show options dialog
-  if (_show_miso_settings)
-    miso_.show_options_dialog();
-
-  Base::StopWatch s1;
-  Base::StopWatch sw; sw.start();
-  unsigned int m = gmm::mat_nrows(_B);
-  unsigned int n = gmm::mat_ncols(_B);
-
-  s1.start();
-  // set up B transposed
-  CMatrixT Bt;
-  gmm::resize(Bt, n, m);
-  gmm::copy(gmm::transposed(_B), Bt);
-
-  // ICGB: SHould these be RLS_out_if() or similar? Or co-opy noisy_ into
-  // the DEB level mechanism.
-  DEB_out_if(noisy_ > 1, 1, " Bt took " << s1.stop() / 1000.0 << "\n")
-    s1.start();
-
-  // setup BtB
-  CMatrixT BtB;
-  gmm::resize(BtB, n, n);
-  gmm::mult(Bt, _B, BtB);
-  DEB_out_if(noisy_ > 1, 1, " BtB took " << s1.stop() / 1000.0 << "\n");
-  s1.start();
-
-  // extract rhs
-  std::vector< double > rhs(n);
-  gmm::copy(gmm::scaled(gmm::mat_const_col(BtB, n - 1), -1.0), rhs);
-  rhs.resize(n - 1);
-
-  DEB_out_if(noisy_ > 1, 1, " rhs extract resize " << s1.stop() / 1000.0 << "\n");
-  s1.start();
-
-  // resize BtB to only contain the actual system matrix (and not the rhs)
-  gmm::resize(BtB, n - 1, n - 1);
-
-  DEB_out_if(noisy_ > 1, 1, " BtB resize took " << s1.stop() / 1000.0 << "\n");
-  s1.start();
-  _x.resize(n - 1);
-  DEB_out_if(noisy_ > 1, 1, " x resize took " << s1.stop() / 1000.0 << "\n");
-
-  // regularize if necessary
-  if (_reg_factor != 0.0)
-    COMISO_GMM::regularize_hack(BtB, _reg_factor);
-  s1.start();
-
-  // BtB -> CSC
-  CSCMatrix BtBCSC;
-  BtBCSC.init_with_good_format(BtB);
-
-  DEB_out_if(noisy_ > 1, 1, " CSC init " << s1.stop() / 1000.0 << "\n");
-  double setup_time = sw.stop() / 1000.0;
-
-
-  Base::StopWatch misw;
-  misw.start();
-  // miso solve
-  miso_.solve(BtBCSC, _x, rhs, _idx_to_round);
-  DEB_out_if(noisy_ > 1, 1, " Miso Time " << misw.stop() / 1000.0 << "s.\n\n");
-  return setup_time;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class RMatrixT, class VectorT >
-void
-ConstrainedSolver::restore_eliminated_vars(
-  RMatrixT&         _constraints,
-  VectorT&          _x,
-  std::vector<int>& _c_elim,
-  std::vector<int>& _new_idx)
-{
-  DEB_enter_func;
-  // restore original ordering of _x
-  _x.resize(_new_idx.size());
-  // last variable is the constant term 1.0
-  _x.back() = 1.0;
-
-  // reverse iterate from prelast element
-  for (int i = static_cast<int>(_new_idx.size()) - 2; i >= 0; --i) // AF: Can this be negative?
-  {
-    if (_new_idx[i] != -1)
-    {
-      // error handling
-      DEB_warning_if((i < _new_idx[i]) && (noisy_ > 0), 1, "UNSAFE Ordering!!!")
-        _x[i] = _x[_new_idx[i]];
-    }
-  }
-
-  // reverse iterate
-  for (int i = static_cast<int>(_c_elim.size()) - 1; i >= 0; --i) // AF: Can this be negative?
-  {
-    int cur_var = _c_elim[i];
-
-    if (cur_var != -1)
-    {
-      // get variable value and set to zero
-      double cur_val = _constraints(i, cur_var);
-
-      //_constraints(i, cur_var) = 0.0;
-      //_x[cur_var] = -gmm::vect_sp(_x, _constraints.row(i))/cur_val;
-      //reformulated to keep _constraints intact for further use:
-      _x[cur_var] -= gmm::vect_sp(_x, _constraints.row(i)) / cur_val;
-
-    }
-  }
-
-  // resize
-  _x.resize(_x.size() - 1);
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-template<class CMatrixT>
-void
-ConstrainedSolver::eliminate_columns(
-  CMatrixT& _M,
-  const std::vector< int >& _columns)
-{
-  // nothing to do?
-  if (_columns.size() == 0) return;
-
-  // eliminate columns in place by first copying to the right place
-  // and a subsequent resize
-  std::vector< int > columns(_columns);
-  std::sort(columns.begin(), columns.end());
-
-  std::vector< int >::iterator col_it = columns.begin();
-  std::vector< int >::iterator col_end = columns.end();
-
-  int next_i = *col_it;
-  for (int i = *col_it; i < (int)_M.ncols(); ++i)
-  {
-    if (col_it != col_end && i == *col_it)
-    {
-      ++col_it;
-    }
-    else
-    {
-      _M.col(next_i) = _M.col(i);
-      ++next_i;
-    }
-  }
-  gmm::resize(_M, _M.nrows(), _M.ncols() - columns.size());
+  COMISO_EIGEN::from_eigen_vec(x, _x);
 }
 
 

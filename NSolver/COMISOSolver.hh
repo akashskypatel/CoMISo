@@ -30,18 +30,18 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
+
 
 /** \class NewtonSolver GUROBISolver.hh
 
     Brief Description.
-  
+
     A more elaborate description follows.
 */
 class COMISODLLEXPORT COMISOSolver
 {
 public:
-   
+
   typedef std::pair<unsigned int, VariableType> PairUiV;
 
   // ********** SOLVE **************** //
@@ -49,8 +49,7 @@ public:
              std::vector<NConstraintInterface*>& _constraints,                  // linear constraints
              std::vector<PairUiV>&               _discrete_constraints,         // discrete constraint
              double                              _reg_factor = 0.0,             // reguluarization factor
-             bool                                _show_miso_settings = false,    // show settings dialog
-             bool                                _show_timings = true        ); // show timings
+             bool                                _show_miso_settings = false);  // show settings dialog
 
 
   // get reference to ConstrainedSolver to manipulate parameters
