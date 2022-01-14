@@ -17,7 +17,6 @@ target_link_libraries(CoMISo
 	PUBLIC Base
 	PRIVATE Ipopt
 	PUBLIC Gmm
-	PRIVATE Boost
 #  PRIVATE OSQP
 	)
 
