@@ -31,6 +31,21 @@ template <size_t DIM> struct SolverBaseT
 
   using PointVector = std::vector<Point>;
 
+  struct Value // It means that X_name_ = val_.
+               // Used to get the results and to set the fixed variables
+  {
+    Value() {}
+    Value(size_t _var_name, Point _point) : var_name(_var_name), point(_point)
+    {
+    }
+    size_t var_name; // Variable name.
+    Point point;     // Value of the variable
+    bool operator<(const Value& _vl) const { return var_name < _vl.var_name; }
+    bool operator==(const Value& _vl) const { return var_name == _vl.var_name; }
+  }; // struct Value
+
+  using ValueVector = std::vector<Value>;
+
   struct LinearTerm // It means that coeff_ * X_name_
   {
     size_t var_name; // Variable name.

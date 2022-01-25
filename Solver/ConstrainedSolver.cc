@@ -460,7 +460,6 @@ void ConstrainedSolver::make_constraints_independent(
     _constraints.prune(0.0);
   }
 
-
   rhs_update_table_.D_ = rhs_update_table_.update_D_;
 }
 
@@ -1065,6 +1064,7 @@ bool ConstrainedSolver::update_constraint_gcd(
 
 
 //-----------------------------------------------------------------------------
+
 
 void ConstrainedSolver::RHSUpdateTable::apply(
     Vector& _constraint_rhs, Vector& _rhs)

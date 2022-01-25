@@ -1,0 +1,80 @@
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+
+
+//=============================================================================
+//
+//  CLASS MultiDimConstrainedSolver
+//
+//=============================================================================
+
+
+#ifndef COMISO_MULTIDIMCONSTRAINEDSOLVERT_HH
+#define COMISO_MULTIDIMCONSTRAINEDSOLVERT_HH
+
+
+//== INCLUDES =================================================================
+#include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Config/StdTypes.hh>
+#include <CoMISo/Solver/SolverBaseT.hh>
+
+#include <vector>
+
+//== NAMESPACES ===============================================================
+
+namespace COMISO
+{
+
+// Class to solve linear systems of the form:
+// Minimize ||Ax - b||^2, subject to linear constraints Cx=d, and integer
+// constraints.
+template <int DIM>
+class COMISODLLEXPORT MultiDimConstrainedSolverT
+{
+public:
+  using Point            = typename SolverBaseT<DIM>::Point;
+  using PointVector      = typename SolverBaseT<DIM>::PointVector;
+  using LinearTerm       = typename SolverBaseT<DIM>::LinearTerm;
+  using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
+  using LinearEquation   = typename SolverBaseT<DIM>::LinearEquation;
+  using Value            = typename SolverBaseT<DIM>::Value;
+  using ValueVector      = typename SolverBaseT<DIM>::ValueVector;
+  using IndexVector      = std::vector<int>;
+
+
+  MultiDimConstrainedSolverT();
+
+  ~MultiDimConstrainedSolverT();
+
+  // Add an equation to the system. solve() will minimize sum of the quadratic
+  // errors of all equations
+  void add_equation(const LinearEquation& _eq);
+
+  // Add a linear constraint to the system
+  void add_constraint(const LinearEquation& _eq);
+
+  // Set the integer constraints
+  void set_integers(IndexVector _int_var_indcs);
+
+  // Solve the system that has been setup with the calls above.
+  // Clears all equations, constraints, and integer constraints that
+  // have been setup using the functions above.
+  void solve(PointVector& _result);
+
+private:
+
+  class Impl;
+  Impl* impl_;
+};
+
+
+//=============================================================================
+} // namespace COMISO
+//=============================================================================
+#if defined(INCLUDE_TEMPLATES) && !defined(COMISO_MULTIDIMCONSTRAINEDSOLVERT_C)
+#define COMISO_MULTIDIMCONSTRAINEDSOLVERT_TEMPLATES
+#include "MultiDimConstrainedSolverT.cc"
+#endif
+//=============================================================================
+#endif // COMISO_CONSTRAINEDSOLVER_HH defined
+//=============================================================================
+

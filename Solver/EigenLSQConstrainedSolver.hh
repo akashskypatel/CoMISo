@@ -53,17 +53,8 @@ public:
   using LinearTerm = typename SolverBaseT<DIM>::LinearTerm;
   using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
   using LinearEquation = typename SolverBaseT<DIM>::LinearEquation;
-
-  struct Value // It means that X_name_ = val_.
-               // Used to get the results and to set the fixed variables
-  {
-    size_t var_name; // Variable name.
-    Point point;     // Value of the variable
-    bool operator<(const Value& _vl) const { return var_name < _vl.var_name; }
-    bool operator==(const Value& _vl) const { return var_name == _vl.var_name; }
-  }; // struct Value
-
-  using ValueVector = std::vector<Value>;
+  using Value = typename SolverBaseT<DIM>::Value;
+  using ValueVector = typename SolverBaseT<DIM>::ValueVector;
   using Result = ValueVector;
 
   /** \constructor
@@ -84,7 +75,7 @@ public:
   ~EigenLSQConstrainedSolverT();
 
   /** \Add a linear equation in the form Sum_i(a_i * x_i) = b_i
-  * 
+  *
   * The solution will minimize the sum of the square of all the added
    * equations: min Sum((Sum_i(a_i * x_i) - b_i)^2)
    */
@@ -95,9 +86,9 @@ public:
    * The input data can be modified by the function.
    * This class assumes that sets of constraints added with different calls to
    * add_linear_constraints do not have common variables.
-   * 
+   *
    * Warning: adding a large number of constraints in one call makes
-   * performances unacceptable. 
+   * performances unacceptable.
    * The expectation is that _lnr_cnstrs.size() < 100.
    */
   void add_linear_constraints(std::vector<LinearEquation>& _lnr_cnstrs);
