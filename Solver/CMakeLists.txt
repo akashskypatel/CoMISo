@@ -11,6 +11,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/MultiDimConstrainedSolverT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SolverBaseT.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/SubProblemSolverT.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolver.hh
    PARENT_SCOPE
@@ -27,6 +28,7 @@ SET(my_t_impls
    ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MultiDimConstrainedSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/SubProblemSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolverT.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolverT.cc
    PARENT_SCOPE
@@ -43,6 +45,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/MISolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/MultiDimConstrainedSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolver.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/SubProblemSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolver.cc
    PARENT_SCOPE
