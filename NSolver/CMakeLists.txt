@@ -5,16 +5,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintTools.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/CPLEXSolver.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/cURLpp.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudCache.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudConfig.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudJob.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTProblemInstance.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LazyConstraintSolver.hh
@@ -33,10 +24,9 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceADOLC.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterfaceDCO.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.hh
+   # ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/QuadraticProblem.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT.hh
-   ${CMAKE_CURRENT_SOURCE_DIR}/TAOSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/TapeIDSingleton.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/TestInterface.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/VariableType.hh
@@ -57,15 +47,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/COMISOSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintTools.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/CBCSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/CPLEXSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/cURLpp.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudCache.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudJob.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/DOCloudSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/GurobiHelper.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/GUROBISolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTProblemInstance.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/LeastSquaresProblem.cc
@@ -78,8 +60,7 @@ SET(my_sources
    ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraints.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NProblemInterface.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/NPTiming.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/TAOSolver.cc
+   # ${CMAKE_CURRENT_SOURCE_DIR}/OSQPSolver.cc
    ${CMAKE_CURRENT_SOURCE_DIR}/TapeIDSingleton.cc
    PARENT_SCOPE
 )
