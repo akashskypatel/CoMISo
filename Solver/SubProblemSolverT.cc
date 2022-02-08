@@ -76,6 +76,13 @@ SubProblemSolverT<DIM>::solve(Result& _result)
   sbst_map_.reset();
 }
 
+template <int DIM>
+const typename SubProblemSolverT<DIM>::ValueVector&
+SubProblemSolverT<DIM>::fixed_values() const
+{
+  return sbst_map_.fixed_values();
+}
+
 }//namespace COMISO
 
 

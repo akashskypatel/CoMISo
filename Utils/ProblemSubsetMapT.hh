@@ -5,6 +5,7 @@
 
 #include <CoMISo/Solver/SolverBaseT.hh>
 #include <CoMISo/Utils/Tagging.hh>
+#include <CoMISo/Utils/Tools.hh>
 
 #include <Base/Debug/DebOut.hh>
 
@@ -53,9 +54,15 @@ public:
   // being the number of new fixed values.
   void reset_fixed_values(ValueVector _fixed_values = ValueVector()) 
   {
+    DEB_enter_func;
     reset();
     is_fixed_.untag_all();
     fixed_values_ = std::move(_fixed_values);
+    DEB_only(auto size_before = fixed_values_.size());
+    sort_unique(fixed_values_);
+    DEB_only(auto size_after = fixed_values_.size());
+    DEB_line_if(size_after != size_before, 3,
+        "Removed " << size_before - size_after << " fixed values");
     for (size_t i = 0; i < fixed_values_.size(); ++i)
     {
       set_fixed(fixed_values_[i].var_name);
@@ -126,6 +133,8 @@ public:
     return _idx;
   }
 
+  // Return the list of fixed values, without duplications
+  const ValueVector& fixed_values() const { return fixed_values_; }
 
 private:
 

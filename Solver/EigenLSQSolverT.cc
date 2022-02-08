@@ -18,7 +18,7 @@ namespace COMISO
 {
 
 template <size_t DIM>
-const typename EigenLSQSolverT<DIM>::Result& EigenLSQSolverT<DIM>::solve()
+void EigenLSQSolverT<DIM>::solve(Result& _result)
 {
   using SparseMatrix = Eigen::SparseMatrix<double>;
   using ColumnMatrix = Eigen::Matrix<double, Eigen::Dynamic, DIM>;
@@ -54,13 +54,12 @@ const typename EigenLSQSolverT<DIM>::Result& EigenLSQSolverT<DIM>::solve()
     // oscillations.
     COMISO_THROW(LSQC_SINGULAR);
   }
-  result_.resize(col_size);
-  for (auto i = 0; i < result_.size(); ++i)
+  _result.resize(col_size);
+  for (auto i = 0; i < _result.size(); ++i)
   {
     for (auto j = 0; j < DIM; ++j)
-      result_[i][j] = X(i, j);
+      _result[i][j] = X(i, j);
   }
-  return result_;
 }
 
 } // namespace COMISO

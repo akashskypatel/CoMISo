@@ -72,6 +72,9 @@ public:
   // have been setup using the functions above. Keeps fixed values.
   void solve(Result& _result);
 
+  // Return the list of fixed values, without duplications
+  const ValueVector& fixed_values() const;
+
 private:
 
   ProblemSubsetMapT<DIM> sbst_map_;

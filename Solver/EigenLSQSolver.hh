@@ -55,12 +55,10 @@ public:
     lin_eqs_.emplace_back(std::move(_lin_eq));
   }
 
-  const Result& solve();
+  void solve(Result& _result);
 
 private:
   std::vector<LinearEquation> lin_eqs_;
-  // System solution
-  PointVector result_;
 };
 
 //=============================================================================
