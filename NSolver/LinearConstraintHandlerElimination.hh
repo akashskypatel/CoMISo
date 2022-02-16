@@ -8,6 +8,9 @@
 #ifndef COMISO_LINEARCONSTRAINTHANDLERELIMINATION_HH
 #define COMISO_LINEARCONSTRAINTHANDLERELIMINATION_HH
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -124,6 +127,9 @@ private:
 #define COMISO_LINEARCONSTRAINTHANDLERELIMINATION_TEMPLATES
 #include "LinearConstraintHandlerEliminationT.cc"
 #endif
+
+#endif // COMISO_GMM_AVAILABLE
+
 //=============================================================================
 #endif // COMISO_LINEARCONSTRAINTHANDLERELIMINATION_HH defined
 //=============================================================================

@@ -30,8 +30,11 @@
 //=============================================================================
 
 #define COMISO_CONSTRAINEDSOLVER_C
-//== INCLUDES =================================================================
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+
+//== INCLUDES =================================================================
 #include "ConstrainedSolver.hh"
 #include <CoMISo/Utils/gmm.hh>
 #include <CoMISo/Solver/GMM_Tools.hh>
@@ -46,6 +49,7 @@
 
 //== NAMESPACES ===============================================================
 
+#if COMISO_GMM_AVAILABLE
 
 namespace COMISO {
 
@@ -223,3 +227,5 @@ ConstrainedSolver::resolve(
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
+
+#endif // COMISO_GMM_AVAILABLE

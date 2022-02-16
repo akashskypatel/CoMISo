@@ -3,6 +3,10 @@
 #ifndef GMMTYPES_HH_INCLUDED
 #define GMMTYPES_HH_INCLUDED
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 #include <gmm/gmm_matrix.h>
 
 namespace COMISO_GMM
@@ -17,4 +21,7 @@ typedef gmm::csc_matrix<double> CSCMatrix;
 
 }//namespace COMISO_GMM
 
+#endif // COMISO_GMM_AVAILABLE
+
 #endif//GMMTYPES_HH_INCLUDED
+

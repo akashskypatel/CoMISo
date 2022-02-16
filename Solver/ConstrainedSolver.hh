@@ -35,6 +35,7 @@
 
 
 //== INCLUDES =================================================================
+#include <CoMISo/Config/config.hh>
 #include <CoMISo/Config/CoMISoDefines.hh>
 
 #include "GMM_Tools.hh"
@@ -119,6 +120,7 @@ public:
       double               _reg_factor = 0.0,
       bool                 _show_miso_settings = true);
 
+#if COMISO_GMM_AVAILABLE
   // same as above but gmm matrices as input.
   // This is deprecated. Please use Eigen interface
   template<class RMatrixT, class CMatrixT, class VectorT, class VectorIT >
@@ -141,6 +143,7 @@ public:
       const VectorIT& _idx_to_round,
       const double    _reg_factor = 0.0,
       const bool      _show_miso_settings = true);
+#endif // COMISO_GMM_AVAILABLE
 
 
   // efficient re-solve with modified _constraint_rhs and/or _rhs (if not
@@ -151,6 +154,7 @@ public:
       const Vector*  _constraint_rhs = nullptr,
       const Vector*  _rhs            = nullptr);
 
+#if COMISO_GMM_AVAILABLE
   // same as above but gmm interface.
   // This is deprecated. Please use Eigen interface
   template <class VectorT>
@@ -158,6 +162,7 @@ public:
             VectorT& _x,
       const VectorT* _constraint_rhs = nullptr,
       const VectorT* _rhs            = nullptr);
+#endif // COMISO_GMM_AVAILABLE
 
 
 /// Non-Quadratic matrix constrained solver
@@ -189,6 +194,7 @@ public:
       const double         _reg_factor = 0.0,
       const bool           _show_miso_settings = true);
 
+#if COMISO_GMM_AVAILABLE
   // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT, class VectorIT >
   void solve(
@@ -198,6 +204,7 @@ public:
             VectorIT& _idx_to_round,
       const double    _reg_factor = 0.0,
       const bool      _show_miso_settings = true);
+#endif // COMISO_GMM_AVAILABLE
 
 
   // const version of above function
@@ -209,7 +216,8 @@ public:
       const double            _reg_factor = 0.0,
       const bool              _show_miso_settings = true);
 
-
+  
+#if COMISO_GMM_AVAILABLE
   // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT, class VectorIT >
   void solve_const(
@@ -219,6 +227,7 @@ public:
       const VectorIT& _idx_to_round,
       const double    _reg_factor = 0.0,
       const bool      _show_miso_settings = true);
+#endif // COMISO_GMM_AVAILABLE
 
   // efficient re-solve with modified _rhs by keeping previous _constraints and _A fixed
   // ATTENTION: only the rhs resulting from B^TB can be changed!!! otherwise use solve
@@ -227,12 +236,14 @@ public:
           Vector&    _x,
     const Vector*    _constraint_rhs = 0);
 
+#if COMISO_GMM_AVAILABLE
   // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT >
   void resolve(
     const RMatrixT& _B,
           VectorT&  _x,
     const VectorT*  _constraint_rhs = 0);
+#endif // COMISO_GMM_AVAILABLE
 
 /*@}*/
 
@@ -270,34 +281,6 @@ private:
 			const std::vector<int>&    _idx_to_round,
 			      std::vector<int>&    _c_elim );
 
-  // same as above but reordering
-  void make_constraints_independent_reordering(
-            HalfSparseRowMatrix& _constraints,
-			const std::vector<int>&    _idx_to_round,
-			      std::vector<int>&    _c_elim );
-
-
-  // adjust _constraints such that col _col is zero except in row _row and
-  // and those rows that should be ignored.
-  // col will be chosen automatically.
-  // _changed_rows returns the rows that were changed.
-  void make_constraint_independent(
-            HalfSparseRowMatrix& _constraints,
-            HalfSparseColMatrix& _constraints_c,
-      const int                  _row,
-            int&                 _col,
-      const std::vector<bool>&   _integer,
-      const std::vector<bool>&   _ignore,
-            std::vector<int>&    _changed_rows);
-
-  // same as above but without returning changed rows
-  void make_constraint_independent(
-            HalfSparseRowMatrix& _constraints,
-            HalfSparseColMatrix& _constraints_c,
-      const int                  _row,
-            int&                 _col,
-      const std::vector<bool>&   _integer,
-      const std::vector<bool>&   _ignore);
 
 /// Eliminate constraints on a factored matrix B
 /**
@@ -352,8 +335,6 @@ private:
 				const std::vector<int>&    _c_elim,
 				const std::vector<int>&    _new_idx);
 
-/*@}*/
-
 
   // add _coeff * (_source_row of _source_mat)  to _target_row of _target_mat
   void add_row(
@@ -389,25 +370,6 @@ private:
     return _a;
   }
 
-  int find_gcd(std::vector<int>& _v_gcd, int& _n_ints);
-
-
-  // TODO if no gcd correction was possible, at least use a variable divisible by 2 as new elim_j (to avoid in-exactness e.g. 1/3)
-  bool update_constraint_gcd(
-          RowMatrix&        _constraints,
-    const Eigen::Index      _row_i,
-    const int               _elim_j,
-          std::vector<int>& _v_gcd,
-          int&              _n_ints);
-
-
-  // same as above but on a sparse vector
-  bool update_constraint_gcd(
-          SparseVector&     _row,
-    const int               _elim_j,
-          std::vector<int>& _v_gcd,
-          int&              _n_ints);
-
 
 private:
 
@@ -436,7 +398,7 @@ private:
   public:
     RHSUpdateTable()
         : c_elim_(), new_idx_(), constraints_(), D_(), cur_rhs_(),
-          cur_constraint_rhs_(), update_D_()
+          cur_constraint_rhs_()
     {}
 
     void append(int _i, double _f, int _j, bool _flag)
@@ -501,9 +463,6 @@ private:
     // constraint_rhs after Gaussian elimination update D*constraint_rhs_orig_
     Vector cur_constraint_rhs_;
 
-    // For better performance use this instead of D_ when updating and assign to
-    // D_ when done
-    HalfSparseRowMatrix update_D_;
   } rhs_update_table_;
 };
 

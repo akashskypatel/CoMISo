@@ -8,6 +8,8 @@
 #ifndef COMISO_NPDERIVATIVECHECKER_HH
 #define COMISO_NPDERIVATIVECHECKER_HH
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
 
 //== INCLUDES =================================================================
 
@@ -22,7 +24,7 @@
 #include <cmath>
 #include <climits>
 
-#include <CoMISo/Utils/gmm.hh>
+#include <CoMISo/Solver/Eigen_Tools.hh>
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 
@@ -182,7 +184,7 @@ protected:
   void get_random_x(std::vector<double>& _x, double _xmin, double _xmax)
   {
     // get random values in [-1,1]
-    gmm::fill_random(_x);
+    COMISO_EIGEN::fill_random(_x);
     double range = _xmax - _xmin;
     for(unsigned int i=0; i<_x.size(); ++i)
       _x[i] = (((_x[i]+1.0)/2.0)*range + _xmin);
@@ -205,10 +207,12 @@ inline double NPDerivativeChecker::getCoeff(const NProblemInterface::SMatrixNP &
     return m.coeff(r, c);
 }
 
+#if COMISO_GMM_AVAILABLE
 template<>
 inline double NPDerivativeChecker::getCoeff(const NProblemGmmInterface::SMatrixNP &m, int r, int c) {
     return m(r, c);
 }
+#endif // COMISO_GMM_AVAILABLE
 
 
 //=============================================================================

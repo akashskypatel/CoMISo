@@ -4,6 +4,9 @@
 //
 //=============================================================================
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+
 //== INCLUDES =================================================================
 
 #include "NewtonSolver.hh"
@@ -15,7 +18,7 @@ namespace COMISO {
 
 //== IMPLEMENTATION ==========================================================
 
-
+#if COMISO_GMM_AVAILABLE
 // solve
 int
 NewtonSolver::
@@ -115,7 +118,7 @@ solve(NProblemGmmInterface* _problem)
   return false;
 #endif
 }
-
+#endif // COMISO_GMM_AVAILABLE
 
 //-----------------------------------------------------------------------------
 

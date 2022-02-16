@@ -39,6 +39,7 @@
 namespace COMISO {
 
 
+#if COMISO_GMM_AVAILABLE
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
@@ -64,6 +65,7 @@ bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
 
   return update_system_eigen(E);
 }
+#endif // COMISO_GMM_AVAILABLE
 
 //-----------------------------------------------------------------------------
 

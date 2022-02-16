@@ -30,6 +30,10 @@
 //
 //=============================================================================
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 //== INCLUDES =================================================================
 
 #include "GMM_ToolsT.cc"
@@ -160,3 +164,6 @@ void read_matrix(const std::string& _filename, CSCMatrix& _m)
 
 
 }//namespace COMISO_GMM
+
+
+#endif // COMISO_GMM_AVAILABLE

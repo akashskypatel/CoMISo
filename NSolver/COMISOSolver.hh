@@ -11,6 +11,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
+#if COMISO_EIGEN3_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -48,7 +49,7 @@ public:
   void solve(NProblemInterface*                  _problem,                      // problem instance
              std::vector<NConstraintInterface*>& _constraints,                  // linear constraints
              std::vector<PairUiV>&               _discrete_constraints,         // discrete constraint
-             double                              _reg_factor = 0.0,             // reguluarization factor
+             double                              _reg_factor = 0.0,             // regularization factor
              bool                                _show_miso_settings = false);  // show settings dialog
 
 
@@ -56,12 +57,9 @@ public:
   ConstrainedSolver& solver() { return cs_;}
 
 protected:
-  double* P(std::vector<double>& _v)
+  double* P(ConstrainedSolver::Vector& _v)
   {
-    if( !_v.empty())
-      return ((double*)&_v[0]);
-    else
-      return 0;
+    return _v.data();
   }
 
 private:
@@ -72,6 +70,8 @@ private:
 
 //=============================================================================
 } // namespace COMISO
+//=============================================================================
+#endif // COMISO_EIGEN3_AVAILABLE
 //=============================================================================
 #endif // COMISO_GUROBISOLVER_HH defined
 //=============================================================================

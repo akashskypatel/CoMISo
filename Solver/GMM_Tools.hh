@@ -29,6 +29,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -333,6 +334,9 @@ void read_vector(const std::string& _filename, std::vector<T>& _v);
 #define COMISO_GMM_TOOLS_TEMPLATES
 #include "GMM_ToolsT.cc"
 #endif
+
+#endif // COMISO_GMM_AVAILABLE
+
 //=============================================================================
 #endif // GMM_GMM_TOOLS_HH defined
 //=============================================================================

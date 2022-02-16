@@ -32,6 +32,10 @@
 
 #define COMISO_GMM_TOOLS_C
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 //== INCLUDES =================================================================
 
 #include "GMM_Tools.hh"
@@ -1206,3 +1210,4 @@ void read_vector(const std::string& _filename, std::vector<T>& _v)
 //=============================================================================
 } // namespace COMISO_GMM
 //=============================================================================
+#endif // COMISO_GMM_AVAILABLE

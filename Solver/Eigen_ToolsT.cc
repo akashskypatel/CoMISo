@@ -58,6 +58,14 @@ namespace COMISO_EIGEN
 
 template <typename ScalarT, int OPTIONS, typename StorageT>
 HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::HalfSparseMatrixBase(
+    size_t _outer_size, size_t _inner_size)
+      : mat_(_outer_size), inner_size_(0)
+{
+  innerResize(_inner_size);
+}
+
+template <typename ScalarT, int OPTIONS, typename StorageT>
+HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::HalfSparseMatrixBase(
     const Matrix& _mat)
 {
   const auto outer_size = _mat.outerSize();
@@ -888,6 +896,7 @@ void eigen_to_cholmod(const MatrixT& _A, cholmod_sparse*& _AC,
 }
 #endif
 
+#if COMISO_GMM_AVAILABLE
 /*
 /// Eigen to Cholmod_dense interface
 template<class MatrixT>
@@ -976,7 +985,6 @@ void cholmod_to_eigen_dense( const cholmod_dense& _AC, MatrixT& _A)
   }
   _A.setFromTriplets( triplets.begin(), triplets.end());
 }
-
 
 /// GMM to Cholmod_sparse interface
 template<class MatrixT>
@@ -1270,6 +1278,8 @@ void from_eigen_vec(const EIGEN_VectorT& _E, GMM_VectorT& _G)
   for (int i = 0; i < _E.rows(); ++i)
     _G[i] = _E(i);
 }
+
+#endif // COMISO_GMM_AVAILABLE
 
 template <class EIGEN_VectorT, class ScalarT>
 void from_eigen_vec(const EIGEN_VectorT& _E, std::vector<ScalarT>& _v)

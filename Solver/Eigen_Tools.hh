@@ -88,6 +88,7 @@ public:
   using Index = Eigen::Index;
 
   HalfSparseMatrixBase() { inner_size_ = 0; }
+  HalfSparseMatrixBase(size_t _outer_size, size_t _inner_size);
   HalfSparseMatrixBase(const Matrix& _mat);
   HalfSparseMatrixBase(const OtherMatrix& _mat);
 
@@ -108,12 +109,23 @@ public:
   int outerSize() const { return (int)mat_.size(); }
   int innerSize() const { return inner_size_; }
 
-  void outerResize(size_t _size) { mat_.resize(_size); }
+  void outerResize(size_t _size)
+  {
+    mat_.resize(_size, SparseVector(inner_size_));
+  }
 
   void innerResize(size_t _size)
   {
+    inner_size_ = static_cast<int>(_size);
     for (auto& v : mat_)
       v.resize(_size);
+  }
+
+  void innerConservativeResize(size_t _size) 
+  {
+    inner_size_ = static_cast<int>(_size);
+    for (auto& v : mat_)
+      v.conservativeResize(_size);
   }
 
   void prune(double _eps)
@@ -142,6 +154,7 @@ public:
   using OtherMatrix = Eigen::SparseMatrix<ScalarT, Eigen::RowMajor, int>;
 
   HalfSparseColMatrix() : Base() {}
+  HalfSparseColMatrix(int _rows, int _cols) : Base(_cols, _rows) {}
   HalfSparseColMatrix(const Matrix& _m) : Base(_m) {}
   HalfSparseColMatrix(const OtherMatrix& _m) : Base(_m) {}
   HalfSparseColMatrix(const HalfSparseRowMatrix<ScalarT>& _m) : Base(_m) {}
@@ -168,6 +181,7 @@ public:
   using OtherMatrix = Eigen::SparseMatrix<ScalarT, Eigen::ColMajor, int>;
 
   HalfSparseRowMatrix() : Base() {}
+  HalfSparseRowMatrix(size_t _rows, size_t _cols) : Base(_rows, _cols) {}
   HalfSparseRowMatrix(const Matrix& _m) : Base(_m) {}
   HalfSparseRowMatrix(const OtherMatrix& _m) : Base(_m) {}
   HalfSparseRowMatrix(const HalfSparseColMatrix<ScalarT>& _m) : Base(_m) {}
@@ -321,7 +335,6 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
     RealT* const _val, IntegerT* const _rows, IntegerT* const _cols,
     ScalarT* const _x, ScalarT* const _rhs);
 
-
 #if COMISO_SUITESPARSE_AVAILABLE
 
 /// Eigen to Cholmod_sparse interface
@@ -336,16 +349,19 @@ void eigen_to_cholmod( const MatrixT&  _A,
                      bool            _long_int      = false);
 #endif
 
+#if COMISO_GMM_AVAILABLE
 // convert a gmm column-sparse matrix into an Eigen sparse matrix
 template <class GMM_MatrixT, class EIGEN_MatrixT>
 void gmm_to_eigen(const GMM_MatrixT& _G, EIGEN_MatrixT& _E);
 
 template <class GMM_VectorT, class EIGEN_VectorT>
 void to_eigen_vec(const GMM_VectorT& _G, EIGEN_VectorT& _E);
+#endif // COMISO_GMM_AVAILABLE
 
 template <class ScalarT, class EIGEN_VectorT>
 void to_eigen_vec(const std::vector<ScalarT>& _G, EIGEN_VectorT& _E);
 
+#if COMISO_GMM_AVAILABLE
 // convert an Eigen sparse matrix into a gmm sparse matrix
 template <class EIGEN_MatrixT, class GMM_MatrixT>
 void eigen_to_gmm(const EIGEN_MatrixT& _E, GMM_MatrixT& _G);
@@ -361,10 +377,16 @@ void eigen_to_gmm_csc(const Eigen::SparseMatrix<ScalarT, Eigen::ColMajor>& _E, G
 
 template <class EIGEN_VectorT, class GMM_VectorT>
 void from_eigen_vec(const EIGEN_VectorT& _E, const GMM_VectorT& _G);
+#endif // COMISO_GMM_AVAILABLE
 
 template <class EIGEN_VectorT, class ScalarT>
 void from_eigen_vec(const EIGEN_VectorT& _E, std::vector<ScalarT>& _v);
 
+
+inline void fill_random(std::vector<double>& _x)
+{
+  from_eigen_vec(Eigen::VectorXd::Random(_x.size()), _x);
+}
 
 // Write a matrix in MatrixMarket format
 template <typename MatrixT>

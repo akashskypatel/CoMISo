@@ -15,6 +15,10 @@
 #include <CoMISo/Utils/gmm.hh>
 #include <iostream>
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 //== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================
@@ -106,6 +110,9 @@ private:
 #define COMISO_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
 #include "LinearConstraintHandlerPenaltyT.cc"
 #endif
+
+//=============================================================================
+#endif // COMISO_GMM_AVAILABLE
 //=============================================================================
 #endif // COMISO_LINEARCONSTRAINTHANDLERPENALTY_HH defined
 //=============================================================================

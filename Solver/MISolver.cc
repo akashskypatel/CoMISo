@@ -61,8 +61,10 @@ ILOSTLBEGIN
 #include <Base/Debug/DebTime.hh>
 #include <Base/Utils/StopWatch.hh>
 
-#include <queue>
 #include <float.h>
+#include <numeric>
+#include <queue>
+#include <set>
 
 namespace COMISO
 {

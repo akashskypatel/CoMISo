@@ -67,8 +67,10 @@ public:
     const std::vector<int>&    _rowind,
     const std::vector<double>& _values);
 
+#if COMISO_GMM_AVAILABLE
   template< class GMM_MatrixT>
   bool calc_system_gmm(const GMM_MatrixT& _mat);
+#endif // COMISO_GMM_AVAILABLE
 
   template< class Eigen_MatrixT>
   bool calc_system_eigen(const Eigen_MatrixT& _mat);
@@ -77,8 +79,10 @@ public:
     const std::vector<int>&    _rowind,
     const std::vector<double>& _values);
 
+#if COMISO_GMM_AVAILABLE
   template< class GMM_MatrixT>
   bool update_system_gmm(const GMM_MatrixT& _mat);
+#endif // COMISO_GMM_AVAILABLE
 
   template< class Eigen_MatrixT>
   bool update_system_eigen(const Eigen_MatrixT& _mat);
