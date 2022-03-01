@@ -60,6 +60,17 @@ public:
   // have been setup using the functions above.
   void solve(PointVector& _result);
 
+  // Update const term of the _eq_idx'th equation added via add_equation().
+  void update_equation_const_term(size_t _eq_idx, const Point& _const_term);
+
+  // Update const term of the _cnstrnt_idx'th constraint added via
+  // add_constraint().
+  void update_constraint_const_term(size_t _cnstrnt_idx, const Point& _const_term);
+
+  // Resolve problem with changed right hand sides. You need to ensure that
+  // solve has been called before calling this function.
+  void resolve(PointVector& _result);
+
 private:
 
   class Impl;

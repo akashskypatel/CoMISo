@@ -25,8 +25,8 @@ public:
   {
   }
 
-  void add_equation(const LinearEquation& _eq) { add(A_, b_, _eq); }
-  void add_constraint(const LinearEquation& _eq) { add(C_, d_, _eq); }
+  void add_equation(const LinearEquation& _eq) { add(_eq, A_triplets_, b_); }
+  void add_constraint(const LinearEquation& _eq) { add(_eq, C_triplets_, d_); }
 
   void set_integers(IndexVector _int_var_indcs)
   {
@@ -35,6 +35,25 @@ public:
 
   // Solve problem. Resets all equations, constraints and integer constraints
   void solve(PointVector& _result);
+
+  // Update const term of the _eq_idx'th equation added via add_equation().
+  void update_equation_const_term(size_t _eq_idx, const Point& _const_term)
+  {
+    DEB_error_if(_eq_idx >= b_.size(), "Index out of range.");
+    b_[_eq_idx] = _const_term;
+  };
+
+  // Update const term of the _cnstrnt_idx'th constraint added via
+  // add_constraint().
+  void update_constraint_const_term(size_t _cnstrnt_idx, const Point& _const_term)
+  {
+    DEB_error_if(_cnstrnt_idx >= d_.size(), "Index out of range.");
+    d_[_cnstrnt_idx] = _const_term;
+  };
+
+  // Resolve problem with changed right hand sides. You need to ensure that
+  // solve has been called before calling this function.
+  void resolve(PointVector& _result);
 
 private:
 
@@ -59,14 +78,14 @@ private:
   }
 
   // Exchange rhs (last column) of _mat with column _col of _rhs
-  static void update_rhs(RowMatrix& _mat, const PointVector& _rhs, int _col)
+  static void update_rhs(const PointVector& _rhs, int _col, RowMatrix& _mat)
   {
     for (int i = 0; i < _mat.rows(); ++i)
       _mat.coeffRef(i, _mat.cols() - 1) = -_rhs[i][_col];
   }
 
   // Add a linear equation into triplets and rhs vector
-  void add(TripletVector& _M, PointVector& _rhs, const LinearEquation _eq)
+  void add(const LinearEquation& _eq, TripletVector& _M, PointVector& _rhs)
   {
     if (_eq.linear_terms.empty())
       return; // don't add empty equations
@@ -79,67 +98,85 @@ private:
     _rhs.push_back(_eq.const_term);
   }
 
-  // Reset all data accumulated by calling add_equation add_constraint and
-  // set_integer
-  void reset()
+  // Store one dimensional solution in dimension _dim_idx of _result
+  void store_result(const ConstrainedSolver::Vector& _solution, int _dim_idx,
+    PointVector& _result)
   {
-    A_.clear();
-    b_.clear();
-    C_.clear();
-    d_.clear();
-    int_var_indcs_.clear();
-    var_nmbr_ = 0;
+    DEB_error_if(_solution.size() != var_nmbr_,
+        "Unexpected solution size of " << _solution.size()
+                                       << " instead of expected " << var_nmbr_);
+    _result.resize(var_nmbr_);
+    for (int i = 0; i < var_nmbr_; ++i)
+      _result[i][_dim_idx] = _solution[i];
   }
 
-  TripletVector A_; // Matrix A defining the minimization objective ||Ax-b||^2
+  // Resolve for a given dimension
+  void resolve(int _dim_idx, PointVector& _result);
+
+  RowMatrix     A_; // Matrix A defining the minimization objective ||Ax-b||^2
+  TripletVector A_triplets_; // Triplets for matrix A_
   PointVector   b_; // b of the minimization objective ||Ax-b||^2
-  TripletVector C_; // Matrix C defining the linear equality constraints Cx=d
+  RowMatrix     C_; // Matrix C defining the linear equality constraints Cx=d
+  TripletVector C_triplets_; // Triplets for matrix C_
   PointVector   d_; // rhs of equality constraints Cx = d
   IndexVector   int_var_indcs_; // List of variables which should be rounded to
                                 // integers.
 
   size_t var_nmbr_; // Number of variables in the problem
+
+  ConstrainedSolver solver_; // Solver for one dimensional problems.
 };
 
 template <int DIM>
 void
 MultiDimConstrainedSolverT<DIM>::Impl::solve(PointVector& _result)
 {
-  ConstrainedSolver solver;
+  DEB_enter_func;
 
   // create systems with first dimension of _b,_d as rhs in last column of A,C
-  RowMatrix A;
-  RowMatrix C;
-  to_matrix(A_, var_nmbr_, b_, A);
-  to_matrix(C_, var_nmbr_, d_, C);
+  to_matrix(A_triplets_, var_nmbr_, b_, A_);
+  to_matrix(C_triplets_, var_nmbr_, d_, C_);
 
   ConstrainedSolver::Vector solution(var_nmbr_);
 
   // solve system for first dimension
-  solver.solve(C, A, solution, int_var_indcs_, 0.0, false);
-  _result.resize(var_nmbr_);
-
-  // store result
-  for (int i = 0; i < var_nmbr_; ++i)
-    _result[i][0] = solution[i];
+  solver_.solve(C_, A_, solution, int_var_indcs_, 0.0, false);
+  store_result(solution, 0, _result);
 
   // solve system for remaining dimensions
-  for (int k = 1; k < DIM; ++k)
-  {
-    // exchange right hand sides
-    update_rhs(A, b_, k);
-    Vector rhs;
-    to_vector(d_, k, rhs);
+  for (int i = 1; i < DIM; ++i)
+    resolve(i, _result);
+}
 
-    // resolve for updated rhs
-    solver.resolve(A, solution, &rhs);
 
-    // store result
-    for (int j = 0; j < var_nmbr_; ++j)
-      _result[j][k] = solution[j];
-  }
+template <int DIM>
+void
+MultiDimConstrainedSolverT<DIM>::Impl::resolve(PointVector& _result)
+{
+  DEB_error_if(A_.rows() == 0,
+    "Equation matrix is empty. solve() needs to be called before resolve().");
+  // resolve system for all dimensions
+  for (int i = 0; i < DIM; ++i)
+    resolve(i, _result);
+}
 
-  reset();
+template <int DIM>
+void
+MultiDimConstrainedSolverT<DIM>::Impl::resolve(int _dim_idx, PointVector& _result)
+{
+  DEB_enter_func;
+
+  ConstrainedSolver::Vector solution(var_nmbr_);
+
+  // exchange right hand sides
+  update_rhs(b_, _dim_idx, A_);
+  Vector rhs;
+  to_vector(d_, _dim_idx, rhs);
+
+  // resolve for updated rhs
+  solver_.resolve(A_, solution, &rhs);
+
+  store_result(solution, _dim_idx, _result);
 }
 
 
@@ -182,6 +219,27 @@ void
 MultiDimConstrainedSolverT<DIM>::solve(PointVector& _result)
 {
   return impl_->solve(_result);
+}
+
+template <int DIM>
+void MultiDimConstrainedSolverT<DIM>::update_equation_const_term(
+    size_t _eq_idx, const Point& _const_term)
+{
+  impl_->update_equation_const_term(_eq_idx, _const_term);
+}
+
+template <int DIM>
+void MultiDimConstrainedSolverT<DIM>::update_constraint_const_term(
+    size_t _cnstrnt_idx, const Point& _const_term)
+{
+  impl_->update_constraint_const_term(_cnstrnt_idx, _const_term);
+}
+
+template <int DIM>
+void
+MultiDimConstrainedSolverT<DIM>::resolve(PointVector& _result)
+{
+  return impl_->resolve(_result);
 }
 
 }//namespace COMISO
