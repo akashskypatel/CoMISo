@@ -92,6 +92,30 @@ inline bool are_same(const double _x, const double _y, const double _tol)
 template <typename T> inline T sqr(const T& _a) { return _a * _a; }
 
 
+
+// Sort list and remove duplicate elements, using provided predicates.
+template <typename T, typename LessPredicateT, typename EqualPredicateT>
+void sort_unique(std::vector<T>& _v, const LessPredicateT& _less,
+    const EqualPredicateT& _equal)
+{
+  std::sort(_v.begin(), _v.end(), _less);
+  _v.erase(std::unique(_v.begin(), _v.end(), _equal), _v.end());
+}
+
+// Sort list and remove duplicate elements. Using provided predicate to sort
+// elements and to derive an equality predicate.
+template <typename T, typename LessPredicateT>
+void sort_unique(std::vector<T>& _v, const LessPredicateT& _less)
+{
+  const auto equal = [&_less](const auto& _l, const auto& _r)
+  {
+    return !_less(_l, _r) && !_less(_r, _l);
+  };
+  sort_unique(_v, _less, equal);
+}
+
+// Sort list and remove duplicate elements. Sorted via operator<(), equality
+// of elements checked via operator==().
 template <typename T>
 void sort_unique(std::vector<T>& _v)
 {

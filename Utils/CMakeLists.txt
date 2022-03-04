@@ -7,6 +7,7 @@ set(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/SmartPointer.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/Tagging.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/Tools.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/VectorT.hh
    PARENT_SCOPE
 )
 

@@ -16,8 +16,8 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Utils/VectorT.hh>
 
-#include <array>
 #include <vector>
 
 //== NAMESPACES ===============================================================
@@ -27,7 +27,7 @@ namespace COMISO
 
 template <size_t DIM> struct SolverBaseT
 {
-  using Point = std::array<double, DIM>; // Object to minimize
+  using Point = VectorT<double, DIM>; // Object to minimize
 
   using PointVector = std::vector<Point>;
 
@@ -40,8 +40,19 @@ template <size_t DIM> struct SolverBaseT
     }
     size_t var_name; // Variable name.
     Point point;     // Value of the variable
-    bool operator<(const Value& _vl) const { return var_name < _vl.var_name; }
-    bool operator==(const Value& _vl) const { return var_name == _vl.var_name; }
+
+    bool operator<(const Value& _vl) const
+    {
+      if (var_name != _vl.var_name)
+        return var_name < _vl.var_name;
+      return point < _vl.point;
+    }
+
+    bool operator==(const Value& _vl) const
+    {
+      return var_name == _vl.var_name && point == _vl.point;
+    }
+
   }; // struct Value
 
   using ValueVector = std::vector<Value>;

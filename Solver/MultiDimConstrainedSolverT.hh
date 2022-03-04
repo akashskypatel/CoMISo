@@ -36,12 +36,18 @@ public:
   using LinearTerm       = typename SolverBaseT<DIM>::LinearTerm;
   using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
   using LinearEquation   = typename SolverBaseT<DIM>::LinearEquation;
-  using Value            = typename SolverBaseT<DIM>::Value;
-  using ValueVector      = typename SolverBaseT<DIM>::ValueVector;
   using IndexVector      = std::vector<int>;
+  using Result           = PointVector;
 
 
   MultiDimConstrainedSolverT();
+
+  /// delete copy constructor
+  MultiDimConstrainedSolverT(const MultiDimConstrainedSolverT<DIM>&) = delete;
+
+  /// delete assignment operator
+  MultiDimConstrainedSolverT& operator=(
+      const MultiDimConstrainedSolverT& _rhs) = delete;
 
   ~MultiDimConstrainedSolverT();
 
@@ -58,7 +64,7 @@ public:
   // Solve the system that has been setup with the calls above.
   // Clears all equations, constraints, and integer constraints that
   // have been setup using the functions above.
-  void solve(PointVector& _result);
+  void solve(Result& _result);
 
   // Update const term of the _eq_idx'th equation added via add_equation().
   void update_equation_const_term(size_t _eq_idx, const Point& _const_term);
@@ -69,7 +75,7 @@ public:
 
   // Resolve problem with changed right hand sides. You need to ensure that
   // solve has been called before calling this function.
-  void resolve(PointVector& _result);
+  void resolve(Result& _result);
 
 private:
 

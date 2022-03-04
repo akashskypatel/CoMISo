@@ -189,7 +189,8 @@ void ConstrainedSolver::resolve(
   rhs_update_table_.apply(rhs_update_table_.cur_constraint_rhs_, rhs_red);
   rhs_update_table_.eliminate(rhs_red);
 
-  miso_.resolve(_x, rhs_red);
+  if (rhs_red.rows() > 0) // Skip solve if there is nothing to solve
+    miso_.resolve(_x, rhs_red);
 
   // restore eliminated vars to fulfill the given conditions
   restore_eliminated_vars(rhs_update_table_.constraints_, _x, rhs_update_table_.c_elim_, rhs_update_table_.new_idx_);

@@ -33,8 +33,8 @@ public:
     int_var_indcs_ = std::move(_int_var_indcs);
   }
 
-  // Solve problem. Resets all equations, constraints and integer constraints
-  void solve(PointVector& _result);
+  // Solve problem.
+  void solve(Result& _result);
 
   // Update const term of the _eq_idx'th equation added via add_equation().
   void update_equation_const_term(size_t _eq_idx, const Point& _const_term)
@@ -53,7 +53,7 @@ public:
 
   // Resolve problem with changed right hand sides. You need to ensure that
   // solve has been called before calling this function.
-  void resolve(PointVector& _result);
+  void resolve(Result& _result);
 
 private:
 
@@ -62,11 +62,14 @@ private:
       const PointVector& _rhs, RowMatrix& _mat)
   {
     const auto row_num = _rhs.size();
+    const auto triplets_nmbr = _triplets.size();
+    // temporarily add rhs to triplets
     for (size_t i = 0; i < row_num; ++i)
       _triplets.emplace_back((int)i, (int)_col_num, -_rhs[i][0]);
     _mat.resize(row_num, _col_num + 1);
     _mat.reserve(_triplets.size());
     _mat.setFromTriplets(_triplets.begin(), _triplets.end());
+    _triplets.resize(triplets_nmbr);// Remove the added triplets
   }
 
   // Extract simple one dimensional vector for column _col of a point vector
@@ -87,8 +90,6 @@ private:
   // Add a linear equation into triplets and rhs vector
   void add(const LinearEquation& _eq, TripletVector& _M, PointVector& _rhs)
   {
-    if (_eq.linear_terms.empty())
-      return; // don't add empty equations
     const auto row_idx = _rhs.size();
     for (const auto& term : _eq.linear_terms)
     {
@@ -129,7 +130,7 @@ private:
 
 template <int DIM>
 void
-MultiDimConstrainedSolverT<DIM>::Impl::solve(PointVector& _result)
+MultiDimConstrainedSolverT<DIM>::Impl::solve(Result& _result)
 {
   DEB_enter_func;
 
@@ -151,7 +152,7 @@ MultiDimConstrainedSolverT<DIM>::Impl::solve(PointVector& _result)
 
 template <int DIM>
 void
-MultiDimConstrainedSolverT<DIM>::Impl::resolve(PointVector& _result)
+MultiDimConstrainedSolverT<DIM>::Impl::resolve(Result& _result)
 {
   DEB_error_if(A_.rows() == 0,
     "Equation matrix is empty. solve() needs to be called before resolve().");
@@ -197,7 +198,7 @@ template <int DIM>
 void
 MultiDimConstrainedSolverT<DIM>::add_equation(const LinearEquation& _eq)
 {
-  impl_-> add_equation(_eq);
+  impl_->add_equation(_eq);
 }
 
 template <int DIM>
@@ -216,7 +217,7 @@ MultiDimConstrainedSolverT<DIM>::set_integers(IndexVector _int_var_indcs)
 
 template <int DIM>
 void
-MultiDimConstrainedSolverT<DIM>::solve(PointVector& _result)
+MultiDimConstrainedSolverT<DIM>::solve(Result& _result)
 {
   return impl_->solve(_result);
 }
@@ -237,7 +238,7 @@ void MultiDimConstrainedSolverT<DIM>::update_constraint_const_term(
 
 template <int DIM>
 void
-MultiDimConstrainedSolverT<DIM>::resolve(PointVector& _result)
+MultiDimConstrainedSolverT<DIM>::resolve(Result& _result)
 {
   return impl_->resolve(_result);
 }

@@ -26,9 +26,6 @@ class ProblemSubsetMapT
   using Tag = unsigned int;
 
   using Point            = typename SolverBaseT<DIM>::Point;
-  using PointVector      = typename SolverBaseT<DIM>::PointVector;
-  using LinearTerm       = typename SolverBaseT<DIM>::LinearTerm;
-  using LinearTermVector = typename SolverBaseT<DIM>::LinearTermVector;
   using LinearEquation   = typename SolverBaseT<DIM>::LinearEquation;
   using Value            = typename SolverBaseT<DIM>::Value;
   using ValueVector      = typename SolverBaseT<DIM>::ValueVector;
@@ -59,7 +56,9 @@ public:
     is_fixed_.untag_all();
     fixed_values_ = std::move(_fixed_values);
     DEB_only(auto size_before = fixed_values_.size());
-    sort_unique(fixed_values_);
+    // Create list with at most one fixed value for each variable
+    sort_unique(fixed_values_, [](const auto& _l, const auto& _r)
+        { return _l.var_name < _r.var_name; });
     DEB_only(auto size_after = fixed_values_.size());
     DEB_line_if(size_after != size_before, 3,
         "Removed " << size_before - size_after << " fixed values");
@@ -70,18 +69,18 @@ public:
     }
   }
 
-  // Transform a linear equation into sub problem
-  void map(LinearEquation& _eq)
+  // Transform a linear equation into sub problem. Returns the update applied to
+  // the const term of _eq, i.e. const_term after = const_term + return value
+  Point map(LinearEquation& _eq)
   {
     // Update all terms
+    auto const_term_before = _eq.const_term;
     for (auto& term : _eq.linear_terms)
     {
       if (is_fixed(term.var_name))
       {
         // For fixed values update right hand side accordingly
-        const auto& pnt = fixed_point(term.var_name);
-        for (int i = 0; i < DIM; ++i)
-          _eq.const_term[i] -= term.coeff * pnt[i];
+        _eq.const_term -= term.coeff * fixed_point(term.var_name);
         // Invalidate variable for later removal
         term.var_name = INVALID_ID;
       }
@@ -94,6 +93,8 @@ public:
         std::remove_if(_eq.linear_terms.begin(), _eq.linear_terms.end(),
             [](const auto& _elem) { return _elem.var_name == INVALID_ID; }),
         _eq.linear_terms.end());
+
+    return _eq.const_term - const_term_before;
   }
 
   // Map vector of variable indices into sub problem
