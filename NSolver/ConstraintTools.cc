@@ -11,21 +11,23 @@
 #include <Base/Debug/DebOut.hh>
 
 #include <limits>
+#include <numeric>
 
-
-
-namespace COMISO {
+namespace COMISO 
+{
+namespace ConstraintTools
+{
 
 //-----------------------------------------------------------------------------
 
 void
-ConstraintTools::remove_dependent_linear_constraints(
+remove_dependent_linear_constraints(
     std::vector<NConstraintInterface*>& _constraints, const double _eps)
 {
   // split into linear and nonlinear
   std::vector<NConstraintInterface*> lin_const, nonlin_const;
 
-  for(unsigned int i=0; i<_constraints.size(); ++i)
+  for (unsigned int i = 0; i < _constraints.size(); ++i)
   {
     if (_constraints[i]->is_linear() &&
         _constraints[i]->constraint_type() == NConstraintInterface::NC_EQUAL)
@@ -36,9 +38,9 @@ ConstraintTools::remove_dependent_linear_constraints(
       nonlin_const.push_back(_constraints[i]);
   }
 
-  remove_dependent_linear_constraints_only_linear_equality( lin_const);
+  remove_dependent_linear_constraints_only_linear_equality(lin_const);
 
-  for(unsigned int i=0; i<lin_const.size(); ++i)
+  for (unsigned int i = 0; i < lin_const.size(); ++i)
     nonlin_const.push_back(lin_const[i]);
 
   // return filtered constraints
@@ -48,30 +50,31 @@ ConstraintTools::remove_dependent_linear_constraints(
 
 //-----------------------------------------------------------------------------
 
-void
-ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(
+void 
+remove_dependent_linear_constraints_only_linear_equality(
     std::vector<NConstraintInterface*>& _constraints, const double _eps)
 {
   DEB_enter_func;
   // make sure that constraints are available
-  if(_constraints.empty()) return;
+  if (_constraints.empty())
+    return;
 
   // 1. copy (normalized) data into gmm dynamic sparse matrix
   size_t n(_constraints[0]->n_unknowns());
   size_t m(_constraints.size());
   std::vector<double> x(n, 0.0);
   NConstraintInterface::SVectorNC g;
-  HalfSparseRowMatrix A(m, n+1);
-  for(unsigned int i=0; i<_constraints.size(); ++i)
+  HalfSparseRowMatrix A(m, n + 1);
+  for (unsigned int i = 0; i < _constraints.size(); ++i)
   {
     // store rhs in last column
-    A.coeffRef(i,n) = _constraints[i]->eval_constraint(x.data());
+    A.coeffRef(i, n) = _constraints[i]->eval_constraint(x.data());
     // get and store coefficients
     _constraints[i]->eval_gradient(x.data(), g);
     double v_max(0.0);
     for (NConstraintInterface::SVectorNC::InnerIterator it(g); it; ++it)
     {
-      A.coeffRef(i,it.index()) = it.value();
+      A.coeffRef(i, it.index()) = it.value();
       v_max = std::max(v_max, std::abs(it.value()));
     }
     // normalize row
@@ -79,9 +82,8 @@ ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(
       A.row(i) *= 1.0 / v_max;
   }
 
-  ConstraintTools ct(_eps, true, false);
   std::vector<int> _elmn_clmn(A.rows(), -1);
-  ct.make_constraints_independent(A, _elmn_clmn);
+  gauss_elimination(A, _elmn_clmn, IntVector(), nullptr, _eps, FL_DO_GCD);
 
   std::vector<size_t> keep;
   for (size_t i = 0; i < _elmn_clmn.size(); ++i)
@@ -93,12 +95,13 @@ ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(
     }
   }
 
-  DEB_line(2, "removed " << _constraints.size()-keep.size() << 
-    " dependent linear constraints out of " << _constraints.size());
+  DEB_line(2, "removed " << _constraints.size() - keep.size()
+                         << " dependent linear constraints out of "
+                         << _constraints.size());
 
   // 4. store result
   std::vector<NConstraintInterface*> new_constraints;
-  for(unsigned int i=0; i<keep.size(); ++i)
+  for (unsigned int i = 0; i < keep.size(); ++i)
     new_constraints.push_back(_constraints[keep[i]]);
 
   // return linearly independent ones
@@ -108,45 +111,102 @@ ConstraintTools::remove_dependent_linear_constraints_only_linear_equality(
 
 //-----------------------------------------------------------------------------
 
-
-void ConstraintTools::make_constraints_independent(
-    HalfSparseRowMatrix& _constraints, const std::vector<int>& _idx_to_round,
-    std::vector<int>& _c_elim)
+// Dependent linear constraint removal implementation
+class GaussElimination
 {
-  if (update_D_ != nullptr)
-  { 
-    // setup linear transformation for rhs, start with identity
-    const auto row_nmbr = _constraints.rows();
-    update_D_->innerResize(row_nmbr);
-    update_D_->outerResize(row_nmbr);
-    for (int i = 0; i < row_nmbr; ++i)
-      update_D_->coeffRef(i, i) = 1.0;
+public:
+  GaussElimination(HalfSparseRowMatrix& _constraints, IntVector& _c_elim,
+      const IntVector& _indcs_to_round, HalfSparseRowMatrix* _update_D,
+      const double _eps, const uint _flags)
+      : constraints_(_constraints), c_elim_(_c_elim),
+        indcs_to_round_(_indcs_to_round), update_D_(_update_D), epsilon_(_eps),
+        flags_(_flags)
+  {}
+
+  void run()
+  {
+    if (update_D_ != nullptr)
+    {// setup linear transformation for rhs, start with identity
+      const auto row_nmbr = constraints_.rows();
+      update_D_->innerResize(row_nmbr);
+      update_D_->outerResize(row_nmbr);
+      for (int i = 0; i < row_nmbr; ++i)
+        update_D_->coeffRef(i, i) = 1.0;
+    }
+
+    if (reorder())
+      make_constraints_independent_reordering();
+    else
+      make_constraints_independent_no_reordering();
   }
 
-  if (use_reordering_)
-  {
-    make_constraints_independent_reordering(
-        _constraints, _idx_to_round, _c_elim);
-  }
-  else
-  {
-    make_constraints_independent_no_reordering(
-        _constraints, _idx_to_round, _c_elim);
-  }
-}
+private:
+  HalfSparseRowMatrix& constraints_;
+  IntVector& c_elim_;
+  const IntVector& indcs_to_round_;
+  double epsilon_;
+  HalfSparseRowMatrix* update_D_;
+  const uint flags_;
 
-void ConstraintTools::make_constraints_independent(
-    HalfSparseRowMatrix& _constraints, std::vector<int>& _c_elim)
-{
-  std::vector<int> to_round_dummy;
-  make_constraints_independent(_constraints, to_round_dummy, _c_elim);
-}
+private:
+
+  bool do_gcd() const { return (flags_ & FL_DO_GCD) == FL_DO_GCD; }
+  bool reorder() const { return (flags_ & FL_REORDER) == FL_REORDER; }
+
+  // adjust _constraints such that col _col is zero except in row _row and
+  // and those rows that should be ignored.
+  // col will be chosen automatically.
+  // _changed_rows returns the rows that were changed.
+  void make_constraint_independent(
+          HalfSparseRowMatrix& _constraints,
+          HalfSparseColMatrix& _constraints_c,
+          int                  _row,
+          int&                 _col,
+    const std::vector<bool>&   _integer,
+    const std::vector<bool>&   _ignore,
+          std::vector<int>&    _changed_rows);
+
+  // same as above but without returning changed rows
+  void make_constraint_independent(
+            HalfSparseRowMatrix& _constraints,
+            HalfSparseColMatrix& _constraints_c,
+      const int                  _row,
+            int&                 _col,
+      const std::vector<bool>&   _integer,
+      const std::vector<bool>&   _ignore);
+
+  // add _coeff * (_source_row of _source_mat)  to _target_row of _target_rmat
+  // and target_cmat. set element in _zero_col to 0 if it exists
+  void add_row_simultaneously(
+    const Eigen::Index         _target_row,
+    const double               _coeff,
+    const HalfSparseRowMatrix& _source_mat,
+    const Eigen::Index         _source_row,
+          HalfSparseRowMatrix& _target_rmat,
+          HalfSparseColMatrix& _target_cmat,
+    const Eigen::Index         _zero_col = -1);
+
+  // TODO if no gcd correction was possible, at least use a variable divisible
+  // by 2 as new elim_j (to avoid in-exactness e.g. 1/3)
+  bool update_constraint_gcd(
+          SparseVector&     _row,
+    const int               _elim_j,
+          std::vector<int>& _v_gcd,
+          int&              _n_ints);
+
+  void make_constraints_independent_reordering();
+
+  void make_constraints_independent_no_reordering();
+
+  static int find_gcd(IntVector& _v_gcd, int& _n_ints);
+};
+
 
 
 //-----------------------------------------------------------------------------
 
 
-void ConstraintTools::make_constraint_independent(
+void GaussElimination::make_constraint_independent(
           HalfSparseRowMatrix& _constraints,
           HalfSparseColMatrix& _constraints_c,
           int                  _row,
@@ -243,9 +303,9 @@ void ConstraintTools::make_constraint_independent(
         "incompatible condition: " << std::abs(
             _constraints.coeff(row_id, n_vars - 1)))
   }
-  else if (_integer[elim_j] && elim_val > 1e-6)
+  else if (_integer[elim_j] && elim_val > 1e-6)// TODO: why not use epsion_?
   {
-    if (do_gcd_ && gcd_update_valid)
+    if (do_gcd() && gcd_update_valid)
     {
       // perform gcd update
       DEB_only(bool gcd_ok =) update_constraint_gcd(
@@ -255,11 +315,11 @@ void ConstraintTools::make_constraint_independent(
     }
     else
     {
-      DEB_warning_if(!do_gcd_, 1,
+      DEB_warning_if(do_gcd(), 1,
           "NO +-1 coefficient found, integer rounding cannot be guaranteed. "
           "Try using the GCD option! "
               << DEB_os_str(_constraints.row(row_id)));
-      DEB_warning_if(do_gcd_, 1,
+      DEB_warning_if(do_gcd(), 1,
           "GCD of non-integer cannot be computed! "
               << DEB_os_str(_constraints.row(row_id)))
     }
@@ -295,7 +355,7 @@ void ConstraintTools::make_constraint_independent(
   }
 }
 
-void ConstraintTools::make_constraint_independent(
+void GaussElimination::make_constraint_independent(
         HalfSparseRowMatrix& _constraints,
         HalfSparseColMatrix& _constraints_c,
         int                  _row,
@@ -303,36 +363,31 @@ void ConstraintTools::make_constraint_independent(
   const std::vector<bool>&   _integer,
   const std::vector<bool>&   _ignore)
 {
-  std::vector<int> changed_rows;
+  IntVector changed_rows;
   make_constraint_independent(_constraints, _constraints_c, _row, _col,
       _integer, _ignore, changed_rows);
 }
 
 
-void 
-ConstraintTools::
-make_constraints_independent_reordering(
-    HalfSparseRowMatrix& _constraints,
-    const std::vector<int>& _idx_to_round,
-    std::vector<int>& _c_elim)
+void GaussElimination::make_constraints_independent_reordering()
 {
   DEB_enter_func;
 
-  const auto n_vars = _constraints.cols();
-  const auto n_rows = _constraints.rows();
+  const auto n_vars = constraints_.cols();
+  const auto n_rows = constraints_.rows();
 
   // build round map
   std::vector<bool> roundmap(n_vars, false);
-  for (size_t i = 0; i < _idx_to_round.size(); ++i)
-    roundmap[_idx_to_round[i]] = true;
+  for (size_t i = 0; i < indcs_to_round_.size(); ++i)
+    roundmap[indcs_to_round_[i]] = true;
 
-  HalfSparseColMatrix _constraints_c(_constraints);
+  HalfSparseColMatrix _constraints_c(constraints_);
 
   // init priority queue
   MutablePriorityQueueT<int, int> queue;
   queue.clear(n_rows);
   for (int i = 0; i < n_rows; ++i)
-    queue.update(i, COMISO_EIGEN::count_non_zeros(_constraints.row(i), true));
+    queue.update(i, COMISO_EIGEN::count_non_zeros(constraints_.row(i), true));
 
   std::vector<bool> row_visited(n_rows, false);
   std::vector<size_t> row_ordering;
@@ -347,69 +402,64 @@ make_constraints_independent_reordering(
     row_ordering.push_back(row);
     row_visited[row] = true;
 
-    make_constraint_independent(_constraints, _constraints_c, row, _c_elim[row],
+    make_constraint_independent(constraints_, _constraints_c, row, c_elim_[row],
         roundmap, row_visited, changed_rows);
 
     for (int row : changed_rows)
     {
-      auto cur_nnz = COMISO_EIGEN::count_non_zeros(_constraints.row(row), true);
+      auto cur_nnz = COMISO_EIGEN::count_non_zeros(constraints_.row(row), true);
       queue.update(row, cur_nnz);
     }
   }
 
-  _constraints.prune(0.0);
+  constraints_.prune(0.0);
 
   // correct ordering
-  auto c_tmp = std::move(_constraints);
-  _constraints = Eigen::SparseMatrix<double, Eigen::RowMajor>(n_rows, n_vars);
+  auto c_tmp = std::move(constraints_);
+  constraints_ = Eigen::SparseMatrix<double, Eigen::RowMajor>(n_rows, n_vars);
   HalfSparseRowMatrix d_tmp;
   if (update_D_ != nullptr)
     d_tmp = *update_D_;
 
-  std::vector<int> elim_temp(_c_elim);
-  _c_elim.resize(0);
-  _c_elim.resize(elim_temp.size(), -1);
+  std::vector<int> elim_temp(c_elim_);
+  c_elim_.resize(0);
+  c_elim_.resize(elim_temp.size(), -1);
 
   for (int i = 0; i < n_rows; ++i)
   {
-    _constraints.row(i) = std::move(c_tmp.row(row_ordering[i]));
+    constraints_.row(i) = std::move(c_tmp.row(row_ordering[i]));
     if (update_D_ != nullptr)
       update_D_->row(i) = d_tmp.row(row_ordering[i]);
 
-    _c_elim[i] = elim_temp[row_ordering[i]];
+    c_elim_[i] = elim_temp[row_ordering[i]];
   }
 }
 
-void ConstraintTools::make_constraints_independent_no_reordering(
-    HalfSparseRowMatrix& _constraints,
-    const std::vector<int>& _idx_to_round,
-    std::vector<int>& _c_elim)
+void GaussElimination::make_constraints_independent_no_reordering()
 {
-
-  const size_t row_nmbr = _constraints.rows();
-  const size_t var_nmbr = _constraints.cols();
+  const size_t row_nmbr = constraints_.rows();
+  const size_t var_nmbr = constraints_.cols();
 
   // build round map
   std::vector<bool> roundmap(var_nmbr, false);
-  for (unsigned int i = 0; i < _idx_to_round.size(); ++i)
-    roundmap[_idx_to_round[i]] = true;
+  for (unsigned int i = 0; i < indcs_to_round_.size(); ++i)
+    roundmap[indcs_to_round_[i]] = true;
 
   // copy constraints into column matrix (for faster update via iterators)
-  HalfSparseColMatrix constraints_c(_constraints);
+  HalfSparseColMatrix constraints_c(constraints_);
 
   std::vector<bool> visited(row_nmbr, false);
   // for all constraints
   for (int i = 0; i < row_nmbr; ++i)
   {
     visited[i] = true;
-    make_constraint_independent(_constraints, constraints_c, i, _c_elim[i],
+    make_constraint_independent(constraints_, constraints_c, i, c_elim_[i],
         roundmap, visited);
   }
-  _constraints.prune(0.0);
+  constraints_.prune(0.0);
 }
 
-
-void ConstraintTools::add_row_simultaneously(
+void GaussElimination::add_row_simultaneously(
     const Eigen::Index         _target_row,
     const double               _coeff,
     const HalfSparseRowMatrix& _source_mat,
@@ -443,8 +493,7 @@ void ConstraintTools::add_row_simultaneously(
   }
 }
 
-
-bool ConstraintTools::update_constraint_gcd(
+bool GaussElimination::update_constraint_gcd(
   SparseVector& _row,
   const int _elim_j,
   std::vector<int>& _v_gcd,
@@ -470,8 +519,7 @@ bool ConstraintTools::update_constraint_gcd(
   return true;
 }
 
-
-int ConstraintTools::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
+int GaussElimination::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
 {
   bool found_gcd = false;
   bool done = false;
@@ -486,7 +534,7 @@ int ConstraintTools::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
     for (int k = 0; k < _n_ints - 1 && !done; ++k)
     {
       // use abs(.) to get same sign needed for all_same
-      _v_gcd[k] = abs(gcd(_v_gcd[k], _v_gcd[k + 1]));
+      _v_gcd[k] = std::abs(std::gcd(_v_gcd[k], _v_gcd[k + 1]));
 
       if (k > 0 && prev_val != _v_gcd[k])
         all_same = false;
@@ -515,14 +563,14 @@ int ConstraintTools::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
         }
       }
     }
-    // already done (by successfull "2"-test)?
+    // already done (by successful "2"-test)?
     if (!done)
     {
       // all gcds the same?
       // we just need to check one final gcd between first 2 elements
       if (all_same && _n_ints > 1)
       {
-        _v_gcd[0] = abs(gcd(_v_gcd[0], _v_gcd[1]));
+        _v_gcd[0] = std::abs(std::gcd(_v_gcd[0], _v_gcd[1]));
         // we are done
         _n_ints = 1;
       }
@@ -550,6 +598,16 @@ int ConstraintTools::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
   }
   return i_gcd;
 }
+
+void gauss_elimination(HalfSparseRowMatrix& _constraints, IntVector& _c_elim,
+    const IntVector& _indcs_to_round, HalfSparseRowMatrix* _update_D,
+    const double _eps, const uint _flags)
+{
+  GaussElimination(
+      _constraints, _c_elim, _indcs_to_round, _update_D, _eps, _flags).run();
+}
+
+} // namespace ConstraintTools
 
 //=============================================================================
 } // namespace COMISO

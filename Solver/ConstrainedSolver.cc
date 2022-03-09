@@ -349,8 +349,15 @@ void ConstrainedSolver::make_constraints_independent(
   _c_elim.resize(_constraints.rows(), -1);
 
   HalfSparseRowMatrix D;
-  ConstraintTools(epsilon_, do_gcd_, use_constraint_reordering_, &D)
-      .make_constraints_independent(_constraints, _idx_to_round, _c_elim);
+
+  unsigned int flags = ConstraintTools::FL_NONE;
+  if (do_gcd_)
+    flags |= ConstraintTools::FL_DO_GCD;
+  if (use_constraint_reordering_)
+    flags |= ConstraintTools::FL_REORDER;
+
+  ConstraintTools::gauss_elimination(
+      _constraints, _c_elim, _idx_to_round, &D, epsilon_, flags);
 
   rhs_update_table_.D_ = D;
 }
