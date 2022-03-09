@@ -69,7 +69,7 @@ public:
   // efficiently than the more general constraints specified with
   // add_constraints() by being removed from the system immediatly.
   // Also clears all equations, linear constraints, and integer constraints.
-  void reset(ValueVector _fixed_values);
+  void reset(ValueVector _fixed_values = {});
 
   // Set the integer constraints
   void set_integers(IndexVector _int_var_indcs);

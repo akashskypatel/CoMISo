@@ -41,7 +41,7 @@ public:
   {
     DEB_error_if(_eq_idx >= b_.size(), "Index out of range.");
     b_[_eq_idx] = _const_term;
-  };
+  }
 
   // Update const term of the _cnstrnt_idx'th constraint added via
   // add_constraint().
@@ -49,11 +49,15 @@ public:
   {
     DEB_error_if(_cnstrnt_idx >= d_.size(), "Index out of range.");
     d_[_cnstrnt_idx] = _const_term;
-  };
+  }
 
   // Resolve problem with changed right hand sides. You need to ensure that
   // solve has been called before calling this function.
   void resolve(Result& _result);
+
+  // Clear all equations, constraints, and integer constraints so that a new
+  // system can be solved.
+  void reset();
 
 private:
 
@@ -180,6 +184,17 @@ MultiDimConstrainedSolverT<DIM>::Impl::resolve(int _dim_idx, PointVector& _resul
   store_result(solution, _dim_idx, _result);
 }
 
+template <int DIM>
+void
+COMISO::MultiDimConstrainedSolverT<DIM>::Impl::reset()
+{
+  A_triplets_.clear();
+  b_.clear();
+  C_triplets_.clear();
+  d_.clear();
+  int_var_indcs_.clear();
+  var_nmbr_ = 0;
+}
 
 template <int DIM>
 MultiDimConstrainedSolverT<DIM>::MultiDimConstrainedSolverT()
@@ -223,6 +238,13 @@ MultiDimConstrainedSolverT<DIM>::solve(Result& _result)
 }
 
 template <int DIM>
+void
+MultiDimConstrainedSolverT<DIM>::reset()
+{
+  impl_->reset();
+}
+
+template <int DIM>
 void MultiDimConstrainedSolverT<DIM>::update_equation_const_term(
     size_t _eq_idx, const Point& _const_term)
 {
@@ -242,6 +264,7 @@ MultiDimConstrainedSolverT<DIM>::resolve(Result& _result)
 {
   return impl_->resolve(_result);
 }
+
 
 }//namespace COMISO
 

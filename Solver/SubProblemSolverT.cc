@@ -48,6 +48,9 @@ void
 SubProblemSolverT<DIM>::reset(ValueVector _fixed_values)
 {
   sbst_map_.reset_fixed_values(std::move(_fixed_values));
+  solver_.reset();
+  eq_cnst_term_diff_.clear();
+  cnstrnt_cnst_term_diff_.clear();
 }
 
 template <int DIM>

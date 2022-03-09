@@ -62,9 +62,11 @@ public:
   void set_integers(IndexVector _int_var_indcs);
 
   // Solve the system that has been setup with the calls above.
-  // Clears all equations, constraints, and integer constraints that
-  // have been setup using the functions above.
   void solve(Result& _result);
+
+  // Clear all equations, constraints, and integer constraints so that a new
+  // system can be solved.
+  void reset();
 
   // Update const term of the _eq_idx'th equation added via add_equation().
   void update_equation_const_term(size_t _eq_idx, const Point& _const_term);
