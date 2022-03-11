@@ -7,6 +7,10 @@
 #ifndef COMISO_IPOPTCALLBACKPARAMETERS_HH
 #define COMISO_IPOPTCALLBACKPARAMETERS_HH
 
+#include <CoMISo/Config/config.hh>
+
+#if COMISO_IPOPT_AVAILABLE
+
 #include <IpTNLP.hpp>
 
 //== TYPE DEFINITION CALLBACK PARAMETERS ======================================
@@ -27,5 +31,7 @@ struct IPOPTCallbackParameters {
   Ipopt::IpoptCalculatedQuantities* ip_cq;
 };
 }
+
+#endif // COMISO_IPOPT_AVAILABLE
 
 #endif

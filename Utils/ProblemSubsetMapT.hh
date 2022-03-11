@@ -164,7 +164,7 @@ private:
   template <typename T>
   void map(T& _idx)
   {
-    DEB_error_if(_idx > forward_map_.size(),
+    DEB_error_if(static_cast<size_t>(_idx) > forward_map_.size(),
         "Trying to map index " << _idx << " which is larger than maximum index "
                                << forward_map_.size());
     if (is_fixed(_idx))

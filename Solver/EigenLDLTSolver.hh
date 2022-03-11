@@ -49,7 +49,6 @@
 LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Eigen>
 #include <Eigen/Sparse>
-#include <Eigen/SparseCholesky>
 LOW_CODE_QUALITY_SECTION_END
 
 

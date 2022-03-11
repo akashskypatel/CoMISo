@@ -52,7 +52,6 @@ void ConstrainedSolver::solve(
       _show_miso_settings);
 }
 
-
 //-----------------------------------------------------------------------------
 
 
@@ -71,12 +70,12 @@ void ConstrainedSolver::solve(
   {
     RowMatrix constraints = _constraints;
     ColMatrix A = _A;
-    write_matrix("ConstrainedSolver_constraints.mtx", constraints);
-    write_matrix("ConstrainedSolver_system.mtx", A);
-    write_matrix("ConstrainedSolver_rhs.vec", _rhs);
+    COMISO_EIGEN::write_matrix("ConstrainedSolver_constraints.mtx", constraints);
+    COMISO_EIGEN::write_matrix("ConstrainedSolver_system.mtx", A);
+    COMISO_EIGEN::write_matrix("ConstrainedSolver_rhs.vec", _rhs);
     Eigen::VectorXi idx_to_round;
     COMISO_EIGEN::to_eigen_vec(_idx_to_round, idx_to_round);
-    write_matrix("ConstrainedSolver_idx_to_round.vec", idx_to_round);
+    COMISO_EIGEN::write_matrix("ConstrainedSolver_idx_to_round.vec", idx_to_round);
   }
 #endif
 
@@ -84,8 +83,8 @@ void ConstrainedSolver::solve(
   if (_show_miso_settings)
     miso_.show_options_dialog();
 
-  const size_t nrows = _A.rows();
-  const size_t ncols = _A.cols();
+  DEB_only(const size_t nrows = _A.rows());
+  DEB_only(const size_t ncols = _A.cols());
   const size_t ncons = _constraints.rows();
 
   DEB_line(2, "Initital dimension: "
@@ -118,7 +117,7 @@ void ConstrainedSolver::solve(
   restore_eliminated_vars(_constraints, _x, c_elim, new_idx);
 
 #ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_vector("ConstrainedSolver_solution.vec", _x);
+  COMISO_EIGEN::write_matrix("ConstrainedSolver_solution.vec", _x);
 #endif
 }
 
@@ -196,7 +195,7 @@ void ConstrainedSolver::resolve(
   restore_eliminated_vars(rhs_update_table_.constraints_, _x, rhs_update_table_.c_elim_, rhs_update_table_.new_idx_);
 
 #ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_vector("ConstrainedSolver_solution_resolve_" +
+  COMISO_EIGEN::write_matrix("ConstrainedSolver_solution_resolve_" +
                        std::to_string(n_resolves_++) + ".vec", _x);
 #endif
 }
@@ -244,8 +243,8 @@ void ConstrainedSolver::solve(
   if (_show_miso_settings)
     miso_.show_options_dialog();
 
-  const size_t nrows = _B.rows();
-  const size_t ncols = _B.cols();
+  DEB_only(const size_t nrows = _B.rows());
+  DEB_only(const size_t ncols = _B.cols());
   const size_t ncons = _constraints.rows();
 
   DEB_line(2, "Initital dimension: "
@@ -279,7 +278,7 @@ void ConstrainedSolver::solve(
   restore_eliminated_vars(_constraints, _x, c_elim, new_idx);
 
 #ifdef COMISO_CONSTRAINEDSOLVER_DUMP_SYSTEMS
-  write_vector("ConstrainedSolver_solution.vec", _x);
+  COMISO_EIGEN::write_matrix("ConstrainedSolver_solution.vec", _x);
 #endif
 }
 
@@ -651,10 +650,10 @@ void ConstrainedSolver::eliminate_columns(
 
   const auto columns = make_sorted_unique(_columns);
   const auto n_cols_after = _M.cols() - columns.size();
-  int offset = 0;
-  for (int i = 0; i < n_cols_after; ++i)
+  size_t offset = 0;
+  for (size_t i = 0; i < n_cols_after; ++i)
   {
-    while (offset < columns.size() && i + offset == columns[offset])
+    while (offset < columns.size() && i + offset == (size_t)columns[offset])
       ++offset;
     if (offset > 0) // prevent self assignment which sets col to zero
       _M.col(i) = _M.col(i + offset);

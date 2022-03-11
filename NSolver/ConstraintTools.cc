@@ -119,7 +119,7 @@ public:
       const IntVector& _indcs_to_round, HalfSparseRowMatrix* _update_D,
       const double _eps, const uint _flags)
       : constraints_(_constraints), c_elim_(_c_elim),
-        indcs_to_round_(_indcs_to_round), update_D_(_update_D), epsilon_(_eps),
+        indcs_to_round_(_indcs_to_round), epsilon_(_eps), update_D_(_update_D),
         flags_(_flags)
   {}
 
@@ -450,10 +450,10 @@ void GaussElimination::make_constraints_independent_no_reordering()
 
   std::vector<bool> visited(row_nmbr, false);
   // for all constraints
-  for (int i = 0; i < row_nmbr; ++i)
+  for (size_t i = 0; i < row_nmbr; ++i)
   {
     visited[i] = true;
-    make_constraint_independent(constraints_, constraints_c, i, c_elim_[i],
+    make_constraint_independent(constraints_, constraints_c, (int)i, c_elim_[i],
         roundmap, visited);
   }
   constraints_.prune(0.0);
@@ -521,7 +521,6 @@ bool GaussElimination::update_constraint_gcd(
 
 int GaussElimination::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
 {
-  bool found_gcd = false;
   bool done = false;
   bool all_same = true;
   int i_gcd = -1;
@@ -553,14 +552,7 @@ int GaussElimination::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
           }
         done = true;
         if (all_ok)
-        {
-          found_gcd = true;
           i_gcd = 2;
-        }
-        else
-        {
-          found_gcd = false;
-        }
       }
     }
     // already done (by successful "2"-test)?
@@ -579,18 +571,8 @@ int GaussElimination::find_gcd(std::vector<int>& _v_gcd, int& _n_ints)
       if (_n_ints == 1)
       {
         done = true;
-        if ((_v_gcd[0]) * (_v_gcd[0]) == 1)
-        {
-          found_gcd = false;
-          // std::cerr << __FUNCTION__ << " Info: No gcd found!" << std::endl;
-        }
-        else
-        {
+        if ((_v_gcd[0]) * (_v_gcd[0]) != 1)
           i_gcd = _v_gcd[0];
-          found_gcd = true;
-          // std::cerr << __FUNCTION__ << " Info: Found gcd = " << i_gcd <<
-          // std::endl;
-        }
       }
     }
     // we now have n_ints-1 gcds to check next iteration

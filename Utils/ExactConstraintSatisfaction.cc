@@ -496,7 +496,7 @@ std::vector<std::pair<int, double> > ExactConstraintSatisfaction::get_dot_produc
   {                      //construct the list S to do the dot Product
     std::pair<int, double> pair;
     pair.first = A.coeff(pivot_row,i);
-    double test = x.coeff(i) / A.coeff(pivot_row,k);
+    DEB_only(double test = x.coeff(i) / A.coeff(pivot_row,k));
     DEB_warning_if(x.coeff(i) != ( test * A.coeff(pivot_row,k)), 2,
                    "can't devide" << " in row : " << i);
     pair.second = x.coeff(i) / A.coeff(pivot_row,k);

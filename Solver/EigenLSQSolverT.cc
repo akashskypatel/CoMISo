@@ -55,9 +55,9 @@ void EigenLSQSolverT<DIM>::solve(Result& _result)
     COMISO_THROW(LSQC_SINGULAR);
   }
   _result.resize(col_size);
-  for (auto i = 0; i < _result.size(); ++i)
+  for (size_t i = 0; i < _result.size(); ++i)
   {
-    for (auto j = 0; j < DIM; ++j)
+    for (size_t j = 0; j < DIM; ++j)
       _result[i][j] = X(i, j);
   }
 }

@@ -6,6 +6,7 @@ SET(my_headers
    ${CMAKE_CURRENT_SOURCE_DIR}/ConeConstraint.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintTools.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/FiniteElementProblem.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTCallbackParameters.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTProblemInstance.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/IPOPTSolver.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/LazyConstraintSolver.hh
@@ -65,6 +66,3 @@ SET(my_sources
    PARENT_SCOPE
 )
 
-
-
-   

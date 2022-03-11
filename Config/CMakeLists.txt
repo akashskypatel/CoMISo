@@ -1,4 +1,8 @@
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.hh.in ${CMAKE_CURRENT_SOURCE_DIR}/config.hh)
+
 set(my_headers
+   ${CMAKE_CURRENT_SOURCE_DIR}/config.hh.in
    ${CMAKE_CURRENT_SOURCE_DIR}/config.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/CoMISoDefines.hh
    ${CMAKE_CURRENT_SOURCE_DIR}/GmmTypes.hh

@@ -80,7 +80,7 @@ private:
   static void to_vector(const PointVector& _point_vec, int _col, Vector& _vec)
   {
     _vec.resize(_point_vec.size());
-    for (int i = 0; i < _point_vec.size(); ++i)
+    for (size_t i = 0; i < _point_vec.size(); ++i)
       _vec[i] = _point_vec[i][_col];
   }
 
@@ -107,11 +107,11 @@ private:
   void store_result(const ConstrainedSolver::Vector& _solution, int _dim_idx,
     PointVector& _result)
   {
-    DEB_error_if(_solution.size() != var_nmbr_,
-        "Unexpected solution size of " << _solution.size()
+    DEB_error_if(_solution.size() != (int)var_nmbr_,
+        "Unexpected solution size of " << (int)_solution.size()
                                        << " instead of expected " << var_nmbr_);
     _result.resize(var_nmbr_);
-    for (int i = 0; i < var_nmbr_; ++i)
+    for (size_t i = 0; i < var_nmbr_; ++i)
       _result[i][_dim_idx] = _solution[i];
   }
 

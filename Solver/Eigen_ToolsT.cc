@@ -45,8 +45,9 @@
 #include <CoMISo/Utils/Tools.hh>
 #include <Base/Debug/DebOut.hh>
 #include <Base/Debug/DebTime.hh>
-#include <unsupported/Eigen/SparseExtra>
+
 #include <queue>
+#include <fstream>
 
 //== NAMESPACES ===============================================================
 
@@ -125,7 +126,7 @@ HalfSparseMatrixBase<ScalarT, OPTIONS, StorageT>::operator Matrix() const
     sizes.push_back(COMISO_EIGEN::count_non_zeros(mat_[i], false));
 
   _mat.reserve(sizes);
-  for (int i = 0; i < outer_size; ++i)
+  for (size_t i = 0; i < outer_size; ++i)
   {
     for (Eigen::SparseVector<double>::InnerIterator it(mat_[i]); it; ++it)
     {
@@ -580,7 +581,7 @@ std::vector<int> make_new_index_map(
 
   // build re-indexing map
   // -1 means deleted
-  int next_elmn_var_idx(0);
+  size_t next_elmn_var_idx(0);
   int offset(0);
   for (int i = 0; i < _n_vars; ++i)
   {
@@ -694,7 +695,7 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
   // Note: in CSC format, _cols should contain n_cols + 1 elements.
   for (auto iv = _cols[_i]; iv < _cols[_i + 1]; ++iv)
   {
-    if (_rows[iv] == _i)
+    if (_rows[iv] == static_cast<IntegerT>(_i))
     {
       _val[iv] = static_cast<RealT>(1.0);
       _rhs[_i] = _xi;
@@ -716,7 +717,7 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
 
     for (auto j = _cols[col]; j < _cols[col + 1]; ++j)
     {
-      if (_rows[j] == _i)
+      if (_rows[j] == static_cast<IntegerT>(_i))
       {
         _val[j] = static_cast<RealT>(0.0);
         // move to next
@@ -1289,39 +1290,6 @@ void from_eigen_vec(const EIGEN_VectorT& _E, std::vector<ScalarT>& _v)
     _v[i] = _E(i);
 }
 
-
-template <typename MatrixT>
-void write_matrix_ascii(const std::string& _filename, const MatrixT& _m)
-{
-  Eigen::saveMarket(_m, _filename);
-}
-
-template <typename MatrixT>
-void read_matrix_ascii(const std::string& _filename, MatrixT& _m)
-{
-  Eigen::SparseMatrix<double> m;
-  Eigen::loadMarket(m, _filename);
-  _m = m;
-}
-
-template <typename ScalarT, int OPTIONS, typename StorageIndexT>
-void read_matrix_ascii(const std::string& _filename,
-    Eigen::SparseMatrix<ScalarT, OPTIONS, StorageIndexT>& _m)
-{
-  Eigen::loadMarket(_m, _filename);
-}
-
-template <typename VectorT>
-void write_vector_ascii(const std::string& _filename, const VectorT& _v)
-{
-  Eigen::saveMarketVector(_v, _filename);
-}
-
-template <typename VectorT>
-void read_vector_ascii(const std::string& _filename, VectorT& _v)
-{
-  Eigen::loadMarketVector(_v, _filename);
-}
 
 namespace detail
 {
