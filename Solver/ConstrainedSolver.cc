@@ -96,7 +96,7 @@ void ConstrainedSolver::solve(
 
   // c_elim[i] = index of variable which is eliminated in condition i
   // or -1 if condition is invalid
-  std::vector<int> c_elim(ncons);
+  std::vector<int> c_elim;
   make_constraints_independent(_constraints, _idx_to_round, c_elim);
 
   // re-indexing vector
@@ -256,12 +256,11 @@ void ConstrainedSolver::solve(
 
   // c_elim[i] = index of variable which is eliminated in condition i
   // or -1 if condition is invalid
-  std::vector<int> c_elim(ncons);
+  std::vector<int> c_elim;
   make_constraints_independent(_constraints, _idx_to_round, c_elim);
 
   // re-indexing vector
   std::vector<int> new_idx;
-
   eliminate_constraints(_constraints, _B, _idx_to_round, c_elim, new_idx);
 
   Vector rhs;
@@ -343,9 +342,6 @@ void ConstrainedSolver::make_constraints_independent(
         std::vector<int>&    _c_elim)
 {
   DEB_time_func_def;
-
-  _c_elim.clear();
-  _c_elim.resize(_constraints.rows(), -1);
 
   HalfSparseRowMatrix D;
 

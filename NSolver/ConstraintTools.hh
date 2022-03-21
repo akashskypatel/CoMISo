@@ -34,22 +34,18 @@ namespace COMISO
 
 namespace ConstraintTools
 {
-
+using ConstraintVector = std::vector<NConstraintInterface*>;
 const double DEFAULT_EPS = 1e-8; // TODO: document
 
-// remove all linear dependent linear equality constraints. the remaining
-// constraints are a subset of the original ones nonlinear or equality
+// Remove all linear dependent linear equality constraints. The remaining
+// constraints are a subset of the original ones. Non-linear or equality
 // constraints are preserved.
 COMISODLLEXPORT void remove_dependent_linear_constraints(
-    std::vector<NConstraintInterface*>& _constraints,
-    const double _eps = DEFAULT_EPS);
+    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
 
-// same as above but assumes already that all constraints are linear equality
-// constraints
+// As above but assumes that all constraints are linear equality constraints
 COMISODLLEXPORT void remove_dependent_linear_constraints_only_linear_equality(
-    std::vector<NConstraintInterface*>& _constraints,
-    const double _eps = DEFAULT_EPS);
-
+    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
 
 using HalfSparseRowMatrix = COMISO_EIGEN::HalfSparseRowMatrix<double>;
 using HalfSparseColMatrix = COMISO_EIGEN::HalfSparseColMatrix<double>;
@@ -66,27 +62,23 @@ enum Flags // TODO: document flags
 };
 
 /*!
-TODO: fix documentation
-This function performs a Gauss elimination on the constraint matrix making
-the constraints easier to eliminate. TODO: brief description incomplete?
+Perform Gauss elimination on the constraint matrix to facilitate constraint
+elimination downstream.
+ 
+\note Contradicting constraints are ignored.
   
-\note A certain amount of independence of the constraints is assumed. TODO: what
-does this mean?
-  
-\note contradicting constraints will be ignored. TODO: what does this mean?
-  
-\warning care must be taken when non-trivial constraints occur
+\warning Care must be taken downstream when non-trivial constraints occur
 where some of the variables contain integer-variables (to be rounded) as
-the optimal result might not always occur. TODO: makes no sense
+the optimal result might not always occur.
 */
 COMISODLLEXPORT void gauss_elimination(
     HalfSparseRowMatrix& _constraints, // constraint matrix
-    IntVector& _c_elim, // return the variable indices and the order in which
-                        // they can be eliminated
+    IntVector& _elmn_clmn_indcs, // return the variable indices and the order in
+                                 // which they can be eliminated
     const IntVector& _indcs_to_round = IntVector(), // variables to be rounded
-    HalfSparseRowMatrix* _update_D = nullptr,     // TODO: document
-    const double _eps = DEFAULT_EPS,              // TODO: document
-    const uint _flags = Flags::FL_DEFAULT         // control execution flags
+    HalfSparseRowMatrix* _update_D = nullptr,       // TODO: document
+    const double _eps = DEFAULT_EPS,                // TODO: document
+    const uint _flags = Flags::FL_DEFAULT           // control execution flags
 );
 
 } // namespace ConstraintTools
