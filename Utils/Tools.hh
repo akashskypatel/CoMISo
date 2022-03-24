@@ -132,21 +132,6 @@ std::vector<T> make_sorted_unique(const std::vector<T>& _v)
 }
 
 
-// Helper class that stores a variables value and restores it when it goes out
-// of scope.
-template <typename T>
-struct VariableChangeScopeT
-{
-  VariableChangeScopeT(T& _variable) : backup_(_variable), variable_(_variable) {}
-  ~VariableChangeScopeT() { variable_ = backup_; }
-  T  backup_;
-  T& variable_;
-};
-
-// creates a backup of x and restores it at the end of scope
-#define VARIABLE_CHANGE_SCOPE(VAR)                                                   \
-  VariableChangeScopeT<std::remove_reference_t<decltype(VAR)>> backup##__LINE__(VAR);
-
 //=============================================================================
 #endif // TOOLS_HH defined
 //=============================================================================
