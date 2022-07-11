@@ -1,6 +1,6 @@
 // Copyright 2021 Autodesk, Inc. All rights reserved.
 
-#include "EigenLSQSolverT.cc"
+#include "EigenLSQSolverT_impl.hh"
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #if (COMISO_EIGEN3_AVAILABLE)

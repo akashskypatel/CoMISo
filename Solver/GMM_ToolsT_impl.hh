@@ -928,8 +928,8 @@ void inspect_matrix( const MatrixT& _A)
     typedef typename gmm::linalg_traits<ColT>::const_iterator CIter;
 
     ColT col = mat_const_col( Acol, i );
-    CIter it  = gmm::vect_const_begin( col );
-    CIter ite = gmm::vect_const_end( col );
+    auto it  = gmm::vect_const_begin( col );
+    auto ite = gmm::vect_const_end( col );
 
     for(; it != ite; ++it)
     {

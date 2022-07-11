@@ -36,7 +36,7 @@
 
 //== INCLUDES =================================================================
 
-#include "GMM_ToolsT.cc"
+#include "GMM_ToolsT_impl.hh"
 
 #include <CoMISo/Config/GmmTypes.hh>
 #include <CoMISo/Config/StdTypes.hh>

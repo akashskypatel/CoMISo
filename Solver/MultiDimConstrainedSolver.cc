@@ -1,6 +1,6 @@
 // Copyright 2022 Autodesk, Inc. All rights reserved.
 
-#include "MultiDimConstrainedSolverT.cc"
+#include "MultiDimConstrainedSolverT_impl.hh"
 
 namespace COMISO
 {

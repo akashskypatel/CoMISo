@@ -128,7 +128,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_NSOLVERGMMINTERFACE_C)
 #define COMISO_NSOLVERGMMINTERFACE_TEMPLATES
-#include "NPLinearConstraintsT.cc"
+#include "NPLinearConstraintsT_impl.hh"
 #endif
 
 //=============================================================================

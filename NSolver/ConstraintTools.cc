@@ -13,7 +13,7 @@
 #include <limits>
 #include <numeric>
 
-namespace COMISO 
+namespace COMISO
 {
 namespace ConstraintTools
 {
@@ -152,7 +152,7 @@ public:
 private:
   HalfSparseRowMatrix& constraints_;
   // constraints copy into column matrix (for faster update via iterators)
-  HalfSparseColMatrix constraints_clmn_; 
+  HalfSparseColMatrix constraints_clmn_;
   IntVector& elmn_clmn_indcs_;
   const IntVector& indcs_to_round_;
   BoolVector round_map_;

@@ -216,7 +216,7 @@ public:
       const double            _reg_factor = 0.0,
       const bool              _show_miso_settings = true);
 
-  
+
 #if COMISO_GMM_AVAILABLE
   // Same as above but deprecated gmm interface
   template<class RMatrixT, class VectorT, class VectorIT >
@@ -355,6 +355,19 @@ private:
           HalfSparseColMatrix& _target_cmat,
     const Eigen::Index         _zero_col = -1);
 
+  /// Support changing the RHS of the constraint system in resolve(). Enabled by default.
+  /// If this is needed, it must be enabled for the initial solve, not just before the resolve!
+  /// Warning: This can impose substantial memory overhead for large sparse constraint systems.
+  void set_support_constraint_rhs_resolve(bool _val)
+  {
+    support_constraint_rhs_resolve_ = _val;
+    if (!_val)
+    {
+      // Disabling support means we don't need the content of D_ anymore.
+      this->rhs_update_table_.D_ = {};
+    }
+  }
+
 
   // warning: order of replacement not the same as in _columns (internal sort)
   void eliminate_columns(HalfSparseColMatrix& _M, const std::vector<int>& _columns);
@@ -390,6 +403,9 @@ private:
   // count number of resolves
   int n_resolves_ = 0;
 #endif
+
+  // User-configurable, whether to store information for constraint-rhs resolve:
+  bool   support_constraint_rhs_resolve_ = true;
 
   // --------------- Update by Marcel to enable efficient re-solve with changed rhs ----------------------
     // Store for symbolic elimination information for rhs
@@ -472,7 +488,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_CONSTRAINEDSOLVER_C)
 #define COMISO_CONSTRAINEDSOLVER_TEMPLATES
-#include "ConstrainedSolverT.cc"
+#include "ConstrainedSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_CONSTRAINEDSOLVER_HH defined

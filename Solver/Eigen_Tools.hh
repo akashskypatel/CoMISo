@@ -121,7 +121,7 @@ public:
       v.resize(_size);
   }
 
-  void innerConservativeResize(size_t _size) 
+  void innerConservativeResize(size_t _size)
   {
     inner_size_ = static_cast<int>(_size);
     for (auto& v : mat_)
@@ -477,7 +477,7 @@ void read_matrix(const std::string& _filename,
 } // namespace COMISO_Eigen
 //=============================================================================
 #define COMISO_Eigen_TOOLS_TEMPLATES
-#include "Eigen_ToolsT.cc"
+#include "Eigen_ToolsT_impl.hh"
 
 //=============================================================================
 #endif // COMISO_EIGEN3_AVAILABLE

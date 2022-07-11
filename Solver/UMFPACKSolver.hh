@@ -130,7 +130,7 @@ public:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_UMFPACK_SOLVER_TEMPLATES_C)
 #define COMISO_UMFPACK_SOLVER_TEMPLATES
-#include "UMFPACKSolverT.cc"
+#include "UMFPACKSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_SUITESPARSE_AVAILABLE

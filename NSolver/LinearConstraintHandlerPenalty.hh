@@ -108,7 +108,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_LINEARCONSTRAINTHANDLERPENALTY_C)
 #define COMISO_LINEARCONSTRAINTHANDLERPENALTY_TEMPLATES
-#include "LinearConstraintHandlerPenaltyT.cc"
+#include "LinearConstraintHandlerPenaltyT_impl.hh"
 #endif
 
 //=============================================================================

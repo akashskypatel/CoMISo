@@ -164,7 +164,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_SPARSE_QR_SOLVER_TEMPLATES_C)
 #define COMISO_SPARSE_QR_SOLVER_TEMPLATES
-#include "SparseQRSolverT.cc"
+#include "SparseQRSolverT_impl.hh"
 #endif
 //== BUILD-TIME DEPENDENCIES ==================================================
 #endif

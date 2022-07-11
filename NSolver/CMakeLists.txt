@@ -35,10 +35,10 @@ SET(my_headers
 )
 
 set(my_t_impls
-   ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerPenaltyT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerEliminationT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraintsT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerPenaltyT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/LinearConstraintHandlerEliminationT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/NPLinearConstraintsT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/SuperSparseMatrixT_impl.hh
    PARENT_SCOPE
 )
 

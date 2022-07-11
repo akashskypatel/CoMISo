@@ -17,18 +17,18 @@ SET(my_headers
 )
 
 SET(my_t_impls
-   ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_ToolsT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/GMM_ToolsT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/MultiDimConstrainedSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/SubProblemSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolverT.cc
-   ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolverT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/CholmodSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/ConstrainedSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLDLTSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenLSQSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/Eigen_ToolsT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/GMM_ToolsT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/IterativeSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/MultiDimConstrainedSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/SparseQRSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/SubProblemSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/TaucsSolverT_impl.hh
+   ${CMAKE_CURRENT_SOURCE_DIR}/UMFPACKSolverT_impl.hh
    PARENT_SCOPE
 )
 

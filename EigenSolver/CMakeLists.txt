@@ -5,7 +5,7 @@ SET(my_headers
 )
 
 SET(my_t_impls
-   ${CMAKE_CURRENT_SOURCE_DIR}/EigenArpackMatrixT.cc
+   ${CMAKE_CURRENT_SOURCE_DIR}/EigenArpackMatrixT_impl.hh
    PARENT_SCOPE
 )
 

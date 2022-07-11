@@ -23,7 +23,7 @@
 \*===========================================================================*/
 
 
-#include "ConstrainedSolverT.cc"
+#include "ConstrainedSolverT_impl.hh"
 
 #include "CoMISo/NSolver/ConstraintTools.hh"
 
@@ -166,8 +166,14 @@ void ConstrainedSolver::resolve(
   if (_constraint_rhs)
   {
     // apply linear transformation of Gaussian elimination
-    rhs_update_table_.cur_constraint_rhs_.resize(
-        rhs_update_table_.D_.rows());
+    if (!support_constraint_rhs_resolve_)
+    {
+      DEB_error("ConstrainedSolver::resolve: resolve() with modified "
+                "constraint_rhs requested, but support is disabled.")
+      return;
+    }
+
+    rhs_update_table_.cur_constraint_rhs_.resize(-rhs_update_table_.D_.rows());
     rhs_update_table_.cur_constraint_rhs_ =
         rhs_update_table_.D_ * (*_constraint_rhs);
 
@@ -343,7 +349,6 @@ void ConstrainedSolver::make_constraints_independent(
 {
   DEB_time_func_def;
 
-  HalfSparseRowMatrix D;
 
   unsigned int flags = ConstraintTools::FL_NONE;
   if (do_gcd_)
@@ -351,10 +356,19 @@ void ConstrainedSolver::make_constraints_independent(
   if (use_constraint_reordering_)
     flags |= ConstraintTools::FL_REORDER;
 
-  ConstraintTools::gauss_elimination(
-      _constraints, _c_elim, _idx_to_round, &D, epsilon_, flags);
+  if (support_constraint_rhs_resolve_)
+  {
+    HalfSparseRowMatrix D;
+    ConstraintTools::gauss_elimination(
+        _constraints, _c_elim, _idx_to_round, &D, epsilon_, flags);
+    rhs_update_table_.D_ = D;
+  }
+  else
+  {
+    ConstraintTools::gauss_elimination(
+        _constraints, _c_elim, _idx_to_round, nullptr, epsilon_, flags);
+  }
 
-  rhs_update_table_.D_ = D;
 }
 
 

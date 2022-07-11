@@ -73,7 +73,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_ITERATIVESOLVERT_C)
 #define COMISO_ITERATIVESOLVERT_TEMPLATES
-#include "IterativeSolverT.cc"
+#include "IterativeSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_ITERATIVESOLVERT_HH defined
