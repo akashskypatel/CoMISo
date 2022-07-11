@@ -61,39 +61,61 @@ using linalg_traits = typename gmm::linalg_traits<
     typename std::remove_const<typename std::remove_reference<T>::type>::type>;
 
 template <class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve_const(const RMatrixT& _constraints,
-    const CMatrixT& _A, VectorT& _x, const VectorT& _rhs,
-    const VectorIT& _idx_to_round, const double _reg_factor,
-    const bool _show_miso_settings)
+void ConstrainedSolver::solve_const(
+  const RMatrixT& _constraints,
+  const CMatrixT& _A,
+        VectorT&  _x,
+  const VectorT&  _rhs,
+  const VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
   // copy and vectors
   VectorIT idx_to_round(_idx_to_round);
 
   // call non-const function
-  solve(_constraints, _A, _x, _rhs, idx_to_round, _reg_factor,
-      _show_miso_settings);
+  solve(_constraints,
+    _A,
+    _x,
+    _rhs,
+    idx_to_round,
+    _reg_factor,
+    _show_miso_settings);
 }
 
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve_const(const RMatrixT& _constraints,
-    const RMatrixT& _B, VectorT& _x, const VectorIT& _idx_to_round,
-    const double _reg_factor, const bool _show_miso_settings)
+void ConstrainedSolver::solve_const(
+  const RMatrixT& _constraints,
+  const RMatrixT& _B,
+        VectorT&  _x,
+  const VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
   // copy vector
   VectorIT idx_to_round(_idx_to_round);
 
   // call non-const function
-  solve(_constraints, _B, _x, idx_to_round, _reg_factor, _show_miso_settings);
+  solve(_constraints,
+    _B,
+    _x,
+    idx_to_round,
+    _reg_factor,
+    _show_miso_settings);
 }
 
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve(const RMatrixT& _constraints, const RMatrixT& _B,
-    VectorT& _x, VectorIT& _idx_to_round, const double _reg_factor,
-    const bool _show_miso_settings)
+void ConstrainedSolver::solve(
+  const RMatrixT& _constraints,
+  const RMatrixT& _B,
+        VectorT&  _x,
+        VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
   RowMatrix constraints;
   RowMatrix B;
@@ -110,9 +132,14 @@ void ConstrainedSolver::solve(const RMatrixT& _constraints, const RMatrixT& _B,
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve(const RMatrixT& _constraints, const CMatrixT& _A,
-    VectorT& _x, const VectorT& _rhs, VectorIT& _idx_to_round,
-    const double _reg_factor, const bool _show_miso_settings)
+void ConstrainedSolver::solve(
+  const RMatrixT& _constraints,
+  const CMatrixT& _A,
+        VectorT&  _x,
+  const VectorT&  _rhs,
+        VectorIT& _idx_to_round,
+  const double    _reg_factor,
+  const bool      _show_miso_settings)
 {
   RowMatrix constraints;
   ColMatrix A;
@@ -133,7 +160,9 @@ void ConstrainedSolver::solve(const RMatrixT& _constraints, const CMatrixT& _A,
 
 template <class RMatrixT, class VectorT>
 void ConstrainedSolver::resolve(
-    const RMatrixT& _B, VectorT& _x, const VectorT* _constraint_rhs)
+  const RMatrixT& _B,
+        VectorT&   _x,
+  const VectorT*   _constraint_rhs)
 {
   RowMatrix B;
   Vector x;
@@ -154,7 +183,9 @@ void ConstrainedSolver::resolve(
 
 template <class VectorT>
 void ConstrainedSolver::resolve(
-    VectorT& _x, const VectorT* _constraint_rhs, const VectorT* _rhs)
+        VectorT& _x,
+  const VectorT* _constraint_rhs,
+  const VectorT* _rhs)
 {
   Vector x;
   Vector constraint_rhs;
