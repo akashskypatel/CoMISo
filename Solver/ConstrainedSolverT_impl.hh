@@ -61,7 +61,8 @@ using linalg_traits = typename gmm::linalg_traits<
     typename std::remove_const<typename std::remove_reference<T>::type>::type>;
 
 template <class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve_const(
+void
+ConstrainedSolver::solve_const(
   const RMatrixT& _constraints,
   const CMatrixT& _A,
         VectorT&  _x,
@@ -86,7 +87,8 @@ void ConstrainedSolver::solve_const(
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve_const(
+void
+ConstrainedSolver::solve_const(
   const RMatrixT& _constraints,
   const RMatrixT& _B,
         VectorT&  _x,
@@ -109,7 +111,8 @@ void ConstrainedSolver::solve_const(
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve(
+void
+ConstrainedSolver::solve(
   const RMatrixT& _constraints,
   const RMatrixT& _B,
         VectorT&  _x,
@@ -132,7 +135,8 @@ void ConstrainedSolver::solve(
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class CMatrixT, class VectorT, class VectorIT>
-void ConstrainedSolver::solve(
+void
+ConstrainedSolver::solve(
   const RMatrixT& _constraints,
   const CMatrixT& _A,
         VectorT&  _x,
@@ -159,10 +163,11 @@ void ConstrainedSolver::solve(
 //-----------------------------------------------------------------------------
 
 template <class RMatrixT, class VectorT>
-void ConstrainedSolver::resolve(
+void
+ConstrainedSolver::resolve(
   const RMatrixT& _B,
-        VectorT&   _x,
-  const VectorT*   _constraint_rhs)
+        VectorT&  _x,
+  const VectorT*  _constraint_rhs)
 {
   RowMatrix B;
   Vector x;
@@ -182,7 +187,8 @@ void ConstrainedSolver::resolve(
 //-----------------------------------------------------------------------------
 
 template <class VectorT>
-void ConstrainedSolver::resolve(
+void
+ConstrainedSolver::resolve(
         VectorT& _x,
   const VectorT* _constraint_rhs,
   const VectorT* _rhs)
