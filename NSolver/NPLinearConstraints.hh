@@ -9,6 +9,10 @@
 #define COMISO_NPLINEARCONSTRAINTS_HH
 
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
@@ -126,6 +130,9 @@ private:
 #define COMISO_NSOLVERGMMINTERFACE_TEMPLATES
 #include "NPLinearConstraintsT_impl.hh"
 #endif
+
+//=============================================================================
+#endif // COMISO_GMM_AVAILABLE
 //=============================================================================
 #endif // COMISO_NSOLVERGMMINTERFACE_HH defined
 //=============================================================================

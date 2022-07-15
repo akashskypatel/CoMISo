@@ -585,6 +585,7 @@ bool IPOPTProblemInstance::jac_d_constant() const
 
 //== IMPLEMENTATION PROBLEM INSTANCE==========================================================
 
+#if COMISO_GMM_AVAILABLE
 
 bool IPOPTProblemInstanceGmm::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                          Index& nnz_h_lag, IndexStyleEnum& index_style)
@@ -938,6 +939,7 @@ bool IPOPTProblemInstanceGmm::intermediate_callback(
   return true;
 }
 
+#endif // COMISO_GMM_AVAILABLE
 
 //=============================================================================
 } // namespace COMISO

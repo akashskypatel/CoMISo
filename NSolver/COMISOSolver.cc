@@ -8,6 +8,8 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
+#if COMISO_EIGEN3_AVAILABLE
+
 //=============================================================================
 
 #include <vector>
@@ -17,7 +19,7 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ========================================================== 
+//== IMPLEMENTATION ==========================================================
 
 
 // ********** SOLVE **************** //
@@ -27,8 +29,7 @@ solve(NProblemInterface*                  _problem,
       std::vector<NConstraintInterface*>& _constraints,
       std::vector<PairUiV>&               _discrete_constraints,
       double                              _reg_factor,
-      bool                                _show_miso_settings,
-      bool                                _show_timings        )
+      bool                                _show_miso_settings)
 {
 
   //----------------------------------------------
@@ -51,17 +52,19 @@ solve(NProblemInterface*                  _problem,
   // 2. setup constraints
   //----------------------------------------------
   std::size_t n = _problem->n_unknowns();
-  gmm::row_matrix< gmm::wsvector< double > > C(_constraints.size(), n+1);
+  std::vector<Eigen::Triplet<double>> triplets;
   int n_constraints = 0;
 
   // get zero vector
-  std::vector<double> x(n, 0.0);
+  ConstrainedSolver::Vector x(n);
+  x.setZero();
 
   for(unsigned int i=0; i<_constraints.size();  ++i)
+  {
     if(_constraints[i]->constraint_type() == NConstraintInterface::NC_EQUAL)
     {
-      if(!_constraints[i]->is_linear())
-        std::cerr << "Warning: COMISOSolver received a problem with non-linear constraints!!!" << std::endl;
+      DEB_error_if(!_constraints[i]->is_linear(),
+        "COMISOSolver received a problem with non-linear constraints!!!");
 
       // get linear part
       NConstraintInterface::SVectorNC gc;
@@ -69,40 +72,41 @@ solve(NProblemInterface*                  _problem,
 
       NConstraintInterface::SVectorNC::InnerIterator v_it(gc);
       for(; v_it; ++v_it)
-        C(n_constraints, v_it.index()) = v_it.value();
+        triplets.emplace_back(n_constraints, v_it.index(), v_it.value());
 
       // get constant part
-      C(n_constraints, n) = _constraints[i]->eval_constraint(P(x));
+      triplets.emplace_back(
+          n_constraints, (int)n, _constraints[i]->eval_constraint(P(x)));
 
       // move to next constraint
       ++n_constraints;
-    } else {
-        std::cerr << "Warning: COMISOSolver received a problem with non-equality constraints!!!" << std::endl;
     }
+    else
+    {
+      DEB_error(
+          "COMISOSolver received a problem with non-equality constraints!!!");
+    }
+  }
 
   // resize matrix to final number of constraints
-  gmm::resize(C,n_constraints, n+1);
-
+  ConstrainedSolver::RowMatrix C(n_constraints, n);
+  C.setFromTriplets(triplets.begin(), triplets.end());
 
   //----------------------------------------------
   // 3. setup energy
   //----------------------------------------------
 
-  if(!_problem->constant_hessian())
-    std::cerr << "Warning: COMISOSolver received a problem with non-constant hessian!!!" << std::endl;
+  DEB_error_if(!_problem->constant_hessian(),
+    "COMISOSolver received a problem with non-constant hessian!!!");
 
 
   // get hessian matrix
-  gmm::col_matrix< gmm::wsvector< double > > A(n,n);
   NProblemInterface::SMatrixNP H;
   _problem->eval_hessian(P(x), H);
-  for( int i=0; i<H.outerSize(); ++i)
-    for (NProblemInterface::SMatrixNP::InnerIterator it(H,i); it; ++it)
-      A(it.row(),it.col()) = it.value();
 
 
   // get negative gradient
-  std::vector<double> rhs(_problem->n_unknowns());
+  ConstrainedSolver::Vector rhs(_problem->n_unknowns());
   _problem->eval_gradient(P(x), P(rhs));
   for(unsigned int i=0; i<rhs.size(); ++i)
     rhs[i] = -rhs[i];
@@ -114,8 +118,8 @@ solve(NProblemInterface*                  _problem,
   // 4. solve problem
   //----------------------------------------------
 
-  cs_.solve(C,A,x,rhs,round_idxs,
-            _reg_factor, _show_miso_settings, _show_timings);
+  cs_.solve(C,H,x,rhs,round_idxs,
+            _reg_factor, _show_miso_settings);
 
   //  void solve(
   //      RMatrixT& _constraints,
@@ -124,8 +128,7 @@ solve(NProblemInterface*                  _problem,
   //      VectorT&  _rhs,
   //      VectorIT& _idx_to_round,
   //      double    _reg_factor = 0.0,
-  //      bool      _show_miso_settings = true,
-  //      bool      _show_timings = true );
+  //      bool      _show_miso_settings = true );
 
   //----------------------------------------------
   // 5. store result
@@ -140,3 +143,4 @@ solve(NProblemInterface*                  _problem,
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
+#endif // COMISO_EIGEN3_AVAILABLE

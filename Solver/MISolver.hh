@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //=============================================================================
@@ -37,20 +37,20 @@
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/config.hh>
 
-#include "GMM_Tools.hh"
+#include <CoMISo/Solver/Eigen_Tools.hh>
 
 #include <vector>
 
 //== NAMESPACES ===============================================================
 
-namespace COMISO 
+namespace COMISO
 {
 
 class MISolverDialog;
 
 //== CLASS DEFINITION =========================================================
 
-/** \class MISolver MISolver.hh 
+/** \class MISolver MISolver.hh
 
     Mixed-Integer Solver.
     Approximates the solution of a (mixed-)integer problem
@@ -61,11 +61,12 @@ class MISolverDialog;
 class COMISODLLEXPORT MISolver
 {
 public:
-   
-  typedef gmm::csc_matrix<double> CSCMatrix;
-  typedef std::vector<double> Vecd;
   typedef std::vector<int> Veci;
+  typedef std::vector<double> Vecd;
   typedef std::vector<unsigned int> Vecui;
+
+  typedef Eigen::SparseMatrix<double, Eigen::ColMajor> Matrix;
+  typedef Eigen::VectorXd Vector;
 
   enum class RoundingType
   {
@@ -82,10 +83,10 @@ public:
   /// default Constructor
   MISolver();
 
-  /// delete copy constructor 
+  /// delete copy constructor
   MISolver(const MISolver&) = delete;
 
-  /// delete assignment operator 
+  /// delete assignment operator
   MISolver& operator=(const MISolver& _rhs) = delete;
 
   // destructor
@@ -97,13 +98,11 @@ public:
    *  @param _x vector holding solution at the end
    *  @param _rhs right hand side of system Ax=rhs (Will be \b destroyed!)
    *  @param _to_round vector with variable indices to round to integers
-   *  @param _fixed_order specifies if _to_round indices shall be rounded in the
-   *  given order (\b true) or be greedily selected (\b false)
    *  */
-  void solve(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
+  void solve(Matrix& _A, Vector& _x, Vector& _rhs, const Veci& _to_round);
 
-  //! Resolve usig the direct solver
-  void resolve(Vecd& _x, Vecd& _rhs);
+  //! Resolve using the direct solver
+  void resolve(Vector& _x, Vector& _rhs);
 
   /// Compute greedy approximation to a mixed integer problem.
   /** @param _B mx(n+1) matrix with (still non-squared) equations of the energy,
@@ -199,19 +198,15 @@ public:
   /*@}*/
 
 private:
-  void solve_no_rounding(CSCMatrix& _A, Vecd& _x, Vecd& _rhs);
-  void solve_direct_rounding(
-      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
-  void solve_multiple_rounding(
-      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
-  void solve_iterative(
-      CSCMatrix& _A, Vecd& _x, Vecd& _rhs, Veci& _to_round, bool _fixed_order);
-  void solve_gurobi(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
-  void solve_cplex(CSCMatrix& _A, Vecd& _x, Vecd& _rhs, const Veci& _to_round);
+  void solve_no_rounding      (Matrix& _A, Vector& _x, Vector& _rhs);
+  void solve_direct_rounding  (Matrix& _A, Vector& _x, Vector& _rhs, const Veci& _to_round);
+  void solve_multiple_rounding(Matrix& _A, Vector& _x, Vector& _rhs, const Veci& _to_round);
+  void solve_gurobi           (Matrix& _A, Vector& _x, Vector& _rhs, const Veci& _to_round);
+  void solve_cplex            (Matrix& _A, Vector& _x, Vector& _rhs, const Veci& _to_round);
 
   // return true if the solution has been improved only by local iterations
-  bool update_solution_is_local( 
-      const CSCMatrix& _A, Vecd& _x, const Vecd& _rhs, const Vecui& _neigh_i);
+  bool update_solution_is_local(
+      const Matrix& _A, Vector& _x, const Vector& _rhs, const Vecui& _neigh_i);
 
 private:
   RoundingType rounding_type_;
@@ -236,7 +231,7 @@ private:
   DirectSolver* direct_solver_;
   IterativeSolver* iter_solver_;
 
-  bool cholmod_step_done_; // indicate if system factorization has been done
+  bool factorization_done_; // indicate if system factorization has been done
 
   // statistics
   unsigned int n_local_;

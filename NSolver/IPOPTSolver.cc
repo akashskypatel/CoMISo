@@ -11,7 +11,6 @@
 #if COMISO_IPOPT_AVAILABLE
 //=============================================================================
 
-#include "NProblemGmmInterface.hh"
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 #include "BoundConstraint.hh"
@@ -19,8 +18,6 @@
 
 #include <Base/Debug/DebConfig.hh>
 #include <Base/Debug/DebTime.hh>
-
-#include <CoMISo/Utils/gmm.hh>
 
 #include <IpTNLP.hpp>
 #include <IpIpoptApplication.hpp>

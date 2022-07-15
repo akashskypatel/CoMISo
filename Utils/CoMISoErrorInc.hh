@@ -1,6 +1,5 @@
 // (C) Copyright 2014 by Autodesk, Inc.
 
-//!\ReForm_SDK
 #include <Base/Utils/BaseErrorInc.hh>
 
 DEFINE_ERROR(UNSPECIFIED_COMISO_FAILURE, "Unspecified CoMISo Failure")
@@ -46,7 +45,12 @@ DEFINE_ERROR(DOCLOUD_JOB_LOCATION_NOT_FOUND,
 DEFINE_ERROR(DOCLOUD_CPLEX_SOLUTION_MISMATCH, 
   "DO cloud CPLEX solution mismatch [defect | network problem]")
 
-//DEFINE_ERROR(DOCLOUD_ROOT_URL_INVALID, "DO cloud root URL invalid")
+// LSQ constrained solver related messages
+DEFINE_ERROR(LSQC_UNEXPECTED_VARIABLE, "A variable is not in the expected set")
+DEFINE_ERROR(LSQC_SINGULAR, "LSQ constrained problem resulted in a singular system")
+DEFINE_ERROR(LSQC_INFEASIBLE, "LSQ problem does not have solution")
+
+// DEFINE_ERROR(DOCLOUD_ROOT_URL_INVALID, "DO cloud root URL invalid")
 //DEFINE_ERROR(DOCLOUD_API_KEY_INVALID, "DO cloud API key invalid")
 //DEFINE_ERROR(DOCLOUD_INFEASIBLE_TIMEOUT_INVALID, 
 //  "DO cloud infeasible timeout invalid")

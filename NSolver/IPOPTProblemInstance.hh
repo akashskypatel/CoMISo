@@ -42,7 +42,10 @@
 namespace COMISO {
 
 //== FORWARDDECLARATIONS ======================================================
+
+#if COMISO_GMM_AVAILABLE
 class NProblemGmmInterface; // deprecated
+#endif
 class NProblemInterface;
 class NConstraintInterface;
 struct IPOPTCallbackParameters;
@@ -207,6 +210,7 @@ private:
 //== CLASS DEFINITION PROBLEM INSTANCE=========================================================
 
 
+#if COMISO_GMM_AVAILABLE
 class IPOPTProblemInstanceGmm : public Ipopt::TNLP
 {
 public:
@@ -351,6 +355,7 @@ private:
 
   std::function<bool(const IPOPTCallbackParameters &)> intermediate_callback_;
 };
+#endif // COMISO_GMM_AVAILABLE
 
 //=============================================================================
 } // namespace COMISO

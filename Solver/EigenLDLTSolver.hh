@@ -25,7 +25,7 @@
 
 //=============================================================================
 //
-//  CLASS CholmodSolver
+//  CLASS EigenLDLTSolver
 //
 //=============================================================================
 
@@ -49,7 +49,6 @@
 LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Eigen>
 #include <Eigen/Sparse>
-#include <Eigen/SparseCholesky>
 LOW_CODE_QUALITY_SECTION_END
 
 
@@ -67,8 +66,10 @@ public:
     const std::vector<int>&    _rowind,
     const std::vector<double>& _values);
 
+#if COMISO_GMM_AVAILABLE
   template< class GMM_MatrixT>
   bool calc_system_gmm(const GMM_MatrixT& _mat);
+#endif // COMISO_GMM_AVAILABLE
 
   template< class Eigen_MatrixT>
   bool calc_system_eigen(const Eigen_MatrixT& _mat);
@@ -77,17 +78,20 @@ public:
     const std::vector<int>&    _rowind,
     const std::vector<double>& _values);
 
+#if COMISO_GMM_AVAILABLE
   template< class GMM_MatrixT>
   bool update_system_gmm(const GMM_MatrixT& _mat);
+#endif // COMISO_GMM_AVAILABLE
 
   template< class Eigen_MatrixT>
   bool update_system_eigen(const Eigen_MatrixT& _mat);
 
 
-  bool solve(double *             _x0, double *             _b);
+  bool solve(double *             _x, double *             _b);
 
+  bool solve(std::vector<double>& _x, std::vector<double>& _b);
 
-  bool solve(std::vector<double>& _x0, std::vector<double>& _b);
+  bool solve(Eigen::VectorXd& _x, const Eigen::VectorXd& _b);
 
 
   bool& show_timings();
@@ -100,7 +104,7 @@ private:
   // dimension n_
   unsigned int n_;
 
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldlt_;
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> ldlt_;
 
   bool show_timings_;
 };
