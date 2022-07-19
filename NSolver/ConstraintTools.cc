@@ -22,6 +22,18 @@ using BoolVector = std::vector<bool>;
 
 //-----------------------------------------------------------------------------
 
+// TODO: replace with std::gcd when C++17 is avaiable
+int gcd(int _a, int _b)
+{
+  while (_b != 0)
+  {
+    int t(_b);
+    _b = _a % _b;
+    _a = t;
+  }
+  return _a;
+}
+
 void remove_dependent_linear_constraints(
     ConstraintVector& _constraints, const double _eps)
 {
@@ -465,7 +477,7 @@ int GaussElimination::find_gcd(IntVector& _v_gcd, int& _n_ints)
     for (int k = 0; k < _n_ints - 1 && !done; ++k)
     {
       // use abs(.) to get same sign needed for all_same
-      _v_gcd[k] = std::abs(std::gcd(_v_gcd[k], _v_gcd[k + 1]));
+      _v_gcd[k] = std::abs(gcd(_v_gcd[k], _v_gcd[k + 1]));
 
       if (k > 0 && prev_val != _v_gcd[k])
         all_same = false;
@@ -494,7 +506,7 @@ int GaussElimination::find_gcd(IntVector& _v_gcd, int& _n_ints)
       // we just need to check one final gcd between first 2 elements
       if (all_same && _n_ints > 1)
       {
-        _v_gcd[0] = std::abs(std::gcd(_v_gcd[0], _v_gcd[1]));
+        _v_gcd[0] = std::abs(gcd(_v_gcd[0], _v_gcd[1]));
         // we are done
         _n_ints = 1;
       }
