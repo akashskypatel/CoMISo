@@ -10,48 +10,48 @@ namespace COMISO
 
 // A simple wrapper around std::array that provides componentwise arithmetic
 // operations.
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 struct VectorT : public std::array<ScalarT, DIM>
 {
   using Base = std::array<ScalarT, DIM>;
   using Self = VectorT<ScalarT, DIM>;
 
-  ScalarT& operator[](size_t _idx) { return Base::operator[](_idx); }
-  const ScalarT& operator[](size_t _idx) const
+  ScalarT& operator[](std::size_t _idx) { return Base::operator[](_idx); }
+  const ScalarT& operator[](std::size_t _idx) const
   {
     return Base::operator[](_idx);
   }
 
   Self& operator+=(const Self& _other)
   {
-    for (size_t i = 0; i < DIM; ++i)
+    for (std::size_t i = 0; i < DIM; ++i)
       (*this)[i] += _other[i];
     return *this;
   }
 
   Self& operator-=(const Self& _other)
   {
-    for (size_t i = 0; i < DIM; ++i)
+    for (std::size_t i = 0; i < DIM; ++i)
       (*this)[i] -= _other[i];
     return *this;
   }
 
   Self& operator*=(ScalarT _other)
   {
-    for (size_t i = 0; i < DIM; ++i)
+    for (std::size_t i = 0; i < DIM; ++i)
       (*this)[i] *= _other;
     return *this;
   }
 
   Self& operator/=(ScalarT _other)
   {
-    for (size_t i = 0; i < DIM; ++i)
+    for (std::size_t i = 0; i < DIM; ++i)
       (*this)[i] /= _other;
     return *this;
   }
 };
 
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 VectorT<ScalarT, DIM> operator+(
     const VectorT<ScalarT, DIM>& _left, const VectorT<ScalarT, DIM>& _right)
 {
@@ -60,7 +60,7 @@ VectorT<ScalarT, DIM> operator+(
   return res;
 }
 
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 VectorT<ScalarT, DIM> operator-(
     const VectorT<ScalarT, DIM>& _left, const VectorT<ScalarT, DIM>& _right)
 {
@@ -69,7 +69,7 @@ VectorT<ScalarT, DIM> operator-(
   return res;
 }
 
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 VectorT<ScalarT, DIM> operator*(
     ScalarT _left, const VectorT<ScalarT, DIM>& _right)
 {
@@ -78,7 +78,7 @@ VectorT<ScalarT, DIM> operator*(
   return res;
 }
 
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 VectorT<ScalarT, DIM> operator*(
     const VectorT<ScalarT, DIM> _left, ScalarT _right)
 {
@@ -87,7 +87,7 @@ VectorT<ScalarT, DIM> operator*(
   return res;
 }
 
-template <typename ScalarT, size_t DIM>
+template <typename ScalarT, std::size_t DIM>
 VectorT<ScalarT, DIM> operator-(const VectorT<ScalarT, DIM>& _vec)
 {
   VectorT<ScalarT, DIM> res;
