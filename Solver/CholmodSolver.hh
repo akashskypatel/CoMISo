@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //=============================================================================
@@ -64,9 +64,9 @@ public:
     // _size is maximal size this instance can handle (smaller problems are possible!!!)
     CholmodSolver();
     ~CholmodSolver();
-    
-    bool calc_system( const std::vector<int>&    _colptr, 
-		      const std::vector<int>&    _rowind, 
+
+    bool calc_system( const std::vector<int>&    _colptr,
+		      const std::vector<int>&    _rowind,
 		      const std::vector<double>& _values );
 
     bool calc_system_prepare_pattern( const std::vector<int>&    _colptr,
@@ -88,8 +88,8 @@ public:
     bool calc_system_eigen_prepare_pattern( const Eigen_MatrixT& _mat, const Eigen_MatrixT& _mat_pattern);
 
 
-    bool update_system( const std::vector<int>&    _colptr, 
- 			const std::vector<int>&    _rowind, 
+    bool update_system( const std::vector<int>&    _colptr,
+ 			const std::vector<int>&    _rowind,
  			const std::vector<double>& _values );
 
 
@@ -113,10 +113,13 @@ public:
 
     bool solve ( std::vector<double>& _x0, std::vector<double>& _b);
 
+    template <class Eigen_VectorT>
+    bool solve(Eigen_VectorT& _x, Eigen_VectorT& _b);
+
     bool& show_timings();
-    
+
     int dimension();
-    
+
 private:
 
     cholmod_common * mp_cholmodCommon;

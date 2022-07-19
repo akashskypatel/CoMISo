@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
@@ -45,16 +45,16 @@ bool CholmodSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
 
     if(show_timings_) sw_.start();
 
     COMISO_GMM::get_ccs_symmetric_data( _mat,
 					 'u',
-					 values_, 
-					 rowind_, 
+					 values_,
+					 rowind_,
 					 colptr_ );
-    
+
     if(show_timings_)
     {
       std::cerr << "Cholmod Timing GMM convert: " << sw_.stop()/1000.0 << "s\n";
@@ -63,7 +63,7 @@ bool CholmodSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 
     return calc_system( colptr_, rowind_, values_);
 }
-  
+
 
 //-----------------------------------------------------------------------------
 
@@ -74,18 +74,18 @@ bool CholmodSolver::update_system_gmm( const GMM_MatrixT& _mat)
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
   COMISO_GMM::get_ccs_symmetric_data( _mat,
 				      'u',
-				       values_, 
-				       rowind_, 
+				       values_,
+				       rowind_,
 				       colptr_ );
 
   return update_system( colptr_, rowind_, values_);
 }
 
 //-----------------------------------------------------------------------------
-  
+
 template< class Eigen_MatrixT>
 bool CholmodSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
@@ -94,11 +94,11 @@ bool CholmodSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 #if COMISO_EIGEN3_AVAILABLE
     COMISO_EIGEN::get_ccs_symmetric_data( _mat,
 					 'u',
-					 values_, 
-					 rowind_, 
+					 values_,
+					 rowind_,
 					 colptr_ );
 #endif
-    
+
     if(show_timings_)
     {
       std::cerr << "Cholmod Timing EIGEN convert: " << sw_.stop()/1000.0 << "s\n";
@@ -152,11 +152,11 @@ bool CholmodSolver::calc_system_eigen_prepare_pattern( const Eigen_MatrixT& _mat
 template< class Eigen_MatrixT>
 bool CholmodSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 {
-#if COMISO_EIGEN3_AVAILABLE    
+#if COMISO_EIGEN3_AVAILABLE
   COMISO_EIGEN::get_ccs_symmetric_data( _mat,
 				      'u',
-				       values_, 
-				       rowind_, 
+				       values_,
+				       rowind_,
 				       colptr_ );
 #endif
   return update_system( colptr_, rowind_, values_);
@@ -186,6 +186,11 @@ bool CholmodSolver::update_downdate_factor_eigen( const Eigen_MatrixT& _mat, con
     return update_downdate_factor( colptr_, rowind_, values_, _upd);
 }
 
+template <class Eigen_VectorT>
+bool solve(Eigen_VectorT& _x, Eigen_VectorT& _b)
+{
+  return solve(_x.data(), _b.data());
+}
 
 }
 
