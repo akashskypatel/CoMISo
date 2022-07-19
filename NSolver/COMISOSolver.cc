@@ -89,7 +89,7 @@ solve(NProblemInterface*                  _problem,
   }
 
   // resize matrix to final number of constraints
-  ConstrainedSolver::RowMatrix C(n_constraints, n);
+  ConstrainedSolver::RowMatrix C(n_constraints, n + 1);
   C.setFromTriplets(triplets.begin(), triplets.end());
 
   //----------------------------------------------
