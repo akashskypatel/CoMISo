@@ -86,6 +86,7 @@ void ConstrainedSolver::solve(
   DEB_only(const size_t nrows = _A.rows());
   DEB_only(const size_t ncols = _A.cols());
   const size_t ncons = _constraints.rows();
+  _x.resize(nrows);
 
   DEB_line(2, "Initital dimension: "
                   << nrows << " x " << ncols
