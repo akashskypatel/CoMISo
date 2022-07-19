@@ -540,6 +540,9 @@ if (NOT TARGET osqp)
 endif()
 if (TARGET osqpstatic)
   target_link_libraries (CoMISo PRIVATE osqpstatic)
+  # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
+  # So we need to do it here.
+  target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
