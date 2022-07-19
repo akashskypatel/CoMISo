@@ -1246,7 +1246,7 @@ void eigen_to_gmm_csc(
     GMM_CSC_MatrixT& _G)
 {
   using Scalar = typename gmm::linalg_traits<GMM_CSC_MatrixT>::value_type;
-  using Index = typename GMM_CSC_MatrixT::IND_TYPE;
+  using Index = std::remove_reference_t<decltype(_G.ir[0])>;
 
   const auto nnz = static_cast<size_t>(_E.nonZeros());
   const auto nc = static_cast<size_t>(_E.cols());
