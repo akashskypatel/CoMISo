@@ -91,7 +91,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_MULTIDIMCONSTRAINEDSOLVERT_C)
 #define COMISO_MULTIDIMCONSTRAINEDSOLVERT_TEMPLATES
-#include "MultiDimConstrainedSolverT.cc"
+#include "MultiDimConstrainedSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_CONSTRAINEDSOLVER_HH defined

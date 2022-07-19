@@ -112,7 +112,7 @@ private:
 //=============================================================================
 #if defined(INCLUDE_TEMPLATES) && !defined(COMISO_SUBSYSTEMSOLVERT_C)
 #define COMISO_SUBSYSTEMSOLVERT_TEMPLATES
-#include "SubProblemSolverT.cc"
+#include "SubProblemSolverT_impl.hh"
 #endif
 //=============================================================================
 #endif // COMISO_CONSTRAINEDSOLVER_HH defined
