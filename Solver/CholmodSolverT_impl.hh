@@ -187,9 +187,10 @@ bool CholmodSolver::update_downdate_factor_eigen( const Eigen_MatrixT& _mat, con
 }
 
 template <class Eigen_VectorT>
-bool solve(Eigen_VectorT& _x, Eigen_VectorT& _b)
+bool solve(Eigen_VectorT& _x, const Eigen_VectorT& _b)
 {
-  return solve(_x.data(), _b.data());
+  // hopefully, cholmod_solve does not change b
+  return solve(_x.data(), const_cast<Eigen_VectorT&>(_b).data());
 }
 
 }

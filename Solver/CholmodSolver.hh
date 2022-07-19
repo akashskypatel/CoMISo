@@ -114,7 +114,7 @@ public:
     bool solve ( std::vector<double>& _x0, std::vector<double>& _b);
 
     template <class Eigen_VectorT>
-    bool solve(Eigen_VectorT& _x, Eigen_VectorT& _b);
+    bool solve(Eigen_VectorT& _x, const Eigen_VectorT& _b);
 
     bool& show_timings();
 
