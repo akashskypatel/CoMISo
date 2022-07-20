@@ -27,6 +27,7 @@ class ProblemSubsetMapT
 
   using Point            = typename SolverBaseT<DIM>::Point;
   using LinearEquation   = typename SolverBaseT<DIM>::LinearEquation;
+  using LinearTerm       = typename SolverBaseT<DIM>::LinearTerm;
   using Value            = typename SolverBaseT<DIM>::Value;
   using ValueVector      = typename SolverBaseT<DIM>::ValueVector;
 
@@ -49,7 +50,7 @@ public:
 
   // Reset mapping as well as current fixed values. Typically in O(n) with n
   // being the number of new fixed values.
-  void reset_fixed_values(ValueVector _fixed_values = ValueVector()) 
+  void reset_fixed_values(ValueVector _fixed_values = ValueVector())
   {
     DEB_enter_func;
     reset();
@@ -57,7 +58,7 @@ public:
     fixed_values_ = std::move(_fixed_values);
     DEB_only(auto size_before = fixed_values_.size());
     // Create list with at most one fixed value for each variable
-    sort_unique(fixed_values_, [](const auto& _l, const auto& _r)
+    sort_unique(fixed_values_, [](const Value& _l, const Value& _r)
         { return _l.var_name < _r.var_name; });
     DEB_only(auto size_after = fixed_values_.size());
     DEB_line_if(size_after != size_before, 3,
@@ -90,9 +91,9 @@ public:
 
     // remove fixed linear terms
     _eq.linear_terms.erase(
-        std::remove_if(_eq.linear_terms.begin(), _eq.linear_terms.end(),
-            [](const auto& _elem) { return _elem.var_name == INVALID_ID; }),
-        _eq.linear_terms.end());
+      std::remove_if(_eq.linear_terms.begin(), _eq.linear_terms.end(),
+        [](const LinearTerm& _elem) { return _elem.var_name == INVALID_ID; }),
+      _eq.linear_terms.end());
 
     return _eq.const_term - const_term_before;
   }
