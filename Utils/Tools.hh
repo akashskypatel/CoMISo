@@ -107,7 +107,8 @@ void sort_unique(std::vector<T>& _v, const LessPredicateT& _less,
 template <typename T, typename LessPredicateT>
 void sort_unique(std::vector<T>& _v, const LessPredicateT& _less)
 {
-  const auto equal = [&_less](const auto& _l, const auto& _r)
+  using value_type = typename std::vector<T>::value_type;
+  const auto equal = [&_less](const value_type& _l, const value_type& _r)
   {
     return !_less(_l, _r) && !_less(_r, _l);
   };
