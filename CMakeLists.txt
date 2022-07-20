@@ -126,16 +126,16 @@ else()
 endif ()
 
 
-find_package (GMM REQUIRED)
-if (GMM_FOUND)
-  set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
-  list (APPEND NEED_LAPACK "GMM")
-
-  target_include_directories(CoMISo PUBLIC ${GMM_INCLUDE_DIR})
-else()
-  set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
-endif ()
+#find_package (GMM REQUIRED)
+#if (GMM_FOUND)
+#  set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
+#  list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
+#  list (APPEND NEED_LAPACK "GMM")
+#
+#  target_include_directories(CoMISo PUBLIC ${GMM_INCLUDE_DIR})
+#else()
+#  set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
+#endif ()
 
 set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
 set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib. Is there a better way to find it than this?
