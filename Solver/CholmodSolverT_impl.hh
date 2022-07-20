@@ -38,6 +38,7 @@
 
 namespace COMISO {
 
+#if COMISO_GMM_AVAILABLE
 
 template< class GMM_MatrixT>
 bool CholmodSolver::calc_system_gmm( const GMM_MatrixT& _mat)
@@ -83,6 +84,8 @@ bool CholmodSolver::update_system_gmm( const GMM_MatrixT& _mat)
 
   return update_system( colptr_, rowind_, values_);
 }
+
+#endif // COMISO_GMM_AVAILABLE
 
 //-----------------------------------------------------------------------------
 
