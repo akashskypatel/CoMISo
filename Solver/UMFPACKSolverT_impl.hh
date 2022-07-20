@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -32,23 +32,23 @@
 
 namespace COMISO {
 
-
+#if COMISO_GMM_AVAILABLE
 template< class GMM_MatrixT>
 bool UMFPACKSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
 
     if(show_timings_) sw_.start();
 
     COMISO_GMM::get_ccs_symmetric_data( _mat,
 					'c',
-					values_, 
-					rowind_, 
+					values_,
+					rowind_,
 					colptr_ );
-    
+
     if(show_timings_)
     {
       std::cerr << "UMFPACK Timing GMM convert: " << sw_.stop()/1000.0 << "s\n";
@@ -56,7 +56,7 @@ bool UMFPACKSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 
     return calc_system( colptr_, rowind_, values_);
 }
-  
+
 
   //-----------------------------------------------------------------------------
 
@@ -67,16 +67,16 @@ bool UMFPACKSolver::update_system_gmm( const GMM_MatrixT& _mat)
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
   COMISO_GMM::get_ccs_symmetric_data( _mat,
 				      'c',
-				      values_, 
-				      rowind_, 
+				      values_,
+				      rowind_,
 				      colptr_ );
 
     return update_system( colptr_, rowind_, values_);
 }
-
+#endif
 
 }
 #endif//COMISO_SUITESPARSE_AVAILABLE

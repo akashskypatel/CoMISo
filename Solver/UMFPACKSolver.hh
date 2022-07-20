@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //=============================================================================
@@ -64,23 +64,26 @@ public:
     // _size is maximal size this instance can handle (smaller problems are possible!!!)
     UMFPACKSolver();
     ~UMFPACKSolver();
-    
-    bool calc_system( const std::vector<int>&    _colptr, 
-		      const std::vector<int>&    _rowind, 
+
+    bool calc_system( const std::vector<int>&    _colptr,
+		      const std::vector<int>&    _rowind,
 		      const std::vector<double>& _values );
 
-
+#if COMISO_GMM_AVAILABLE
     template< class GMM_MatrixT>
     bool calc_system_gmm( const GMM_MatrixT& _mat);
+#endif
 
 
-    bool update_system( const std::vector<int>&    _colptr, 
- 			const std::vector<int>&    _rowind, 
+    bool update_system( const std::vector<int>&    _colptr,
+ 			const std::vector<int>&    _rowind,
  			const std::vector<double>& _values );
 
 
+#if COMISO_GMM_AVAILABLE
     template< class GMM_MatrixT>
     bool update_system_gmm( const GMM_MatrixT& _mat);
+#endif
 
 
     bool solve ( double *             _x0, double *             _b);
@@ -93,13 +96,13 @@ public:
     int ordering() { return ordering_; }
 
     bool& show_timings() { return show_timings_;}
-    
 
- private:    
+
+ private:
     void print_error( int _status );
 
  private:
-    
+
     void *symbolic_;
     void *numeric_;
 
@@ -116,7 +119,7 @@ public:
     // 8. NESDIS, nd small = 200, prune dense = 0.
     // 9. COLAMD for A*A’ or AMD for A
     int ordering_;
-    
+
     std::vector<double> values_;
     std::vector<int>    colptr_;
     std::vector<int>    rowind_;
