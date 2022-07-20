@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -34,22 +34,23 @@
 namespace COMISO {
 
 
+#if COMISO_GMM_AVAILABLE
 template< class GMM_MatrixT>
 bool SparseQRSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
 
     if(show_timings_) sw_.start();
 
     COMISO_GMM::get_ccs_symmetric_data( _mat,
 					'c',
-					values_, 
-					rowind_, 
+					values_,
+					rowind_,
 					colptr_ );
-    
+
     if(show_timings_)
     {
       std::cerr << "SparseQRSolver Timing GMM convert: " << sw_.stop()/1000.0 << "s\n";
@@ -57,7 +58,7 @@ bool SparseQRSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 
     return calc_system( colptr_, rowind_, values_);
 }
-  
+
 
 //-----------------------------------------------------------------------------
 
@@ -68,19 +69,20 @@ bool SparseQRSolver::update_system_gmm( const GMM_MatrixT& _mat)
 //   std::vector<int>    colptr;
 //   std::vector<int>    rowind;
 //   std::vector<double> values;
-    
+
   COMISO_GMM::get_ccs_symmetric_data( _mat,
 				      'c',
-				      values_, 
-				      rowind_, 
+				      values_,
+				      rowind_,
 				      colptr_ );
 
     return update_system( colptr_, rowind_, values_);
 }
 
+#endif // COMISO_GMM_AVAILABLE
 
 //-----------------------------------------------------------------------------
-  
+
 template< class Eigen_MatrixT>
 bool SparseQRSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
@@ -88,10 +90,10 @@ bool SparseQRSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 
     COMISO_EIGEN::get_ccs_symmetric_data( _mat,
 					 'c',
-					 values_, 
-					 rowind_, 
+					 values_,
+					 rowind_,
 					 colptr_ );
-    
+
     if(show_timings_)
     {
       std::cerr << "SparseQRSolver Timing EIGEN convert: " << sw_.stop()/1000.0 << "s\n";
@@ -99,26 +101,27 @@ bool SparseQRSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 
     return calc_system( colptr_, rowind_, values_);
 }
-  
+
 //-----------------------------------------------------------------------------
 
 template< class Eigen_MatrixT>
 bool SparseQRSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 {
-    
+
   COMISO_EIGEN::get_ccs_symmetric_data( _mat,
 				      'c',
-				       values_, 
-				       rowind_, 
+				       values_,
+				       rowind_,
 				       colptr_ );
 
   return update_system( colptr_, rowind_, values_);
 }
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 
 
+#if COMISO_GMM_AVAILABLE
 template< class GMM_MatrixT, class GMM_MatrixT2, class GMM_MatrixT3, class IntT>
 int
 SparseQRSolver::
@@ -183,9 +186,10 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
 
   return rank;
 }
+#endif // COMISO_GMM_AVAILABLE
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 
 
 template< class Eigen_MatrixT, class IntT >
@@ -257,7 +261,7 @@ factorize_system_eigen( const Eigen_MatrixT& _A, Eigen_MatrixT& _Q, Eigen_Matrix
 }
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 
 
 template< class Eigen_MatrixT >
@@ -311,7 +315,7 @@ solve_system_eigen( const Eigen_MatrixT& _A, const Eigen_MatrixT& _b, Eigen_Matr
 }
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 
 
 template< class Eigen_MatrixT >

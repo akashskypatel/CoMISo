@@ -78,12 +78,13 @@ public:
 		      const std::vector<double>& _values );
 
 
+#if COMISO_GMM_AVAILABLE
     template< class GMM_MatrixT>
     bool calc_system_gmm( const GMM_MatrixT& _mat);
 
-
     template< class GMM_MatrixT>
     bool update_system_gmm( const GMM_MatrixT& _mat);
+#endif
 
     template< class Eigen_MatrixT>
     bool calc_system_eigen( const Eigen_MatrixT& _mat);
@@ -109,9 +110,11 @@ public:
 
     bool& show_timings() { return show_timings_;}
 
+#if COMISO_GMM_AVAILABLE
     // factorize _A*P = _Q*_R and return rank
     template< class GMM_MatrixT, class GMM_MatrixT2, class GMM_MatrixT3, class IntT>
     int factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R, std::vector<IntT>& _P);
+#endif
 
     // factorize _A*P = _Q*_R and return rank
     template< class Eigen_MatrixT, class IntT >
