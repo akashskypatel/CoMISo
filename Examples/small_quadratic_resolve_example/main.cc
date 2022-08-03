@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -37,10 +37,10 @@
 template<class MatrixT>
 void init_les( MatrixT& _A, std::vector< double >& _b)
 {
-  _A(0,0) = 25  ; _A(0,1) = 0 ; _A(0,2) = -15; _A(0,3) = 0 ; 
-  _A(1,0) = 0   ; _A(1,1) = 20; _A(1,2) = -8 ; _A(1,3) = -4; 
-  _A(2,0) = -15 ; _A(2,1) = -8; _A(2,2) = 17 ; _A(2,3) = 0 ; 
-  _A(3,0) = 0   ; _A(3,1) = -4; _A(3,2) = 0  ; _A(3,3) = 4 ; 
+  _A(0,0) = 25  ; _A(0,1) = 0 ; _A(0,2) = -15; _A(0,3) = 0 ;
+  _A(1,0) = 0   ; _A(1,1) = 20; _A(1,2) = -8 ; _A(1,3) = -4;
+  _A(2,0) = -15 ; _A(2,1) = -8; _A(2,2) = 17 ; _A(2,3) = 0 ;
+  _A(3,0) = 0   ; _A(3,1) = -4; _A(3,2) = 0  ; _A(3,3) = 4 ;
 
   _b[0] = 0; _b[1] = 4; _b[2] = -2; _b[3] = 0;
 }
@@ -76,7 +76,7 @@ int main(void)
   gmm::col_matrix< gmm::wsvector< double > > A(n,n);
   std::vector< double > x(n);
   std::vector< double > b(n);
-  
+
   std::vector<double> x_bak;
 
   std::cout << "---------- 1) Set up problem..." << std::endl;
@@ -106,11 +106,11 @@ int main(void)
 
   std::cout << "---------- 2) Solve full ..." << std::endl;
   COMISO::ConstrainedSolver cs;
-  cs.solve_const( constraints, A, x, b, ids_to_round, 0.0, false, true);  
+  cs.solve_const( constraints, A, x, b, ids_to_round, 0.0, false);
   x_bak = x;
-  
+
   // first test: resolve with identical rhs's
-  std::vector<double> constraint_rhs(3); 
+  std::vector<double> constraint_rhs(3);
   std::vector<double> b_new = b;
   constraint_rhs[0] = -2.0;
   constraint_rhs[1] =  1.0;
@@ -125,25 +125,25 @@ int main(void)
   constraint_rhs[0] =  4.0;
   constraint_rhs[1] = -2.0;
   constraint_rhs[2] =  4.0;
-  b_new[0] =  1.0; 
-  b_new[1] = -2.0; 
-  b_new[2] =  3.0; 
+  b_new[0] =  1.0;
+  b_new[1] = -2.0;
+  b_new[2] =  3.0;
   b_new[3] = -5.0;
 
   std::cout << "---------- 3) Solve different rhs pre-factorized ..." << std::endl;
   cs.resolve(x, &constraint_rhs, &b_new);
 
-  
+
   // solve with new factorization
   constraints( 0, n ) = -4.0;
   constraints( 1, n ) =  2.0;
   constraints( 2, n ) = -4.0;
   std::cout << "---------- 4) Solve different rhs full ..." << std::endl;
-  cs.solve_const( constraints, A, x_bak, b_new, ids_to_round, 0.0, false, true);  
+  cs.solve_const( constraints, A, x_bak, b_new, ids_to_round, 0.0, false);
 
   std::cout << "orig     result (with different rhs's):    " << x_bak << std::endl;
   std::cout << "resolve  result (with different rhs's):    " << x     << std::endl;
-  
+
   return 0;
 }
 
