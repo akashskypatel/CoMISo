@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 
@@ -39,10 +39,10 @@
 template<class MatrixT>
 void init_les( MatrixT& _A, std::vector< double >& _b)
 {
-  _A(0,0) = 25  ; _A(0,1) = 0 ; _A(0,2) = -15; _A(0,3) = 0 ; 
-  _A(1,0) = 0   ; _A(1,1) = 20; _A(1,2) = -8 ; _A(1,3) = -4; 
-  _A(2,0) = -15 ; _A(2,1) = -8; _A(2,2) = 17 ; _A(2,3) = 0 ; 
-  _A(3,0) = 0   ; _A(3,1) = -4; _A(3,2) = 0  ; _A(3,3) = 4 ; 
+  _A(0,0) = 25  ; _A(0,1) = 0 ; _A(0,2) = -15; _A(0,3) = 0 ;
+  _A(1,0) = 0   ; _A(1,1) = 20; _A(1,2) = -8 ; _A(1,3) = -4;
+  _A(2,0) = -15 ; _A(2,1) = -8; _A(2,2) = 17 ; _A(2,3) = 0 ;
+  _A(3,0) = 0   ; _A(3,1) = -4; _A(3,2) = 0  ; _A(3,3) = 4 ;
 
   _b[0] = 0; _b[1] = 4; _b[2] = -2; _b[3] = 0;
 }
@@ -93,7 +93,7 @@ void quadratic_example_1()
   COMISO::ConstrainedSolver cs;
   //void solve( RMatrixT& _constraints, CMatrixT& _A, VectorT&  _x, VectorT&  _rhs, VectorIT& _idx_to_round, double    _reg_factor = 0.0, bool      _show_miso_settings = true, bool      _show_timings = true );
   //_show_miso_settings requires a QT context and hence must be false in this example
-  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false, true);
+  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false);
   // copy this solution for later
   std::vector< double > org_x( x);
   std::cout << x << std::endl;
@@ -103,7 +103,7 @@ void quadratic_example_1()
   // reset system
   init_les( A, b);
   ids_to_round.push_back(1);
-  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false, true);
+  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false);
   std::cout << x << std::endl;
 
 
@@ -118,7 +118,7 @@ void quadratic_example_1()
   constraints( 0, 1 ) = -1.0;
   std::cout << "           the constraint equation looks like this:" << std::endl;
   print_equations( constraints);
-  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false, true);
+  cs.solve( constraints, A, x, b, ids_to_round, 0.0, false);
   std::cout << x << std::endl;
 }
 
