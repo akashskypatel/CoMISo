@@ -5,6 +5,10 @@
 //=============================================================================
 
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
+
 //== INCLUDES =================================================================
 
 #include "NPLinearConstraints.hh"
@@ -159,4 +163,4 @@ void   NPLinearConstraintsPenalty::store_result ( const double* _x )
 } // namespace COMISO
 //=============================================================================
 
-
+#endif // COMISO_GMM_AVAILABLE

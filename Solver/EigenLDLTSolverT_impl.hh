@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
@@ -39,6 +39,7 @@
 namespace COMISO {
 
 
+#if COMISO_GMM_AVAILABLE
 template< class GMM_MatrixT>
 bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
 {
@@ -47,9 +48,9 @@ bool EigenLDLTSolver::calc_system_gmm( const GMM_MatrixT& _mat)
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
 
-  return calc_system_eigen( E);
+  return calc_system_eigen(E);
 }
-  
+
 
 //-----------------------------------------------------------------------------
 
@@ -62,21 +63,22 @@ bool EigenLDLTSolver::update_system_gmm( const GMM_MatrixT& _mat)
   Eigen::SparseMatrix<double> E;
   COMISO_EIGEN::gmm_to_eigen(_mat, E);
 
-  return update_system_eigen( E);
+  return update_system_eigen(E);
 }
+#endif // COMISO_GMM_AVAILABLE
 
 //-----------------------------------------------------------------------------
-  
+
 template< class Eigen_MatrixT>
 bool EigenLDLTSolver::calc_system_eigen( const Eigen_MatrixT& _mat)
 {
-  DEB_time_func_def;  
+  DEB_time_func_def;
 
   n_ = static_cast<unsigned int>(_mat.rows());
-    ldlt_.compute(_mat);
-    return (ldlt_.info()==Eigen::Success);
+  ldlt_.compute(_mat);
+  return ldlt_.info() == Eigen::Success;
 }
-  
+
 //-----------------------------------------------------------------------------
 
 template< class Eigen_MatrixT>
@@ -85,7 +87,7 @@ bool EigenLDLTSolver::update_system_eigen( const Eigen_MatrixT& _mat)
   DEB_time_func_def;
 
   ldlt_.factorize(_mat);
-  return (ldlt_.info()==Eigen::Success );
+  return ldlt_.info() == Eigen::Success;
 }
 
 

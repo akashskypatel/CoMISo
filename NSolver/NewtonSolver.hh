@@ -106,6 +106,7 @@ protected:
 
   void solve_kkt_system(const VectorD& _rhs, VectorD& _dx);
 
+#if COMISO_GMM_AVAILABLE
   // deprecated function!
   // solve
   int solve(NProblemGmmInterface* _problem);
@@ -118,6 +119,7 @@ protected:
     eps_ = _eps;
     return solve(_problem);
   }
+#endif // COMISO_GMM_AVAILABLE
 
   // deprecated function!
   bool& constant_hessian_structure() { return constant_hessian_structure_; }

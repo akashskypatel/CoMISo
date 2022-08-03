@@ -9,7 +9,7 @@
 
 //== INCLUDES =================================================================
 
-#include <CoMISo/Utils/gmm.hh>
+#include <Eigen/Sparse>
 #include <deque>
 
 //== FORWARDDECLARATIONS ======================================================
@@ -33,9 +33,9 @@ template <class RealT> class IterativeSolverT
 public:
   typedef unsigned int uint;
   typedef RealT Real;
-  typedef std::vector<Real> Vector;
   typedef std::vector<uint> IndexVector;
-  typedef gmm::csc_matrix<Real> Matrix;
+  typedef Eigen::SparseMatrix<Real, Eigen::ColMajor> Matrix;
+  typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> Vector;
 
   // local Gauss-Seidel
   bool gauss_seidel_local(const Matrix& _A, Vector& _x, const Vector& _rhs,

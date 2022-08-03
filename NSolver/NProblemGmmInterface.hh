@@ -8,6 +8,9 @@
 #ifndef COMISO_NPROBLEMGMMINTERFACE_HH
 #define COMISO_NPROBLEMGMMINTERFACE_HH
 
+//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
+#include <CoMISo/Config/config.hh>
+#if COMISO_GMM_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -59,6 +62,8 @@ public:
 
 //=============================================================================
 } // namespace COMISO
+//=============================================================================
+#endif // COMISO_GMM_AVAILABLE
 //=============================================================================
 #endif // COMISO_NPROBLEMGMMINTERFACE_HH defined
 //=============================================================================

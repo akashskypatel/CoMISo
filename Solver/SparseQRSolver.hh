@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,12 +20,12 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 
 //=============================================================================
 //
-//  CLASS CholmodSolver
+//  CLASS SparseQRSolver
 //
 //=============================================================================
 
@@ -72,18 +72,19 @@ public:
 
     SparseQRSolver();
     ~SparseQRSolver();
-    
+
     bool calc_system( const std::vector<Int>&    _colptr,
 		      const std::vector<Int>&    _rowind,
 		      const std::vector<double>& _values );
 
 
+#if COMISO_GMM_AVAILABLE
     template< class GMM_MatrixT>
     bool calc_system_gmm( const GMM_MatrixT& _mat);
 
-
     template< class GMM_MatrixT>
     bool update_system_gmm( const GMM_MatrixT& _mat);
+#endif
 
     template< class Eigen_MatrixT>
     bool calc_system_eigen( const Eigen_MatrixT& _mat);
@@ -108,10 +109,12 @@ public:
     int ordering() { return ordering_; }
 
     bool& show_timings() { return show_timings_;}
-    
+
+#if COMISO_GMM_AVAILABLE
     // factorize _A*P = _Q*_R and return rank
     template< class GMM_MatrixT, class GMM_MatrixT2, class GMM_MatrixT3, class IntT>
     int factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R, std::vector<IntT>& _P);
+#endif
 
     // factorize _A*P = _Q*_R and return rank
     template< class Eigen_MatrixT, class IntT >
@@ -145,7 +148,7 @@ private:
     // 8. NESDIS, nd small = 200, prune dense = 0.
     // 9. COLAMD for A*A^T or AMD for A
     int ordering_;
-    
+
     // dimension of the mxn matrix
     int m_;
     int n_;

@@ -24,12 +24,12 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
 
-/** \class NProblemGmmInterface NProblemGmmInterface.hh <COMISO/.../NPRoblemGmmInterface.hh>
+
+/** \class LinearConstraint LinearConstraint.hh <COMISO/.../LinearConstraint.hh>
 
     Brief Description.
-  
+
     A more elaborate description follows.
 */
 class COMISODLLEXPORT LinearConstraint : public NConstraintInterface
@@ -64,7 +64,7 @@ public:
         double&    b();
 
   virtual double eval_constraint ( const double* _x );
-  
+
   virtual void eval_gradient( const double* _x, SVectorNC& _g      );
 
   virtual void eval_hessian    ( const double* _x, SMatrixNC& _h      );
