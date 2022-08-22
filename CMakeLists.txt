@@ -131,13 +131,13 @@ else()
 endif ()
 
 
-find_package (GMM)
-if (GMM_FOUND)
+if(NOT TARGET GMM::GMM)
+  find_package(GMM)
+endif()
+if(TARGET GMM::GMM)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
   list (APPEND NEED_LAPACK "GMM")
-
-  target_include_directories(CoMISo PUBLIC ${GMM_INCLUDE_DIR})
+  target_link_libraries     (CoMISo PUBLIC GMM::GMM)
 else()
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
 endif ()
