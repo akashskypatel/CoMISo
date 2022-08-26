@@ -50,6 +50,13 @@ public:
       double _acceptable_tolerance = 1e-8,
       double _almost_infeasible_threshold = 0.5, int _max_passes = 5,
       bool _final_step_with_all_constraints = true);
+
+  // Return the primal objective value
+  double energy() const { return obj_val_; }
+
+private:
+  double obj_val_ = 0.0;
+
 };
 
 //=============================================================================
