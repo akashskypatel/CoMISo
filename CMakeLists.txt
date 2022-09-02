@@ -303,16 +303,14 @@ endif ()
 
 # Maybe CoMISo was added using add_subdirectory and Eigen is already available?
 if (NOT TARGET Eigen3::Eigen)
-    find_package (Eigen3)
+    find_package (Eigen3 REQUIRED)
 endif()
+set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
 
 if (TARGET Eigen3::Eigen)
-  message (STATUS "Found Eigen3")
-  set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
   list( APPEND COMISO_LINK_LIBRARIES Eigen3::Eigen)
 else ()
-  message (FATAL_ERROR "Eigen3 not found!")
-  set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 0" )
+  target_include_directories(CoMISo PUBLIC ${EIGEN3_INCLUDE_DIR})
 endif ()
 
 find_package (DCO)
