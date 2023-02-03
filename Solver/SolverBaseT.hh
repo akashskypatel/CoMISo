@@ -19,6 +19,7 @@
 #include <CoMISo/Utils/VectorT.hh>
 
 #include <vector>
+#include <cstddef>
 
 //== NAMESPACES ===============================================================
 

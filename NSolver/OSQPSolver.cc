@@ -163,9 +163,10 @@ public:
 
   ~Impl()
   {
-    delete data.P;
-    delete data.A;
-    delete work;
+    // c_free is the OSQP-provided free() wrapper:
+    c_free(data.P);
+    c_free(data.A);
+    c_free(work);
   }
 
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
