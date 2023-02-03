@@ -26,7 +26,7 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ========================================================== 
+//== IMPLEMENTATION ==========================================================
 
 namespace
 {
@@ -171,8 +171,9 @@ public:
 
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
   const double* get_solution() const { return work->solution->x; }
+  double objective_value() const { return work->info->obj_val; }
 
-private: 
+private:
   OSQPSettings settings;
   OSQPData data;
   OSQPWorkspace* work = nullptr;
@@ -240,6 +241,8 @@ void OSQPSolver::solve(
 {
   Impl impl;
   impl.solve(_problem, _constraints);
+
+  obj_val_ = impl.objective_value();
 }
 
 void OSQPSolver::solve(NProblemInterface* _problem,
@@ -256,12 +259,13 @@ void OSQPSolver::solve(NProblemInterface* _problem,
   };
   const auto result_function = [&impl]() { return impl.get_solution(); };
 
-  return solve_with_lazy_constraints(solve_function, result_function, _problem,
+  solve_with_lazy_constraints(solve_function, result_function, _problem,
       _constraints, _lazy_constraints, _acceptable_tolerance,
       _almost_infeasible_threshold, _max_passes,
       _final_step_with_all_constraints);
-}
 
+  obj_val_ = impl.objective_value();
+}
 
 //-----------------------------------------------------------------------------
 
