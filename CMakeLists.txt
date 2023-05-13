@@ -399,7 +399,7 @@ else ()
 endif ()
 
 find_package (Gurobi)
-if (GUROBI_FOUND )
+if (TARGET Gurobi::GurobiCXX )
   set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 1" )
   target_link_libraries     (CoMISo PRIVATE Gurobi::GurobiC  Gurobi::GurobiCXX)
 else ()
