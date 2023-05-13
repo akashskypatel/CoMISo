@@ -14,6 +14,10 @@ include (VCICommon)
 
 include(VCIQt)
 
+if (NOT DEFINED BUILD_SHARED_LIBS)
+    option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
+endif()
+
 # Flag to enable or disable QT widgets in CoMISo
 set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
 
@@ -75,7 +79,7 @@ endif()
 # remove template cc files from source file list
 vci_drop_templates (sources)
 
-vci_add_library (CoMISo SHARED ${ui} ${sources} ${headers} )
+vci_add_library (CoMISo ${ui} ${sources} ${headers} )
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
 target_include_directories(CoMISo
