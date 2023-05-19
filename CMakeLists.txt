@@ -527,23 +527,21 @@ endif()
 
 # generate dllexport macros on windows
 if (WIN32)
-  add_definitions(-DCOMISODLL)
-  add_definitions(-DBASEDLL)
-  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
-  # ignore "... needs to have dll-interface to be used by clients"
-  #add_definitions(/wd4251)
-  target_compile_options(CoMISo PRIVATE /wd4251)
+  target_compile_definitions(CoMISo PRIVATE
+      -DCOMISODLL
+      -DBASEDLL
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_USE_MATH_DEFINES
+      -DNOMINMAX
+      )
 endif ()
+# ignore "... needs to have dll-interface to be used by clients"
+target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
 
 # enable debug stuff
 set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 if (COMISO_ENABLE_DEBUG_OUTPUT)
   target_compile_definitions(CoMISo PUBLIC -DDEB_ON)
-endif ()
-
-if (WIN32)
-  #add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX)
-  target_compile_definitions(CoMISo PRIVATE -D_USE_MATH_DEFINES -DNOMINMAX)
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
