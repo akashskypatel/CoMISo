@@ -6,3 +6,4 @@ Config/config.hh
 .DS_Store
 /build*/
 CMakeLists.txt.user*
+.cache/
