@@ -14,11 +14,20 @@ include (VCICommon)
 
 include(VCIQt)
 
+if (NOT DEFINED BUILD_SHARED_LIBS)
+    option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
+endif()
+
 # Flag to enable or disable QT widgets in CoMISo
 set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
 
 # Flag to enable or disable IPOPT
 set( ENABLE_IPOPT ON CACHE BOOL "Build with IPOPT (if found)" )
+
+set(COMISO_ENABLE_METIS   ON CACHE BOOL "Build with METIS (if found)" )
+set(COMISO_ENABLE_MUMPS   ON CACHE BOOL "Build with MUMPS (if found)" )
+set(COMISO_ENABLE_LPSOLVE ON CACHE BOOL "Build with lpsolve (if found)" )
+set(COMISO_ENABLE_GUROBI  ON CACHE BOOL "Build with Gurobi (if found)" )
 
 if( WANT_COMISO_QT )
 
@@ -70,7 +79,7 @@ endif()
 # remove template cc files from source file list
 vci_drop_templates (sources)
 
-vci_add_library (CoMISo SHARED ${ui} ${sources} ${headers} )
+vci_add_library (CoMISo ${ui} ${sources} ${headers} )
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
 target_include_directories(CoMISo
@@ -126,13 +135,13 @@ else()
 endif ()
 
 
-find_package (GMM)
-if (GMM_FOUND)
+if(NOT TARGET GMM::GMM)
+  find_package(GMM)
+endif()
+if(TARGET GMM::GMM)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${GMM_INCLUDE_DIR} )
   list (APPEND NEED_LAPACK "GMM")
-
-  target_include_directories(CoMISo PUBLIC ${GMM_INCLUDE_DIR})
+  target_link_libraries     (CoMISo PUBLIC GMM::GMM)
 else()
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
 endif ()
@@ -251,30 +260,41 @@ else ()
   set (COMISO_TAO_CONFIG_FILE_SETTINGS "#define COMISO_TAO_AVAILABLE 0" )
 endif ()
 
-find_package (METIS)
-if (METIS_FOUND )
-  set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 1" )
+if (COMISO_ENABLE_METIS)
+    find_package (METIS)
+    if (METIS_FOUND )
+        message (STATUS "CoMISo: Building with METIS")
+        set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 1" )
 
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${METIS_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${METIS_LIBRARY_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${METIS_LIBRARIES} )
-  target_include_directories(CoMISo PRIVATE ${METIS_INCLUDE_DIRS})
-  target_link_directories   (CoMISo PRIVATE ${METIS_LIBRARY_DIRS})
-  target_link_libraries     (CoMISo PRIVATE ${METIS_LIBRARIES})
+        list( APPEND COMISO_INCLUDE_DIRECTORIES ${METIS_INCLUDE_DIRS} )
+        list( APPEND COMISO_LINK_DIRECTORIES   ${METIS_LIBRARY_DIRS} )
+        list( APPEND COMISO_LINK_LIBRARIES  ${METIS_LIBRARIES} )
+        target_include_directories(CoMISo PRIVATE ${METIS_INCLUDE_DIRS})
+        target_link_directories   (CoMISo PRIVATE ${METIS_LIBRARY_DIRS})
+        target_link_libraries     (CoMISo PRIVATE ${METIS_LIBRARIES})
+    else()
+        set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 0" )
+        message (STATUS "CoMISo: COMISO_ENABLE_METIS set, but METIS not found.")
+    endif ()
 else()
-  set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 0" )
-  message (STATUS "METIS not found!")
-endif ()
+    message (STATUS "CoMISo: Building without METIS")
+    set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 0" )
+endif()
 
-find_package (MUMPS)
-if (MUMPS_FOUND )
-  set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${MUMPS_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES ${MUMPS_LIBRARY} )
-  target_include_directories(CoMISo PRIVATE ${MUMPS_INCLUDE_DIR})
-  target_link_libraries     (CoMISo PRIVATE ${MUMPS_LIBRARY})
-else ()
-  message (STATUS "MUMPS not found!")
+if (COMISO_ENABLE_MUMPS)
+    find_package (MUMPS)
+    if (MUMPS_FOUND )
+        message (STATUS "CoMISo: Building with MUMPS")
+        set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 1" )
+        list( APPEND COMISO_INCLUDE_DIRECTORIES ${MUMPS_INCLUDE_DIR} )
+        list( APPEND COMISO_LINK_LIBRARIES ${MUMPS_LIBRARY} )
+        target_include_directories(CoMISo PRIVATE ${MUMPS_INCLUDE_DIR})
+        target_link_libraries     (CoMISo PRIVATE ${MUMPS_LIBRARY})
+    else ()
+        message (STATUS "CoMISo: COMISO_ENABLE_MUMPS set, but MUMPS not found!")
+    endif()
+else()
+    message (STATUS "CoMISo: Building without MUMPS")
   set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 0" )
 endif ()
 
@@ -398,13 +418,21 @@ else ()
   set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
 endif ()
 
-find_package (Gurobi)
-if (GUROBI_FOUND )
-  set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 1" )
-  target_link_libraries     (CoMISo PRIVATE Gurobi::GurobiC  Gurobi::GurobiCXX)
-else ()
-  message (STATUS "GUROBI not found!")
-  set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
+if (COMISO_ENABLE_GUROBI)
+    if (NOT TARGET Gurobi::GurobiCXX )
+        find_package (Gurobi)
+    endif()
+    if (TARGET Gurobi::GurobiCXX )
+        message (STATUS "CoMISo: Building with Gurobi")
+        set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 1" )
+        target_link_libraries     (CoMISo PRIVATE Gurobi::GurobiC  Gurobi::GurobiCXX)
+    else ()
+        message (STATUS "CoMISo: COMISO_ENABLE_GUROBI set, but Gurobi not found!")
+        set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
+    endif()
+else()
+    set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
+    message (STATUS "CoMISo: Building without Gurobi")
 endif ()
 
 find_package (MOSEK)
@@ -469,15 +497,24 @@ endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
 
-find_package (LPSolve)
-if (TARGET lpsolve::lpsolve )
-  set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 1" )
-  target_link_libraries     (CoMISo PUBLIC lpsolve::lpsolve)
-  target_link_directories   (CoMISo PUBLIC ${LPSOLVE_LIBRARY_DIR})
-else ()
-  message (STATUS "lpsolve not found!")
-  set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
-endif ()
+
+if(COMISO_ENABLE_LPSOLVE)
+    if (NOT TARGET lpsolve::lpsolve )
+        find_package (LPSolve)
+    endif()
+    if (TARGET lpsolve::lpsolve )
+        message (STATUS "CoMISo: building with lpsolve")
+        set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 1" )
+        target_link_libraries     (CoMISo PUBLIC lpsolve::lpsolve)
+        target_link_directories   (CoMISo PUBLIC ${LPSOLVE_LIBRARY_DIR})
+    else ()
+        message (STATUS "CoMISo: COMISO_ENABLE_LPSOLVE set, but lpsolve not found.")
+        set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
+    endif ()
+else()
+    message (STATUS "CoMISo: building without lpsolve")
+    set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
+endif()
 
 #target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
 
@@ -490,23 +527,21 @@ endif ()
 
 # generate dllexport macros on windows
 if (WIN32)
-  add_definitions(-DCOMISODLL)
-  add_definitions(-DBASEDLL)
-  add_definitions(-D_SCL_SECURE_NO_DEPRECATE)
-  # ignore "... needs to have dll-interface to be used by clients"
-  #add_definitions(/wd4251)
-  target_compile_options(CoMISo PRIVATE /wd4251)
+  target_compile_definitions(CoMISo PRIVATE
+      -DCOMISODLL
+      -DBASEDLL
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_USE_MATH_DEFINES
+      -DNOMINMAX
+      )
 endif ()
+# ignore "... needs to have dll-interface to be used by clients"
+target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
 
 # enable debug stuff
 set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 if (COMISO_ENABLE_DEBUG_OUTPUT)
   target_compile_definitions(CoMISo PUBLIC -DDEB_ON)
-endif ()
-
-if (WIN32)
-  #add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX)
-  target_compile_definitions(CoMISo PRIVATE -D_USE_MATH_DEFINES -DNOMINMAX)
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")

@@ -21,6 +21,8 @@ elif [ "$LANGUAGE" == "C++11" ]; then
   OPTIONS="$OPTIONS -DCMAKE_CXX_FLAGS='-std=c++11' "
 fi
 
+OPTIONS="$OPTIONS -DGMM_DIR=~/sw/gmm-5.4"
+
 echo "============================="
 echo "Software Directory content:  "
 echo "============================="
