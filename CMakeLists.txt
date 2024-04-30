@@ -80,6 +80,7 @@ endif()
 vci_drop_templates (sources)
 
 vci_add_library (CoMISo ${ui} ${sources} ${headers} )
+set_target_properties(CoMISo PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
 target_include_directories(CoMISo
