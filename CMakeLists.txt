@@ -103,6 +103,12 @@ set(COMISO_LINK_DIRECTORIES "")
 set(COMISO_LINK_LIBRARIES "")
 set(NEED_LAPACK "")
 
+vci_openmp()
+if (OPENMP_FOUND)
+  list( APPEND COMISO_INCLUDE_DIRECTORIES ${OpenMP_CXX_INCLUDE_DIR} )
+  list( APPEND COMISO_LINK_LIBRARIES  ${OpenMP_libomp_LIBRARY} )
+endif()
+
 option(COMISO_BUILD_WITHOUT_BOOST "Build CoMISo without boost" OFF)
 
 FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET)
