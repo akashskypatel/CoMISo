@@ -94,7 +94,7 @@ using IntVector = std::vector<int>;
 enum Flags // TODO: document flags
 {
   FL_NONE = 0,
-  FL_DO_GCD,
+  FL_DO_GCD = 1,
   FL_REORDER = FL_DO_GCD << 1,
   FL_DEFAULT = FL_DO_GCD | FL_REORDER
 };
