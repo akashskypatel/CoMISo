@@ -38,6 +38,13 @@ namespace ConstraintTools
 using ConstraintVector = std::vector<NConstraintInterface*>;
 const double DEFAULT_EPS = 1e-8; // TODO: document
 
+enum EliminationMethod { ELIMINATION_EIGEN, ELIMINATION_GMM};
+#if COMISO_EIGEN3_AVAILABLE
+const EliminationMethod DEFAULT_ELIMINATION_METHOD = ELIMINATION_EIGEN;
+#else
+const EliminationMethod DEFAULT_ELIMINATION_METHOD = ELIMINATION_GMM;
+#endif
+
 // struct to return the result of the constraint elimination
 struct ConstraintRemovalResult {
   size_t n_constraints_eliminated = 0;
@@ -48,27 +55,34 @@ struct ConstraintRemovalResult {
 // constraints are a subset of the original ones. Non-linear or equality
 // constraints are preserved.
 COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints(
-    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
+    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS, const EliminationMethod _elim_method = DEFAULT_ELIMINATION_METHOD);
 
 // As above but assumes that all constraints are linear equality constraints
 COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality(
-    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
+    ConstraintVector& _constraints, const double _eps = DEFAULT_EPS, const EliminationMethod _elim_method = DEFAULT_ELIMINATION_METHOD);
 
 // same as above but designed for Eigen::SparseMatrix
 template< typename SMatrixT, typename VectorT>
-COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints(SMatrixT& _A, VectorT& _b, const double _eps = DEFAULT_EPS)
+COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints(SMatrixT& _A, VectorT& _b, const double _eps = DEFAULT_EPS, const EliminationMethod _elim_method = DEFAULT_ELIMINATION_METHOD)
 {
   // convert into NConstraints
   LinearConstraintConverter lcc(_A,_b);
   std::vector<NConstraintInterface*> constraints = lcc.constraints_nsolver();
 
   // process
-  auto result = remove_dependent_linear_constraints_only_linear_equality(constraints, _eps);
+  auto result = remove_dependent_linear_constraints_only_linear_equality(constraints, _eps, _elim_method);
 
   // convert back
   LinearConstraintConverter::nsolver_to_eigen(constraints, _A, _b);
   return result;
 }
+
+
+#if COMISO_EIGEN3_AVAILABLE
+
+// As above but assumes that all constraints are linear equality constraints
+COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality_eigen(
+        ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
 
 
 using HalfSparseRowMatrix = COMISO_EIGEN::HalfSparseRowMatrix<double>;
@@ -96,22 +110,46 @@ struct GaussEliminationResult {
 /*!
 Perform Gauss elimination on the constraint matrix to facilitate constraint
 elimination downstream.
- 
+
 \note Contradicting constraints are ignored.
-  
+
 \warning Care must be taken downstream when non-trivial constraints occur
 where some of the variables contain integer-variables (to be rounded) as
 the optimal result might not always occur.
 */
 COMISODLLEXPORT GaussEliminationResult gauss_elimination(
-    HalfSparseRowMatrix& _constraints, // constraint matrix
-    IntVector& _elmn_clmn_indcs, // return the variable indices and the order in
-                                 // which they can be eliminated
-    const IntVector& _indcs_to_round = IntVector(), // variables to be rounded
-    HalfSparseRowMatrix* _update_D = nullptr,       // TODO: document
-    const double _eps = DEFAULT_EPS,                // TODO: document
-    const uint _flags = Flags::FL_DEFAULT           // control execution flags
+        HalfSparseRowMatrix& _constraints, // constraint matrix
+        IntVector& _elmn_clmn_indcs, // return the variable indices and the order in
+        // which they can be eliminated
+        const IntVector& _indcs_to_round = IntVector(), // variables to be rounded
+        HalfSparseRowMatrix* _update_D = nullptr,       // TODO: document
+        const double _eps = DEFAULT_EPS,                // TODO: document
+        const uint _flags = Flags::FL_DEFAULT           // control execution flags
 );
+#endif // COMISO_EIGEN3_AVAILABLE
+
+
+#if COMISO_GMM_AVAILABLE
+
+// As above but assumes that all constraints are linear equality constraints
+COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality_gmm(
+        ConstraintVector& _constraints, const double _eps = DEFAULT_EPS);
+
+// gmm types
+typedef gmm::wsvector<double>         SVectorGMM;
+typedef gmm::row_matrix< SVectorGMM > RMatrixGMM;
+typedef gmm::col_matrix< SVectorGMM > CMatrixGMM;
+
+static gmm::size_type find_max_abs_coeff(SVectorGMM& _v);
+
+static void add_row_simultaneously( gmm::size_type _row_i,
+                                    double      _coeff,
+                                    SVectorGMM& _row,
+                                    RMatrixGMM& _rmat,
+                                    CMatrixGMM& _cmat,
+                                    const double _eps );
+
+#endif // COMISO_GMM_AVAILABLE
 
 } // namespace ConstraintTools
 

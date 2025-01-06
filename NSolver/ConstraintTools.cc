@@ -22,20 +22,8 @@ using BoolVector = std::vector<bool>;
 
 //-----------------------------------------------------------------------------
 
-// TODO: replace with std::gcd when C++17 is avaiable
-int gcd(int _a, int _b)
-{
-  while (_b != 0)
-  {
-    int t(_b);
-    _b = _a % _b;
-    _a = t;
-  }
-  return _a;
-}
-
 ConstraintRemovalResult remove_dependent_linear_constraints(
-    ConstraintVector& _constraints, const double _eps)
+        ConstraintVector& _constraints, const double _eps, const EliminationMethod _elim_method)
 {
   // split into linear and nonlinear
   std::vector<NConstraintInterface*> lin_const, nonlin_const;
@@ -51,7 +39,7 @@ ConstraintRemovalResult remove_dependent_linear_constraints(
       nonlin_const.push_back(_constraints[i]);
   }
 
-  ConstraintRemovalResult crr = remove_dependent_linear_constraints_only_linear_equality(lin_const, _eps);
+  ConstraintRemovalResult crr = remove_dependent_linear_constraints_only_linear_equality(lin_const, _eps, _elim_method);
 
   for (unsigned int i = 0; i < lin_const.size(); ++i)
     nonlin_const.push_back(lin_const[i]);
@@ -62,11 +50,48 @@ ConstraintRemovalResult remove_dependent_linear_constraints(
   return crr;
 }
 
+//-----------------------------------------------------------------------------
+
+ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality(
+        ConstraintVector& _constraints, const double _eps, const EliminationMethod _elim_method)
+{
+  DEB_enter_func;
+
+  switch(_elim_method)
+  {
+    case ELIMINATION_EIGEN:
+#if COMISO_EIGEN3_AVAILABLE
+      return remove_dependent_linear_constraints_only_linear_equality_eigen(_constraints, _eps);
+#endif
+    case ELIMINATION_GMM:
+#if COMISO_GMM_AVAILABLE
+      return remove_dependent_linear_constraints_only_linear_equality_gmm(_constraints, _eps);
+#endif
+    default:
+    DEB_warning( 1, "remove_dependent_linear_constraints_only_linear_equality was called with invalid EliminationMethod, or neither Eigen3 or GMM are available");
+      return ConstraintRemovalResult();
+  }
+}
 
 //-----------------------------------------------------------------------------
 
 
-ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality(
+// TODO: replace with std::gcd when C++17 is available
+int gcd(int _a, int _b)
+{
+  while (_b != 0)
+  {
+    int t(_b);
+    _b = _a % _b;
+    _a = t;
+  }
+  return _a;
+}
+
+//-----------------------------------------------------------------------------
+
+
+ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality_eigen(
     ConstraintVector& _constraints, const double _eps)
 {
   DEB_enter_func;
@@ -570,6 +595,218 @@ GaussEliminationResult gauss_elimination(HalfSparseRowMatrix& _constraints,
       _constraints, _elmn_clmn_indcs, _indcs_to_round, _update_D, _eps, _flags)
       .run();
 }
+
+
+//-----------------------------------------------------------------------------
+
+#if COMISO_GMM_AVAILABLE
+
+ConstraintTools::ConstraintRemovalResult
+remove_dependent_linear_constraints_only_linear_equality_gmm( std::vector<NConstraintInterface*>& _constraints, const double _eps)
+{
+  DEB_enter_func;
+
+  ConstraintRemovalResult result;
+
+  // make sure that constraints are available
+  if(_constraints.empty()) return result;
+
+  // 1. copy (normalized) data into gmm dynamic sparse matrix
+  size_t n(_constraints[0]->n_unknowns());
+  size_t m(_constraints.size());
+  std::vector<double> x(n, 0.0);
+  NConstraintInterface::SVectorNC g;
+  RMatrixGMM A;
+  gmm::resize(A,m, n+1);
+  for(unsigned int i=0; i<_constraints.size(); ++i)
+  {
+    // store rhs in last column
+    A(i,n) = _constraints[i]->eval_constraint(x.data());
+    // get and store coefficients
+    _constraints[i]->eval_gradient(x.data(), g);
+    double v_max(0.0);
+    for (NConstraintInterface::SVectorNC::InnerIterator it(g); it; ++it)
+    {
+      A(i,it.index()) = it.value();
+      v_max = std::max(v_max, std::abs(it.value()));
+    }
+    // normalize row
+    if(v_max != 0.0)
+      gmm::scale(A.row(i), 1.0/v_max);
+  }
+
+  // 2. get additionally column matrix to exploit column iterators
+  CMatrixGMM Ac;
+  gmm::resize(Ac, gmm::mat_nrows(A), gmm::mat_ncols(A));
+  gmm::copy(A, Ac);
+
+  // 3. initialize priorityqueue for sorting
+  // init priority queue
+  MutablePriorityQueueT<gmm::size_type, gmm::size_type> queue;
+  queue.clear(m);
+  for (gmm::size_type i = 0; i<m; ++i)
+  {
+    gmm::size_type cur_nnz = gmm::nnz( gmm::mat_row(A,i));
+    if (A(i,n) != 0.0)
+      --cur_nnz;
+
+    queue.update(i, cur_nnz);
+  }
+
+  // track row status -1=undecided, 0=remove, 1=keep
+  std::vector<int> row_status(m, -1);
+  std::vector<gmm::size_type> keep;
+//  std::vector<int> remove;
+
+//  std::vector<double> val_keep, val_remove;
+
+  // for all conditions
+  while(!queue.empty())
+  {
+    // get next row
+    gmm::size_type i = queue.get_next();
+    gmm::size_type j = find_max_abs_coeff(A.row(i));
+    double aij = A(i,j);
+    if(std::abs(aij) <= _eps)
+    {
+//      std::cerr << "drop " << aij << "in row " << i << "and column " << j << std::endl;
+      // constraint is linearly dependent
+      row_status[i] = 0;
+      if(std::abs(A(i,n)) > _eps) {
+        ++result.n_infeasible_detected;
+        DEB_warning( 1, "Warning: found dependent constraint with nonzero rhs " << A(i,n));
+      }
+
+//      val_remove.push_back(std::abs(aij));
+    }
+    else
+    {
+//      std::cerr << "keep " << aij << "in row " << i << "and column " << j << std::endl;
+//      val_keep.push_back(std::abs(aij));
+
+      // constraint is linearly independent
+      row_status[i] = 1;
+      keep.push_back(i);
+
+      // update undecided constraints
+      // copy col
+      SVectorGMM col = Ac.col(j);
+
+      // copy row
+      SVectorGMM row = A.row(i);
+
+      // iterate over column
+      gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(col);
+      gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(col);
+
+      for(; c_it != c_end; ++c_it)
+        if( row_status[c_it.index()] == -1) // only process unvisited rows
+        {
+          // row idx
+          gmm::size_type k = c_it.index();
+
+          double s = -(*c_it)/aij;
+
+//          add_row_simultaneously( k, s, row, A, Ac, _eps); // DO NOT TRUNCATE DURING COMPUTATION TO PRESERVE DOUBLE PRECISION UNTIL DECISION!!!
+          add_row_simultaneously( k, s, row, A, Ac, 0.0);
+          // make sure the eliminated entry is numerically 0 on all other rows
+          A( k, j) = 0;
+          Ac(k, j) = 0;
+
+          gmm::size_type cur_nnz = gmm::nnz( gmm::mat_row(A,k));
+          if( A(k,n) != 0.0)
+            --cur_nnz;
+
+          queue.update(k, cur_nnz);
+        }
+    }
+  }
+
+  //  number of removed constraints
+  result.n_constraints_eliminated = _constraints.size()-keep.size();
+
+  // only update _constraints if at least one constraint has been removed, otherwise preserve order and leave _constraints untouched!!!
+  if(result.n_constraints_eliminated > 0)
+  {
+    DEB_line(2, "removed " << result.n_constraints_eliminated <<
+                           " dependent linear constraints out of " << _constraints.size());
+
+    // 4. store updated constraints
+    std::vector<NConstraintInterface *> new_constraints;
+    for (unsigned int i = 0; i < keep.size(); ++i)
+      new_constraints.push_back(_constraints[keep[i]]);
+
+    // return linearly independent ones
+    _constraints.swap(new_constraints);
+  }
+
+  return result;
+
+  // debug output
+//  std::sort(val_keep.begin(),val_keep.end());
+//  std::sort(val_remove.begin(),val_remove.end());
+//  std::cerr << "KEEP VALUES" << std::endl;
+//  for(auto v : val_keep)
+//    std::cerr << std::scientific << v << std::endl;
+//  std::cerr << "REMOVE VALUES" << std::endl;
+//  for(auto v : val_remove)
+//    std::cerr << std::scientific << v << std::endl;
+}
+
+
+//-----------------------------------------------------------------------------
+
+gmm::size_type
+find_max_abs_coeff(SVectorGMM& _v)
+{
+  size_t n = _v.size();
+  gmm::size_type imax(0);
+  double       vmax(-1.0);
+
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(_v);
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(_v);
+
+  for(; c_it != c_end; ++c_it)
+    if(c_it.index() != n-1)
+      if(std::abs(*c_it) > vmax)
+      {
+        imax = c_it.index();
+        vmax = std::abs(*c_it);
+      }
+
+  return imax;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void
+add_row_simultaneously( gmm::size_type _row_i,
+                        double      _coeff,
+                        SVectorGMM& _row,
+                        RMatrixGMM& _rmat,
+                        CMatrixGMM& _cmat,
+                        const double _eps )
+{
+  typedef gmm::linalg_traits<SVectorGMM>::const_iterator RIter;
+  RIter r_it  = gmm::vect_const_begin(_row);
+  RIter r_end = gmm::vect_const_end(_row);
+
+  for(; r_it!=r_end; ++r_it)
+  {
+    _rmat(_row_i, r_it.index()) += _coeff*(*r_it);
+    _cmat(_row_i, r_it.index()) += _coeff*(*r_it);
+    if( std::abs(_rmat(_row_i, r_it.index())) < _eps )
+    {
+      _rmat(_row_i, r_it.index()) = 0.0;
+      _cmat(_row_i, r_it.index()) = 0.0;
+    }
+  }
+}
+
+
+#endif // COMISO_GMM_AVAILABLE
 
 } // namespace ConstraintTools
 
