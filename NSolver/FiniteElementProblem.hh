@@ -38,7 +38,11 @@ public:
 
   typedef Eigen::Triplet<double> Triplet;
 
+  FiniteElementSetBase(const std::string _name="NoName") : name_(_name) {}
+
   virtual ~FiniteElementSetBase() {}
+
+  std::string& name() { return name_;}
 
   virtual double eval_f( const double* _x ) = 0;
 
@@ -47,6 +51,14 @@ public:
   virtual void accumulate_hessian ( const double* _x , std::vector<Triplet>& _triplets) = 0;
 
   virtual double max_feasible_step( const double* _x, const double* _v) { return DBL_MAX;}
+
+  virtual unsigned int n_instances() = 0;
+
+  // evaluate f per element
+  virtual void eval_f_per_element( const double* _x , double* _fi) = 0;
+
+private:
+  std::string name_;
 };
 
 
@@ -119,6 +131,12 @@ public:
     return constants_[_instance];
   }
 
+
+  VecC& c( const size_t _instance)
+  {
+      return constants_[_instance];
+  }
+
 private:
   std::vector<VecI> indices_;
   std::vector<VecC> constants_;
@@ -137,6 +155,8 @@ public:
   typedef typename FiniteElementType::VecI VecI;
   typedef typename FiniteElementType::VecV VecV;
   typedef typename FiniteElementType::VecC VecC;
+
+  FiniteElementSet(const std::string _name = "NoName") : FiniteElementSetBase(_name) {}
 
   // access element for setting constants per element etc.
   FiniteElementType& element() { return element_;}
@@ -213,6 +233,24 @@ public:
     return t;
   }
 
+  virtual unsigned int n_instances()
+  {
+    return instances_.size();
+  }
+
+  virtual void eval_f_per_element( const double* _x , double* _fi)
+  {
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // get local x vector
+      for(unsigned int j=0; j<NV; ++j)
+        x_[j] = _x[instances_.index(i,j)];
+
+      // store result in corresponding output entry
+      _fi[i] = element_.eval_f(x_, instances_.c(i));
+    }
+  }
+
 
 private:
 
@@ -243,6 +281,8 @@ public:
   void clear_sets();
 
   std::vector<double>& x();
+
+  void print_objectives();
 
   // problem definition
   virtual int    n_unknowns   (                                );

@@ -34,7 +34,7 @@ int gcd(int _a, int _b)
   return _a;
 }
 
-void remove_dependent_linear_constraints(
+ConstraintRemovalResult remove_dependent_linear_constraints(
     ConstraintVector& _constraints, const double _eps)
 {
   // split into linear and nonlinear
@@ -51,26 +51,31 @@ void remove_dependent_linear_constraints(
       nonlin_const.push_back(_constraints[i]);
   }
 
-  remove_dependent_linear_constraints_only_linear_equality(lin_const);
+  ConstraintRemovalResult crr = remove_dependent_linear_constraints_only_linear_equality(lin_const, _eps);
 
   for (unsigned int i = 0; i < lin_const.size(); ++i)
     nonlin_const.push_back(lin_const[i]);
 
   // return filtered constraints
   _constraints.swap(nonlin_const);
+
+  return crr;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-void remove_dependent_linear_constraints_only_linear_equality(
+ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality(
     ConstraintVector& _constraints, const double _eps)
 {
   DEB_enter_func;
+
+  ConstraintRemovalResult result;
+
   // make sure that constraints are available
   if (_constraints.empty())
-    return;
+    return result;
 
   // 1. copy (normalized) data into gmm dynamic sparse matrix
   size_t n(_constraints[0]->n_unknowns());
@@ -112,13 +117,24 @@ void remove_dependent_linear_constraints_only_linear_equality(
                          << " dependent linear constraints out of "
                          << _constraints.size());
 
-  // 4. store result
-  std::vector<NConstraintInterface*> new_constraints;
-  for (unsigned int i = 0; i < keep.size(); ++i)
-    new_constraints.push_back(_constraints[keep[i]]);
+  //  number of removed constraints
+  result.n_constraints_eliminated = _constraints.size()-keep.size();
 
-  // return linearly independent ones
-  _constraints.swap(new_constraints);
+  // only update _constraints if at least one constraint has been removed, otherwise preserve order and leave _constraints untouched!!!
+  if(result.n_constraints_eliminated > 0)
+  {
+    DEB_line(2, "removed " << result.n_constraints_eliminated <<
+                           " dependent linear constraints out of " << _constraints.size());
+    // 4. store result
+    std::vector<NConstraintInterface *> new_constraints;
+    for (unsigned int i = 0; i < keep.size(); ++i)
+      new_constraints.push_back(_constraints[keep[i]]);
+
+    // return linearly independent ones
+    _constraints.swap(new_constraints);
+  }
+
+  return result;
 }
 
 
@@ -135,17 +151,24 @@ public:
         elmn_clmn_indcs_(_elmn_clmn_indcs), indcs_to_round_(_indcs_to_round),
         round_map_(constraints_.cols(), false), epsilon_(_eps),
         update_D_(_update_D), flags_(_flags),
-        visited_(constraints_.rows(), false)
+        visited_(constraints_.rows(), false),
+        n_rows_linearly_dependent_(0),
+        n_rows_contradicting_(0)
+
   {
     for (const auto indx_to_round : indcs_to_round_)
       round_map_[indx_to_round] = true; // build round map
   }
 
-  void run()
+  GaussEliminationResult run()
   {
     const auto row_nmbr = constraints_.rows();
     elmn_clmn_indcs_.clear();
     elmn_clmn_indcs_.resize(row_nmbr, -1);
+
+    // reset
+    n_rows_linearly_dependent_=0;
+    n_rows_contradicting_=0;
 
     if (update_D_ != nullptr)
     {// setup linear transformation for rhs, start with identity
@@ -159,6 +182,10 @@ public:
       make_independent_reordering();
     else
       make_independent_no_reordering();
+
+    GaussEliminationResult result;
+    result.n_rows_linearly_dependent = n_rows_linearly_dependent_;
+    result.n_rows_contradicting = n_rows_contradicting_;
   }
 
 private:
@@ -173,6 +200,8 @@ private:
   const uint flags_;
   BoolVector visited_;
   IntVector chng_row_indcs_; // storage for the changed rows in make_independent
+  int       n_rows_linearly_dependent_;
+  int       n_rows_contradicting_;
 
 private:
 
@@ -298,7 +327,7 @@ void GaussElimination::make_independent(int _row_indx)
         "incompatible condition: " << std::abs(
             constraints_.coeff(_row_indx, n_vars - 1)))
   }
-  else if (round_map_[elim_j] && elim_val > 1e-6)// TODO: why not use epsion_?
+  else if (round_map_[elim_j] && elim_val > 1e-6)// TODO: why not use epsilon_?
   {
     if (do_gcd() && gcd_update_valid)
     {
@@ -321,7 +350,15 @@ void GaussElimination::make_independent(int _row_indx)
   }
 
   if (elim_j == -1) // is this condition dependent?
+  {
+    // record number of linearly dependent rows
+    ++n_rows_linearly_dependent_;
+    // record number of contradicting rows
+    if(std::abs(constraints_.coeff(_row_indx, n_vars - 1)) > epsilon_)
+      ++n_rows_contradicting_;
+
     return;
+  }
 
   // get elim variable value
   double elim_val_cur = constraints_.coeff(_row_indx, elim_j);
@@ -525,11 +562,11 @@ int GaussElimination::find_gcd(IntVector& _v_gcd, int& _n_ints)
   return i_gcd;
 }
 
-void gauss_elimination(HalfSparseRowMatrix& _constraints,
+GaussEliminationResult gauss_elimination(HalfSparseRowMatrix& _constraints,
     IntVector& _elmn_clmn_indcs, const IntVector& _indcs_to_round,
     HalfSparseRowMatrix* _update_D, const double _eps, const uint _flags)
 {
-  GaussElimination(
+  return GaussElimination(
       _constraints, _elmn_clmn_indcs, _indcs_to_round, _update_D, _eps, _flags)
       .run();
 }

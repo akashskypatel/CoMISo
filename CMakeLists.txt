@@ -487,6 +487,18 @@ else ()
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 0" )
 endif ()
 
+if (NOT TARGET tinyad::tinyad)
+    find_package (TINYAD)
+endif()
+if (TARGET tinyad::tinyad)
+    message("Building CoMISo with TinyAD support")
+    set (COMISO_TINYAD_CONFIG_FILE_SETTINGS "#define COMISO_TINYAD_AVAILABLE 1" )
+    list( APPEND COMISO_LINK_LIBRARIES tinyad::tinyad)
+else()
+    message("Building CoMISo without TinyAD support")
+    set (COMISO_TINYAD_CONFIG_FILE_SETTINGS "#define COMISO_TINYAD_AVAILABLE 0" )
+endif ()
+
 set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
 set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our lapack library is called liblapack.lib. Is there a better way to find it than this?
 if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)

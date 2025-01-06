@@ -1,5 +1,6 @@
 #include "FiniteElementProblem.hh"
 
+#include <iomanip>
 
 namespace COMISO { 
 
@@ -21,6 +22,18 @@ void FiniteElementProblem::add_set(FiniteElementSetBase* _fe_set)
 void FiniteElementProblem::clear_sets()
 {
   fe_sets_.clear();
+}
+
+void FiniteElementProblem::print_objectives()
+{
+  double f(0.0);
+  for(unsigned int i=0; i<fe_sets_.size(); ++i)
+  {
+    double fi = fe_sets_[i]->eval_f(x().data());
+    std::cerr << std::left << std::setw(25) << fe_sets_[i]->name() << " = " << std::left << std::setw(15) << fi << std::left << " (#elements = " << fe_sets_[i]->n_instances() << ")" << std::endl;
+    f += fi;
+  }
+  std::cerr << std::left << std::setw(20) << "sum" << " = " << f << std::endl;
 }
 
 std::vector<double>& FiniteElementProblem::x()
