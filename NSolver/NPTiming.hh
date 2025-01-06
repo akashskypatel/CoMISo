@@ -54,6 +54,7 @@ public:
   // advanced properties
   virtual bool   constant_gradient() const;
   virtual bool   constant_hessian()  const;
+  virtual double max_feasible_step ( const double* _x, const double* _v);
 
 
   void start_timing();

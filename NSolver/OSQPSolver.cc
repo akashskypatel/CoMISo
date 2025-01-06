@@ -11,8 +11,9 @@
 #if COMISO_OSQP_AVAILABLE
 //=============================================================================
 #include "OSQPSolver.hh"
+#include "OSQPEigen.hh"
 
-#include <osqp.h>
+//#include <osqp/osqp.h>
 
 #include <CoMISo/Utils/CoMISoError.hh>
 #include <CoMISo/Utils/StopWatch.hh>
@@ -26,21 +27,20 @@
 
 namespace COMISO {
 
-//== IMPLEMENTATION ==========================================================
+//== IMPLEMENTATION ========================================================== 
 
 namespace
 {
 
 using ContraintVector = OSQPSolver::ContraintVector;
 
-void regularize_hessian(NProblemInterface::SMatrixNP& _H)
+void regularize_hessian(NProblemInterface::SMatrixNP& _H, const double _reg_factor = 1e-8)
 {
   NProblemInterface::SMatrixNP id;
   id.resize(_H.rows(), _H.cols());
   id.setIdentity();
-  double reg_factor = 1e-8;
   auto diag = _H.diagonal();
-  _H = _H + reg_factor * diag.sum() / diag.rows() * id; // perturbation?!
+  _H = _H + _reg_factor * diag.sum() / diag.rows() * id; // perturbation?!
 }
 
 NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
@@ -48,7 +48,7 @@ NProblemInterface::SMatrixNP get_hessian(NProblemInterface* _problem)
   std::vector<double> zero(_problem->n_unknowns(), 0);
   NProblemInterface::SMatrixNP H;
   _problem->eval_hessian(zero.data(), H);
-  regularize_hessian(H); // TODO: some docs why this is needed?
+  regularize_hessian(H, 0.0); // make sure that diagonal entries are created!
   return H;
 }
 
@@ -115,7 +115,7 @@ void get_constraints(int _n_cols, const ContraintVector& _constraints,
 void throw_solve_failure(const c_int _status)
 {
   DEB_enter_func;
-  DEB_warning(1, " IPOPT solve failure code is " << _status);
+  DEB_warning(1, " OSQP solve failure code is " << int(_status));
   switch (_status)
   {
   case OSQP_MAX_ITER_REACHED:
@@ -134,49 +134,33 @@ void check_solve_status(const c_int _status)
     throw_solve_failure(_status);
 }
 
+
 class Impl // manage OSQP objects
 {
 public:
 
   Impl()
   {
-    osqp_set_default_settings(&settings);
-    settings.alpha = 1.0; // this value works better than the default
-    settings.max_iter = 10000;
-    settings.warm_start = true;
-    settings.polish = 1;
-    settings.polish_refine_iter = 5;
-    settings.eps_abs = 1e-5;      // absolute convergence tolerance
-    settings.eps_rel = 1e-5;      // relative convergence tolerance
-    settings.eps_prim_inf = 1e-6; // primal infeasibility tolerance
-    settings.eps_dual_inf = 1e-6; // dual infeasibility tolerance
-    // settings.linsys_solver = MKL_PARDISO_SOLVER;
-
-    data.n = 0;
-    data.m = 0;
-    data.P = nullptr;
-    data.A = nullptr;
-    data.q = nullptr;
-    data.l = nullptr;
-    data.u = nullptr;
+    osqp_eigen_.settings().alpha = 1.0; // this value works better than the default
+    osqp_eigen_.settings().max_iter = 10000;
+    osqp_eigen_.settings().warm_start = true;
+    osqp_eigen_.settings().polish = 1;
+    osqp_eigen_.settings().polish_refine_iter = 5;
+    osqp_eigen_.settings().eps_abs = 1e-5;      // absolute convergence tolerance
+    osqp_eigen_.settings().eps_rel = 1e-5;      // relative convergence tolerance
+    osqp_eigen_.settings().eps_prim_inf = 1e-6; // primal infeasibility tolerance
+    osqp_eigen_.settings().eps_dual_inf = 1.;   // dual infeasibility tolerance
+    // osqp_eigen_.settings().linsys_solver = MKL_PARDISO_SOLVER;
   }
 
-  ~Impl()
-  {
-    // c_free is the OSQP-provided free() wrapper:
-    c_free(data.P);
-    c_free(data.A);
-    c_free(work);
-  }
+  ~Impl() {}
 
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
-  const double* get_solution() const { return work->solution->x; }
-  double objective_value() const { return work->info->obj_val; }
+  const double* get_solution() const { return osqp_eigen_.get_x(); }
+  const double  objective_value() const{ return osqp_eigen_.objective_value();}
 
 private:
-  OSQPSettings settings;
-  OSQPData data;
-  OSQPWorkspace* work = nullptr;
+  OSQPEigen osqp_eigen_;
 };
 
 void Impl::solve(
@@ -190,51 +174,135 @@ void Impl::solve(
   Eigen::VectorXd upper;                  // upper bounds
   get_constraints(_problem->n_unknowns(), _constraints, A, lower, upper);
 
-  COMISO::NProblemInterface::SMatrixNP HupperTriangle =
-      H.triangularView<Eigen::Upper>();
-  HupperTriangle.makeCompressed();
+  auto exitflag = osqp_eigen_.setup(H, lin_q, A, lower, upper);
 
-  data.n = static_cast<int>(HupperTriangle.cols()); // number of variables n
-  data.m = static_cast<int>(A.rows());              // number of constraints m
-
-  {
-    c_float* P_x =                 // the upper triangular part of the quadratic
-        HupperTriangle.valuePtr(); // cost matrix P in csc format (size n x n).
-    c_int P_nnz =
-        static_cast<int>(HupperTriangle.nonZeros()); // number of non zeros
-    c_int* P_i = HupperTriangle.innerIndexPtr();     // row indices
-    c_int* P_p = HupperTriangle.outerIndexPtr();     // column pointers
-
-    data.P = csc_matrix(data.n, data.n, P_nnz, P_x, P_i, P_p);
-  }
-  {
-    c_float* A_x =
-        A.valuePtr(); // linear constraints matrix A in csc format (size m x n)
-    c_int A_nnz = static_cast<int>(A.nonZeros()); // number of non zeros
-    c_int* A_i = A.innerIndexPtr();               // number of non z
-    c_int* A_p = A.outerIndexPtr();               // row indices
-    data.A = csc_matrix(data.m, data.n, A_nnz, A_x, A_i, A_p);
-  }
-
-  data.q = const_cast<c_float*>(
-      lin_q.data()); // dense array for linear part of cost function (size n)
-  data.l = lower.data(); // dense array for lower bound (size m)
-  data.u = upper.data(); // dense array for upper bound (size m)
-
-  auto exitflag = osqp_setup(&work, &data, &settings); // Setup workspace
-  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
   COMISO_THROW_if(exitflag != 0, QP_INITIALIZATION_FAILED);
 
   // Solve Problem
-  exitflag = osqp_solve(work);
-  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << exitflag);
+  exitflag = osqp_eigen_.solve();
+  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
   COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
-  check_solve_status(work->info->status_val);
 
-  _problem->store_result(work->solution->x);
+  _problem->store_result(osqp_eigen_.get_x());
 }
 
 } // namespace
+
+//class Impl // manage OSQP objects
+//{
+//public:
+//
+//  Impl()
+//  {
+//    osqp_set_default_settings(&settings);
+//    settings.alpha = 1.0; // this value works better than the default
+//    settings.max_iter = 10000;
+//    settings.warm_start = true;
+//    settings.polish = 1;
+//    settings.polish_refine_iter = 5;
+//    settings.eps_abs = 1e-5;      // absolute convergence tolerance
+//    settings.eps_rel = 1e-5;      // relative convergence tolerance
+//    settings.eps_prim_inf = 1e-6; // primal infeasibility tolerance
+//    settings.eps_dual_inf = 1.;   // dual infeasibility tolerance
+//    // settings.linsys_solver = MKL_PARDISO_SOLVER;
+//
+//    data.n = 0;
+//    data.m = 0;
+//    data.P = nullptr;
+//    data.A = nullptr;
+//    data.q = nullptr;
+//    data.l = nullptr;
+//    data.u = nullptr;
+//  }
+//
+//  ~Impl()
+//  {
+//    delete data.P;
+//    delete data.A;
+//    delete work;
+//  }
+//
+//  void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
+//  const double* get_solution() const { return work->solution->x; }
+//
+//private:
+//  OSQPSettings settings;
+//  OSQPData data;
+//  OSQPWorkspace* work = nullptr;
+//};
+//
+//void Impl::solve(
+//    NProblemInterface* _problem, const ContraintVector& _constraints)
+//{
+//  const auto H = get_hessian(_problem);
+//  const auto lin_q = get_linear_energy_coefficients(_problem);
+//
+//  COMISO::NProblemInterface::SMatrixNP A; // inequality constraints
+//  Eigen::VectorXd lower;                  // lower bounds
+//  Eigen::VectorXd upper;                  // upper bounds
+//  get_constraints(_problem->n_unknowns(), _constraints, A, lower, upper);
+//
+//  COMISO::NProblemInterface::SMatrixNP HupperTriangle =
+//      H.triangularView<Eigen::Upper>();
+//  HupperTriangle.makeCompressed();
+//
+//  data.n = static_cast<int>(HupperTriangle.cols()); // number of variables n
+//  data.m = static_cast<int>(A.rows());              // number of constraints m
+//
+//  c_float* P_x =                 // the upper triangular part of the quadratic
+//     HupperTriangle.valuePtr(); // cost matrix P in csc format (size n x n).
+//  c_int P_nnz =
+//  static_cast<int>(HupperTriangle.nonZeros()); // number of non zeros
+//  std::vector<c_int> P_i(P_nnz), P_p(P_nnz);
+//  for(c_int i=0; i<P_nnz; ++i)
+//  {
+//    P_i[i] = HupperTriangle.innerIndexPtr()[i];
+//    P_p[i] = HupperTriangle.outerIndexPtr()[i];
+//  }
+//
+////   c_int == long long int but Eigen uses int
+////    c_int* P_i = (c_int*) HupperTriangle.innerIndexPtr();     // row indices
+////    c_int* P_p = (c_int*) HupperTriangle.outerIndexPtr();     // column pointers
+//
+//    data.P = csc_matrix(data.n, data.n, P_nnz, P_x, P_i.data(), P_p.data());
+//
+//  c_float* A_x =
+//      A.valuePtr(); // linear constraints matrix A in csc format (size m x n)
+//  c_int A_nnz = static_cast<int>(A.nonZeros()); // number of non zeros
+//
+//  std::vector<c_int> A_i(A_nnz), A_p(A_nnz);
+//  for(c_int i=0; i<P_nnz; ++i)
+//  {
+//    A_i[i] = A.innerIndexPtr()[i];
+//    A_p[i] = A.outerIndexPtr()[i];
+//  }
+//
+////   c_int == long long int but Eigen uses int
+////  c_int* A_i = (c_int*) A.innerIndexPtr();               // number of non z
+////  c_int* A_p = (c_int*) A.outerIndexPtr();               // row indices
+//  data.A = csc_matrix(data.m, data.n, A_nnz, A_x, A_i.data(), A_p.data());
+//
+//
+//  data.q = const_cast<c_float*>(
+//      lin_q.data()); // dense array for linear part of cost function (size n)
+//  data.l = lower.data(); // dense array for lower bound (size m)
+//  data.u = upper.data(); // dense array for upper bound (size m)
+//
+//  auto exitflag = osqp_setup(&work, &data, &settings); // Setup workspace
+//  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
+//  COMISO_THROW_if(exitflag != 0, QP_INITIALIZATION_FAILED);
+//
+//  // Solve Problem
+//  exitflag = osqp_solve(work);
+//  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
+//  COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
+//  check_solve_status(work->info->status_val);
+//
+//  _problem->store_result(work->solution->x);
+//}
+//
+//} // namespace
 
 void OSQPSolver::solve(
     NProblemInterface* _problem, const ContraintVector& _constraints)
@@ -259,13 +327,14 @@ void OSQPSolver::solve(NProblemInterface* _problem,
   };
   const auto result_function = [&impl]() { return impl.get_solution(); };
 
-  solve_with_lazy_constraints(solve_function, result_function, _problem,
+  return solve_with_lazy_constraints(solve_function, result_function, _problem,
       _constraints, _lazy_constraints, _acceptable_tolerance,
       _almost_infeasible_threshold, _max_passes,
       _final_step_with_all_constraints);
 
   obj_val_ = impl.objective_value();
 }
+
 
 //-----------------------------------------------------------------------------
 

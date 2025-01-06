@@ -50,9 +50,10 @@ public:
 
   struct COMISODLLEXPORT Config
   {
-    Config() : x_min(-1.0), x_max(1.0), n_iters(1), dx(1e-5), eps(1e-3), relativeEps(std::numeric_limits<double>::quiet_NaN())
+    Config() : check_at_initial_x(true), x_min(-1.0), x_max(1.0), n_iters(1), dx(1e-5), eps(1e-3), relativeEps(std::numeric_limits<double>::quiet_NaN())
     {}
 
+    bool   check_at_initial_x;
     double x_min;
     double x_max;
     int    n_iters;
@@ -90,8 +91,11 @@ public:
 
     for(int i=0; i<conf_.n_iters; ++i)
     {
-      // get random x
-      get_random_x(x, conf_.x_min, conf_.x_max);
+      if(conf_.check_at_initial_x)
+        _np->initial_x(P(x));
+      else
+        get_random_x(x, conf_.x_min, conf_.x_max);
+
       // gradient
       _np->eval_gradient(P(x), P(g));
 
@@ -105,7 +109,7 @@ public:
         x[j] += conf_.dx;
         double fd = (f1-f0)/(2.0*conf_.dx);
 
-        if ((!std::isnan(conf_.relativeEps) && std::abs(fd-g[j]) > std::max(std::abs(g[j]), 1.0) * conf_.relativeEps) || std::abs(fd-g[j]) > conf_.eps)
+        if ((!std::isnan(conf_.relativeEps) && std::abs(fd-g[j]) > std::max(std::abs(g[j]), 1.0) * conf_.relativeEps) || std::abs(fd-g[j]) > conf_.eps || !std::isfinite(fd-g[j]) )
         {
           ++ n_errors;
           std::cerr << "Gradient error in component " << j << ": " << g[j]
@@ -137,9 +141,12 @@ public:
 
     for(int i=0; i<conf_.n_iters; ++i)
     {
-      // get random x
-      get_random_x(x, conf_.x_min, conf_.x_max);
-      // gradient
+      if(conf_.check_at_initial_x)
+        _np->initial_x(P(x));
+      else
+        get_random_x(x, conf_.x_min, conf_.x_max);
+
+      // hessian
       _np->eval_hessian(P(x), H);
 
       for(int j=0; j<n; ++j)
@@ -158,8 +165,7 @@ public:
 
           double fd = (f0-f1-f2+f3)/(4.0*conf_.dx*conf_.dx);
 
-
-          if ((!std::isnan(conf_.relativeEps) && std::abs(fd-H.coeff(j,k)) > std::max(std::abs(getCoeff(H, j,k)), 1.0) * conf_.relativeEps) || std::abs(fd-getCoeff(H, j,k)) > conf_.eps)
+          if ((!std::isnan(conf_.relativeEps) && std::abs(fd-H.coeff(j,k)) > std::max(std::abs(getCoeff(H, j,k)), 1.0) * conf_.relativeEps) || std::abs(fd-getCoeff(H, j,k)) > conf_.eps || !std::isfinite(std::abs(fd-getCoeff(H, j,k))))
           {
             ++ n_errors;
             std::cerr << "Hessian error in component " << j << "," << k << ": " << getCoeff(H, j,k)

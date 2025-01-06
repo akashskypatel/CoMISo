@@ -64,6 +64,12 @@ void NPTiming::store_result ( const double* _x )
   print_statistics();
 }
 
+double NPTiming::max_feasible_step ( const double* _x, const double* _v)
+{
+  return base_->max_feasible_step(_x, _v);
+}
+
+
 bool NPTiming::constant_gradient() const
 {
   return base_->constant_gradient();
