@@ -126,7 +126,7 @@ ConstraintRemovalResult remove_dependent_linear_constraints_only_linear_equality
   }
 
   IntVector elmn_clmn_indcs;
-  gauss_elimination(A, elmn_clmn_indcs, IntVector(), nullptr, _eps, FL_DEFAULT);
+  gauss_elimination(A, elmn_clmn_indcs, IntVector(), nullptr, _eps, FL_DO_GCD);
 
   std::vector<size_t> keep;
   for (size_t i = 0; i < elmn_clmn_indcs.size(); ++i)

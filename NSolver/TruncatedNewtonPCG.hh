@@ -1593,9 +1593,6 @@ public:
       double t_max = std::min(1.0,
                               max_feasible_step_safety_factor_ * _problem->max_feasible_step(x.data(), dx.data()));
 
-      // HACK HACK HACK
-      std::cerr << std::endl << "***** ||A dx|| = " << (_A*dx).norm() << std::endl << std::endl;
-
       // backtracking line search
       double gdx = g.dot(dx);
       double t = t_max;
