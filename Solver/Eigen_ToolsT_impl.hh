@@ -1401,7 +1401,7 @@ void read_matrix_storage(std::istream& _is,
   size_t outer_id = 0;
   for (size_t i = 0; i < values.size(); ++i)
   {
-    while (i >= outer_indices[outer_id + 1])
+    while (i >= static_cast<size_t>(outer_indices[outer_id + 1]))
       ++outer_id;
     auto val = static_cast<CallScalarT>(values[i]);
     auto col = static_cast<CallStorageIndexT>(inner_indices[i]);

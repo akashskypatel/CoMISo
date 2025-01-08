@@ -211,6 +211,8 @@ public:
     GaussEliminationResult result;
     result.n_rows_linearly_dependent = n_rows_linearly_dependent_;
     result.n_rows_contradicting = n_rows_contradicting_;
+
+    return result;
   }
 
 private:

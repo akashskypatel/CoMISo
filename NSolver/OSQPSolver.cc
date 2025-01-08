@@ -157,7 +157,7 @@ public:
 
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
   const double* get_solution() const { return osqp_eigen_.get_x(); }
-  const double  objective_value() const{ return osqp_eigen_.objective_value();}
+        double  objective_value() const{ return osqp_eigen_.objective_value();}
 
 private:
   OSQPEigen osqp_eigen_;

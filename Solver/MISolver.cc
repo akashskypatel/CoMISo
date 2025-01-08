@@ -652,7 +652,7 @@ void MISolver::solve_gurobi(
 
     for (size_t i = 0; i < n_cols; ++i)
     {
-      for (size_t j = cols[i]; j < cols[i + 1]; ++j)
+      for (size_t j = cols[i]; j < static_cast<size_t>(cols[i + 1]); ++j)
         objective += vals[j] * vars[rows[j]] * vars[i];
     }
     for (size_t i = 0; i < n; ++i)
