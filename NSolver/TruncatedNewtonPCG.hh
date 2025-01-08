@@ -1505,178 +1505,186 @@ public:
       else
         eta = pcg_tol*gzn;
 
-      for(int pcg_iter=0; pcg_iter < max_pcg_iters; ++pcg_iter)
+      if(gzn >= newton_tol) // avoid numerical issues when still infeasible but projected gradient is vanishing
       {
-        // compute norm of projected residual (in original norm)
-        double rpn = (W.asDiagonal()*q).norm();
-
-        // debug
-        if(0)
+        for (int pcg_iter = 0; pcg_iter < max_pcg_iters; ++pcg_iter)
         {
-          VectorD rr = H * dx + g;
-          if(_A.rows() > 0 && _A.cols() > 0)
-            v = ldlt.solve(_A*Wi.asDiagonal()*rr);
-          else
-            v.setZero();
-          VectorD rr2 = (rr - _A.transpose()*v);
+          // compute norm of projected residual (in original norm)
+          double rpn = (W.asDiagonal() * q).norm();
 
-          if(!silent_)
-          std::cerr << "++++++++++++++++++++++++++" << std::endl
-                    << "||P(Hdx+g)|| = " << rr2.norm() << std::endl
-                    << "||qn||       = " << rpn << std::endl
-                    << "sqrt(rtq)    = " << std::sqrt(rtq) << std::endl
-                    << std::endl;
-        }
-
-        // stop if accuracy sufficient
-        if(rpn < eta)
-        {
-          cg_converged = true;
-          break;
-        }
-
-        // cache re-used quantities
-        Hp = H*p;
-        double pHp = p.dot(Hp);
-
-        // handle directions of negative curvature (important for Hessians of non-convex problems)
-        if( pHp <= 0.0)
-        {
-          if (pcg_iter == 0)
+          // debug
+          if (0)
           {
-            // use p = proj(-grad f)
-            // TODO: determine better scaling of step
-            dx = p;
-            DEB_line_if(!silent_, 4,  "iter = " << iter << ", PCG found direction of negative curvature at pcg_iter = 0" );
+            VectorD rr = H * dx + g;
+            if (_A.rows() > 0 && _A.cols() > 0)
+              v = ldlt.solve(_A * Wi.asDiagonal() * rr);
+            else
+              v.setZero();
+            VectorD rr2 = (rr - _A.transpose() * v);
+
+            if (!silent_)
+              std::cerr << "++++++++++++++++++++++++++" << std::endl
+                        << "||P(Hdx+g)|| = " << rr2.norm() << std::endl
+                        << "||qn||       = " << rpn << std::endl
+                        << "sqrt(rtq)    = " << std::sqrt(rtq) << std::endl
+                        << std::endl;
           }
-          else
+
+          // stop if accuracy sufficient
+          if (rpn < eta)
           {
-            // use current dx
-            DEB_line_if(!silent_, 4, "iter = " << iter << ", PCG found direction of negative curvature at pcg_iter = " << pcg_iter );
+            cg_converged = true;
+            break;
           }
-          // quit PCG iteration
-          break;
-        }
+
+          // cache re-used quantities
+          Hp = H * p;
+          double pHp = p.dot(Hp);
+
+          // handle directions of negative curvature (important for Hessians of non-convex problems)
+          if (pHp <= 0.0)
+          {
+            if (pcg_iter == 0)
+            {
+              // use p = proj(-grad f)
+              // TODO: determine better scaling of step
+              dx = p;
+              DEB_line_if(!silent_, 4,
+                          "iter = " << iter << ", PCG found direction of negative curvature at pcg_iter = 0");
+            }
+            else
+            {
+              // use current dx
+              DEB_line_if(!silent_, 4, "iter = " << iter << ", PCG found direction of negative curvature at pcg_iter = "
+                                                 << pcg_iter);
+            }
+            // quit PCG iteration
+            break;
+          }
 
           // optimal step length along p (minimizer of quadratic)
-        double alpha = rtq/pHp;
+          double alpha = rtq / pHp;
 
-        // update dx
-        dx += alpha*p;
-        r2 = r + alpha*Hp;
+          // update dx
+          dx += alpha * p;
+          r2 = r + alpha * Hp;
 
-        // project r2  --> q2
-        if(_A.rows() > 0 && _A.cols() > 0)
-          v = ldlt.solve(_A*Wi.asDiagonal()*r2);
-        else
-          v.setZero();
-        q2 = Wi.asDiagonal()*(r2 - _A.transpose()*v);
+          // project r2  --> q2
+          if (_A.rows() > 0 && _A.cols() > 0)
+            v = ldlt.solve(_A * Wi.asDiagonal() * r2);
+          else
+            v.setZero();
+          q2 = Wi.asDiagonal() * (r2 - _A.transpose() * v);
 
 
-        double rtq2 = r2.dot(q2);
-        double beta = rtq2/rtq;
-        p = -q2 + beta*p;
+          double rtq2 = r2.dot(q2);
+          double beta = rtq2 / rtq;
+          p = -q2 + beta * p;
 
-        // swap vectors
-        q.swap(q2);
-        // r.swap(r2);
-        // constraint refinement
-        r = r2 - _A.transpose()*v;
-        // update rtq
-        rtq = rtq2;
+          // swap vectors
+          q.swap(q2);
+          // r.swap(r2);
+          // constraint refinement
+          r = r2 - _A.transpose() * v;
+          // update rtq
+          rtq = rtq2;
 
-        // count number of pcg iters
-        ++n_pcg_iters;
-      }
+          // count number of pcg iters
+          ++n_pcg_iters;
+        }
 
-      // get maximal reasonable step
-      double t_max = std::min(1.0,
-                              max_feasible_step_safety_factor_ * _problem->max_feasible_step(x.data(), dx.data()));
+        // get maximal reasonable step
+        double t_max = std::min(1.0,
+                                max_feasible_step_safety_factor_ * _problem->max_feasible_step(x.data(), dx.data()));
 
-      // backtracking line search
-      double gdx = g.dot(dx);
-      double t = t_max;
-      xn = x + t*dx;
-      double fxn = _problem->eval_f(xn.data());
-      int iter_ls = 0;
-      ls_succeeded = false;
-      while (!(fxn <= fx + alpha_ls_ * gdx * t) && iter_ls < max_iter_ls) {
-        t *= beta_ls_;
+        // backtracking line search
+        double gdx = g.dot(dx);
+        double t = t_max;
         xn = x + t * dx;
-        fxn = _problem->eval_f(xn.data());
-        ++iter_ls;
-      }
-
-      // store line search truncation
-      alpha_line_search = t;
-      // store relative reduction
-      rel_objective_decrease = std::abs((fx-fxn)/fx);
-
-      // update x, fx, xz
-      if (iter_ls < max_iter_ls)
-      {
-        if(allow_warmstart_)
-          dx=xn-x;
-        x.swap(xn);
-        fx = fxn;
-        ls_succeeded = true;
-        // update constraint violation
-        constraint_violation = (_A*x-_b).lpNorm<Eigen::Infinity>();
-        feasible_solution_found_ = (constraint_violation < eps_constraints_violation_);
-
-        // update reduced variables
-        //        xz = Z.transpose()*(x-x0);
-      }
-      else
-      {
-        if(feasible_solution_found_ || !feasibility_step_productive)
+        double fxn = _problem->eval_f(xn.data());
+        int iter_ls = 0;
+        ls_succeeded = false;
+        while (!(fxn <= fx + alpha_ls_ * gdx * t) && iter_ls < max_iter_ls)
         {
-          DEB_line_if(!silent_, 4, "Warning: line search failed ---> terminate");
-          DEB_line_if(!silent_, 4, "|g| = " << g.norm());
-          DEB_line_if(!silent_, 4, "|dx| = " << dx.norm());
-          DEB_line_if(!silent_, 4, "|W| = " << W.norm());
-          DEB_line_if(!silent_, 4, "|Wi| = " << Wi.norm());
-          DEB_line_if(!silent_, 4, "gdx = " << gdx);
+          t *= beta_ls_;
+          xn = x + t * dx;
+          fxn = _problem->eval_f(xn.data());
+          ++iter_ls;
+        }
 
-          reduced_gradient_norm_ = gzn;
+        // store line search truncation
+        alpha_line_search = t;
+        // store relative reduction
+        rel_objective_decrease = std::abs((fx - fxn) / fx);
 
-          break;
+        // update x, fx, xz
+        if (iter_ls < max_iter_ls)
+        {
+          if (allow_warmstart_)
+            dx = xn - x;
+          x.swap(xn);
+          fx = fxn;
+          ls_succeeded = true;
+          // update constraint violation
+          constraint_violation = (_A * x - _b).lpNorm<Eigen::Infinity>();
+          feasible_solution_found_ = (constraint_violation < eps_constraints_violation_);
+
+          // update reduced variables
+          //        xz = Z.transpose()*(x-x0);
         }
         else
-          DEB_line_if(!silent_, 4, "Warning: line search failed ---> continue since feasibility_step_productive");
-      }
-
-      DEB_line_if(!silent_, 4,
-               "iter = " << iter << ", f(x) = " << fx << ", t = " << t
-                         << " (tmax=" << t_max << "), " << "#ls = " << iter_ls
-                         << ", constraint_violation = " << constraint_violation
-                         << ", |reduced grad| = " << gzn
-                         << ", " << "PCG_tol = " << eta
-                         << ", " << "PCG_iters = " << n_pcg_iters
-                         << ", " << "PCG_converged = " << int(cg_converged)
-                         << ", " << "g*dx = " << gdx
-                         << ", " << "warmstart = " << int(warmstart)
-                         << ", " << "hessian_update = " << int(hessian_updated)
-                         << ", " << "rel_obj_decrease = " << rel_objective_decrease
-                         );
-
-      if(std::abs(gdx) < eps_gdx_)
-      {
-        constraint_violation = (_A*x-_b).lpNorm<Eigen::Infinity>();
-        reduced_gradient_norm_ = gzn;
-        if(constraint_violation < eps_constraints_violation_)
         {
-          converged_ = true;
-          feasible_solution_found_ = true;
-          DEB_line_if(!silent_, 4, "converged" << ", f(x) = " << fx
-                                               << ", ||gz|| = " << gzn
-                                               << ", " << "g*dx = " << gdx
-                                               << ", max_constraint_violation = " << constraint_violation
-                                               << ", " << "PCG_iters = " << n_pcg_iters);
-          break;
+          if (feasible_solution_found_ || !feasibility_step_productive)
+          {
+            DEB_line_if(!silent_, 4, "Warning: line search failed ---> terminate");
+            DEB_line_if(!silent_, 4, "|g| = " << g.norm());
+            DEB_line_if(!silent_, 4, "|dx| = " << dx.norm());
+            DEB_line_if(!silent_, 4, "|W| = " << W.norm());
+            DEB_line_if(!silent_, 4, "|Wi| = " << Wi.norm());
+            DEB_line_if(!silent_, 4, "gdx = " << gdx);
+
+            reduced_gradient_norm_ = gzn;
+
+            break;
+          }
+          else DEB_line_if(!silent_, 4, "Warning: line search failed ---> continue since feasibility_step_productive");
+        }
+
+        DEB_line_if(!silent_, 4,
+                    "iter = " << iter << ", f(x) = " << fx << ", t = " << t
+                              << " (tmax=" << t_max << "), " << "#ls = " << iter_ls
+                              << ", constraint_violation = " << constraint_violation
+                              << ", |reduced grad| = " << gzn
+                              << ", " << "PCG_tol = " << eta
+                              << ", " << "PCG_iters = " << n_pcg_iters
+                              << ", " << "PCG_converged = " << int(cg_converged)
+                              << ", " << "g*dx = " << gdx
+                              << ", " << "warmstart = " << int(warmstart)
+                              << ", " << "hessian_update = " << int(hessian_updated)
+                              << ", " << "rel_obj_decrease = " << rel_objective_decrease
+        );
+
+        if (std::abs(gdx) < eps_gdx_)
+        {
+          constraint_violation = (_A * x - _b).lpNorm<Eigen::Infinity>();
+          reduced_gradient_norm_ = gzn;
+          if (constraint_violation < eps_constraints_violation_)
+          {
+            converged_ = true;
+            feasible_solution_found_ = true;
+            DEB_line_if(!silent_, 4, "converged" << ", f(x) = " << fx
+                                                 << ", ||gz|| = " << gzn
+                                                 << ", " << "g*dx = " << gdx
+                                                 << ", max_constraint_violation = " << constraint_violation
+                                                 << ", " << "PCG_iters = " << n_pcg_iters);
+            break;
+          }
         }
       }
-
+      else // if(gzn >= newton_tol)
+      {
+        DEB_line_if(!silent_, 4, "Warning: x infeasible but ||projected_gradient|| < eps   ---->   skip optimization step and continue with feasibility step");
+      }
     }
     n_iterations_used_ = iter; // TODO: or increase? may make more sense for incremental solves.
 
