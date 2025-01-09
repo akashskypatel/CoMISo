@@ -10,6 +10,8 @@
 #  SUITESPARSE_LIBRARY_DIRS     - all Library directories containing suitesparse libs
 #  SUITESPARSE_SPQR_VALID       - automatic identification whether or not spqr package is installed correctly
 
+message("SUITESPARSE FINDER CALLED!!!!")
+
 if (SUITESPARSE_INCLUDE_DIRS)
   # Already in cache, be silent
   SET(SUITESPARSE_FIND_QUIETLY TRUE)
@@ -77,14 +79,15 @@ else( WIN32 )
     )
    
     FIND_LIBRARY(SUITESPARSE_LIBRARY
-      NAMES libSuiteSparse.dylib
+      NAMES libsuitesparseconfig.dylib
       PATHS /opt/homebrew/lib
             /opt/local/lib)
     message("SUITESPARSE_LIBRARY: ${SUITESPARSE_LIBRARY}")
 
     FIND_PATH( SUITESPARSE_LIBRARY_DIR
-      NAMES libSuiteSparse.dylib
-      PATHS /opt/local/lib )
+      NAMES libsuitesparseconfig.dylib
+      PATHS /opt/homebrew/lib
+            /opt/local/lib )
 
     message("SUITESPARSE_LIBRARY_DIR: ${SUITESPARSE_LIBRARY_DIR}")
     list ( APPEND SUITESPARSE_LIBRARY_DIRS ${SUITESPARSE_LIBRARY_DIR} )
