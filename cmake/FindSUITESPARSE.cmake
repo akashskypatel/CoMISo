@@ -71,11 +71,15 @@ if( WIN32 )
 else( WIN32 )
   if( APPLE)
     FIND_PATH( CHOLMOD_INCLUDE_DIR cholmod.h
-      PATHS  /opt/local/include/ufsparse )
+      PATHS  /opt/homebrew/include/suitesparse
+             /opt/local/include/ufsparse
+
+    )
    
     FIND_LIBRARY(SUITESPARSE_LIBRARY
       NAMES libSuiteSparse.dylib
-      PATHS /opt/local/lib)
+      PATHS /opt/homebrew/lib
+            /opt/local/lib)
     message("SUITESPARSE_LIBRARY: ${SUITESPARSE_LIBRARY}")
 
     FIND_PATH( SUITESPARSE_LIBRARY_DIR
