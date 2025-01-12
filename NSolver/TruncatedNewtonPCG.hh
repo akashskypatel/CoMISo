@@ -1295,7 +1295,7 @@ public:
     double alpha_line_search = 0.0;
     double rel_objective_decrease = 0.0;
 
-    size_t iter = 0;
+    int iter = 0;
     for(; iter<max_iters; ++iter)
     {
       // get gradient and Hessian

@@ -14,6 +14,13 @@ include (VCICommon)
 
 include(VCIQt)
 
+# Select appropriate C++ version.
+set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
+set_property(CACHE COMISO_CXX_STANDARD PROPERTY STRINGS 11 14 17 20 23)
+set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS FALSE)
+
 if (NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
 endif()
