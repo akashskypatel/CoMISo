@@ -169,9 +169,10 @@ public:
   double& adaptive_tolerance_modifier() { return adaptive_tolerance_modifier_;};
 
   double& tolerance_newton_decrement() { return eps_gdx_;}
-
   // deprecated
   double& tolerance_gdx() { return eps_gdx_;}
+
+  double& tolerance_reduced_gradient_norm() { return eps_;}
 
   int& max_iters()     { return max_iters_;}
   int& max_pcg_iters() { return max_pcg_iters_;}
