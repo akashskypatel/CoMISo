@@ -136,6 +136,13 @@ if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
       # One must add -DBOOST_ALL_DYN_LINK to DEFINITIONS to use Boost
       # auto-link with shared libraries.
     add_definitions( -DBOOST_ALL_DYN_LINK )
+    if (APPLE)
+        # cf https://github.com/boostorg/boost_install/issues/47#issuecomment-1548879217
+        find_package(ICU COMPONENTS uc i18n data REQUIRED)
+        add_library(icuuc ALIAS ICU::uc)
+        add_library(icui18n ALIAS ICU::i18n)
+        add_library(icudata ALIAS ICU::data)
+    endif()
   endif()
 
 else()
