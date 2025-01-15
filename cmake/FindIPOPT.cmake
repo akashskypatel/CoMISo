@@ -65,6 +65,7 @@ ELSE( WIN32 )
    find_path(IPOPT_INCLUDE_DIR NAMES IpNLP.hpp
      PATHS  "$ENV{IPOPT_HOME}/include/coin"
             "/usr/include/coin"
+            "/usr/include/coin-or"
             "~/sw/Ipopt-3.12.4-installed/include/coin"
    )
 
