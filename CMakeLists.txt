@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.21)
 
 project(CoMISo VERSION 1.1.0)
 
@@ -14,12 +14,14 @@ include (VCICommon)
 
 include(VCIQt)
 
+if(PROJECT_IS_TOP_LEVEL)
 # Select appropriate C++ version.
-set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
-set_property(CACHE COMISO_CXX_STANDARD PROPERTY STRINGS 11 14 17 20 23)
-set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_EXTENSIONS FALSE)
+    set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
+    set_property(CACHE COMISO_CXX_STANDARD PROPERTY STRINGS 11 14 17 20 23)
+    set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
+    set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+    set(CMAKE_CXX_EXTENSIONS FALSE)
+endif()
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
@@ -209,6 +211,7 @@ if (SUITESPARSE_FOUND )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
   target_include_directories(CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS})
+  message("XXXXXXXX CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS}")
   target_link_directories   (CoMISo PUBLIC ${SUITESPARSE_LIBRARY_DIRS})
   target_link_libraries     (CoMISo PUBLIC ${SUITESPARSE_LIBRARIES})
 
