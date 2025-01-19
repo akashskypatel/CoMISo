@@ -597,7 +597,7 @@ target_link_libraries (CoMISo PUBLIC
 if (NOT TARGET osqp)
   find_package(osqp)
 endif()
-if (TARGET osqpstatic)
+if (TARGET osqp::osqpstatic)
   target_link_libraries (CoMISo PRIVATE osqp::osqpstatic)
   # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
   # So we need to do it here.

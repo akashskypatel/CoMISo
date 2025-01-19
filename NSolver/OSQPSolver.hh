@@ -15,7 +15,6 @@
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <vector>
-#include <string>
 #include "NProblemInterface.hh"
 #include "NConstraintInterface.hh"
 
