@@ -1,9 +1,13 @@
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.21)
 
 project(CoMISo VERSION 1.1.0)
 
 if(POLICY CMP0100)
   cmake_policy(SET CMP0100 NEW)
+endif()
+
+if(POLICY CMP0167) # boost finder removal
+    cmake_policy(SET CMP0167 NEW)
 endif()
 
 # add our macro directory to cmake search path
@@ -14,12 +18,14 @@ include (VCICommon)
 
 include(VCIQt)
 
+if(PROJECT_IS_TOP_LEVEL)
 # Select appropriate C++ version.
-set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
-set_property(CACHE COMISO_CXX_STANDARD PROPERTY STRINGS 11 14 17 20 23)
-set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_EXTENSIONS FALSE)
+    set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
+    set_property(CACHE COMISO_CXX_STANDARD PROPERTY STRINGS 11 14 17 20 23)
+    set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
+    set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+    set(CMAKE_CXX_EXTENSIONS FALSE)
+endif()
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
@@ -110,15 +116,14 @@ set(COMISO_LINK_DIRECTORIES "")
 set(COMISO_LINK_LIBRARIES "")
 set(NEED_LAPACK "")
 
-vci_openmp()
-if (OPENMP_FOUND)
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${OpenMP_CXX_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${OpenMP_libomp_LIBRARY} )
+find_package(OpenMP)
+if(TARGET OpenMP::OpenMP_CXX)
+    target_link_libraries(CoMISo PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 option(COMISO_BUILD_WITHOUT_BOOST "Build CoMISo without boost" OFF)
 
-FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET)
+FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET MODULE)
 if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
   set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 1" )
   list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
@@ -137,6 +142,13 @@ if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
       # One must add -DBOOST_ALL_DYN_LINK to DEFINITIONS to use Boost
       # auto-link with shared libraries.
     add_definitions( -DBOOST_ALL_DYN_LINK )
+    if (APPLE)
+        # cf https://github.com/boostorg/boost_install/issues/47#issuecomment-1548879217
+        find_package(ICU COMPONENTS uc i18n data REQUIRED)
+        add_library(icuuc ALIAS ICU::uc)
+        add_library(icui18n ALIAS ICU::i18n)
+        add_library(icudata ALIAS ICU::data)
+    endif()
   endif()
 
 else()
@@ -203,6 +215,7 @@ if (SUITESPARSE_FOUND )
   list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
   list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
   target_include_directories(CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS})
+  message("XXXXXXXX CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS}")
   target_link_directories   (CoMISo PUBLIC ${SUITESPARSE_LIBRARY_DIRS})
   target_link_libraries     (CoMISo PUBLIC ${SUITESPARSE_LIBRARIES})
 
@@ -598,11 +611,11 @@ target_link_libraries (CoMISo PUBLIC
 if (NOT TARGET osqp)
   find_package(osqp)
 endif()
-if (TARGET osqpstatic)
-  target_link_libraries (CoMISo PRIVATE osqpstatic)
+if (TARGET osqp::osqpstatic)
+  target_link_libraries (CoMISo PRIVATE osqp::osqpstatic)
   # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
   # So we need to do it here.
-  target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
+  #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )

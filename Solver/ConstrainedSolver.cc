@@ -83,7 +83,7 @@ void ConstrainedSolver::solve(
   if (_show_miso_settings)
     miso_.show_options_dialog();
 
-  DEB_only(const size_t nrows = _A.rows());
+  const size_t nrows = _A.rows();
   DEB_only(const size_t ncols = _A.cols());
   const size_t ncons = _constraints.rows();
   _x.resize(nrows);
