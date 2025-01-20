@@ -6,6 +6,10 @@ if(POLICY CMP0100)
   cmake_policy(SET CMP0100 NEW)
 endif()
 
+if(POLICY CMP0167) # boost finder removal
+    cmake_policy(SET CMP0167 NEW)
+endif()
+
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/VCI)
 set (CMAKE_DEBUG_POSTFIX "d")
