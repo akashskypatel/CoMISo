@@ -286,6 +286,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // reset status
   status_ = OptimizerStatus();
   status_.cg_iterations_total = 0;
+  status_.n_newton_iters = 0;
 
 //    converged_ = false;
 //    feasible_solution_found_ = false;
@@ -712,7 +713,9 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
       // output iteration data
       DEB_line_if(!silent_, 4,
-                  "iter = " << iter << ", f(x) = " << status_.fx << ", t = " << status_.line_search_t
+                  "iter = " << iter << ", f(x) = " << status_.fx
+                            << ", feasible = " << int(status_.feasible)
+                            << ", t = " << status_.line_search_t
                             << " (tmax=" << status_.line_search_t_max_feasible << "), " << "#ls = "
                             << status_.line_search_iterations
                             << ", constraint_violation = " << status_.constraint_violation_inf_norm
@@ -746,6 +749,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 //      }
   }
   n_iterations_used_ = iter; // TODO: or increase? may make more sense for incremental solves.
+  status_.n_newton_iters = iter;
 
   // store result
   _problem->store_result(x.data());

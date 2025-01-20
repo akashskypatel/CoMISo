@@ -67,7 +67,7 @@ public:
     {
       return (     feasible
                 && !negative_curvature_step
-                && line_search_t == 1.0
+//                && line_search_t == 1.0
                 && (newton_decrement_within_tolerance || projected_gradient_norm_within_tolerance) );
     }
 
@@ -112,6 +112,9 @@ public:
 
     // Hessian updated in last iteration?
     bool hessian_updated = false;
+
+    // total number of performed Netwon iterations
+    int n_newton_iters = 0;
   };
 
 
