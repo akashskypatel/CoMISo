@@ -128,10 +128,11 @@ public:
       v.conservativeResize(_size);
   }
 
-  void prune(double _eps)
+  void prune(const ScalarT& reference, const typename Matrix::RealScalar& epsilon = Eigen::NumTraits<typename Matrix::RealScalar>::dummy_precision())
   {
-    for (auto& vec : mat_)
-      vec.prune(_eps);
+    for (auto& vec : mat_) {
+      vec.prune(reference, epsilon);
+    }
   }
 
 protected:

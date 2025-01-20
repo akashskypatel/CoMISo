@@ -33,6 +33,7 @@ namespace
 {
 
 using ContraintVector = OSQPSolver::ContraintVector;
+using SMatrix = Eigen::SparseMatrix<double, Eigen::ColMajor, c_int>;
 
 void regularize_hessian(NProblemInterface::SMatrixNP& _H, const double _reg_factor = 1e-8)
 {
@@ -62,7 +63,7 @@ Eigen::VectorXd get_linear_energy_coefficients(NProblemInterface* _problem)
 }
 
 void get_constraints(int _n_cols, const ContraintVector& _constraints,
-    COMISO::NProblemInterface::SMatrixNP& _C, Eigen::VectorXd& _lower_bounds,
+    SMatrix& _C, Eigen::VectorXd& _lower_bounds,
     Eigen::VectorXd& _upper_bounds)
 {
   size_t n_rows = _constraints.size();
@@ -169,7 +170,7 @@ void Impl::solve(
   const auto H = get_hessian(_problem);
   const auto lin_q = get_linear_energy_coefficients(_problem);
 
-  COMISO::NProblemInterface::SMatrixNP A; // inequality constraints
+  SMatrix A; // inequality constraints
   Eigen::VectorXd lower;                  // lower bounds
   Eigen::VectorXd upper;                  // upper bounds
   get_constraints(_problem->n_unknowns(), _constraints, A, lower, upper);
@@ -183,6 +184,7 @@ void Impl::solve(
   exitflag = osqp_eigen_.solve();
   DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
   COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
+
 
   _problem->store_result(osqp_eigen_.get_x());
 }
