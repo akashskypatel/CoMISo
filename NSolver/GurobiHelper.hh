@@ -12,6 +12,7 @@
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
 #if (COMISO_GUROBI_AVAILABLE && COMISO_BOOST_AVAILABLE)
+#define COMISO_GUROBIHELPER_AVAILABLE 1
 //=============================================================================
 
 #include <gurobi_c++.h>
@@ -45,7 +46,9 @@ class GurobiHelper {
 };
 
 } /* namespace COMISO */
-#endif /* COMISO_GUROBI_AVAILABLE */
+# else // (COMISO_GUROBI_AVAILABLE && COMISO_BOOST_AVAILABLE)
+#define COMISO_GUROBIHELPER_AVAILABLE 0
+#endif // (COMISO_GUROBI_AVAILABLE && COMISO_BOOST_AVAILABLE)
 #endif /* GUROBIHELPER_HH_ */
 
 

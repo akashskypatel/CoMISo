@@ -13,9 +13,7 @@
  #include <gurobi_c++.h>
 
 #include "GUROBISolver.hh"
-#if (COMISO_QT_AVAILABLE)
 #include "GurobiHelper.hh"
-#endif//COMISO_QT_AVAILABLE
 #include <CoMISo/Utils/CoMISoError.hh>
 #include <CoMISo/Utils/StopWatch.hh>
 
@@ -199,13 +197,13 @@ double solve_problem_two_phase(GRBModel& _model, double _time_limit0, double _ga
       DEB_line(5, "Writing problem's environment into file \"" << _problem_env_output_path << "\".");
       _model.getEnv().writeParams(_problem_env_output_path);
     }
-#if (COMISO_QT_AVAILABLE)
+#if (COMISO_GUROBIHELPER_AVAILABLE)
     if (!_problem_output_path.empty())
     {
       DEB_line(5, "Writing problem into file \"" << _problem_output_path << "\".");
       GurobiHelper::outputModelToMpsGz(_model, _problem_output_path);
     }
-#endif//COMISO_QT_AVAILABLE
+#endif//COMISO_GUROBIHELPER_AVAILABLE
 
     // optimize
     _model.getEnv().set(GRB_DoubleParam_TimeLimit, _time_limit0);
@@ -262,7 +260,7 @@ void store_result(NProblemInterface* _problem, GRBModel& _model, const std::vect
   }
   else
   {
-#if (COMISO_QT_AVAILABLE)
+#if (COMISO_GUROBIHELPER_AVAILABLE)
       DEB_line(5, "Loading stored solution from \"" << _solution_input_path << "\".");
       // store loaded result
       const size_t oldSize = x.size();
@@ -271,7 +269,7 @@ void store_result(NProblemInterface* _problem, GRBModel& _model, const std::vect
       COMISO_THROW_TODO_if(oldSize != x.size(),
                            "oldSize != x.size() <=> " << oldSize << " != " << x.size() <<
                            "\nLoaded solution vector doesn't have expected dimension.");
-#endif//COMISO_QT_AVAILABLE
+#endif//COMISO_GUROBIHELPER_AVAILABLE
   }
 
   _problem->store_result(P(x));
