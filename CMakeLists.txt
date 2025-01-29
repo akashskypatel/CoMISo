@@ -213,32 +213,25 @@ else ()
   message (STATUS "ADOLC not found!")
 endif ()
 
-find_package (SUITESPARSE)
-if (SUITESPARSE_FOUND )
-  list (APPEND NEED_LAPACK "SUITESPARSE")
+SET(SUITESPARSE_PACKAGES AMD CAMD CCOLAMD CHOLMOD COLAMD CXSparse GraphBLAS KLU KLU_CHOLMOD LAGraph LDL ParU RBio SPEX SPQR UMFPACK)
 
-  set (COMISO_SUITESPARSE_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_AVAILABLE 1" )
+SET(SUITESPARSE_PACKAGES_FOUND "")
+SET(SUITESPARSE_PACKAGES_NOT_FOUND "")
+foreach(_package ${SUITESPARSE_PACKAGES})
+    find_package(${_package} CONFIG QUIET)
+    if (${${_package}_FOUND})
+        target_link_libraries(CoMISo PUBLIC SuiteSparse::${_package})
+        list(APPEND SUITESPARSE_PACKAGES_FOUND ${_package})
+        set(COMISO_SUITESPARSE_${_package}_AVAILABLE TRUE)
+    else()
+        list(APPEND SUITESPARSE_PACKAGES_NOT_FOUND ${_package})
+        set(COMISO_SUITESPARSE_${_package}_AVAILABLE FALSE)
+    endif()
+endforeach()
 
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${SUITESPARSE_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${SUITESPARSE_LIBRARY_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${SUITESPARSE_LIBRARIES} )
-  target_include_directories(CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS})
-  message("XXXXXXXX CoMISo PUBLIC ${SUITESPARSE_INCLUDE_DIRS}")
-  target_link_directories   (CoMISo PUBLIC ${SUITESPARSE_LIBRARY_DIRS})
-  target_link_libraries     (CoMISo PUBLIC ${SUITESPARSE_LIBRARIES})
-
-  # special handling, since spqr is incorrect in several distributions
-  if(SUITESPARSE_SPQR_VALID)
-    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 1" )
-  else()
-    message (STATUS "SUITESPARSE SPQR seems to be invalid!")
-    set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
-  endif()
-
-else ()
-  message (STATUS "SUITESPARSE not found!")
-  set (COMISO_SUITESPARSE_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_AVAILABLE 0" )
-  set (COMISO_SUITESPARSE_SPQR_CONFIG_FILE_SETTINGS "#define COMISO_SUITESPARSE_SPQR_AVAILABLE 0" )
+message (STATUS "SuiteSparse packages found: ${SUITESPARSE_PACKAGES_FOUND}")
+if(SUITESPARSE_PACKAGES_NOT_FOUND)
+    message (STATUS "SuiteSparse packages not found: ${SUITESPARSE_PACKAGES_NOT_FOUND}")
 endif()
 
 if(NOT DISABLE_MPI)
@@ -639,6 +632,10 @@ vci_print_configure_header (COMISO "CoMISo")
 # write config file
 configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config.hh.in"
      "CoMISo/Config/config.hh" @ONLY IMMEDIATE)
+
+# TODO: split into multiple config files to minimize re-compilation when unrelated dependencies change:
+configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config_suitesparse.hh.in"
+     "CoMISo/Config/config_suitesparse.hh" @ONLY IMMEDIATE)
 
 
 
