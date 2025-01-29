@@ -1,6 +1,6 @@
-cmake_minimum_required (VERSION 3.21)
+cmake_minimum_required (VERSION 3.18)
 
-project(CoMISo VERSION 1.1.0)
+project(CoMISo VERSION 1.1.0 LANGUAGES C CXX)
 
 if(POLICY CMP0100)
   cmake_policy(SET CMP0100 NEW)
@@ -17,6 +17,14 @@ set (CMAKE_DEBUG_POSTFIX "d")
 include (VCICommon)
 
 include(VCIQt)
+
+if(CMAKE_VERSION VERSION_LESS 3.21.0)
+  if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(PROJECT_IS_TOP_LEVEL ON)
+  else()
+    set(PROJECT_IS_TOP_LEVEL OFF)
+  endif()
+endif()
 
 if(PROJECT_IS_TOP_LEVEL)
 # Select appropriate C++ version.
