@@ -70,12 +70,10 @@ public:
 
   ~OSQPEigen()
   {
-    if(work_ != nullptr)
-      osqp_cleanup(work_);
-    if(data_.P != nullptr)
-      delete data_.P;
-    if(data_.A != nullptr)
-      delete data_.A;
+    osqp_cleanup(work_);
+    // c_free is the OSQP-provided free() wrapper:
+    c_free(data_.P);
+    c_free(data_.A);
   }
 
   template<class SMatrixT, class SMatrixT2>
