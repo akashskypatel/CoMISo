@@ -273,18 +273,12 @@ void quadratic_example_2()
         COMISO::OSQPSolver solver;
         Base::StopWatch sw;
         sw.start();
-        bool success = solver.solve(&prob, constraints);
+        solver.solve(&prob, constraints);
         sw.stop();
         if (i > 1 || n_tests == 1)
           t_osqp += sw.elapsed();
-        if (success)
-        {
-          std::cout << "OSQP  succeeded in " << sw.elapsed() << "ms. Optimum found at x = " << prob.get_result()[0] << " and y = " << prob.get_result()[1] << " with value " << prob.eval_f(prob.get_result().data()) << std::endl;
-        }
-        else
-        {
-          std::cout << "OSQP failed" << std::endl;
-        }
+
+        std::cout << "OSQP  took " << sw.elapsed() << "ms. Optimum found at x = " << prob.get_result()[0] << " and y = " << prob.get_result()[1] << " with value " << prob.eval_f(prob.get_result().data()) << std::endl;
       }
 #endif
 
@@ -309,4 +303,3 @@ int main(void)
 
   return -1;
 }
-
