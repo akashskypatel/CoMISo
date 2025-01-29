@@ -1,4 +1,4 @@
-
+#pragma once
 /*===========================================================================*\
  *                                                                           *
  *                            TruncatedNewtonPCG                             *
@@ -11,11 +11,10 @@
 
 
 
-#ifndef COMISO_TRUNCATEDNEWTONPCG_HH
-#define COMISO_TRUNCATEDNEWTONPCG_HH
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -250,6 +249,5 @@ private:
 //=============================================================================
 } // namespace COMISO
 //=============================================================================
-#endif // COMISO_TRUNCATEDNEWTONPCG_HH defined
-//=============================================================================
+#endif
 

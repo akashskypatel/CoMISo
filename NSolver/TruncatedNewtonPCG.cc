@@ -10,6 +10,7 @@
 
 
 #include "TruncatedNewtonPCG.hh"
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 namespace COMISO
 {
@@ -1564,3 +1565,4 @@ solve_projected_normal_equation(NProblemInterface* _problem, std::vector<NConstr
 
 
 }
+#endif
