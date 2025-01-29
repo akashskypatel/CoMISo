@@ -11,6 +11,22 @@
 
 #include "TruncatedNewtonPCG.hh"
 
+#include <CoMISo/Utils/StopWatch.hh>
+#include <CoMISo/NSolver/LinearConstraintConverter.hh>
+
+#include <Base/Debug/DebTime.hh>
+#include <Eigen/IterativeLinearSolvers>
+
+
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+#include <Eigen/CholmodSupport>
+#endif
+
+#if COMISO_METIS_AVAILABLE
+#include <Eigen/MetisSupport>
+#endif
+
+
 namespace COMISO
 {
 
@@ -328,10 +344,13 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // cholesky decomposition of projection
 //    Eigen::SimplicialLDLT<SMatrixD, Eigen::Lower, Eigen::MetisOrdering<int> > ldlt;
 //    Eigen::SimplicialLDLT<SMatrixD, Eigen::Lower, Eigen::NaturalOrdering<int> > ldlt;
-//    Eigen::SimplicialLDLT<SMatrixD> ldlt;
-  Eigen::CholmodSupernodalLLT<SMatrixD> ldlt;
 //    Eigen::UmfPackLU<SMatrixD> ldlt;
 //    Eigen::CholmodSimplicialLLT<SMatrixD> ldlt;
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+  Eigen::CholmodSupernodalLLT<SMatrixD> ldlt;
+#else
+  Eigen::SimplicialLDLT<SMatrixD> ldlt;
+#endif
 
   // prepare solver
   bool ldlt_initialized = false;

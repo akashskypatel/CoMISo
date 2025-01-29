@@ -1,4 +1,4 @@
-
+#pragma once
 /*===========================================================================*\
  *                                                                           *
  *                            TruncatedNewtonPCG                             *
@@ -11,8 +11,6 @@
 
 
 
-#ifndef COMISO_TRUNCATEDNEWTONPCG_HH
-#define COMISO_TRUNCATEDNEWTONPCG_HH
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
@@ -20,21 +18,13 @@
 //== INCLUDES =================================================================
 
 #include <iomanip>
-
 #include <CoMISo/Config/CoMISoDefines.hh>
-#include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/NSolver/NConstraintInterface.hh>
-#include <CoMISo/NSolver/LinearConstraintConverter.hh>
-
-#include <Base/Debug/DebTime.hh>
+#include <CoMISo/NSolver/LinearConstraint.hh>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <Eigen/IterativeLinearSolvers>
-
-#include <Eigen/CholmodSupport>
-#include <Eigen/MetisSupport>
 
 //== FORWARDDECLARATIONS ======================================================
 
@@ -249,7 +239,5 @@ private:
 
 //=============================================================================
 } // namespace COMISO
-//=============================================================================
-#endif // COMISO_TRUNCATEDNEWTONPCG_HH defined
 //=============================================================================
 

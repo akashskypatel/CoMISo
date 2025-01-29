@@ -49,6 +49,9 @@
 #include <queue>
 #include <fstream>
 
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+#  include <cholmod.h>
+#endif
 //== NAMESPACES ===============================================================
 
 namespace COMISO_EIGEN
@@ -732,7 +735,7 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
 
 
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 /// Eigen to Cholmod_sparse interface
 template <class MatrixT>
@@ -895,7 +898,7 @@ void eigen_to_cholmod(const MatrixT& _A, cholmod_sparse*& _AC,
       ((int*)(_AC->p))[i] = colptr[i];
   }
 }
-#endif
+#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 #if COMISO_GMM_AVAILABLE
 /*

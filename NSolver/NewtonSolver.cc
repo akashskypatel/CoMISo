@@ -881,8 +881,12 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
 #if COMISO_SUITESPARSE_SPQR_AVAILABLE
       case LS_SPQR:
 //      spqr_solver_.factorize(_KKT);
+#if EIGEN_VERSION_AT_LEAST(3,4,90)
       spqr_solver_.compute(_KKT);
       return (spqr_solver_.info() == Eigen::Success);
+#else
+      return 0;
+#endif
 #endif
     case LS_EigenCG:
       cg_solver_.compute(_KKT);
@@ -910,7 +914,9 @@ void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
     case LS_Umfpack: _dx = umfpack_solver_.solve(_rhs); break;
 #endif
 #if COMISO_SUITESPARSE_SPQR_AVAILABLE
+#if EIGEN_VERSION_AT_LEAST(3,4,90)
     case LS_SPQR: _dx = spqr_solver_.solve(_rhs); break;
+#endif
 #endif
     case LS_EigenCG: _dx = cg_solver_.solve(_rhs); break;
     case LS_EigenBiCGSTAB: _dx = bicgstab_solver_.solve(_rhs); break;

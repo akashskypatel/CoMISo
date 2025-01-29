@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <string>
-#include <osqp/osqp.h>
+#include <osqp.h>
 
 #include <Base/Debug/DebUtils.hh>
 #include <Base/Debug/DebOut.hh>

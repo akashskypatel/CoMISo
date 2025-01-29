@@ -32,7 +32,9 @@
 #endif
 
 #if COMISO_SUITESPARSE_SPQR_AVAILABLE
+#if EIGEN_VERSION_AT_LEAST(3,4,90)
 #include <Eigen/SPQRSupport>
+#endif
 #endif
 
 // ToDo: why is Metis not working yet?
@@ -285,7 +287,9 @@ private:
   Eigen::UmfPackLU<SMatrixD> umfpack_solver_;
 #endif
 #if COMISO_SUITESPARSE_SPQR_AVAILABLE
+#if EIGEN_VERSION_AT_LEAST(3,4,90)
   Eigen::SPQR<SMatrixD>      spqr_solver_;
+#endif
 #endif
 
 #if COMISO_OSQP_AVAILABLE

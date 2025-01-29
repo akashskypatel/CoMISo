@@ -47,6 +47,10 @@
 #include <queue>
 #include <CoMISo/Solver/Eigen_Tools.hh>
 
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+#  include <cholmod.h>
+#endif
+
 //== NAMESPACES ===============================================================
 
 namespace COMISO_GMM
@@ -973,7 +977,7 @@ void print_dense( const MatrixT& _A)
 
 
 //-----------------------------------------------------------------------------
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 /// GMM to Cholmod_sparse interface
 template<class MatrixT>
@@ -1123,7 +1127,7 @@ void gmm_to_cholmod( const MatrixT& _A, cholmod_sparse* &_AC, cholmod_common* _c
        ((int*)(_AC->p))[i] = colptr[i];
   }
 }
-#endif
+#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 
 template <typename MatrixT>
