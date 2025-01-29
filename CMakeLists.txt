@@ -617,15 +617,17 @@ target_link_libraries (CoMISo PUBLIC
 )
 
 if (NOT TARGET osqp)
-  find_package(osqp)
+  find_package(osqp CONFIG)
 endif()
 if (TARGET osqp::osqpstatic)
-  target_link_libraries (CoMISo PRIVATE osqp::osqpstatic)
+  message("OSQP found")
+  target_link_libraries (CoMISo PUBLIC osqp::osqpstatic)
   # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
   # So we need to do it here.
   #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
+  message("OSQP NOT found")
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
 endif()
 
