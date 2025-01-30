@@ -787,7 +787,6 @@ double NewtonSolver::backtracking_line_search_infeasible_merit_l1(NProblemInterf
 {
   DEB_enter_func;
   size_t n = _x.size();
-  size_t m = _b.size();
 
   // update mu
   double res_primal_1 = (_A*_x-_b).template lpNorm<1>();
