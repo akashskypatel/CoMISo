@@ -13,6 +13,7 @@
 
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/LinearConstraintConverter.hh>
+#include <CoMISo/Utils/MatrixDecompositions.hh>
 
 #include <Base/Debug/DebTime.hh>
 #include <Eigen/IterativeLinearSolvers>
@@ -341,19 +342,8 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // Diagonal Preconditioner
   VectorD W(n), Wi(n);
 
-  // cholesky decomposition of projection
-//    Eigen::SimplicialLDLT<SMatrixD, Eigen::Lower, Eigen::MetisOrdering<int> > ldlt;
-//    Eigen::SimplicialLDLT<SMatrixD, Eigen::Lower, Eigen::NaturalOrdering<int> > ldlt;
-//    Eigen::UmfPackLU<SMatrixD> ldlt;
-//    Eigen::CholmodSimplicialLLT<SMatrixD> ldlt;
-#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
-  Eigen::CholmodSupernodalLLT<SMatrixD> ldlt;
-#else
-  Eigen::SimplicialLDLT<SMatrixD> ldlt;
-#endif
-
-  // prepare solver
-  bool ldlt_initialized = false;
+  std::unique_ptr<MatrixDecomposition<double>> decomposed_projection;
+  decomposed_projection = make_decomposition<double>(MatrixDecompositionAlgorithm::Cholmod_Supernodal);
 
   // get function value at current point
   status_.fx = _problem->eval_f(x.data());
@@ -441,16 +431,15 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
       // update factorization (if valid matrix)
       if(_A.rows() > 0 && _A.cols() > 0)
       {
-        if (!ldlt_initialized)
-        {
-          ldlt.analyzePattern(AWiAt);
-          ldlt_initialized = true;
+        if (!decomposed_projection) {
+            decomposed_projection = make_decomposition<double>(MatrixDecompositionAlgorithm::Cholmod_Supernodal);
+            decomposed_projection->analyzePattern(AWiAt);
         }
-        ldlt.factorize(AWiAt);
+        decomposed_projection->factorize(AWiAt);
 
         // ldlt.compute(AWiAt); // old update
 
-        if (ldlt.info() != Eigen::Success)
+        if (decomposed_projection->info() != Eigen::Success)
         {
           for (unsigned int j = 0; j < 10; ++j)
           {
@@ -461,8 +450,8 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
             for (Eigen::Index j = 0; j < AWiAt.rows(); ++j)
               AWiAt.coeffRef(j, j) += reg;  // operation is safe since all diagonal entries are nonzero!!!
 
-            ldlt.compute(AWiAt);
-            if (ldlt.info() == Eigen::Success)
+            decomposed_projection->compute(AWiAt);
+            if (decomposed_projection->info() == Eigen::Success)
               break;
           }
         }
@@ -481,7 +470,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
       // optimize full KKT-system but approximate Hessian only through diagonal
       if(_A.rows() > 0 && _A.cols() > 0)
-        v  = ldlt.solve(_b-_A*x + _A*Wi.asDiagonal()*g);
+        v  = decomposed_projection->solve(_b-_A*x + _A*Wi.asDiagonal()*g);
       else
         v.setZero();
 
@@ -548,7 +537,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
     // project r  --> q
     if(_A.rows() > 0 && _A.cols() > 0)
-      v  = ldlt.solve(_A*Wi.asDiagonal()*r);
+      v  = decomposed_projection->solve(_A*Wi.asDiagonal()*r);
     else
       v.setZero();
     gz = r - _A.transpose()*v;
@@ -629,7 +618,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
         // project r2  --> q2
         if (_A.rows() > 0 && _A.cols() > 0)
         {
-          v = ldlt.solve(_A * Wi.asDiagonal() * r2);
+          v = decomposed_projection->solve(_A * Wi.asDiagonal() * r2);
           q2 = Wi.asDiagonal() * (r2 - _A.transpose() * v);
         }
         else
@@ -776,7 +765,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // compute dual variables
   if(compute_dual_variables_)
   {
-    if(!ldlt_initialized)
+    if(!decomposed_projection)
     {
       std::cerr << "ERROR: dual variables cannot be computed since ldlt is not initialized!!!" << std::endl;
       return status_.converged_to_local_optimum();
@@ -784,7 +773,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
     // Variant I ---> compute dual variables with preconditioner (does not require additional factorization)
     if(_A.rows() > 0 && _A.cols() > 0)
-      nue_ = ldlt.solve(-_A*Wi.asDiagonal()*(g+H*dx));
+      nue_ = decomposed_projection->solve(-_A*Wi.asDiagonal()*(g+H*dx));
     else
       nue_.setZero();
 
