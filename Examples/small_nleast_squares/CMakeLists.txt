@@ -1,10 +1,9 @@
-include (CoMISoExample)
+project(small_nleast_squares
+    LANGUAGES C CXX)
 
-vci_add_executable (small_nleast_squares ${sources} ${headers} )
+if (NOT TARGET CoMISo::CoMISo)
+    find_package(CoMISo MODULE REQUIRED)
+endif()
 
-# enable rpath linking
-set_target_properties(small_nleast_squares PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
-
-target_link_libraries (small_nleast_squares
-  CoMISo::CoMISo
-)
+add_executable(small_nleast_squares "main.cc")
+target_link_libraries (small_nleast_squares CoMISo::CoMISo)

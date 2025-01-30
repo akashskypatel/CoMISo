@@ -1,10 +1,9 @@
-include (CoMISoExample)
+project(small_symmetric_dirichlet
+    LANGUAGES C CXX)
 
-vci_add_executable (small_symmetric_dirichlet ${sources} ${headers} )
+if (NOT TARGET CoMISo::CoMISo)
+    find_package(CoMISo MODULE REQUIRED)
+endif()
 
-# enable rpath linking
-set_target_properties(small_symmetric_dirichlet PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
-
-target_link_libraries (small_symmetric_dirichlet
-  CoMISo::CoMISo
-)
+add_executable(small_symmetric_dirichlet "main.cc")
+target_link_libraries (small_symmetric_dirichlet CoMISo::CoMISo)

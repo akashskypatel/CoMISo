@@ -1,10 +1,9 @@
-include (CoMISoExample)
+project(small_linear_problem
+    LANGUAGES C CXX)
 
-vci_add_executable (small_linear_problem ${sources} ${headers} )
+if (NOT TARGET CoMISo::CoMISo)
+    find_package(CoMISo MODULE REQUIRED)
+endif()
 
-# enable rpath linking
-set_target_properties(small_linear_problem PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
-
-target_link_libraries (small_linear_problem
-  CoMISo::CoMISo
-)
+add_executable(small_linear_problem "main.cc")
+target_link_libraries (small_linear_problem CoMISo::CoMISo)
