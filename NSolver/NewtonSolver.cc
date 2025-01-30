@@ -574,8 +574,8 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 
   // regularize constraints
 //  if(_regularize_constraints != 0.0)
-    for( int i=0; i<m; ++i)
-      trips_.push_back(Triplet(n+i,n+i,_regularize_constraints_absolute));
+  for( int i=0; i<m; ++i)
+    trips_.push_back(Triplet(n+i,n+i,_regularize_constraints_absolute));
 
   // regularize Hessian
 //  if(_regularize_hessian != 0.0)
