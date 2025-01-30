@@ -149,10 +149,6 @@ private:
     // 9. COLAMD for A*A^T or AMD for A
     int ordering_;
 
-    // dimension of the mxn matrix
-    int m_;
-    int n_;
-
     std::vector<double> values_;
     std::vector<Int>    colptr_;
     std::vector<Int>    rowind_;
