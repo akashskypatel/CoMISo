@@ -23,15 +23,16 @@
 \*===========================================================================*/
 
 #include <CoMISo/Config/config.hh>
-#include <iostream>
+#include <CoMISo/Base/Debug/DebConfig.hh>
 
 #include <CoMISo/NSolver/NewtonSolver.hh>
 #include <CoMISo/NSolver/NProblemInterface.hh>
-#include <vector>
 
 #include <CoMISo/Utils/ExactConstraintSatisfaction.hh>
 
-#include <Base/Debug/DebConfig.hh>
+#include <vector>
+#include <iostream>
+#include <iomanip>
 
 //------------------------------------------------------------------------------------------------------
 
