@@ -155,7 +155,6 @@ void get_ccs_symmetric_data(const MatrixT& _mat, const char _uplo,
 {
   // Assumes col major
 
-  const int m = _mat.innerSize();
   const int n = _mat.outerSize();
 
   _values.resize(0);
