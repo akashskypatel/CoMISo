@@ -102,8 +102,20 @@ endif()
 vci_drop_templates (sources)
 
 vci_add_library (CoMISo ${ui} ${sources} ${headers} )
-set_target_properties(CoMISo PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+set_target_properties (CoMISo PROPERTIES
+    VERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
+    SOVERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
+    POSITION_INDEPENDENT_CODE ON
+    #AUTOMOC OFF
+    #AUTOUIC OFF
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN TRUE
+    )
+
 add_library(CoMISo::CoMISo ALIAS CoMISo)
+
+
 
 target_include_directories(CoMISo
     PUBLIC
