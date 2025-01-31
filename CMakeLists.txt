@@ -110,9 +110,22 @@ target_include_directories(CoMISo
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
 )
+
+include(GenerateExportHeader)
+generate_export_header(CoMISo
+    BASE_NAME COMISO
+    EXPORT_FILE_NAME "src/CoMISo/Config/Export.hh"
+)
+
+generate_export_header(CoMISo
+    BASE_NAME BASE
+    EXPORT_FILE_NAME "src/Base/Config/Export.hh"
+)
+
 
 if ( QT_FOUND )
   target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
@@ -571,8 +584,6 @@ endif()
 # generate dllexport macros on windows
 if (WIN32)
   target_compile_definitions(CoMISo PRIVATE
-      -DCOMISODLL
-      -DBASEDLL
       -D_SCL_SECURE_NO_DEPRECATE
       -D_USE_MATH_DEFINES
       -DNOMINMAX
