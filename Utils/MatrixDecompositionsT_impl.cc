@@ -66,27 +66,27 @@ make_decomposition(MatrixDecompositionAlgorithm algo)
 #if COMISO_METIS_AVAILABLE
             return std::make_unique<MatrixDecompositionT<
                 Eigen::SimplicialLDLT<M, Eigen::Lower, Eigen::MetisOrdering<Index>>,
-                Scalar>>(M());
+                Scalar>>();
 #else
             throw std::runtime_error("make_decomposition(): CoMISo was compiled without METIS support");
 #endif
         case MDA::Eigen_SimplicialLDLT_NaturalOrdering:
             return std::make_unique<MatrixDecompositionT<
                 Eigen::SimplicialLDLT<M, Eigen::Lower, Eigen::NaturalOrdering<Index>>,
-                Scalar>>(M());
+                Scalar>>();
         case MDA::Eigen_SimplicialLDLT_AMDOrdering:
             return std::make_unique<MatrixDecompositionT<
                 Eigen::SimplicialLDLT<M, Eigen::Lower, Eigen::AMDOrdering<Index>>,
-                Scalar>>(M());
+                Scalar>>();
         case MDA::Eigen_SimplicialCholesky:
             return std::make_unique<MatrixDecompositionT<
                 Eigen::SimplicialCholesky<M, Eigen::Lower, Eigen::AMDOrdering<Index>>,
-                Scalar>>(M());
+                Scalar>>();
         case MDA::Cholmod_Supernodal:
 #if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
             return std::make_unique<MatrixDecompositionT<
                 Eigen::CholmodSupernodalLLT<M, Eigen::Lower>,
-                Scalar>>(M());
+                Scalar>>();
 #else
             throw std::runtime_error("make_decomposition(): CoMISo was compiled without CHOLMOD support");
 #endif
@@ -94,7 +94,7 @@ make_decomposition(MatrixDecompositionAlgorithm algo)
 #if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
             return std::make_unique<MatrixDecompositionT<
                 Eigen::CholmodSimplicialLLT<M, Eigen::Lower>,
-                Scalar>>(M());
+                Scalar>>();
 #else
             throw std::runtime_error("make_decomposition(): CoMISo was compiled without CHOLMOD support");
 #endif
@@ -102,7 +102,7 @@ make_decomposition(MatrixDecompositionAlgorithm algo)
 #if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
             return std::make_unique<MatrixDecompositionT<
                 Eigen::UmfPackLU<M>,
-                Scalar>>(M());
+                Scalar>>();
 #else
             throw std::runtime_error("make_decomposition(): CoMISo was compiled without UMFPACK support");
 #endif

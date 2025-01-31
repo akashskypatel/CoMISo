@@ -342,8 +342,8 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // Diagonal Preconditioner
   VectorD W(n), Wi(n);
 
+  auto md_alg = MatrixDecompositionAlgorithm::Cholmod_Supernodal;
   std::unique_ptr<MatrixDecomposition<double>> decomposed_projection;
-  decomposed_projection = make_decomposition<double>(MatrixDecompositionAlgorithm::Cholmod_Supernodal);
 
   // get function value at current point
   status_.fx = _problem->eval_f(x.data());
@@ -432,7 +432,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
       if(_A.rows() > 0 && _A.cols() > 0)
       {
         if (!decomposed_projection) {
-            decomposed_projection = make_decomposition<double>(MatrixDecompositionAlgorithm::Cholmod_Supernodal);
+            decomposed_projection = make_decomposition<double>(md_alg);
             decomposed_projection->analyzePattern(AWiAt);
         }
         decomposed_projection->factorize(AWiAt);
