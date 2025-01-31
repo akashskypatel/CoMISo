@@ -103,7 +103,7 @@ public:
     // Hessian updated in last iteration?
     bool hessian_updated = false;
 
-    // total number of performed Netwon iterations
+    // total number of performed Newton iterations
     int n_newton_iters = 0;
   };
 

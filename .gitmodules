@@ -3,4 +3,4 @@
 	url = ../Base.git
 [submodule "cmake-library"]
 	path = cmake-library
-	url = ../../cmake/cmake-library
+	url = https://gitlab.vci.rwth-aachen.de:9000/cmake/cmake-library

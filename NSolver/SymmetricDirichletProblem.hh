@@ -35,6 +35,7 @@
 //== INCLUDES =================================================================
 
 #include <CoMISo/Config/config.hh>
+#include <CoMISo/Config/Export.hh>
 
 #if (COMISO_ADOLC_AVAILABLE && COMISO_EIGEN3_AVAILABLE)
 
@@ -58,7 +59,7 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-class SymmetricDirichletElement
+class COMISO_EXPORT SymmetricDirichletElement
 {
 public:
 
@@ -112,7 +113,7 @@ private:
     the symmetric dirichlet energy should be minimized
 */
 
-class COMISODLLEXPORT SymmetricDirichletProblem : public FiniteElementProblem
+class COMISO_EXPORT SymmetricDirichletProblem : public FiniteElementProblem
 {
 public:
 
@@ -156,7 +157,7 @@ private:
 };
 
 
-class SymmetricDirichletOneVertexElement
+class COMISO_EXPORT SymmetricDirichletOneVertexElement
 {
 public:
 
@@ -193,7 +194,7 @@ public:
     that optimizes only a single vertex for which the user inputs all adjacent triangles.
 */
 
-class COMISODLLEXPORT SymmetricDirichletOneRingProblem : public FiniteElementProblem
+class COMISO_EXPORT SymmetricDirichletOneRingProblem : public FiniteElementProblem
 {
 public:
 

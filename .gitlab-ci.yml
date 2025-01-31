@@ -25,12 +25,14 @@ CoMISo-VS2017-Qt-5.10.1-x64:
   tags:
     - VS2017
     - IPOPT3129
+  allow_failure: true # ipopt/metis compile error, needs update.
 
-trigger_build:
-  stage: deploy
-  script:
-    - "curl -X POST \
-       -F token=e32246977fc2f0983bd1994162b407 \
-       -F ref=master \
-       --form variables[BRANCH]=${CI_COMMIT_REF_NAME} \
-       https://www.graphics.rwth-aachen.de:9000/api/v3/projects/682/trigger/builds"
+
+#trigger_build:
+#  stage: deploy
+#  script:
+#    - "curl -X POST \
+#       -F token=e32246977fc2f0983bd1994162b407 \
+#       -F ref=master \
+#       --form variables[BRANCH]=${CI_COMMIT_REF_NAME} \
+#       https://www.graphics.rwth-aachen.de:9000/api/v3/projects/682/trigger/builds"

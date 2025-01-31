@@ -11,8 +11,9 @@
 #include <vector>
 #include <cassert>
 #include <cstring>
+#include <CoMISo/Config/Export.hh>
 
-class TapeIDSingleton {
+class COMISO_EXPORT TapeIDSingleton {
 public:
     static TapeIDSingleton* Instance() {
 

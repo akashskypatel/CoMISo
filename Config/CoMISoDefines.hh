@@ -22,34 +22,5 @@
  *                                                                           *
 \*===========================================================================*/ 
 
-#ifndef COMISODLLEXPORT
-	#if defined(WIN32) || defined(_WIN32)
-		#ifdef COMISODLL
-			#ifdef USECOMISO
-				#define COMISODLLEXPORT __declspec(dllimport)
-				#define COMISODLLEXPORTONLY
-			#else
-				#define COMISODLLEXPORT __declspec(dllexport)
-				#define COMISODLLEXPORTONLY __declspec(dllexport)
-			#endif
-		#else		
-      #define COMISODLLEXPORT
-      #define COMISODLLEXPORTONLY
-		#endif
-	#else // non-Windows symbols export:
-    #ifdef COMISODLL
-      // only export symbols if COMISODLL is defined (same behavior as Windows)
-      #define COMISODLLEXPORT __attribute__((visibility("default")))
-      #define COMISODLLEXPORTONLY COMISODLLEXPORT
-    #else // COMISODLL not defined
-      // this allows building CoMISo as static library without exposing its symbols
-      #define COMISODLLEXPORT
-      #define COMISODLLEXPORTONLY
-    #endif // COMISODLL
-	#endif
-#endif
-
-#undef min
-#undef max
-
-
+#include <CoMISo/Config/Export.hh>
+#define COMISODLLEXPORT COMISO_EXPORT

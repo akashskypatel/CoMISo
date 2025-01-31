@@ -102,17 +102,42 @@ endif()
 vci_drop_templates (sources)
 
 vci_add_library (CoMISo ${ui} ${sources} ${headers} )
-set_target_properties(CoMISo PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+set_target_properties (CoMISo PROPERTIES
+    VERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
+    SOVERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
+    POSITION_INDEPENDENT_CODE ON
+    #AUTOMOC OFF
+    #AUTOUIC OFF
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN TRUE
+    )
+
 add_library(CoMISo::CoMISo ALIAS CoMISo)
+
+
 
 target_include_directories(CoMISo
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
 )
+
+include(GenerateExportHeader)
+generate_export_header(CoMISo
+    BASE_NAME COMISO
+    EXPORT_FILE_NAME "src/CoMISo/Config/Export.hh"
+)
+
+generate_export_header(CoMISo
+    BASE_NAME BASE
+    EXPORT_FILE_NAME "src/Base/Config/Export.hh"
+)
+
 
 if ( QT_FOUND )
   target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
@@ -175,9 +200,11 @@ if(NOT TARGET GMM::GMM)
 endif()
 if(TARGET GMM::GMM)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 1" )
+  set(COMISO_GMM_AVAILABLE 1)
   list (APPEND NEED_LAPACK "GMM")
   target_link_libraries     (CoMISo PUBLIC GMM::GMM)
 else()
+  set(COMISO_GMM_AVAILABLE 0)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
 endif ()
 
@@ -571,8 +598,6 @@ endif()
 # generate dllexport macros on windows
 if (WIN32)
   target_compile_definitions(CoMISo PRIVATE
-      -DCOMISODLL
-      -DBASEDLL
       -D_SCL_SECURE_NO_DEPRECATE
       -D_USE_MATH_DEFINES
       -DNOMINMAX
@@ -646,96 +671,11 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config_suitesparse.hh.in"
 # of the library are already there
 #######################################################################
 
-if(${CMAKE_PROJECT_NAME} MATCHES "CoMISo")
-  set (COMISO_BUILD_EXAMPLES TRUE CACHE BOOL "Build CoMISo Examples")
-else()
-  set (COMISO_BUILD_EXAMPLES FALSE CACHE BOOL "Build CoMISo Examples")
-endif()
+option (COMISO_BUILD_EXAMPLES "Build CoMISo examples" ${PROJECT_IS_TOP_LEVEL})
 
 if (COMISO_BUILD_EXAMPLES )
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/factored_solver/CMakeLists.txt" )
-    add_subdirectory (Examples/factored_solver)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/quadratic_solver/CMakeLists.txt" )
-    add_subdirectory (Examples/quadratic_solver)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/test2/CMakeLists.txt" )
-    add_subdirectory (Examples/test2)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_quadratic_example/CMakeLists.txt" )
-    add_subdirectory (Examples/small_quadratic_example)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_factored_example/CMakeLists.txt" )
-    add_subdirectory (Examples/small_factored_example)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/super_sparse_matrix/CMakeLists.txt" )
-    add_subdirectory (Examples/super_sparse_matrix)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/eigen_solver/CMakeLists.txt" )
-    add_subdirectory (Examples/eigen_solver)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_nsolver/CMakeLists.txt" )
-    add_subdirectory (Examples/small_nsolver)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_eigenproblem/CMakeLists.txt" )
-    add_subdirectory (Examples/small_eigenproblem)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_miqp/CMakeLists.txt" )
-    add_subdirectory (Examples/small_miqp)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_nleast_squares/CMakeLists.txt" )
-    add_subdirectory (Examples/small_nleast_squares)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_sparseqr/CMakeLists.txt" )
-    add_subdirectory (Examples/small_sparseqr)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_quadratic_resolve_example/CMakeLists.txt" )
-    add_subdirectory (Examples/small_quadratic_resolve_example)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_cplex_soc/CMakeLists.txt" )
-    add_subdirectory (Examples/small_cplex_soc)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_adolc/CMakeLists.txt" )
-    add_subdirectory (Examples/small_adolc)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_dco/CMakeLists.txt" )
-    add_subdirectory (Examples/small_dco)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/vector1_adolc/CMakeLists.txt" )
-    add_subdirectory (Examples/vector1_adolc)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_linear_problem/CMakeLists.txt" )
-    add_subdirectory (Examples/small_linear_problem)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/crossfield3d/CMakeLists.txt" )
-    add_subdirectory (Examples/crossfield3d)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/crossfield3d/CMakeLists.txt" )
-    add_subdirectory (Examples/crossfield3d_dco)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_finite_element/CMakeLists.txt" )
-    add_subdirectory (Examples/small_finite_element)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_AQP/CMakeLists.txt" )
-    add_subdirectory (Examples/small_AQP)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/finite_element_integrability_problem/CMakeLists.txt" )
-    add_subdirectory (Examples/finite_element_integrability_problem)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_mosek_native/CMakeLists.txt" )
-    add_subdirectory (Examples/small_mosek_native)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_mosek_fusion_sdp/CMakeLists.txt" )
-    add_subdirectory (Examples/small_mosek_fusion_sdp)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_symmetric_dirichlet/CMakeLists.txt" )
-  add_subdirectory (Examples/small_symmetric_dirichlet)
-  endif()
-  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/small_exact_constraint_satifaction_example/CMakeLists.txt" )
-  add_subdirectory (Examples/small_exact_constraint_satifaction_example)
-  endif()
-
-endif (COMISO_BUILD_EXAMPLES )
+    add_subdirectory (Examples/)
+endif ()
 
 # Only create install target, when we are building CoMISo standalone
 if(NOT COMISO_NO_INSTALL)

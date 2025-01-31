@@ -1,10 +1,9 @@
-include (CoMISoExample)
+project(small_quadratic_resolve_example
+    LANGUAGES C CXX)
 
-vci_add_executable (small_quadratic_resolve ${sources} ${headers} )
+if (NOT TARGET CoMISo::CoMISo)
+    find_package(CoMISo MODULE REQUIRED)
+endif()
 
-# enable rpath linking
-set_target_properties(small_quadratic_resolve PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
-
-target_link_libraries (small_quadratic_resolve
-  CoMISo::CoMISo
-)
+add_executable(small_quadratic_resolve_example "main.cc")
+target_link_libraries (small_quadratic_resolve_example CoMISo::CoMISo)

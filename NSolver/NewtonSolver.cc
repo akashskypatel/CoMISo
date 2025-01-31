@@ -574,8 +574,8 @@ bool NewtonSolver::factorize(NProblemInterface* _problem,
 
   // regularize constraints
 //  if(_regularize_constraints != 0.0)
-    for( int i=0; i<m; ++i)
-      trips_.push_back(Triplet(n+i,n+i,_regularize_constraints_absolute));
+  for( int i=0; i<m; ++i)
+    trips_.push_back(Triplet(n+i,n+i,_regularize_constraints_absolute));
 
   // regularize Hessian
 //  if(_regularize_hessian != 0.0)
@@ -787,7 +787,6 @@ double NewtonSolver::backtracking_line_search_infeasible_merit_l1(NProblemInterf
 {
   DEB_enter_func;
   size_t n = _x.size();
-  size_t m = _b.size();
 
   // update mu
   double res_primal_1 = (_A*_x-_b).template lpNorm<1>();
