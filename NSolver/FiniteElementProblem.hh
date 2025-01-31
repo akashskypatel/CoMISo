@@ -11,7 +11,7 @@
 
 //== INCLUDES =================================================================
 
-#include <CoMISo/Config/CoMISoDefines.hh>
+#include <CoMISo/Config/Export.hh>
 #include "NProblemInterface.hh"
 
 
@@ -32,7 +32,7 @@ namespace COMISO {
 */
 
 
-class FiniteElementSetBase
+class COMISO_EXPORT FiniteElementSetBase
 {
 public:
 
