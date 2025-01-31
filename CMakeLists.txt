@@ -669,11 +669,7 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config_suitesparse.hh.in"
 # of the library are already there
 #######################################################################
 
-if(${CMAKE_PROJECT_NAME} MATCHES "CoMISo")
-  set (COMISO_BUILD_EXAMPLES TRUE CACHE BOOL "Build CoMISo Examples")
-else()
-  set (COMISO_BUILD_EXAMPLES FALSE CACHE BOOL "Build CoMISo Examples")
-endif()
+set (COMISO_BUILD_EXAMPLES ${PROJECT_IS_TOP_LEVEL} CACHE BOOL "Build CoMISo Examples")
 
 if (COMISO_BUILD_EXAMPLES )
   if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Examples/factored_solver/CMakeLists.txt" )
