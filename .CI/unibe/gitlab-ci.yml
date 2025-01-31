@@ -1,0 +1,33 @@
+variables:
+  GIT_SUBMODULE_FORCE_HTTPS: "true" # rewrite git:// submodule urls to https
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_UPDATE_FLAGS: --jobs 16
+  GIT_STRATEGY: clone # fetch is more efficient
+
+container:
+  image: docker:27.5.0
+  tags:
+    - cgg
+    - docker-docker
+  variables:
+    TAG_PREFIX: "x64-"
+    DOCKERFILE: ".CI/Dockerfile"
+
+  script:
+    - TAG="${CI_REGISTRY_IMAGE}:${TAG_PREFIX}${CI_COMMIT_SHA}"
+    - TAG_LATEST="${CI_REGISTRY_IMAGE}:${TAG_PREFIX}latest"
+    - echo -n $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker pull "${TAG_LATEST}" || true
+    - >
+      docker build
+      --file ${DOCKERFILE}
+      --pull
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VCS_URL=$CI_PROJECT_URL
+      --cache-from "${TAG_LATEST}"
+      --tag "${TAG}"
+      .
+    - docker push "${TAG}"
+    - docker tag "${TAG}" "${TAG_LATEST}"
+    - docker push "${TAG_LATEST}"
+
