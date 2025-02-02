@@ -13,7 +13,7 @@
 
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/LinearConstraintConverter.hh>
-#include <CoMISo/Utils/MatrixDecompositions.hh>
+#include <CoMISo/Utils/MatrixDecomposition.hh>
 
 #include <Base/Debug/DebTime.hh>
 #include <Eigen/IterativeLinearSolvers>

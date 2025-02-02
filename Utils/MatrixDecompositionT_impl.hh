@@ -1,6 +1,6 @@
 #include <CoMISo/Config/config_suitesparse.hh>
 #include <CoMISo/Config/config.hh>
-#include <CoMISo/Utils/MatrixDecompositions.hh>
+#include <CoMISo/Utils/MatrixDecomposition.hh>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
