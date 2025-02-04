@@ -183,7 +183,7 @@ public:
         return true;
       else
       {
-        // accuracy not suffient ---> subdivide
+        // accuracy not sufficient ---> subdivide
         double t_sub = 0.5;
         if(_t < 0.2)
           t_sub = 2.0*_t;
