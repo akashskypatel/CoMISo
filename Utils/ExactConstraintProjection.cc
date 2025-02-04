@@ -1,8 +1,18 @@
+/*===========================================================================*\
+ *                                                                           *
+ *                        ExactConstraintProjection                          *
+ *      Copyright (C) 2025 by Computer Graphics Group, University of Bern    *
+ *                           http://cgg.unibe.ch                             *
+ *                                                                           *
+ *      Author: David Bommes                                                 *
+ *                                                                           *
+\*===========================================================================*/
+
 #include "ExactConstraintProjection.hh"
 
+#include <numeric>
 
 namespace COMISO {
-
 
 bool
 ExactConstraintProjection::
@@ -12,8 +22,9 @@ transform_to_IRREF()
   int m = A_IRREF_R_.cols();
 
   // results
-  int n_pivots = 0;
-  int pivot_max_abs_val = 0;
+  int  n_pivots = 0;
+  int  pivot_max_abs_val = 0;
+  bool valid = true;
 
   // initialize pivots to uninitialized, i.e. -1
   pivot_.clear();
@@ -71,7 +82,11 @@ transform_to_IRREF()
     else
     {
       if(b_IRREF_[_i] != 0)
-        std::cerr << "Warning: infeasible linear condition with zero coefficients but non-zero rhs = " << b_IRREF_[_i] << " detected during elimination" << std::endl;
+      {
+        std::cerr << "Warning: infeasible linear condition with zero coefficients but non-zero rhs = " << b_IRREF_[_i]
+                  << " detected during elimination" << std::endl;
+        valid = false;
+      }
     }
   };
 
@@ -194,6 +209,8 @@ transform_to_IRREF()
   // verify consistency
   if(1)
     check_consistency();
+
+  return valid;
 }
 
 //-----------------------------------------------------------------------------
@@ -222,7 +239,7 @@ safe_dot(const std::vector<PairDD>& _dp) const
 
   // construct queues of positive and negative terms
   // assure that p.first is always positive, i.e. for negative terms p.second must be negative
-  for(const auto p : _dp)
+  for(const auto& p : _dp)
   {
     if(p.first*p.second >= 0.0)
       pos.push(PairDD(std::abs(p.first), std::abs(p.second)));
