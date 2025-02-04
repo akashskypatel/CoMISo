@@ -79,7 +79,7 @@ project(DVectorEigen &_x)
   delta_ = std::pow(2, K_);
 
   // 2. truncate free variables (collect divisors)
-  double max_diff_free_variables = 0.0;
+  double max_abs_diff_free_variables = 0.0;
   int max_lcm = 1;
   std::vector<size_t> dependent_variables;
   for (size_t i = 0; i < is_free_variable_.size(); ++i)
@@ -99,13 +99,14 @@ project(DVectorEigen &_x)
 
       double x_old = _x[i];
       _x[i] = truncate_to_F_delta(_x[i] / lcm_i) * lcm_i;
-      max_diff_free_variables = std::max(max_diff_free_variables, std::abs(x_old - _x[i]));
+      // collect statistics
+      max_abs_diff_free_variables = std::max(max_abs_diff_free_variables, std::abs(x_old - _x[i]));
     }
     else
       dependent_variables.push_back(i);
 
   // 4. compute dependent variables (use safe_dot)
-  double max_diff_dependent_variables = 0.0;
+  double max_abs_diff_dependent_variables = 0.0;
   for (const auto pivot_i: dependent_variables)
   {
     assert(A_IRREF_C_.col(pivot_i).nonZeros() == 1); // a dependent variable has a single 1 in its column
@@ -136,12 +137,12 @@ project(DVectorEigen &_x)
 
     double x_old = _x[pivot_i];
     _x[pivot_i] = b_div - safe_dot(dp);
-    max_diff_dependent_variables = std::max(max_diff_dependent_variables, std::abs(x_old - _x[pivot_i]));
+    max_abs_diff_dependent_variables = std::max(max_abs_diff_dependent_variables, std::abs(x_old - _x[pivot_i]));
   }
 
   // output statistics on max/avg change
-  std::cerr << "max_diff_free_variables      = " << max_diff_free_variables << std::endl;
-  std::cerr << "max_diff_dependent_variables = " << max_diff_dependent_variables << std::endl;
+  std::cerr << "max_diff_free_variables      = " << max_abs_diff_free_variables << std::endl;
+  std::cerr << "max_diff_dependent_variables = " << max_abs_diff_dependent_variables << std::endl;
   std::cerr << "max_lcm                      = " << max_lcm << std::endl;
 
   return valid;
