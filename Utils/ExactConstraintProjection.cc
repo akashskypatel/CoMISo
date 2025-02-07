@@ -11,6 +11,7 @@
 #include "ExactConstraintProjection.hh"
 
 #include <numeric>
+#include <set>
 
 namespace COMISO {
 
