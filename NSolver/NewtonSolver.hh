@@ -26,15 +26,16 @@
 
 //#include <Base/Debug/DebTime.hh>
 
-#if COMISO_SUITESPARSE_AVAILABLE
-  #include <Eigen/UmfPackSupport>
-  #include <Eigen/CholmodSupport>
+#if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
+#  include <Eigen/UmfPackSupport>
 #endif
 
-#if COMISO_SUITESPARSE_SPQR_AVAILABLE
-#if EIGEN_VERSION_AT_LEAST(3,4,90)
-#include <Eigen/SPQRSupport>
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+#  include <Eigen/CholmodSupport>
 #endif
+
+#if COMISO_SUITESPARSE_SPQR_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
+#  include <Eigen/SPQRSupport>
 #endif
 
 // ToDo: why is Metis not working yet?
@@ -283,13 +284,11 @@ private:
   // BiCGSTAB solver
   Eigen::BiCGSTAB<SMatrixD> bicgstab_solver_;
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
   Eigen::UmfPackLU<SMatrixD> umfpack_solver_;
 #endif
-#if COMISO_SUITESPARSE_SPQR_AVAILABLE
-#if EIGEN_VERSION_AT_LEAST(3,4,90)
+#if COMISO_SUITESPARSE_SPQR_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
   Eigen::SPQR<SMatrixD>      spqr_solver_;
-#endif
 #endif
 
 #if COMISO_OSQP_AVAILABLE
