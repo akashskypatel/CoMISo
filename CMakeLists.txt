@@ -716,3 +716,26 @@ if(NOT COMISO_NO_INSTALL)
          FILE CoMISoConfig.cmake)
   export(PACKAGE CoMISo)
 endif()
+
+set(COMISO_ENABLE_UNITTESTS PROJECT_IS_TOP_LEVEL CACHE BOOL "Build CoMISo unit tests.")
+if (COMISO_ENABLE_UNITTESTS)
+    find_package(Catch2 3 QUIET)
+    if (NOT TARGET Catch2::Catch2)
+        message(STATUS "Catch2 not found, but tests enabled - downloading Catch2.")
+        include(FetchContent)
+        FetchContent_Declare(
+            Catch2
+            URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.8.0.zip
+            URL_HASH SHA256=bffd2c45a84e5a4b0c17e695798e8d2f65931cbaf5c7556d40388d1d8d04eb83
+            DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+            #GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            #GIT_TAG        v3.8.0 # or a later release
+            )
+        FetchContent_MakeAvailable(Catch2)
+        list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+    endif()
+    include(CTest)
+    include(Catch)
+    add_subdirectory(Tests)
+
+endif()
