@@ -2,32 +2,86 @@ variables:
   GIT_SUBMODULE_FORCE_HTTPS: "true" # rewrite git:// submodule urls to https
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_SUBMODULE_UPDATE_FLAGS: --jobs 16
-  GIT_STRATEGY: clone # fetch is more efficient
+  GIT_STRATEGY: fetch
 
-container:
-  image: docker:27.5.0
-  tags:
-    - cgg
-    - docker-docker
+include:
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.8
+    inputs:
+      stage: build
+      tags:
+        - cgg
+        - linux
+        - docker-docker
+      debian_release: bookworm
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.8
+    inputs:
+      stage: build
+      tags:
+        - cgg
+        - linux
+        - docker-docker
+      debian_release: trixie
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.7
+    inputs:
+      stage: build
+      tags:
+        - cgg
+        - win22
+        - docker-windows
+      cmake_options: "-DCOMISO_ENABLE_METIS=OFF"
+
+.job-template-build-with-tests:
   variables:
-    TAG_PREFIX: "x64-"
-    DOCKERFILE: ".CI/Dockerfile"
-
+    CMAKE_APPLE_SILICON_PROCESSOR: "x86_64"
   script:
-    - TAG="${CI_REGISTRY_IMAGE}:${TAG_PREFIX}${CI_COMMIT_SHA}"
-    - TAG_LATEST="${CI_REGISTRY_IMAGE}:${TAG_PREFIX}latest"
-    - echo -n $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
-    - docker pull "${TAG_LATEST}" || true
+    - export PATH=/usr/lib/ccache:${PATH}
     - >
-      docker build
-      --file ${DOCKERFILE}
-      --pull
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VCS_URL=$CI_PROJECT_URL
-      --cache-from "${TAG_LATEST}"
-      --tag "${TAG}"
-      .
-    - docker push "${TAG}"
-    - docker tag "${TAG}" "${TAG_LATEST}"
-    - docker push "${TAG_LATEST}"
+      ${TIME} cmake .. -G Ninja
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      -DCMAKE_APPLE_SILICON_PROCESSOR=${CMAKE_APPLE_SILICON_PROCESSOR}
+    - ${TIME} -v cmake --build .
+    - ${TIME} -v ctest --output-junit test-report.xml
+    - ccache -s
+    #- ${TIME} -v ./Build/bin/unittests --gtest_output=xml:test-report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: build-${CI_JOB_NAME}/test-report.xml
 
+
+#.job-template-macos:
+#  needs: []
+#  extends: .job-template-build-with-tests
+#  tags:
+#    - cgg
+#    - macos
+#  variables:
+#    CXX: /opt/llvm/bin/clang++
+#    CC: /opt/llvm/bin/clang
+#    CMAKE_BUILD_TYPE: Debug
+#    TIME: /opt/local/bin/gtime
+#    BEAROPT_STL_DEBUG: "OFF"
+#  before_script:
+#    - "${CXX} --version"
+#    - cmake --version
+#    - uname -a
+#    - ccache -s
+#    - mkdir build-${CI_JOB_NAME}
+#    - cd build-${CI_JOB_NAME}
+#  allow_failure: true # just for now as the Macs are offline
+
+#macos-intel:
+#  extends: .job-template-macos
+#  tags:
+#    - amd64
+#
+#macos-arm:
+#  variables:
+#    # gitlab-runner is an x86_64 binary, so it sets the current architecture to that,
+#    # cf https://gitlab.kitware.com/cmake/cmake/-/merge_requests/5589
+#    CMAKE_APPLE_SILICON_PROCESSOR: "arm64"
+#  extends: .job-template-macos
+#  tags:
+#    - arm64
+#
