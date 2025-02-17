@@ -642,7 +642,7 @@ target_link_libraries (CoMISo PUBLIC
   ${COMISO_LINK_LIBRARIES}
 )
 
-if (NOT TARGET osqp)
+if (NOT TARGET osqp::osqpstatic)
   find_package(osqp CONFIG)
 endif()
 if (TARGET osqp::osqpstatic)
