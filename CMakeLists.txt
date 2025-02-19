@@ -675,6 +675,8 @@ if (COMISO_BUILD_EXAMPLES )
     add_subdirectory (Examples/)
 endif ()
 
+option(COMISO_NO_INSTALL "avoid cmake install/export (hack)" OFF) # TODO: do we still need this? where?
+
 # Only create install target, when we are building CoMISo standalone
 if(NOT COMISO_NO_INSTALL)
 
