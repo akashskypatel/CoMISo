@@ -40,12 +40,28 @@ public:
   // Note I : _A and _b are expected to have integer coefficients only
   template<class SMatrixEigen,class DVectorEigen>
   bool initialize(const SMatrixEigen& _A, const DVectorEigen& _b);
+  // same as above but with specific type
+  bool initialize(const SMatrixIntR& _A, const DVectorInt& _b);
 
   // modify _x such that _A*x=b is exactly satisfied without any numerical error
   // Return value: true upon success, otherwise false
   // Note: As described in the addendum of "Exact Constraint Satisfaction for Truly Seamless Parametrization", the projection might be impossible for inhomogenous systems with _b not equal to 0
-  template<class DVectorEigen>
-  bool project(DVectorEigen& _x);
+  template<class DVectorT>
+  bool project(DVectorT& _x);
+
+  // access truncation delta
+  const double& delta() const {return delta_;}
+        double& delta()       {return delta_;}
+
+  // access truncation margin
+  const int& K_margin() const {return K_margin_;}
+  int&       K_margin()       {return K_margin_;}
+
+  // zero all mantissa bits in conflict with F_delta
+  double truncate_to_F_delta(const double _d) const;
+
+  // check whether a double is in F_delta
+  bool is_in_F_delta(const double _d) const;
 
   // check for errors
   void check_consistency();
@@ -56,12 +72,11 @@ private:
   // simultaneously transfrom A_IRREF_C_*x=b_IRREF_
   bool transform_to_IRREF();
 
-  // zero all mantissa bits in conflict with F_delta
-  double truncate_to_F_delta(const double _d) const;
-
   // assume pairs where p.first is an integer coefficient and p.second is a double coefficient
   double safe_dot(const std::vector<PairDD>& _dp) const;
-
+  // same as above but constructed from sparse vector
+  template<class DVectorT>
+  double safe_dot(const SVectorInt& _v, const DVectorT& _w) const;
 
 private:
   // constraint matrix in IRREF both in row and column storage

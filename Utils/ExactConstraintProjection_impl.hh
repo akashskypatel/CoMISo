@@ -63,10 +63,10 @@ initialize(const SMatrixEigen &_A, const DVectorEigen &_b)
 //-----------------------------------------------------------------------------
 
 
-template<class DVectorEigen>
+template<class DVectorT>
 bool
 ExactConstraintProjection::
-project(DVectorEigen &_x)
+project(DVectorT &_x)
 {
   bool valid = true;
 
@@ -77,6 +77,8 @@ project(DVectorEigen &_x)
 
   K_ = std::ceil(std::log2(max_abs)) + static_cast<double>(K_margin_);
   delta_ = std::pow(2, K_);
+
+  std::cerr << "delta = " << delta_ << std::endl;
 
   // 2. truncate free variables (collect divisors)
   double max_abs_diff_free_variables = 0.0;
@@ -101,6 +103,8 @@ project(DVectorEigen &_x)
       _x[i] = truncate_to_F_delta(_x[i] / lcm_i) * lcm_i;
       // collect statistics
       max_abs_diff_free_variables = std::max(max_abs_diff_free_variables, std::abs(x_old - _x[i]));
+
+      assert(is_in_F_delta(_x[i]));
     }
     else
       dependent_variables.push_back(i);
@@ -138,6 +142,8 @@ project(DVectorEigen &_x)
     double x_old = _x[pivot_i];
     _x[pivot_i] = b_div - safe_dot(dp);
     max_abs_diff_dependent_variables = std::max(max_abs_diff_dependent_variables, std::abs(x_old - _x[pivot_i]));
+
+    assert(is_in_F_delta(_x[pivot_i]));
   }
 
   // output statistics on max/avg change
@@ -145,8 +151,34 @@ project(DVectorEigen &_x)
   std::cerr << "max_diff_dependent_variables = " << max_abs_diff_dependent_variables << std::endl;
   std::cerr << "max_lcm                      = " << max_lcm << std::endl;
 
+#if DEB_ON
+  // verify result
+  double max_abs_deviation = 0.0;
+  for(int i=0; i<A_IRREF_C_.rows(); ++i)
+  {
+    double deviation = b_IRREF_[i]-safe_dot(A_IRREF_R_.row(i), _x);
+    max_abs_deviation = std::max(max_abs_deviation, std::abs(deviation));
+  }
+  std::cerr << "result verification max_abs_deviation = " << max_abs_deviation << std::endl;
+#endif
+
   return valid;
 }
 
+
+//-----------------------------------------------------------------------------
+
+
+template<class DVectorT>
+double
+ExactConstraintProjection::
+safe_dot(const SVectorInt& _v, const DVectorT& _w) const
+{
+  std::vector<PairDD> dp;
+  for (SVectorInt::InnerIterator row_it(_v); row_it; ++row_it)
+    dp.emplace_back(PairDD(row_it.value(), _w[row_it.index()]));
+
+  return safe_dot(dp);
+}
 
 } // namespace COMISO

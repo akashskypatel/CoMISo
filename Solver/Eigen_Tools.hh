@@ -132,6 +132,12 @@ public:
     }
   }
 
+  void push_back(const SparseVector& _vec)
+  {
+    assert(_vec.size() == inner_size_);
+    mat_.push_back(_vec);
+  }
+
 protected:
   std::vector<SparseVector> mat_;
   int inner_size_;
@@ -165,6 +171,8 @@ public:
 
   int cols() const { return (int)this->mat_.size(); }
   int rows() const { return this->inner_size_; }
+
+  void add_col(const SparseVector& _col) {this->push_back(_col);}
 };
 
 
@@ -201,6 +209,8 @@ public:
 
   int cols() const { return this->inner_size_; }
   int rows() const { return (int)this->mat_.size(); }
+
+  void add_row(const SparseVector& _col) {this->push_back(_col);}
 };
 
 
