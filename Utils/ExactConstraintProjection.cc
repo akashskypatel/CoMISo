@@ -42,6 +42,8 @@ bool
 ExactConstraintProjection::
 transform_to_IRREF()
 {
+  COMISO::StopWatch sw; sw.start();
+
   int n = A_IRREF_R_.rows();
   int m = A_IRREF_R_.cols();
 
@@ -81,7 +83,7 @@ transform_to_IRREF()
 
     for(SMatrixIntR::SparseVector::InnerIterator it(A_IRREF_R_.row(_i)); it; ++it)
     {
-      if(it.value() != 0)
+      if(std::abs(it.value()) != 0)
       {
         row_nnz[_i] += 1;
 
@@ -145,14 +147,54 @@ transform_to_IRREF()
     if(cur.first != row_nnz[row_cur] || pivot_[row_cur] != -1 || row_nnz[row_cur] == 0)
       continue;
 
-    // choose  pivot element to be of minimal magnitude
-    const int pivot_cur = row_min_pivot_col_idx[row_cur];
-    pivot_[row_cur] = pivot_cur;
+    // choose  pivot element to be of minimal magnitude and with minimal number of nonzeros in column
+    int pivot_cur = row_min_pivot_col_idx[row_cur];
     int pivot_val = row_min_pivot_col_val[row_cur];
+
+    // determine best pivot element ---> minimal number of nonzeros in column
+    int nnz_pivot_col = A_IRREF_C_.col(pivot_cur).nonZeros();
+    for (SMatrixIntR::SparseVector::InnerIterator it_row( A_IRREF_R_.row(row_cur)); it_row; ++it_row)
+      if(std::abs(it_row.value()) != 0)
+      {
+        int nnz = A_IRREF_C_.col(it_row.index()).nonZeros();
+        if (nnz < nnz_pivot_col &&
+            (!prioritize_unit_pivots_ || std::abs(it_row.value()) <= std::abs(pivot_val)))
+        {
+          nnz_pivot_col = nnz;
+          pivot_cur = it_row.index();
+          pivot_val = it_row.value();
+
+        }
+      }
+
+    // set pivot
+    pivot_[row_cur] = pivot_cur;
     pivot_max_abs_val = std::max(pivot_max_abs_val, pivot_val);
     ++n_pivots;
     // mark pivot as dependent variable
     is_free_variable_[pivot_cur] = false;
+
+    if(enable_detailed_logging_)
+    {
+      int nnz_min   = INT_MAX;
+      int nnz_min_1 = INT_MAX;
+      for (SMatrixIntR::SparseVector::InnerIterator it_row( A_IRREF_R_.row(row_cur)); it_row; ++it_row)
+      {
+        int nnz = A_IRREF_C_.col(it_row.index()).nonZeros();
+        nnz_min = std::min(nnz,nnz_min);
+        if(std::abs(it_row.value()) == 1)
+          nnz_min_1 = std::min(nnz, nnz_min_1);
+      }
+
+        std::cerr << "*** process row " << row_cur << ", remaining "
+                << to_process_with_unit_pivot.size() + to_process.size()
+                << ", pivot_idx = " << pivot_cur
+                << ", pivot_val = " << pivot_val
+                << ", #nnz in pivot col = " << A_IRREF_C_.col(pivot_cur).nonZeros()
+                << ", min #nnz in col = " << nnz_min
+                << ", min #nnz in col with |1| coeff = " << nnz_min_1
+                << std::endl;
+    }
 
     // verify data consistency
     assert(A_IRREF_R_.coeff(row_cur,pivot_cur) == pivot_val);
@@ -231,6 +273,8 @@ transform_to_IRREF()
     std::cerr << "max #nnz in row = " << *std::max_element(row_nnz.begin(), row_nnz.end()) << std::endl;
     std::cerr << "#nnz in IRREF   = " << std::accumulate(row_nnz.begin(), row_nnz.end(), 0) << std::endl;
   }
+
+  std::cerr << "transform_to_IRREF took " << sw.stop()/1000.0 << "seconds" << std::endl;
 
   // verify consistency
   if(1)

@@ -97,6 +97,12 @@ private:
   int    K_margin_ = 1;
   // largest number 2^K_
   double delta_ = 0.0;
+
+  // prefer unit pivots (coefficients +1/-1) at the cost of potentially more fill-in
+  // empirically fill-in reduction is more important and delivers lower truncation errors
+  bool prioritize_unit_pivots_ = false;
+
+  const bool enable_detailed_logging_ = false;
 };
 
 //=============================================================================

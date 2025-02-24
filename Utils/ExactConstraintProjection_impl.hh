@@ -68,6 +68,8 @@ bool
 ExactConstraintProjection::
 project(DVectorT &_x)
 {
+  COMISO::StopWatch sw; sw.start();
+
   bool valid = true;
 
   // 1. determine K=max_i ceil(log2(|x_i|) + 1 and delta = 2^K
@@ -129,6 +131,9 @@ project(DVectorT &_x)
         dp.emplace_back(PairDD(a, b));
       }
 
+    if(enable_detailed_logging_)
+      std::cerr << "*** projection process variable " << pivot_i << " with #dp coefficients = " << dp.size() << std::endl;
+
     double b_div = b_IRREF_[row_idx] / C_pivot;
 
     // check divisibility of rhs
@@ -151,6 +156,8 @@ project(DVectorT &_x)
   std::cerr << "max_diff_dependent_variables = " << max_abs_diff_dependent_variables << std::endl;
   std::cerr << "max_lcm                      = " << max_lcm << std::endl;
 
+  std::cerr << "project took " << sw.stop()/1000.0 << " seconds" << std::endl;
+
 #if DEB_ON
   // verify result
   double max_abs_deviation = 0.0;
@@ -161,6 +168,7 @@ project(DVectorT &_x)
   }
   std::cerr << "result verification max_abs_deviation = " << max_abs_deviation << std::endl;
 #endif
+
 
   return valid;
 }
