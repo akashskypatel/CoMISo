@@ -173,6 +173,10 @@ public:
   int rows() const { return this->inner_size_; }
 
   void add_col(const SparseVector& _col) {this->push_back(_col);}
+
+  void prune_col(Index _col, const ScalarT& _reference, const typename Matrix::RealScalar& _epsilon = Eigen::NumTraits<typename Matrix::RealScalar>::dummy_precision()) {
+      col(_col).prune(_reference, _epsilon);
+  }
 };
 
 
@@ -211,6 +215,10 @@ public:
   int rows() const { return (int)this->mat_.size(); }
 
   void add_row(const SparseVector& _col) {this->push_back(_col);}
+
+  void prune_row(Index _row, const ScalarT& _reference, const typename Matrix::RealScalar& _epsilon = Eigen::NumTraits<typename Matrix::RealScalar>::dummy_precision()) {
+      row(_row).prune(_reference, _epsilon);
+  }
 };
 
 
