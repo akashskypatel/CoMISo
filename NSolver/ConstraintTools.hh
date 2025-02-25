@@ -63,7 +63,7 @@ COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints_only
 
 // same as above but designed for Eigen::SparseMatrix
 template< typename SMatrixT, typename VectorT>
-COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints(SMatrixT& _A, VectorT& _b, const double _eps = DEFAULT_EPS, const EliminationMethod _elim_method = DEFAULT_ELIMINATION_METHOD)
+ConstraintRemovalResult remove_dependent_linear_constraints(SMatrixT& _A, VectorT& _b, const double _eps = DEFAULT_EPS, const EliminationMethod _elim_method = DEFAULT_ELIMINATION_METHOD)
 {
   // convert into NConstraints
   LinearConstraintConverter lcc(_A,_b);

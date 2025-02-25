@@ -11,6 +11,7 @@
 #include "ExactConstraintProjection.hh"
 
 #include <numeric>
+#include <set>
 
 namespace COMISO {
 
@@ -232,7 +233,7 @@ transform_to_IRREF()
         // update rhs
         b_IRREF_[row_elim] -= val_elim*b_IRREF_[row_cur];
 
-        A_IRREF_R_.row(row_elim).prune(0);
+        A_IRREF_R_.prune_row(row_elim, 0);
 
         // check consistency, i.e. zeroing of pivot column
         assert(A_IRREF_R_.coeff(row_elim,pivot_cur) == 0);
@@ -262,7 +263,7 @@ transform_to_IRREF()
         enqueue_row(row_elim);
       }
     // prune pivot column
-    A_IRREF_C_.col(pivot_cur).prune(0);
+    A_IRREF_C_.prune_col(pivot_cur, 0);
   }
 
   std::cerr << "#independent      conditions in IRREF = " << std::scientific << n_pivots << std::endl;
@@ -395,8 +396,8 @@ void
 ExactConstraintProjection::
 check_consistency()
 {
-  A_IRREF_R_.prune(0);
-  A_IRREF_C_.prune(0);
+  A_IRREF_R_.prune(0.);
+  A_IRREF_C_.prune(0.);
 
   // first verify consistency of col and row matrices
   for (int k=0; k<A_IRREF_R_.outerSize(); ++k)
