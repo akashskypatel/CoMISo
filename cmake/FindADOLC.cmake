@@ -11,7 +11,6 @@ if (ADOLC_INCLUDE_DIR)
   set(ADOLC_LIBRARIES "${ADOLC_LIBRARY}" )
 else (ADOLC_INCLUDE_DIR)
 
-message( status "adolc include dir: ${ADOLC_DIR}/include/")
 
 find_path( ADOLC_INCLUDE_DIR 
 	   NAMES adolc/adolc.h 

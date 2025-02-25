@@ -10,15 +10,6 @@ if(POLICY CMP0167) # boost finder removal
     cmake_policy(SET CMP0167 NEW)
 endif()
 
-# add our macro directory to cmake search path
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/VCI)
-set (CMAKE_DEBUG_POSTFIX "d")
-
-
-include(FindPkgConfig)
-include(VCICommon)
-include(VCIQt)
-
 if(CMAKE_VERSION VERSION_LESS 3.21.0)
   if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(PROJECT_IS_TOP_LEVEL ON)
@@ -27,6 +18,20 @@ if(CMAKE_VERSION VERSION_LESS 3.21.0)
   endif()
 endif()
 
+# add our macro directory to cmake search path
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/VCI)
+
+set (CMAKE_DEBUG_POSTFIX "d")
+
+include(FindPkgConfig)
+include(VCICommon)
+include(VCIQt)
+include(VCIOutput)
+
+
 if(PROJECT_IS_TOP_LEVEL)
 # Select appropriate C++ version.
     set(COMISO_CXX_STANDARD 17 CACHE STRING "C++ standard version to use")
@@ -34,85 +39,131 @@ if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_CXX_STANDARD ${COMISO_CXX_STANDARD})
     set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
     set(CMAKE_CXX_EXTENSIONS FALSE)
+
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Build/bin")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Build/lib")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Build/lib")
+    set(CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY ON) # deprecated since CMake 3.16
+    set(CMAKE_FIND_USE_PACKAGE_REGISTRY OFF) # since CMake 3.16
 endif()
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build shared instead of static libraries" ON)
 endif()
 
-# Flag to enable or disable QT widgets in CoMISo
-set( WANT_COMISO_QT ON CACHE BOOL "Enable Qt support in CoMISo" )
+set(COMISO_ENABLE_QT      ON  CACHE BOOL "Build CoMISo with Qt widgets (if found)")
+set(COMISO_ENABLE_IPOPT   ON  CACHE BOOL "Build CoMISo with IPOPT (if found)" )
+set(COMISO_ENABLE_METIS   ON  CACHE BOOL "Build CoMISo with METIS (if found)" )
+set(COMISO_ENABLE_MUMPS   ON  CACHE BOOL "Build CoMISo with MUMPS (if found)" )
+set(COMISO_ENABLE_LPSOLVE ON  CACHE BOOL "Build CoMISo with lpsolve (if found)" )
+set(COMISO_ENABLE_GUROBI  ON  CACHE BOOL "Build CoMISo with Gurobi (if found)" )
+set(COMISO_ENABLE_MOSEK   ON  CACHE BOOL "Build CoMISo with Mosek (if found)" )
+set(COMISO_ENABLE_TAUCS   OFF CACHE BOOL "Build CoMISo with TAUCS (if found)" )
+set(COMISO_ENABLE_BOOST   ON CACHE BOOL "Build CoMISo with Boost (if found)" )
 
-# Flag to enable or disable IPOPT
-set( ENABLE_IPOPT ON CACHE BOOL "Build with IPOPT (if found)" )
 
-set(COMISO_ENABLE_METIS   ON CACHE BOOL "Build with METIS (if found)" )
-set(COMISO_ENABLE_MUMPS   ON CACHE BOOL "Build with MUMPS (if found)" )
-set(COMISO_ENABLE_LPSOLVE ON CACHE BOOL "Build with lpsolve (if found)" )
-set(COMISO_ENABLE_GUROBI  ON CACHE BOOL "Build with Gurobi (if found)" )
-set(COMISO_ENABLE_MOSEK   ON CACHE BOOL "Build with Mosek (if found)" )
+set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 
-if( WANT_COMISO_QT )
-
-  set(QT_REQUIRED_PACKAGES
-    Core
-    Widgets
-    )
-
-  vci_qt ()
-
-  if( QT_FOUND)
-    add_definitions (-DQT_FOUND)
-    set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 1" )
-  else()
-    set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 0" )
-  endif()
-
-  if ( QT_FOUND )
-    # Enable automoc
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_AUTOUIC ON)
-  endif()
-
-endif( WANT_COMISO_QT )
-
-# source code directories
-set (directories
-  .
-  Base/Code
-  Base/Debug
-  Base/Security
-  Base/Utils
-  Solver
-  NSolver
-  EigenSolver
-  Config
-  Utils
-  QtWidgets
-)
-
-# collect all header,source and ui files
-vci_append_files (headers "*.hh" ${directories})
-vci_append_files (sources "*.cc" ${directories})
-
-if( QT_FOUND )
-  vci_append_files (ui "*.ui" ${directories})
+### Deprecated aliases:
+if(DEFINED WANT_COMISO_QT)
+    message(WARNING "CoMISo: Legacy option WANT_COMISO_QT was passed, use COMISO_ENABLE_QT instead.")
+    set(COMISO_ENABLE_QT ${WANT_COMISO_QT})
 endif()
 
-# remove template cc files from source file list
-vci_drop_templates (sources)
 
-vci_add_library (CoMISo ${ui} ${sources} ${headers} )
+if(DEFINED ENABLE_IPOPT)
+    message(WARNING "CoMISo: Legacy option ENABLE_IPOPT was passed, use COMISO_ENABLE_IPOPT instead.")
+    set(COMISO_ENABLE_IPOPT ${ENABLE_IPOPT})
+endif()
+
+if(DEFINED COMISO_BUILD_WITHOUT_BOOST AND COMISO_BUILD_WITHOUT_BOOST)
+    message(WARNING "CoMISo: Legacy option COMISO_BUILD_WITHOUT_BOOST was passed, use COMISO_ENABLE_BOOST=FALSE instead.")
+    set(COMISO_ENABLE_BOOST OFF)
+endif()
+
+
+add_library(CoMISo
+    ./Base/Debug/DebCallStack.cc
+    ./Base/Debug/DebConfig.cc
+    ./Base/Debug/DebFile.cc
+    ./Base/Debug/DebIndexMeshOut.cc
+    ./Base/Debug/DebStream.cc
+    ./Base/Utils/BaseError.cc
+    ./Base/Utils/Environment.cc
+    ./Base/Utils/FileOutput.cc
+    ./Base/Utils/IOutputStream.cc
+    ./Base/Utils/NullOutputStream.cc
+    ./Base/Utils/OStringStream.cc
+    ./Base/Utils/Option.cc
+    ./Base/Utils/RedirectStream.cc
+    ./Base/Utils/StopWatch.cc
+    ./EigenSolver/ArpackSolver.cc
+    ./NSolver/BoundConstraint.cc
+    ./NSolver/CBCSolver.cc
+    ./NSolver/COMISOSolver.cc
+    ./NSolver/CPLEXSolver.cc
+    ./NSolver/CombinedProblem.cc
+    ./NSolver/ConeConstraint.cc
+    ./NSolver/ConstraintTools.cc
+    ./NSolver/DOCloudCache.cc
+    ./NSolver/DOCloudJob.cc
+    ./NSolver/DOCloudSolver.cc
+    ./NSolver/FiniteElementProblem.cc
+    ./NSolver/GUROBISolver.cc
+    ./NSolver/GurobiHelper.cc
+    ./NSolver/IPOPTProblemInstance.cc
+    ./NSolver/IPOPTSolver.cc
+    ./NSolver/LPSolveSolver.cc
+    ./NSolver/LeastSquaresProblem.cc
+    ./NSolver/LinearConstraint.cc
+    ./NSolver/LinearConstraintHandlerElimination.cc
+    ./NSolver/LinearConstraintHandlerPenalty.cc
+    ./NSolver/LinearProblem.cc
+    ./NSolver/NPDerivativeChecker.cc
+    ./NSolver/NPLinearConstraints.cc
+    ./NSolver/NPTiming.cc
+    ./NSolver/NProblemInterface.cc
+    ./NSolver/NewtonSolver.cc
+    ./NSolver/OSQPSolver.cc
+    ./NSolver/SymmetricDirichletProblem.cc
+    ./NSolver/TAOSolver.cc
+    ./NSolver/TapeIDSingleton.cc
+    ./NSolver/TruncatedNewtonPCG.cc
+    ./NSolver/cURLpp.cc
+    ./Solver/CholmodSolver.cc
+    ./Solver/ConstrainedSolver.cc
+    ./Solver/EigenLDLTSolver.cc
+    ./Solver/EigenLSQSolver.cc
+    ./Solver/GMM_Tools.cc
+    ./Solver/IterativeSolver.cc
+    ./Solver/MISolver.cc
+    ./Solver/MultiDimConstrainedSolver.cc
+    ./Solver/SparseQRSolver.cc
+    ./Solver/SubProblemSolver.cc
+    ./Solver/TaucsSolver.cc
+    ./Solver/UMFPACKSolver.cc
+    ./Utils/CoMISoError.cc
+    ./Utils/ExactConstraintSatisfaction.cc
+    ./Utils/MatrixDecomposition.cc
+)
+
+
+#target_sources(CoMISo PRIVATE ${sources})
 
 set_target_properties (CoMISo PROPERTIES
     VERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
     SOVERSION ${CoMISo_VERSION_MAJOR}.${CoMISo_VERSION_MINOR}
     POSITION_INDEPENDENT_CODE ON
-    #AUTOMOC OFF
-    #AUTOUIC OFF
+    AUTOMOC OFF
+    AUTOUIC OFF
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN TRUE
     )
+
+if (COMISO_ENABLE_DEBUG_OUTPUT)
+  target_compile_definitions(CoMISo PUBLIC -DDEB_ON)
+endif ()
 
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
@@ -140,15 +191,31 @@ generate_export_header(CoMISo
 )
 
 
-if ( QT_FOUND )
-  target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
+# Maybe CoMISo was added using add_subdirectory and Eigen is already available?
+if (NOT TARGET Eigen3::Eigen)
+    find_package (Eigen3 REQUIRED CONFIG)
 endif()
+target_link_libraries     (CoMISo PUBLIC Eigen3::Eigen)
+set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
 
-include (VCIOutput)
+if( COMISO_ENABLE_QT )
+  set(QT_REQUIRED_PACKAGES Core Widgets)
+  vci_qt ()
 
-set(COMISO_INCLUDE_DIRECTORIES "")
-set(COMISO_LINK_DIRECTORIES "")
-set(COMISO_LINK_LIBRARIES "")
+  if( QT_FOUND)
+    target_sources(CoMISo PRIVATE ./QtWidgets/MISolverDialogUI.cc)
+    set_target_properties (CoMISo PROPERTIES
+        AUTOMOC ON
+        AUTOUIC ON)
+    target_link_libraries(CoMISo PUBLIC ${QT_LIBRARIES})
+    set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 1" )
+  else()
+    set (COMISO_QT_CONFIG_FILE_SETTINGS "#define COMISO_QT_AVAILABLE 0" )
+  endif()
+endif( COMISO_ENABLE_QT )
+
+
+
 set(NEED_LAPACK "")
 
 find_package(OpenMP)
@@ -156,44 +223,39 @@ if(TARGET OpenMP::OpenMP_CXX)
     target_link_libraries(CoMISo PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-option(COMISO_BUILD_WITHOUT_BOOST "Build CoMISo without boost" OFF)
 
-FIND_PACKAGE( Boost 1.59.0 COMPONENTS system filesystem regex QUIET MODULE)
-if(Boost_FOUND AND NOT COMISO_BUILD_WITHOUT_BOOST)
-  set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_DIRECTORIES    ${Boost_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${Boost_LIBRARIES} )
+if(COMISO_ENABLE_BOOST)
+    find_package( Boost 1.59.0 COMPONENTS system regex QUIET MODULE)
+    if(Boost_FOUND)
+        set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 1" )
+        target_link_libraries     (CoMISo PRIVATE ${Boost_LIBRARIES})
 
-  target_include_directories(CoMISo PRIVATE ${Boost_INCLUDE_DIRS})
-  target_link_directories   (CoMISo PRIVATE ${Boost_LIBRARY_DIR})
-  target_link_libraries     (CoMISo PRIVATE ${Boost_LIBRARIES})
-
-  option(Boost_USE_STATIC_LIBS "Link with static Boost libraries" OFF)
-  mark_as_advanced(Boost_USE_STATIC_LIBS)
-  if(Boost_USE_STATIC_LIBS)
-    set(Boost_USE_STATIC_LIBS ON)
-  else()
-      # One must add -DBOOST_ALL_DYN_LINK to DEFINITIONS to use Boost
-      # auto-link with shared libraries.
-    add_definitions( -DBOOST_ALL_DYN_LINK )
-    if (APPLE)
-        # cf https://github.com/boostorg/boost_install/issues/47#issuecomment-1548879217
-        find_package(ICU COMPONENTS uc i18n data REQUIRED)
-        add_library(icuuc ALIAS ICU::uc)
-        add_library(icui18n ALIAS ICU::i18n)
-        add_library(icudata ALIAS ICU::data)
+        # TODO: is this something a consuming project should set instead?
+        option(Boost_USE_STATIC_LIBS "Link with static Boost libraries" OFF)
+        mark_as_advanced(Boost_USE_STATIC_LIBS)
+        if(Boost_USE_STATIC_LIBS)
+            set(Boost_USE_STATIC_LIBS ON)
+        else()
+            # One must add -DBOOST_ALL_DYN_LINK to DEFINITIONS to use Boost
+            # auto-link with shared libraries.
+            add_definitions( -DBOOST_ALL_DYN_LINK )
+        endif()
+        if (APPLE)
+            # cf https://github.com/boostorg/boost_install/issues/47#issuecomment-1548879217
+            # if we can avoid regex, we don't need this:
+            find_package(ICU COMPONENTS uc i18n data REQUIRED)
+            add_library(icuuc ALIAS ICU::uc)
+            add_library(icui18n ALIAS ICU::i18n)
+            add_library(icudata ALIAS ICU::data)
+        endif()
+    else()
+        set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 0" )
+        message (STATUS "CoMISo: optional dependency Boost not found.")
     endif()
-  endif()
-
 else()
-  set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 0" )
-  if(COMISO_BUILD_WITHOUT_BOOST)
-    message (STATUS "Building without boost (COMISO_BUILD_WITHOUT_BOOST flag is set)")
-  else()
-    message (STATUS "Boost not found!")
-  endif()
-endif ()
+        set (COMISO_BOOST_CONFIG_FILE_SETTINGS "#define COMISO_BOOST_AVAILABLE 0" )
+    message (STATUS "CoMISo: Building without boost (COMISO_ENABLE_BOOST=OFF)")
+endif()
 
 
 if(NOT TARGET GMM::GMM)
@@ -207,39 +269,29 @@ if(TARGET GMM::GMM)
 else()
   set(COMISO_GMM_AVAILABLE 0)
   set (COMISO_GMM_CONFIG_FILE_SETTINGS "#define COMISO_GMM_AVAILABLE 0" )
+  message (STATUS "CoMISo: optional dependency GMM not found.")
 endif ()
 
-set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
-set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our blas librariy is called libblas.lib. Is there a better way to find it than this?
 find_package (BLAS)
 if (BLAS_FOUND )
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 1" )
 
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${BLAS_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${BLAS_LIBRARY_DIRS} ${BLAS_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${BLAS_LIBRARIES} )
-
-  target_include_directories(CoMISo PRIVATE ${BLAS_INCLUDE_DIRS})
-  target_link_directories   (CoMISo PRIVATE ${BLAS_LIBRARY_DIRS} ${BLAS_LIBRARY_DIR})
-  target_link_libraries     (CoMISo PRIVATE ${BLAS_LIBRARIES})
+  message (STATUS "CoMISo: BLAS found: ${BLAS_LIBRARIES}")
+  target_link_libraries     (CoMISo PRIVATE BLAS::BLAS)
 else()
   set (COMISO_BLAS_CONFIG_FILE_SETTINGS "#define COMISO_BLAS_AVAILABLE 0" )
-  message (STATUS "BLAS not found!")
+  message (STATUS "CoMISo: optional dependency BLAS not found.")
 endif ()
-set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
 
-find_package (ADOLC)
+find_package (ADOLC QUIET)
 if (ADOLC_FOUND)
   set (COMISO_ADOLC_CONFIG_FILE_SETTINGS "#define COMISO_ADOLC_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${ADOLC_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_DIRECTORIES   ${ADOLC_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${ADOLC_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${ADOLC_INCLUDE_DIR})
   target_link_directories   (CoMISo PRIVATE ${ADOLC_LIBRARY_DIR})
   target_link_libraries     (CoMISo PRIVATE ${ADOLC_LIBRARIES})
 else ()
   set (COMISO_ADOLC_CONFIG_FILE_SETTINGS "#define COMISO_ADOLC_AVAILABLE 0" )
-  message (STATUS "ADOLC not found!")
+  message (STATUS "CoMISo: optional dependency ADOLC not found.")
 endif ()
 
 SET(SUITESPARSE_PACKAGES AMD CAMD CCOLAMD CHOLMOD COLAMD CXSparse GraphBLAS KLU KLU_CHOLMOD LAGraph LDL ParU RBio SPEX SPQR UMFPACK)
@@ -281,8 +333,6 @@ if(NOT DISABLE_PETSC)
   find_package (PETSC)
   if (PETSC_FOUND AND MPI_FOUND)
     set (COMISO_PETSC_CONFIG_FILE_SETTINGS "#define COMISO_PETSC_AVAILABLE 1" )
-    list( APPEND COMISO_INCLUDE_DIRECTORIES ${PETSC_INCLUDE_DIRS} )
-    list( APPEND COMISO_LINK_LIBRARIES  ${PETSC_LIBRARY} )
     target_include_directories(CoMISo PRIVATE ${PETSC_INCLUDE_DIRS})
     target_link_libraries     (CoMISo PRIVATE ${PETSC_LIBRARY})
   else ()
@@ -299,9 +349,6 @@ if(NOT DISABLE_TAO)
   find_package (TAO)
   if (TAO_FOUND AND PETSC_FOUND AND MPI_FOUND)
     set (COMISO_TAO_CONFIG_FILE_SETTINGS "#define COMISO_TAO_AVAILABLE 1" )
-    list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAO_INCLUDE_DIRS} )
-    list( APPEND COMISO_LINK_DIRECTORIES ${TAO_LIBRARY_DIR} )
-    list( APPEND COMISO_LINK_LIBRARIES  ${TAO_LIBRARY} )
     target_include_directories(CoMISo PRIVATE ${TAO_INCLUDE_DIRS})
     target_link_directories   (CoMISo PRIVATE ${TAO_LIBRARY_DIR})
     target_link_libraries     (CoMISo PRIVATE ${TAO_LIBRARY})
@@ -315,17 +362,14 @@ else ()
 endif ()
 
 if (COMISO_ENABLE_METIS)
-    find_package (METIS)
-    if (METIS_FOUND )
+    if (NOT TARGET METIS::METIS)
+        find_package (METIS)
+    endif()
+    if (TARGET METIS::METIS)
         message (STATUS "CoMISo: Building with METIS")
         set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 1" )
 
-        list( APPEND COMISO_INCLUDE_DIRECTORIES ${METIS_INCLUDE_DIRS} )
-        list( APPEND COMISO_LINK_DIRECTORIES   ${METIS_LIBRARY_DIRS} )
-        list( APPEND COMISO_LINK_LIBRARIES  ${METIS_LIBRARIES} )
-        target_include_directories(CoMISo PRIVATE ${METIS_INCLUDE_DIRS})
-        target_link_directories   (CoMISo PRIVATE ${METIS_LIBRARY_DIRS})
-        target_link_libraries     (CoMISo PRIVATE ${METIS_LIBRARIES})
+        target_link_libraries(CoMISo PRIVATE METIS::METIS)
     else()
         set (COMISO_METIS_CONFIG_FILE_SETTINGS "#define COMISO_METIS_AVAILABLE 0" )
         message (STATUS "CoMISo: COMISO_ENABLE_METIS set, but METIS not found.")
@@ -340,8 +384,6 @@ if (COMISO_ENABLE_MUMPS)
     if (MUMPS_FOUND )
         message (STATUS "CoMISo: Building with MUMPS")
         set (COMISO_MUMPS_CONFIG_FILE_SETTINGS "#define COMISO_MUMPS_AVAILABLE 1" )
-        list( APPEND COMISO_INCLUDE_DIRECTORIES ${MUMPS_INCLUDE_DIR} )
-        list( APPEND COMISO_LINK_LIBRARIES ${MUMPS_LIBRARY} )
         target_include_directories(CoMISo PRIVATE ${MUMPS_INCLUDE_DIR})
         target_link_libraries     (CoMISo PRIVATE ${MUMPS_LIBRARY})
     else ()
@@ -354,7 +396,7 @@ else()
 endif ()
 
 
-if(ENABLE_IPOPT)
+if(COMISO_ENABLE_IPOPT)
     pkg_check_modules(IPOPT IMPORTED_TARGET ipopt)
     if(TARGET PkgConfig::IPOPT)
           target_link_libraries (CoMISo PUBLIC PkgConfig::IPOPT)
@@ -366,9 +408,6 @@ if(ENABLE_IPOPT)
 
         if (IPOPT_FOUND)
           set (COMISO_IPOPT_CONFIG_FILE_SETTINGS "#define COMISO_IPOPT_AVAILABLE 1" )
-          list( APPEND COMISO_INCLUDE_DIRECTORIES ${IPOPT_INCLUDE_DIRS} )
-          list( APPEND COMISO_LINK_DIRECTORIES ${IPOPT_LIBRARY_DIRS} )
-          list( APPEND COMISO_LINK_LIBRARIES ${IPOPT_LIBRARIES} )
           target_include_directories(CoMISo PUBLIC ${IPOPT_INCLUDE_DIRS})
           target_link_directories   (CoMISo PUBLIC ${IPOPT_LIBRARY_DIRS})
           target_link_libraries     (CoMISo PUBLIC ${IPOPT_LIBRARIES})
@@ -382,20 +421,13 @@ if(ENABLE_IPOPT)
           set (COMISO_IPOPT_CONFIG_FILE_SETTINGS "#define COMISO_IPOPT_AVAILABLE 0" )
           set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
         endif()
-        endif()
     endif()
-
-# Maybe CoMISo was added using add_subdirectory and Eigen is already available?
-if (NOT TARGET Eigen3::Eigen)
-    find_package (Eigen3 REQUIRED CONFIG)
 endif()
-list( APPEND COMISO_LINK_LIBRARIES Eigen3::Eigen)
-set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
+
 
 find_package (DCO)
 if (DCO_FOUND )
   set (COMISO_DCO_CONFIG_FILE_SETTINGS "#define COMISO_DCO_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${DCO_INCLUDE_DIR} )
   target_include_directories   (CoMISo PUBLIC ${DCO_INCLUDE_DIR})
 else ()
   message (STATUS "DCO not found!")
@@ -405,8 +437,6 @@ endif ()
 find_package (CBC)
 if (CBC_FOUND )
   set (COMISO_CBC_CONFIG_FILE_SETTINGS "#define COMISO_CBC_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CBC_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CBC_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${CBC_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${CBC_LIBRARIES})
 else ()
@@ -417,8 +447,6 @@ endif ()
 find_package (CLP)
 if (CLP_FOUND )
   set (COMISO_CLP_CONFIG_FILE_SETTINGS "#define COMISO_CLP_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CLP_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CLP_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${CLP_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${CLP_LIBRARIES})
 else ()
@@ -429,8 +457,6 @@ endif ()
 find_package (CGL)
 if (CGL_FOUND )
   set (COMISO_CGL_CONFIG_FILE_SETTINGS "#define COMISO_CGL_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CGL_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CGL_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${CGL_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${CGL_LIBRARIES})
 else ()
@@ -438,11 +464,9 @@ else ()
   set (COMISO_CGL_CONFIG_FILE_SETTINGS "#define COMISO_CGL_AVAILABLE 0" )
 endif ()
 
-find_package (COINUTILS)
+find_package (CoinUtils)
 if (COINUTILS_FOUND )
   set (COMISO_COINUTILS_CONFIG_FILE_SETTINGS "#define COMISO_COINUTILS_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${COINUTILS_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${COINUTILS_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${COINUTILS_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${COINUTILS_LIBRARIES})
 else ()
@@ -453,8 +477,6 @@ endif ()
 find_package (OSI)
 if (OSI_FOUND )
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${OSI_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${OSI_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${OSI_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${OSI_LIBRARIES})
 else ()
@@ -462,20 +484,21 @@ else ()
   set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
 endif ()
 
-find_package (Taucs QUIET)
-set (SUPRESS_TAUCS OFF CACHE BOOL "Set to ON if CoMISo should be built without TAUCS.")
-if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
-  list (APPEND NEED_LAPACK "Taucs")
-  set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${TAUCS_INCLUDE_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${TAUCS_LIBRARY} )
-  target_include_directories(CoMISo PRIVATE ${TAUCS_INCLUDE_DIR})
-  target_link_libraries     (CoMISo PRIVATE ${TAUCS_LIBRARY})
+if (COMISO_ENABLE_TAUCS)
+    find_package (Taucs QUIET)
+    if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
+    list (APPEND NEED_LAPACK "Taucs")
+    set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
+    target_include_directories(CoMISo PRIVATE ${TAUCS_INCLUDE_DIR})
+    target_link_libraries     (CoMISo PRIVATE ${TAUCS_LIBRARY})
 
-else ()
-  message (STATUS "TAUCS not found!")
-  set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
-endif ()
+    else ()
+    message (STATUS "TAUCS not found!")
+    set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
+    endif ()
+else()
+    set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
+endif()
 
 if (COMISO_ENABLE_GUROBI)
     if (NOT TARGET Gurobi::GurobiCXX )
@@ -498,7 +521,7 @@ if (COMISO_ENABLE_MOSEK)
     find_package (MOSEK QUIET)
     if (MOSEK_FOUND )
         set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 1" )
-        list( APPEND COMISO_LINK_LIBRARIES  ${MOSEK_LIBRARIES} )
+        target_link_libraries (CoMISo PUBLIC Mosek::MosekC Mosek::FusionCXX)
     else ()
         message (STATUS "MOSEK not found!")
         set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 0" )
@@ -512,11 +535,7 @@ endif()
 find_package (ARPACK)
 if (ARPACK_FOUND )
   set (COMISO_ARPACK_CONFIG_FILE_SETTINGS "#define COMISO_ARPACK_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${ARPACK_INCLUDE_DIR} )
-#  list( APPEND COMISO_LINK_DIRECTORIES    ${ARPACK_LIBRARY_DIR} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${ARPACK_LIBRARY} )
   target_include_directories(CoMISo PRIVATE ${ARPACK_INCLUDE_DIR})
-#  target_link_directories   (CoMISo PRIVATE ${ARPACK_LIBRARY_DIR})
   target_link_libraries     (CoMISo PRIVATE ${ARPACK_LIBRARY})
 else ()
   message (STATUS "ARPACK not found!")
@@ -526,8 +545,6 @@ endif ()
 find_package (CPLEX)
 if (CPLEX_FOUND )
   set (COMISO_CPLEX_CONFIG_FILE_SETTINGS "#define COMISO_CPLEX_AVAILABLE 1" )
-  list( APPEND COMISO_INCLUDE_DIRECTORIES ${CPLEX_INCLUDE_DIRS} )
-  list( APPEND COMISO_LINK_LIBRARIES  ${CPLEX_LIBRARIES} )
   target_include_directories(CoMISo PRIVATE ${CPLEX_INCLUDE_DIRS})
   target_link_libraries     (CoMISo PRIVATE ${CPLEX_LIBRARIES})
 
@@ -549,7 +566,7 @@ endif()
 if (TARGET tinyad::tinyad)
     message("Building CoMISo with TinyAD support")
     set (COMISO_TINYAD_CONFIG_FILE_SETTINGS "#define COMISO_TINYAD_AVAILABLE 1" )
-    list( APPEND COMISO_LINK_LIBRARIES tinyad::tinyad)
+    target_link_libraries(CoMISo PRIVATE tinyad::tinyad)
 else()
     message("Building CoMISo without TinyAD support")
     set (COMISO_TINYAD_CONFIG_FILE_SETTINGS "#define COMISO_TINYAD_AVAILABLE 0" )
@@ -558,20 +575,15 @@ endif ()
 set(TMP_CMAKE_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
 set(CMAKE_FIND_LIBRARY_PREFIXES lib "") #Our lapack library is called liblapack.lib. Is there a better way to find it than this?
 if (NEED_LAPACK AND NOT SUITESPARSE_FOUND)
-  FIND_PACKAGE(LAPACK)
+  find_package(LAPACK)
   if (LAPACK_FOUND)
-    list( APPEND COMISO_INCLUDE_DIRECTORIES ${LAPACK_INCLUDE_DIR} )
-    list( APPEND COMISO_LINK_DIRECTORIES    ${LAPACK_LIBRARY_DIR} )
-    list( APPEND COMISO_LINK_LIBRARIES  ${LAPACK_LIBRARIES} )
-    target_include_directories(CoMISo PRIVATE ${LAPACK_INCLUDE_DIR})
-    target_link_directories   (CoMISo PRIVATE ${LAPACK_LIBRARY_DIR})
-    target_link_libraries     (CoMISo PRIVATE ${LAPACK_LIBRARIES})
+      message(STATUS "CoMISo: Found LAPACK: ${LAPACK_LIBRARIES}")
+      target_link_libraries     (CoMISo PRIVATE LAPACK::LAPACK)
   else()
     message(STATUS "LAPACK not found!")
   endif()
 endif(NEED_LAPACK AND NOT SUITESPARSE_FOUND)
 set(CMAKE_FIND_LIBRARY_PREFIXES "${TMP_CMAKE_FIND_LIBRARY_PREFIXES}")
-
 
 
 if(COMISO_ENABLE_LPSOLVE)
@@ -582,7 +594,6 @@ if(COMISO_ENABLE_LPSOLVE)
         message (STATUS "CoMISo: building with lpsolve")
         set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 1" )
         target_link_libraries     (CoMISo PUBLIC lpsolve::lpsolve)
-        target_link_directories   (CoMISo PUBLIC ${LPSOLVE_LIBRARY_DIR})
     else ()
         message (STATUS "CoMISo: COMISO_ENABLE_LPSOLVE set, but lpsolve not found.")
         set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
@@ -591,15 +602,6 @@ else()
     message (STATUS "CoMISo: building without lpsolve")
     set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
 endif()
-
-#target_include_directories(CoMISo PRIVATE "${COMISO_INCLUDE_DIRECTORIES}")
-
-#get_target_property(INC_DIRS CoMISo INCLUDE_DIRECTORIES)
-#get_target_property(INT_INC_DIRS CoMISo INTERFACE_INCLUDE_DIRECTORIES)
-#message("Target CoMISo include dirs: ${INC_DIRS}")
-#message("Target CoMISo int include dirs: ${INT_INC_DIRS}")
-#message("COMISO_INCLUDE_DIRECTORIES: ${COMISO_INCLUDE_DIRECTORIES}")
-#message("COMISO_LINK_DIRECTORIES: ${COMISO_LINK_DIRECTORIES}")
 
 # generate dllexport macros on windows
 if (WIN32)
@@ -613,34 +615,12 @@ endif ()
 target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
 
 # enable debug stuff
-set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
-if (COMISO_ENABLE_DEBUG_OUTPUT)
-  target_compile_definitions(CoMISo PUBLIC -DDEB_ON)
-endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
   # disable unused parameter warning
   #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
   target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
 endif()
-if ( QT_FOUND )
-
-  if ( NOT WIN32 )
-    # Allow targets depending on VCI find the autogenerated header files
-    #target_include_directories( CoMISo PUBLIC
-    #                           ${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include )
-  else()
-     # Allow targets depending on VCI find the autogenerated header files
-     #target_include_directories( CoMISo PUBLIC
-     #                          $<$<CONFIG:Debug>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Debug/>
-     #                          $<$<CONFIG:Release>:${CMAKE_CURRENT_BINARY_DIR}/CoMISo_autogen/include_Release/> )
-  endif()
-
-endif()
-
-target_link_libraries (CoMISo PUBLIC
-  ${COMISO_LINK_LIBRARIES}
-)
 
 if (NOT TARGET osqp::osqpstatic)
   find_package(osqp CONFIG)
@@ -653,7 +633,7 @@ if (TARGET osqp::osqpstatic)
   #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
 else()
-  message("OSQP NOT found")
+    message (STATUS "CoMISo: optional dependency OSQP not found.")
   set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
 endif()
 
@@ -735,4 +715,27 @@ if(NOT COMISO_NO_INSTALL)
          NAMESPACE CoMISo::
          FILE CoMISoConfig.cmake)
   export(PACKAGE CoMISo)
+endif()
+
+set(COMISO_ENABLE_UNITTESTS PROJECT_IS_TOP_LEVEL CACHE BOOL "Build CoMISo unit tests.")
+if (COMISO_ENABLE_UNITTESTS)
+    find_package(Catch2 3 QUIET)
+    if (NOT TARGET Catch2::Catch2)
+        message(STATUS "Catch2 not found, but tests enabled - downloading Catch2.")
+        include(FetchContent)
+        FetchContent_Declare(
+            Catch2
+            URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.8.0.zip
+            URL_HASH SHA256=bffd2c45a84e5a4b0c17e695798e8d2f65931cbaf5c7556d40388d1d8d04eb83
+            DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+            #GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            #GIT_TAG        v3.8.0 # or a later release
+            )
+        FetchContent_MakeAvailable(Catch2)
+        list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+    endif()
+    include(CTest)
+    include(Catch)
+    add_subdirectory(Tests)
+
 endif()

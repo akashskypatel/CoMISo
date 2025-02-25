@@ -1,5 +1,5 @@
-#include <CoMISo/Utils/MatrixDecompositions.hh>
-#include <CoMISo/Utils/MatrixDecompositionsT_impl.cc>
+#include <CoMISo/Utils/MatrixDecomposition.hh>
+#include <CoMISo/Utils/MatrixDecompositionT_impl.hh>
 
 
 namespace COMISO {
