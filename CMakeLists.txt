@@ -50,7 +50,7 @@ set(COMISO_ENABLE_METIS   ON CACHE BOOL "Build with METIS (if found)" )
 set(COMISO_ENABLE_MUMPS   ON CACHE BOOL "Build with MUMPS (if found)" )
 set(COMISO_ENABLE_LPSOLVE ON CACHE BOOL "Build with lpsolve (if found)" )
 set(COMISO_ENABLE_GUROBI  ON CACHE BOOL "Build with Gurobi (if found)" )
-set(COMISO_ENABLE_MOSEK   ON CACHE BOOL "Build with Gurobi (if found)" )
+set(COMISO_ENABLE_MOSEK   ON CACHE BOOL "Build with Mosek (if found)" )
 
 if( WANT_COMISO_QT )
 
