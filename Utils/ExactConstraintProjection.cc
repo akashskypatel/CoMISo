@@ -288,8 +288,9 @@ transform_to_IRREF()
 
 double
 ExactConstraintProjection::
-truncate_to_F_delta(const double _d) const
+round_to_F_delta(const double _d) const
 {
+  // the floating point operation automatically rounds to the closest number (it's not only a truncation!!!)
   if(_d >= 0.0)
     return (_d+delta_)-delta_;
   else

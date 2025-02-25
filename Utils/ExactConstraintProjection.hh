@@ -57,8 +57,8 @@ public:
   const int& K_margin() const {return K_margin_;}
   int&       K_margin()       {return K_margin_;}
 
-  // zero all mantissa bits in conflict with F_delta
-  double truncate_to_F_delta(const double _d) const;
+  // zero all mantissa bits in conflict with F_delta (while rounding to the closest possibility)
+  double round_to_F_delta(const double _d) const;
 
   // check whether a double is in F_delta
   bool is_in_F_delta(const double _d) const;
@@ -97,6 +97,8 @@ private:
   int    K_margin_ = 1;
   // largest number 2^K_
   double delta_ = 0.0;
+  // first bit, which will always be zeroed
+  double epsilon_ = 0.0;
 
   // prefer unit pivots (coefficients +1/-1) at the cost of potentially more fill-in
   // empirically fill-in reduction is more important and delivers lower truncation errors

@@ -80,7 +80,18 @@ project(DVectorT &_x)
   K_ = std::ceil(std::log2(max_abs)) + static_cast<double>(K_margin_);
   delta_ = std::pow(2, K_);
 
-  std::cerr << "delta = " << delta_ << std::endl;
+  //determine epsilon (the largest bit, which will always be truncated)
+  epsilon_ = delta_;
+  while (((epsilon_ + delta_) - delta_) == epsilon_)
+    epsilon_ *= 0.5;
+
+  // verify epsilon
+  assert(!is_in_F_delta(epsilon_));
+  assert(round_to_F_delta(    epsilon_)==0.0);
+  assert(round_to_F_delta(2.0*epsilon_) >0.0);
+
+  std::cerr << "delta   = " << delta_ << std::endl;
+  std::cerr << "epsilon = " << epsilon_ << std::endl;
 
   // 2. truncate free variables (collect divisors)
   double max_abs_diff_free_variables = 0.0;
@@ -102,7 +113,9 @@ project(DVectorT &_x)
       max_lcm = std::max(max_lcm, lcm_i);
 
       double x_old = _x[i];
-      _x[i] = truncate_to_F_delta(_x[i] / lcm_i) * lcm_i;
+
+      _x[i] = round_to_F_delta(_x[i] / lcm_i) * lcm_i;
+
       // collect statistics
       max_abs_diff_free_variables = std::max(max_abs_diff_free_variables, std::abs(x_old - _x[i]));
 
