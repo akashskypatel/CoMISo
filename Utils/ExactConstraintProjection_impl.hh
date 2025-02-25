@@ -12,6 +12,7 @@
 
 #include "ExactConstraintProjection.hh"
 #include <CoMISo/Utils/StopWatch.hh>
+#include <numeric>
 
 namespace COMISO
 {
