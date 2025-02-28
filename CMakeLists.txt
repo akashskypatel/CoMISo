@@ -145,6 +145,7 @@ add_library(CoMISo
     ./Solver/UMFPACKSolver.cc
     ./Utils/CoMISoError.cc
     ./Utils/ExactConstraintSatisfaction.cc
+    ./Utils/ExactConstraintProjection.cc
     ./Utils/MatrixDecomposition.cc
 )
 
