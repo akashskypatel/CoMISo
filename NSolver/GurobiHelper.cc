@@ -14,7 +14,7 @@
   #include <QFileInfo>
 #endif
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
@@ -39,14 +39,14 @@ class TempFileGuard {
         }
 
         ~TempFileGuard() {
-            if (boost::filesystem::exists(filePath_))
-                boost::filesystem::remove(filePath_);
+            if (std::filesystem::exists(filePath_))
+                std::filesystem::remove(filePath_);
         }
 
-        const boost::filesystem::path &filePath() const { return filePath_; };
+        const std::filesystem::path &filePath() const { return filePath_; };
 
     private:
-        boost::filesystem::path filePath_;
+        std::filesystem::path filePath_;
 };
 
 static void moveConstantTermIntoConstrainedVariable(GRBModel &model) {
