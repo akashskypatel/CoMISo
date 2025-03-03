@@ -181,14 +181,25 @@ target_include_directories(CoMISo
 )
 
 include(GenerateExportHeader)
+
+option(COMISO_EXCLUDE_DEPRECATED "Exclude deprecated parts of CoMISo" FALSE)
+if (COMISO_EXCLUDE_DEPRECATED)
+  set(NO_BUILD_DEPRECATED DEFINE_NO_DEPRECATED)
+else()
+  set(NO_BUILD_DEPRECATED "")
+endif()
+
+
 generate_export_header(CoMISo
     BASE_NAME COMISO
     EXPORT_FILE_NAME "src/CoMISo/Config/Export.hh"
+    ${NO_BUILD_DEPRECATED}
 )
 
 generate_export_header(CoMISo
     BASE_NAME BASE
     EXPORT_FILE_NAME "src/Base/Config/Export.hh"
+    ${NO_BUILD_DEPRECATED}
 )
 
 
