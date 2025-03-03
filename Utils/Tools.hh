@@ -1,3 +1,4 @@
+#pragma once
 /*===========================================================================*\
  *                                                                           *
  *                               CoMISo                                      *
@@ -22,14 +23,14 @@
  *                                                                           *
 \*===========================================================================*/
 
-#ifndef TOOLS_HH
-#define TOOLS_HH
 
 #include <math.h>
 #include <stdint.h>
 #include <vector>
 #include <algorithm>
+#include <CoMISo/Config/Export.hh>
 
+namespace COMISO {
 //! get the closest integer to _x, much faster than round(), can overflow!
 inline int int_round(const double _x)
 {
@@ -37,7 +38,7 @@ inline int int_round(const double _x)
 }
 
 //! a popular macro to access int_round()
-#define ROUND_MI(x) int_round(x)
+#define ROUND_MI(x) ::COMISO::int_round(x)
 
 //! get the closest 64-it integer to _x, much faster than round(), no overflow!
 inline int64_t int64_round(const double _x)
@@ -132,7 +133,50 @@ std::vector<T> make_sorted_unique(const std::vector<T>& _v)
   return v;
 }
 
+}
 
-//=============================================================================
-#endif // TOOLS_HH defined
-//=============================================================================
+#ifndef COMISO_NO_DEPRECATED
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::int_round(...) instead")]]
+inline int int_round(const double _x) { return COMISO::int_round(_x); }
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::int64_round(...) instead")]]
+inline int64_t int64_round(const double _x) { return COMISO::int64_round(_x); }
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::double_round(...) instead")]]
+inline double double_round(const double _x) { return COMISO::double_round(_x); }
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::round_residue(...) instead")]]
+inline double round_residue(const double _x) {return COMISO::round_residue(_x);}
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::is_rounded(...) instead")]]
+inline bool is_rounded(const double _x, const double _tol) {return COMISO::is_rounded(_x, _tol);}
+
+[[deprecated("Deprecated use of global namespace: Use COMISO::are_same(...) instead")]]
+inline bool are_same(const double _x, const double _y, const double _tol) { return COMISO::are_same(_x, _y, _tol);}
+
+template <typename T> 
+[[deprecated("Deprecated use of global namespace: Use COMISO::sqr(...) instead")]]
+inline T sqr(const T& _a) { return _a * _a; }
+
+// Sort list and remove duplicate elements, using provided predicates.
+template <typename T, typename LessPredicateT, typename EqualPredicateT>
+[[deprecated("Deprecated use of global namespace: Use COMISO::sort_unique(...) instead")]]
+void sort_unique(std::vector<T>& _v, const LessPredicateT& _less, const EqualPredicateT& _equal)
+{ return COMISO::sort_unique( _v, _less, _equal);}
+
+template <typename T, typename LessPredicateT>
+[[deprecated("Deprecated use of global namespace: Use COMISO::sort_unique(...) instead")]]
+void sort_unique(std::vector<T>& _v, const LessPredicateT& _less)
+{ return COMISO::sort_unique(_v, _less);}
+
+template <typename T>
+[[deprecated("Deprecated use of global namespace: Use COMISO::sort_unique(...) instead")]]
+void sort_unique(std::vector<T>& _v) { return COMISO::sort_unique(_v);}
+
+template <typename T>
+[[deprecated("Deprecated use of global namespace: Use COMISO::make_sorted_unique(...) instead")]]
+std::vector<T> make_sorted_unique(const std::vector<T>& _v)
+{ return COMISO::make_sorted_unique(_v);}
+
+#endif

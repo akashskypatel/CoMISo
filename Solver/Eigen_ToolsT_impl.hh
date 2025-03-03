@@ -577,7 +577,7 @@ template <class IntegerT>
 std::vector<int> make_new_index_map(
     const std::vector<IntegerT>& _elmn_vars, int _n_vars)
 {
-  const auto elmn_vars = make_sorted_unique(_elmn_vars);
+  const auto elmn_vars = COMISO::make_sorted_unique(_elmn_vars);
 
   std::vector<int> new_idx_map(_n_vars, -1);
 
