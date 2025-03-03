@@ -13,14 +13,6 @@ PATH=$PATH:/opt/local/bin
 export PATH
 
 OPTIONS=""
-
-if [ "$LANGUAGE" == "C++98" ]; then
-  echo "Building with C++98";
-elif [ "$LANGUAGE" == "C++11" ]; then
-  echo "Building with C++11";
-  OPTIONS="$OPTIONS -DCMAKE_CXX_FLAGS='-std=c++11' "
-fi
-
 OPTIONS="$OPTIONS -DGMM_DIR=~/sw/gmm-5.4"
 
 echo "============================="

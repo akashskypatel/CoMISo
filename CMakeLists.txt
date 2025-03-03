@@ -106,9 +106,9 @@ add_library(CoMISo
     ./NSolver/CombinedProblem.cc
     ./NSolver/ConeConstraint.cc
     ./NSolver/ConstraintTools.cc
-    ./NSolver/DOCloudCache.cc
-    ./NSolver/DOCloudJob.cc
-    ./NSolver/DOCloudSolver.cc
+    #./NSolver/DOCloudCache.cc
+    #./NSolver/DOCloudJob.cc
+    #./NSolver/DOCloudSolver.cc
     ./NSolver/FiniteElementProblem.cc
     ./NSolver/GUROBISolver.cc
     ./NSolver/GurobiHelper.cc
@@ -298,9 +298,9 @@ endif ()
 find_package (ADOLC QUIET)
 if (ADOLC_FOUND)
   set (COMISO_ADOLC_CONFIG_FILE_SETTINGS "#define COMISO_ADOLC_AVAILABLE 1" )
-  target_include_directories(CoMISo PRIVATE ${ADOLC_INCLUDE_DIR})
-  target_link_directories   (CoMISo PRIVATE ${ADOLC_LIBRARY_DIR})
-  target_link_libraries     (CoMISo PRIVATE ${ADOLC_LIBRARIES})
+  target_include_directories(CoMISo PUBLIC ${ADOLC_INCLUDE_DIR})
+  target_link_directories   (CoMISo PUBLIC ${ADOLC_LIBRARY_DIR})
+  target_link_libraries     (CoMISo PUBLIC ${ADOLC_LIBRARIES})
 else ()
   set (COMISO_ADOLC_CONFIG_FILE_SETTINGS "#define COMISO_ADOLC_AVAILABLE 0" )
   message (STATUS "CoMISo: optional dependency ADOLC not found.")
