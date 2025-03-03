@@ -26,9 +26,9 @@ NewtonSolver::
 solve(NProblemGmmInterface* _problem)
 {
   DEB_enter_func;
-#if COMISO_SUITESPARSE_AVAILABLE  
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
   converged_ = true;
-  
+
   // get problem size
   int n = _problem->n_unknowns();
 

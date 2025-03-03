@@ -24,8 +24,8 @@
 
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
-#include <CoMISo/Config/config.hh>
-#if COMISO_SUITESPARSE_AVAILABLE
+#include <CoMISo/Config/config_suitesparse.hh>
+#if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
 
 #include "UMFPACKSolver.hh"
 
@@ -243,5 +243,5 @@ bool UMFPACKSolver::solve( double * _x, double * _b)
 }
 
 //=============================================================================
-#endif // COMISO_SUITESPARSE_AVAILABLE
+#endif // COMISO_SUITESPARSE_UMFPACK_AVAILABLE
 //=============================================================================

@@ -24,7 +24,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 //=============================================================================
 
 #include "CholmodSolver.hh"
@@ -323,6 +323,11 @@ bool CholmodSolver::update_downdate_factor( const std::vector<int>&    _colptr,
                                             const std::vector<double>& _values,
                                             const bool                 _upd)
 {
+#ifndef CHOLMOD_HAS_MATRIXOPS
+    // cholmod_submatrix
+    std::cerr << "CoMISo CholmodSolver::update_downdate_factor not available, as CHOLMOD was built without MATRIXOPS feature." << std::endl;
+    return false;
+#else
     if(show_timings_) sw_.start();
 
     colptr_ = _colptr;
@@ -379,6 +384,7 @@ bool CholmodSolver::update_downdate_factor( const std::vector<int>&    _colptr,
     }
 
     return true;
+#endif
 }
 
 
@@ -442,5 +448,5 @@ show_timings()
 }
 
 //=============================================================================
-#endif // COMISO_SUITESPARSE_AVAILABLE
+#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 //=============================================================================

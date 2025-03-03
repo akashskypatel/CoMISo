@@ -25,7 +25,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 //=============================================================================
 
 
@@ -203,5 +203,5 @@ bool CholmodSolver::solve(Eigen_VectorT& _x, const Eigen_VectorT& _b)
 }
 
 //=============================================================================
-#endif // COMISO_SUITESPARSE_AVAILABLE
+#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 //=============================================================================

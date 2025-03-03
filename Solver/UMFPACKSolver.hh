@@ -34,8 +34,8 @@
 
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
-#include <CoMISo/Config/config.hh>
-#if COMISO_SUITESPARSE_AVAILABLE
+#include <CoMISo/Config/config_suitesparse.hh>
+#if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -136,7 +136,7 @@ public:
 #include "UMFPACKSolverT_impl.hh"
 #endif
 //=============================================================================
-#endif // COMISO_SUITESPARSE_AVAILABLE
+#endif // COMISO_SUITESPARSE_UMFPACK_AVAILABLE
 //=============================================================================
 #endif // COMISO_UMFPACK_SOLVER_HH defined
 //=============================================================================
