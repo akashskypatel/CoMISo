@@ -106,9 +106,9 @@ add_library(CoMISo
     ./NSolver/CombinedProblem.cc
     ./NSolver/ConeConstraint.cc
     ./NSolver/ConstraintTools.cc
-    ./NSolver/DOCloudCache.cc
-    ./NSolver/DOCloudJob.cc
-    ./NSolver/DOCloudSolver.cc
+    #./NSolver/DOCloudCache.cc
+    #./NSolver/DOCloudJob.cc
+    #./NSolver/DOCloudSolver.cc
     ./NSolver/FiniteElementProblem.cc
     ./NSolver/GUROBISolver.cc
     ./NSolver/GurobiHelper.cc
