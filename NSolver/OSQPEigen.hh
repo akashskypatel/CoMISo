@@ -145,8 +145,11 @@ public:
 //    DEB_error_if( (exitflag != 0), ("OSQP Setup failed with exit flag " << int(exitflag)) );
 //    COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
     std::cerr << "OSQP exit flag = " << int(exitflag) << std::endl;
+    std::cerr << "OSQP status_val = " << work_->info->status_val << std::endl;
+#if 0
     for(int i=0; i<100; ++i)
       std::cerr << "x[" << i << "] = " << get_x()[i] << std::endl;
+#endif
     return int(exitflag);
   }
 

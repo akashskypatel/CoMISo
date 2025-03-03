@@ -41,7 +41,7 @@
 #include <CoMISo/Config/GmmTypes.hh>
 #include <CoMISo/Utils/gmm.hh>
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 #include <cholmod.h>
 #endif
 
@@ -256,7 +256,7 @@ template<class MatrixT>
 void print_dense( const MatrixT& _A);
 
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 /// GMM to Cholmod_sparse interface
 template<class MatrixT>

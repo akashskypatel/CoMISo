@@ -82,7 +82,7 @@ public:
         use_trust_region_regularization_(true),
         solver_type_(LS_EigenLU), constant_hessian_structure_(false)
   {
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
     solver_type_ = LS_Umfpack;
 #endif
   }

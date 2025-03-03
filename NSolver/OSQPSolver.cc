@@ -182,7 +182,7 @@ void Impl::solve(
 
   // Solve Problem
   exitflag = osqp_eigen_.solve();
-  DEB_error_if(exitflag != 0, "OSQP Setup failed with exit flag " << int(exitflag));
+  DEB_error_if(exitflag != 0, "OSQP solve() failed with exit flag " << int(exitflag));
   COMISO_THROW_if(exitflag != 0, QP_OPTIMIZATION_FAILED);
 
 

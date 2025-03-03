@@ -45,7 +45,7 @@ LOW_CODE_QUALITY_SECTION_BEGIN
 #include <Eigen/Sparse>
 LOW_CODE_QUALITY_SECTION_END
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 #include <cholmod.h>
 #endif
 
@@ -351,7 +351,7 @@ void fix_var_csc_symmetric(const unsigned int _i, const ScalarT _xi,
     RealT* const _val, IntegerT* const _rows, IntegerT* const _cols,
     ScalarT* const _x, ScalarT* const _rhs);
 
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 /// Eigen to Cholmod_sparse interface
 template<class MatrixT>

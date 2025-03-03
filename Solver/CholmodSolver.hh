@@ -34,7 +34,7 @@
 
 //== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
-#if COMISO_SUITESPARSE_AVAILABLE
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 
 //== INCLUDES =================================================================
 
@@ -143,7 +143,7 @@ private:
 #include "CholmodSolverT_impl.hh"
 #endif
 //=============================================================================
-#else  // COMISO_SUITESPARSE_AVAILABLE
+#else  // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 #include<CoMISo/Solver/EigenLDLTSolver.hh>
 
 //#warning "CholmodSolver not available, fallback to EigenLDLTSolver..."
@@ -153,7 +153,7 @@ namespace COMISO
   typedef EigenLDLTSolver CholmodSolver;
 } // namespace COMISO
 
-#endif // COMISO_SUITESPARSE_AVAILABLE
+#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
 //=============================================================================
 #endif // COMISO_CHOLMOD_SOLVER_HH defined
 //=============================================================================
