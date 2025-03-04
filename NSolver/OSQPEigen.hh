@@ -17,7 +17,8 @@
 #include <CoMISo/Utils/CoMISoError.hh>
 
 #include <vector>
-#include <string>
+#include <Eigen/Sparse>
+#include <iostream>
 #include <osqp.h>
 
 #include <Base/Debug/DebUtils.hh>
@@ -176,6 +177,7 @@ public:
   }
 
   double objective_value() const { return work_->info->obj_val; }
+  long long status() const { return work_->info->status_val; }
 
   template<class SMatrixT>
   int update_objective(const SMatrixT& _P, const Eigen::VectorXd& _q)
