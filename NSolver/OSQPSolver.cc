@@ -150,7 +150,7 @@ public:
     osqp_eigen_.settings().eps_abs = 1e-5;      // absolute convergence tolerance
     osqp_eigen_.settings().eps_rel = 1e-5;      // relative convergence tolerance
     osqp_eigen_.settings().eps_prim_inf = 1e-6; // primal infeasibility tolerance
-    osqp_eigen_.settings().eps_dual_inf = 1.;   // dual infeasibility tolerance
+    osqp_eigen_.settings().eps_dual_inf = 1e-8;   // dual infeasibility tolerance
     // osqp_eigen_.settings().linsys_solver = MKL_PARDISO_SOLVER;
   }
 
