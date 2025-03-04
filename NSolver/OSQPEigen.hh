@@ -116,9 +116,9 @@ public:
     if(work_ != nullptr)
       osqp_cleanup(work_);
     if(data_.P != nullptr)
-      delete data_.P;
+      c_free(data_.P);
     if(data_.A != nullptr)
-      delete data_.A;
+      c_free(data_.A);
 
     data_.P = create_osqp_csc(P_upper_, P_v, P_i, P_c);
     data_.A = create_osqp_csc(A_, A_v, A_i, A_c);
