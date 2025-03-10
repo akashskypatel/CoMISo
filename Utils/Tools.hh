@@ -74,7 +74,7 @@ inline double double_round(const double _x) { return double(int64_round(_x)); }
 //! get the residual after rounding
 inline double round_residue(const double _x)
 {
-  return fabs(double_round(_x) - _x);
+  return fabs(COMISO::double_round(_x) - _x);
 }
 
 //! get if _x is rounded within _tol
