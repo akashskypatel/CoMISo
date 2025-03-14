@@ -317,6 +317,9 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
   // allow only steps larger than eps_ls_ in line search
   const int max_iter_ls   = int ( std::log(eps_ls_)/std::log(beta_ls_));
 
+  // initialize mu for merit-function based line search
+  double mu_merit = 0.0;
+
   // initialize vectors of unknowns
   VectorD x(n);
   _problem->initial_x(x.data());
@@ -392,36 +395,63 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
       // setup preconditioner W = (|diag(H)|)
       // and Wi = (|diag(H)|)^-1
 
-      double minW = DBL_MAX;
-      double maxW = 0.0;
+//      double minW = DBL_MAX;
+//      double maxW = 0.0;
+
 
       for(int j=0; j<n ;++j)
       {
-        W[j]  = std::abs(H.coeffRef(j,j));
+        double d = std::abs(H.coeffRef(j,j));
+
+        if(!std::isfinite(d))
+        {
+          d = 1.0;
+          DEB_line_if(!silent_, 2, "ERROR: diagonal entry of Hessian is not finite ---> ignore for preconditioner");
+        }
+
+        // clamp preconditioner range
+        if( d < min_preconditioner_value_)
+        {
+//          DEB_line_if(!silent_, 2, "iter = " << iter << ", increase preconditioner value from " << d << " to " << min_preconditioner_value_);
+          d = min_preconditioner_value_;
+        }
+
+        if( d > max_preconditioner_value_)
+        {
+//          DEB_line_if(!silent_, 2, "iter = " << iter << ", decrease preconditioner value from " << d << " to " << max_preconditioner_value_);
+          d = max_preconditioner_value_;
+        }
+
+        W[j]  = d;
         Wi[j] = 1.0/W[j];
 
-        minW = std::min(minW,W[j]);
-        maxW = std::max(maxW,W[j]);
+//        minW = std::min(minW,W[j]);
+//        maxW = std::max(maxW,W[j]);
 
 //          // no preconditioner
 //          W[j]  = 1.0;
 //          Wi[j] = 1.0;
       }
 
-      // make sure that the preconditioner is numerically safe
-      if(maxW == 0.0 || maxW > max_preconditioner_range_*minW)
-      {
-        double minW_new = maxW/max_preconditioner_range_;
-        DEB_line_if(!silent_, 2,  "iter = " << iter << ", correct preconditioner range [" << minW << ", " << maxW << "] to [" << minW_new << ", " << maxW << "]")
-
-        for(int j=0; j<n ;++j)
-          if(W[j] < minW_new)
-          {
-            W[j]  = minW_new;
-            Wi[j] = 1.0/W[j];
-          }
-      }
-
+      // deactivate old preconditioner-update
+//      if(0)
+//      {
+//        // make sure that the preconditioner is numerically safe
+//        if (maxW == 0.0 || maxW > max_preconditioner_range_ * minW)
+//        {
+//          double minW_new = maxW / max_preconditioner_range_;
+//          DEB_line_if(!silent_, 2,
+//                      "iter = " << iter << ", correct preconditioner range [" << minW << ", " << maxW << "] to ["
+//                                << minW_new << ", " << maxW << "]")
+//
+//          for (int j = 0; j < n; ++j)
+//            if (W[j] < minW_new)
+//            {
+//              W[j] = minW_new;
+//              Wi[j] = 1.0 / W[j];
+//            }
+//        }
+//      }
       // prepare constraint projection
       if(iter == 0)
       DEB_line_if(!silent_, 2, "prepare constraint projection ..." );
@@ -462,7 +492,7 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
     // perform feasiblity step?
     status_.feasibility_step_productive = false;
-    if( status_.constraint_violation_inf_norm >= eps_constraints_violation_)
+    if( status_.constraint_violation_inf_norm >= eps_constraints_violation_desirable_)
     {
 //        // optimize constraint violation in Hessian-diagonal norm
 //        v  = ldlt.solve(_b-_A*x);
@@ -478,50 +508,100 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
 
       // debug
 //        std::cerr << "debug: constraint violation after full projection = " << (_A*(x+dz)-_b).norm() << std::endl;
+
       // truncate feasiblity step
       double t_max = std::min(1.0,
                               max_infeasibility_step_safety_factor_ * _problem->max_feasible_step(x.data(), dz.data()));
       //      std::cerr << "debug: t_max = " << t_max << std::endl;
 
-      // TODO: perform line search for feasibility step
-      // new x
-      xn = x + t_max*dz;
-
-      double constraint_violation_new = (_A*xn-_b).lpNorm<Eigen::Infinity>();
-
-      // is step productive? (can be numerically non-productive)
-      if(constraint_violation_new < status_.constraint_violation_inf_norm)
+      if(line_search_feasibility_step_)
       {
-        DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step reducing constraint violation "
-                                           << status_.constraint_violation_inf_norm << " ---> " << constraint_violation_new << "  (t=" << t_max << ")");
-
-        // update objective
-        double fx_new = _problem->eval_f(xn.data());
-        if(std::isfinite(fx_new)) // valid objective function?
+        double fxn = status_.fx;
+        double t = backtracking_line_search_infeasible_merit_l1(_problem, H, _A, _b, x, g, dz,
+                                                                xn, fxn, mu_merit,
+                                                                t_max, max_iter_ls);
+        if (t > 0.0)
         {
-          // update
-          xn.swap(x);
-          status_.feasibility_step_productive = true;
-          status_.constraint_violation_inf_norm = constraint_violation_new;
-          status_.fx = fx_new;
 
-          // feasible solution found?
-          if(status_.constraint_violation_inf_norm < eps_constraints_violation_)
-            status_.feasible = true;
+          // line search alrady computes xn
+          // xn = x + t*dz;
 
-          // update gradient
-          _problem->eval_gradient(x.data(), g.data());
+          double constraint_violation_new = (_A * xn - _b).lpNorm<Eigen::Infinity>();
+
+          DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step (merit-based) reducing constraint violation "
+                                             << status_.constraint_violation_inf_norm << " ---> "
+                                             << constraint_violation_new << "  (t=" << t_max << ")");
+
+          // update objective
+          double fx_new = _problem->eval_f(xn.data());
+          if (std::isfinite(fx_new)) // valid objective function?
+          {
+            // update
+            xn.swap(x);
+            status_.feasibility_step_productive = true;
+            status_.constraint_violation_inf_norm = constraint_violation_new;
+            status_.fx = fx_new;
+
+            // feasible solution found?
+            if (status_.constraint_violation_inf_norm < eps_constraints_violation_)
+              status_.feasible = true;
+
+            // update gradient
+            _problem->eval_gradient(x.data(), g.data());
+          }
+          else
+          {
+            DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step line search truncated to 0.0");
+            status_.feasibility_step_productive = false;
+          }
+        }
+      }
+      else // do not perform line search ---> old option
+      {
+        // new x
+        xn = x + t_max * dz;
+
+        double constraint_violation_new = (_A * xn - _b).lpNorm<Eigen::Infinity>();
+
+        // is step productive? (can be numerically non-productive)
+        if (constraint_violation_new < status_.constraint_violation_inf_norm)
+        {
+          DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step reducing constraint violation "
+                                             << status_.constraint_violation_inf_norm << " ---> "
+                                             << constraint_violation_new << "  (t=" << t_max << ")");
+
+          // update objective
+          double fx_new = _problem->eval_f(xn.data());
+          if (std::isfinite(fx_new)) // valid objective function?
+          {
+            // update
+            xn.swap(x);
+            status_.feasibility_step_productive = true;
+            status_.constraint_violation_inf_norm = constraint_violation_new;
+            status_.fx = fx_new;
+
+            // feasible solution found?
+            if (status_.constraint_violation_inf_norm < eps_constraints_violation_)
+              status_.feasible = true;
+
+            // update gradient
+            _problem->eval_gradient(x.data(), g.data());
+          }
+          else
+          {
+            DEB_line_if(!silent_, 2, "iter = " << iter
+                                               << ", feasibility step resulted in non-finite objective value --> revert to previous x");
+          }
         }
         else
         {
-          DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step resulted in non-finite objective value --> revert to previous x");
+          DEB_line_if(!silent_, 2,
+                      "iter = " << iter << ", feasibility step was not productive --> revert to previous x");
         }
       }
-      else
-      {
-        DEB_line_if(!silent_, 2, "iter = " << iter << ", feasibility step was not productive --> revert to previous x");
-      }
     }
+
+
     // ---------------------------
     // Projected-Preconditioned-CG
 
@@ -697,6 +777,10 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
           //        xz = Z.transpose()*(x-x0);
         }
       }
+      else
+      {
+        DEB_line_if(!silent_, 2, "Warning: dx is not a descent direction, gdx = " << gdx);
+      }
 
       // line-search not productive?
       if (status_.line_search_t == 0.0)
@@ -865,6 +949,76 @@ solve_projected_normal_equation(NProblemInterface* _problem, std::vector<NConstr
 
 //-----------------------------------------------------------------------------
 
+
+//-----------------------------------------------------------------------------
+
+
+double
+TruncatedNewtonPCG::
+backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const SMatrixD& _H,
+                                             const SMatrixD& _A, const VectorD& _b,
+                                             const VectorD& _x, const VectorD& _g, VectorD& _dx,
+                                             VectorD& _x_new, double& _fx, double& _mu_merit,
+                                             const double _t_start, const int _max_ls_iters)
+{
+  DEB_enter_func;
+  size_t n = _x.size();
+
+  // update mu
+  double res_primal_1 = (_A*_x-_b).template lpNorm<1>();
+  double gdx          = _g.transpose()*_dx;
+  double dxHdx        = _dx.transpose()*_H*_dx;
+  double mu_new = 1.2*(gdx+0.5*std::max(0.0,dxHdx))/((1.0-rho_merit_)*res_primal_1);
+  _mu_merit = std::max(mu_new, _mu_merit);
+
+  // current step size
+  double t = _t_start;
+
+  // merit function and directional derivative for t=0
+  double merit_0  = _fx + _mu_merit*res_primal_1;
+//  double merit_0  = _problem->eval_f(_x.data()) + _mu_merit*res_primal_1;
+  double D_merit_0 = gdx - _mu_merit*res_primal_1;
+
+//  std::cerr << "mu_merit=" << mu_merit_ << std::endl;
+//  std::cerr << "D_merit_0=" << D_merit_0 << std::endl;
+
+  double fx(0.0);
+
+  // backtracking (stable in case of NAN and with max iterations)
+  for(int i=0; i<_max_ls_iters; ++i)
+  {
+    // current update of x, nue and g
+    _x_new = _x + _dx*t;
+    fx = _problem->eval_f(_x_new.data());
+    // check if update is inside domain
+    if(std::isfinite(fx))
+    {
+      double merit_t = fx + _mu_merit*(_A*_x_new-_b).template lpNorm<1>();
+
+      //     std::cerr << "t=" << t << ", merit(t)=" << merit_t << ", merit(0)+alpha*t*Dmerit(0)=" << merit_0 + alpha_ls_*t*D_merit_0 << std::endl;
+
+      // sufficient decrease in residual?
+      if (merit_t <= merit_0 + alpha_ls_*t*D_merit_0)
+      {
+        // succesfull line search
+        _fx = fx;
+        return t;
+      }
+    }
+    //   else std::cerr << "t=" << t << ", merit(t)=" << std::numeric_limits<double>::infinity() << std::endl;
+
+    // shrink with factor beta
+    t *= beta_ls_;
+  }
+
+  // restore
+  _x_new = _x;
+
+  DEB_warning(1, "line search could not find a valid step");
+  return 0.0;
+}
+
+// below are experimental versions, which are currently not used anymore
 
 //  // solve with linear constraints
 //  // Warning: so far only feasible starting points with (_A*_problem->initial_x() == b) are supported!

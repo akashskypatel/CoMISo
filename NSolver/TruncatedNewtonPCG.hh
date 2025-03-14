@@ -155,6 +155,8 @@ public:
 
   void set_eps_constraints_violation(double eps){ eps_constraints_violation_ = eps; }
 
+  void set_eps_constraints_violation_desirable(double eps){ eps_constraints_violation_desirable_ = eps; }
+
   double reduced_gradient_norm() { return status_.projected_gradient_norm;};
 
   bool& always_update_preconditioner() { return always_update_preconditioner_;};
@@ -179,15 +181,28 @@ public:
   double& hessian_min_acceptable_alpha() {return hessian_min_acceptable_alpha_;}
   double& hessian_min_acceptable_rel_objective_decrease() {return hessian_min_acceptable_rel_objective_decrease_;}
 
+  [[deprecated("Not used anymore, replaced by min_preconditioner_value and max_preconditioner_value")]]
   double& max_preconditioner_range() { return max_preconditioner_range_;}
+
+  double& min_preconditioner_value() { return min_preconditioner_value_;}
+  double& max_preconditioner_value() { return max_preconditioner_value_;}
 
   double& alpha_ls() {return alpha_ls_;}
   double& beta_ls()  {return beta_ls_;}
   size_t n_iterations_used() const {return n_iterations_used_;}
 
+  bool line_search_feasibility_step() {return line_search_feasibility_step_;}
+
   bool& compute_dual_variables() {return compute_dual_variables_;}
 
   VectorD& nue() {return nue_;}
+
+  double backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const SMatrixD& _H,
+                                               const SMatrixD& _A, const VectorD& _b,
+                                               const VectorD& _x, const VectorD& _g, VectorD& _dz,
+                                               VectorD& _x_new, double& _fx, double& _mu_merit,
+                                               const double _t_start, const int _max_ls_iters);
+
 
 private:
 
@@ -201,9 +216,23 @@ private:
   double alpha_ls_      = 0.1;
   double beta_ls_       = 0.8;
 
-  double eps_constraints_violation_ = 1e-6;
+  // parameters of L1 Merit function line search
+  bool   line_search_feasibility_step_ = true;
+  double rho_merit_     = 0.5;
 
+  // max inf-norm constraint violation allowed for feasibility
+  double eps_constraints_violation_ = 1e-6;
+  // max inf-norm constraint violation above which feasibility steps are still performed
+  double eps_constraints_violation_desirable_ = 1e-9;
+
+  // deprecated parameter
   double max_preconditioner_range_ = 1e9;
+
+  // set limits for preconditioner values
+//  double min_preconditioner_value_ = 1e-12;
+//  double max_preconditioner_value_ = 1e12;
+  double min_preconditioner_value_ = 1e-6;
+  double max_preconditioner_value_ = 1e6;
 
   double max_feasible_step_safety_factor_ = 0.5;
   double max_infeasibility_step_safety_factor_ = 0.6;
@@ -216,7 +245,7 @@ private:
   // parameters for adaptive hessian update
   int    hessian_max_skips_ = 10; // maximum number of skipped hessian updates
   double hessian_min_acceptable_alpha_ = 0.1; // minimal acceptable line-search step length to skip hessian update
-  double hessian_min_acceptable_rel_objective_decrease_ = 0.1; // minimal acceptable relative objectitve descrease to skip hessian update
+  double hessian_min_acceptable_rel_objective_decrease_ = 0.1; // minimal acceptable relative objective descrease to skip hessian update
 
   double adaptive_tolerance_modifier_ = 1.0;
 
