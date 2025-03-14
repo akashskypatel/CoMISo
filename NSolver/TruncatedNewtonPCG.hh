@@ -199,8 +199,10 @@ public:
 
   double backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const SMatrixD& _H,
                                                const SMatrixD& _A, const VectorD& _b,
-                                               const VectorD& _x, const VectorD& _g, VectorD& _dz,
-                                               VectorD& _x_new, double& _fx, double& _mu_merit,
+                                               const VectorD& _x, const double& _fx,
+                                               const VectorD& _g, VectorD& _dx,
+                                               VectorD& _x_new, double& _fx_new,
+                                               double& _mu_merit,
                                                const double _t_start, const int _max_ls_iters);
 
 

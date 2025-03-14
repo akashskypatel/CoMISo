@@ -517,7 +517,8 @@ solve( NProblemInterface* _problem, const SMatrixD& _A, const VectorD& _b )
       if(line_search_feasibility_step_)
       {
         double fxn = status_.fx;
-        double t = backtracking_line_search_infeasible_merit_l1(_problem, H, _A, _b, x, g, dz,
+        double t = backtracking_line_search_infeasible_merit_l1(_problem, H, _A, _b, x, status_.fx,
+                                                                g, dz,
                                                                 xn, fxn, mu_merit,
                                                                 t_max, max_iter_ls);
         if (t > 0.0)
@@ -957,8 +958,10 @@ double
 TruncatedNewtonPCG::
 backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const SMatrixD& _H,
                                              const SMatrixD& _A, const VectorD& _b,
-                                             const VectorD& _x, const VectorD& _g, VectorD& _dx,
-                                             VectorD& _x_new, double& _fx, double& _mu_merit,
+                                             const VectorD& _x, const double& _fx,
+                                             const VectorD& _g, VectorD& _dx,
+                                             VectorD& _x_new, double& _fx_new,
+                                             double& _mu_merit,
                                              const double _t_start, const int _max_ls_iters)
 {
   DEB_enter_func;
@@ -1001,7 +1004,7 @@ backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const 
       if (merit_t <= merit_0 + alpha_ls_*t*D_merit_0)
       {
         // succesfull line search
-        _fx = fx;
+        _fx_new = fx;
         return t;
       }
     }
