@@ -95,6 +95,16 @@ public:
     double line_search_t_max_feasible = 0.0;
     int    line_search_iterations = 0;
 
+    // line search parameter of last step in [0,1]
+    double line_search_t_inf = 0.0;
+    double line_search_t_inf_max_feasible = 0.0;
+    int    line_search_inf_iterations = 0;
+
+    // number of refinement iters in current Newton iter
+    int refinement_iters = 0;
+    // total number of iterative refinement iterations
+    int refinement_iters_total = 0;
+
     // ConjugateGradient data
     bool cg_converged = false;
     int  cg_iterations = 0;
@@ -105,6 +115,8 @@ public:
 
     // total number of performed Newton iterations
     int n_newton_iters = 0;
+    // total number of negative curvature iterations
+    int n_negative_curvature_iters = 0;
   };
 
 
@@ -197,13 +209,31 @@ public:
 
   VectorD& nue() {return nue_;}
 
+  double backtracking_line_search(NProblemInterface* _problem,
+                           const VectorD& _x, const double _fx,
+                           const VectorD& _dx,
+                           const double _gdx, const double _t_max, const int _max_iter_ls,
+                           VectorD& _x_new, double& _fx_new, int& _iter_ls) const;
+
+  double line_search_negative_curvature( NProblemInterface* _problem,
+                                         const VectorD& _x, const double _fx,
+                                         const VectorD& _dx,
+                                         const double _t_max, const int _max_iter_ls,
+                                         VectorD& _x_new, double& _fx_new, int& _iter_ls) const;
+
+
   double backtracking_line_search_infeasible_merit_l1(NProblemInterface* _problem, const SMatrixD& _H,
                                                const SMatrixD& _A, const VectorD& _b,
                                                const VectorD& _x, const double& _fx,
                                                const VectorD& _g, VectorD& _dx,
                                                VectorD& _x_new, double& _fx_new,
                                                double& _mu_merit,
-                                               const double _t_start, const int _max_ls_iters);
+                                               const double _t_start, const int _max_ls_iters, int& _n_iters) const;
+
+  double max_abs_cos_angle(const SMatrixD& _A, const VectorD& _A_inv_row_norm, const VectorD& _v) const;
+
+  void print_iteration_data(const OptimizerStatus& _status) const;
+  void print_summary(const OptimizerStatus& _status) const;
 
 
 private:
@@ -252,6 +282,13 @@ private:
   double adaptive_tolerance_modifier_ = 1.0;
 
   bool compute_dual_variables_ = false;
+
+  // iterative refinement parameters
+  bool enable_iterative_refinement_ = true;
+  int  max_iterative_refinement_iters_ = 5;
+  double iterative_refinement_cos_angle_threshold_ = 1e-12;
+  // perform additional projection for Newton search direction (should not be necessary when iterative refinement is used)
+  bool project_dx_before_update_ = false;
 
   // dual variables
   VectorD nue_;
