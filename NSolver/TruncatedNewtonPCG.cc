@@ -13,6 +13,7 @@
 
 #include <ios>
 #include <iomanip>
+#include <cassert>
 
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/LinearConstraintConverter.hh>
