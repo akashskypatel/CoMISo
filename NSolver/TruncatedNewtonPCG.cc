@@ -412,7 +412,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
   // link iter to status_.n_newton_iters
   int& iter = status_.n_newton_iters;
-  for (iter=1; iter < max_iters_; ++iter)
+  for (iter=1; iter <= max_iters_; ++iter)
   {
     // initialize
     status_.refinement_iters = 0;
