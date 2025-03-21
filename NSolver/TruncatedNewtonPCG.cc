@@ -14,6 +14,7 @@
 #include <ios>
 #include <iomanip>
 #include <cassert>
+#include <sstream>
 
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/LinearConstraintConverter.hh>
@@ -1228,10 +1229,11 @@ print_iteration_data(const OptimizerStatus& _status) const
 {
   DEB_enter_func;
 
-  if(_status.n_newton_iters % 10 == 0)
+  std::stringstream ss_out;
+
+  if(!silent_ && _status.n_newton_iters % 10 == 0)
   {
-    // TODO: print caption
-    std::cerr << std::left << std::setw(6) << "iter" << " | "
+    ss_out    << std::left << std::setw(6) << "iter" << " | "
               << std::left << std::setw(11) << "f(x)" << " | "
               << std::left << std::setw(11) << "||Ax-b||" << " | "
               << std::left << std::setw(8) << "||g_p||" << " | "
@@ -1258,7 +1260,7 @@ print_iteration_data(const OptimizerStatus& _status) const
 
     if(_status.n_newton_iters == 0)
     {
-      std::cerr << std::setprecision(4) << std::scientific
+      ss_out    << std::setprecision(4) << std::scientific
                 << std::left << std::setw(2) << feasible
                 << std::left << std::setw(4) << _status.n_newton_iters << " | "
                 << std::left << std::setw(11) << _status.fx << " | "
@@ -1275,12 +1277,11 @@ print_iteration_data(const OptimizerStatus& _status) const
                 << std::left << std::setw(3) << "-" << " | "
                 << std::left << std::setw(1) << "-" << " | "
                 << std::left << std::setw(1) << "-" << " | "
-                << std::left << std::setw(1) << "-" << " | "
-                << std::endl;
+                << std::left << std::setw(1) << "-" << " | ";
     }
     else
     {
-      std::cerr << std::setprecision(4) << std::scientific
+      ss_out    << std::setprecision(4) << std::scientific
                 << std::left << std::setw(2) << feasible
                 << std::left << std::setw(4) << _status.n_newton_iters << " | "
                 << std::left << std::setw(11) << _status.fx << " | "
@@ -1298,51 +1299,11 @@ print_iteration_data(const OptimizerStatus& _status) const
                 << std::left << std::setw(3) << _status.refinement_iters << " | "
                 << std::left << std::setw(1) << int(_status.cg_converged) << " | "
                 << std::left << std::setw(1) << int(_status.negative_curvature_step) << " | "
-                << std::left << std::setw(1) << int(_status.hessian_updated) << " | "
-                << std::endl;
+                << std::left << std::setw(1) << int(_status.hessian_updated) << " | ";
     }
   }
 
-  //      DEB_line_if(!silent_, 4,
-//                  "iter = " << iter << ", f(x) = " << status_.fx
-//                            << ", feasible = " << int(status_.feasible)
-//                            << ", t = " << status_.line_search_t
-//                            << " (tmax=" << status_.line_search_t_max_feasible << "), " << "#ls = "
-//                            << status_.line_search_iterations
-//                            << ", constraint_violation = " << status_.constraint_violation_inf_norm
-//                            << ", |reduced grad| = " << status_.projected_gradient_norm
-//                            << ", " << "PCG_tol = " << eta
-//                            << ", " << "PCG_iters = " << status_.cg_iterations
-//                            << ", " << "PCG_converged = " << int(status_.cg_converged)
-//                            << ", " << "Newton decrement = " << status_.newton_decrement
-//                            << ", " << "negative curvature step = " << int(status_.negative_curvature_step)
-//                            << ", " << "warmstart = " << int(warmstart)
-//                            << ", " << "hessian_update = " << int(status_.hessian_updated)
-//                            << ", " << "rel_obj_decrease = " << rel_objective_decrease
-//      );
-
-
-
-//  DEB_line_if(!silent_, 2, "" << std::setprecision(4) << std::scientific
-//                              << std::left << std::setw(4) << _status.n_newton_iters << " | "
-//                              << std::left << std::setw(6) << _status.fx             << " | ");
-
-
-//  DEB_line_if(!silent_, 2, "" << std::setprecision(4) << std::scientific
-//                           << std::left << std::setw(4) << _status.n_newton_iters << " | "
-//                           << std::left << std::setw(6) << _status.fx             << " | ");
-
-//  DEB_line_if(!silent_, 2, "------------------ TruncatedNewtonSummary BEGIN ------------------");
-//  DEB_line_if(!silent_, 2, "Converged to local optimum = " << int(_status.converged_to_local_optimum()));
-//  DEB_line_if(!silent_, 2, "objective f(x)   = " << _status.fx);
-//  DEB_line_if(!silent_, 2, "||Ax-b||_inf     = " << _status.constraint_violation_inf_norm);
-//  DEB_line_if(!silent_, 2, "||proj(grad)||   = " << status_.projected_gradient_norm);
-//  DEB_line_if(!silent_, 2, "Newton decrement = " << status_.newton_decrement);
-//  DEB_line_if(!silent_, 2, "#iters Newton    = " << status_.n_newton_iters);
-//  DEB_line_if(!silent_, 2, "#iters PCG       = " << status_.cg_iterations_total);
-//  DEB_line_if(!silent_, 2, "#iters Neg. curv.= " << status_.n_negative_curvature_iters);
-//  DEB_line_if(!silent_, 2, "#iters refinement= " << status_.refinement_iters_total);
-//  DEB_line_if(!silent_, 2, "------------------ TruncatedNewtonSummary END ------------------");
+  DEB_line_if(!silent_, 2, ss_out.str());
 }
 
 
