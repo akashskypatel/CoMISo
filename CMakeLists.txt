@@ -65,7 +65,7 @@ set(COMISO_ENABLE_TAUCS   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo wit
 set(COMISO_ENABLE_BOOST   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with Boost (if found)" )
 set(COMISO_ENABLE_TINYAD  ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Build CoMISo with TinyAD (if found)" )
 set(COMISO_ENABLE_SUITESPARSE_DEFAULT   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Default for COMISO_ENABLE_SUITESPARSE_* - only has an effect on first cmake run!" )
-
+set(COMISO_ENABLE_OSQP  ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Build CoMISo with OSQP (if found)" )
 
 set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 
@@ -653,19 +653,24 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
   target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
 endif()
 
-if (NOT TARGET osqp::osqpstatic)
-  find_package(osqp CONFIG)
-endif()
-if (TARGET osqp::osqpstatic)
-  message("OSQP found")
-  target_link_libraries (CoMISo PUBLIC osqp::osqpstatic)
-  # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
-  # So we need to do it here.
-  #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
-  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
+if(COMISO_ENABLE_OSQP)
+    if (NOT TARGET osqp::osqpstatic)
+        find_package(osqp CONFIG)
+    endif()
+    if (TARGET osqp::osqpstatic)
+        message("OSQP found")
+        target_link_libraries (CoMISo PUBLIC osqp::osqpstatic)
+        # I think osqp should link with CMAKE_DL_LIBS, but it doesn't.
+        # So we need to do it here.
+        #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
+        set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
+    else()
+        message (STATUS "CoMISo: optional dependency OSQP not found.")
+        set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
+    endif()
 else()
-    message (STATUS "CoMISo: optional dependency OSQP not found.")
-  set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
+    message (STATUS "CoMISo: Building without OSQP.")
+    set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
 endif()
 
 set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
