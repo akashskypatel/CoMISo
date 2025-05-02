@@ -40,6 +40,7 @@
 //=============================================================================
 
 #include <Eigen/Dense>
+#include <Base/Debug/DebOut.hh>
 #include <cassert>
 
 
@@ -216,6 +217,7 @@ public:
 
   bool first_root_of_control_polygon(double& _t_root)
   {
+    DEB_enter_func;
     for(Index i=1; i<=DIMENSION; ++i)
     {
       // check segment [(i-1)/n, i/n]
@@ -225,7 +227,7 @@ public:
       // catch numerical problems
       if(!std::isfinite(p))
       {
-        std::cerr << "Warning: first_root_of_control_polygon observed numerical issues --- c_[i-1]*c_[i] = " << p << std::endl;
+        DEB_warning(2, "Warning: first_root_of_control_polygon observed numerical issues --- c_[i-1]*c_[i] = " << p);
         return false;
       }
 
