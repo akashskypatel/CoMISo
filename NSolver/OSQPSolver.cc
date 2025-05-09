@@ -144,8 +144,13 @@ public:
   {
     osqp_eigen_.settings().alpha = 1.0; // this value works better than the default
     osqp_eigen_.settings().max_iter = 10000;
+#if COMISO_OSQP_NEW_API
+    osqp_eigen_.settings().warm_starting = true;
+    osqp_eigen_.settings().polishing = 1;
+#else
     osqp_eigen_.settings().warm_start = true;
     osqp_eigen_.settings().polish = 1;
+#endif
     osqp_eigen_.settings().polish_refine_iter = 5;
     osqp_eigen_.settings().eps_abs = 1e-5;      // absolute convergence tolerance
     osqp_eigen_.settings().eps_rel = 1e-5;      // relative convergence tolerance

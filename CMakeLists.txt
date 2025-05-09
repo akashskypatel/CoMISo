@@ -67,6 +67,8 @@ set(COMISO_ENABLE_TINYAD  ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Build CoMISo wi
 set(COMISO_ENABLE_SUITESPARSE_DEFAULT   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Default for COMISO_ENABLE_SUITESPARSE_* - only has an effect on first cmake run!" )
 set(COMISO_ENABLE_OSQP  ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Build CoMISo with OSQP (if found)" )
 
+set(COMISO_OSQP_PRERELEASE_API  ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Use pre-1.0 API of OSQP (DEPRECATED)" )
+
 set (COMISO_ENABLE_DEBUG_OUTPUT TRUE CACHE BOOL "Enable CoMISo Debug Output")
 
 ### Deprecated aliases:
@@ -664,10 +666,17 @@ if(COMISO_ENABLE_OSQP)
         # So we need to do it here.
         #target_link_libraries(CoMISo PRIVATE ${CMAKE_DL_LIBS})
         set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 1" )
+        if (COMISO_OSQP_PRERELEASE_API)
+            string(APPEND COMISO_OSQP_CONFIG_FILE_SETTINGS "\n#define COMISO_OSQP_NEW_API 0")
+        else()
+            string(APPEND COMISO_OSQP_CONFIG_FILE_SETTINGS "\n#define COMISO_OSQP_NEW_API 1")
+        endif()
+
     else()
         message (STATUS "CoMISo: optional dependency OSQP not found.")
         set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
     endif()
+
 else()
     message (STATUS "CoMISo: Building without OSQP.")
     set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )

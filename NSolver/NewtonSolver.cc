@@ -996,10 +996,16 @@ double NewtonSolver::determine_spd_regularization(const SMatrixD& _A, const doub
 
 int NewtonSolver::setup_osqp(const SMatrixD& _H, const VectorD& _g, const SMatrixD& _A, const VectorD& _b)
 {
+#if COMISO_OSQP_NEW_API
+    // we now have these options:
+    //osqp_eigen_.settings().linsys_solver = OSQP_DIRECT_SOLVER;
+    //osqp_eigen_.settings().linsys_solver = OSQP_INDIRECT_SOLVER;
+#else
   if(solver_type_ == LS_OSQP_DIRECT)
     osqp_eigen_.settings().linsys_solver = QDLDL_SOLVER;
   if(solver_type_ == LS_OSQP_MKL)
     osqp_eigen_.settings().linsys_solver = MKL_PARDISO_SOLVER;
+#endif
 
   return (osqp_eigen_.setup(_H, _g, _A, _b, _b) == 0);
 }
