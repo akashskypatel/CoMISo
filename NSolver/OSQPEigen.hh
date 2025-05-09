@@ -1,36 +1,39 @@
-//=============================================================================
-//
-//  CLASS OSQPSolver
-//
-//=============================================================================
+#pragma once
 
-#ifndef COMISO_OSQPEIGEN_HH
-#define COMISO_OSQPEIGEN_HH
-
-//== COMPILE-TIME PACKAGE REQUIREMENTS ========================================
 #include <CoMISo/Config/config.hh>
 #if COMISO_OSQP_AVAILABLE
-
-//== INCLUDES =================================================================
 
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Utils/CoMISoError.hh>
 
+#include <iostream>
 #include <vector>
 #include <Eigen/Sparse>
-#include <iostream>
 #include <osqp.h>
 
 #include <Base/Debug/DebUtils.hh>
 #include <Base/Debug/DebOut.hh>
 #include <Base/Debug/DebTime.hh>
 
-//== FORWARDDECLARATIONS ======================================================
-
-//== NAMESPACES ===============================================================
 
 namespace COMISO
 {
+
+#if COMISO_OSQP_NEW_API
+    using c_int = OSQPInt;
+    using c_float = OSQPFloat;
+    struct OSQPData {
+        ~OSQPData() {
+        }
+        std::unique_ptr<OSQPCscMatrix> P;
+        const OSQPFloat*     q = nullptr;
+        std::unique_ptr<OSQPCscMatrix> A;
+        const OSQPFloat*     l = nullptr;
+        const OSQPFloat*     u = nullptr;
+        OSQPInt              m;
+        OSQPInt              n;
+    };
+#endif
 
 //== CLASS DEFINITION =========================================================
 
@@ -48,8 +51,13 @@ public:
     osqp_set_default_settings(&settings_);
     settings_.alpha = 1.0; // this value works better than the default
     settings_.max_iter = 10000;
+#if COMISO_OSQP_NEW_API
+    settings_.warm_starting = 1;
+    settings_.polishing = 1;
+#else
     settings_.warm_start = true;
     settings_.polish = 1;
+#endif
     settings_.polish_refine_iter = 5;
     settings_.eps_abs = 1e-5;      // absolute convergence tolerance
     settings_.eps_rel = 1e-5;      // relative convergence tolerance
@@ -72,9 +80,11 @@ public:
   ~OSQPEigen()
   {
     osqp_cleanup(work_);
+#if !COMISO_OSQP_NEW_API
     // c_free is the OSQP-provided free() wrapper:
     c_free(data_.P);
     c_free(data_.A);
+#endif
   }
 
   template<class SMatrixT, class SMatrixT2>
@@ -112,13 +122,14 @@ public:
       upper_bnd_[i] = _upper_bnd[i];
     }
 
-    // free old
-    if(work_ != nullptr)
-      osqp_cleanup(work_);
+    osqp_cleanup(work_); work_ = nullptr;
+
+#if !COMISO_OSQP_NEW_API
     if(data_.P != nullptr)
       c_free(data_.P);
     if(data_.A != nullptr)
       c_free(data_.A);
+#endif
 
     data_.P = create_osqp_csc(P_upper_, P_v, P_i, P_c);
     data_.A = create_osqp_csc(A_, A_v, A_i, A_c);
@@ -126,7 +137,14 @@ public:
     data_.l = lower_bnd_.data(); // dense array for lower bound (size m)
     data_.u = upper_bnd_.data(); // dense array for upper bound (size m)
 
+#if COMISO_OSQP_NEW_API
+    auto exitflag = osqp_setup(&work_,
+            data_.P.get(),
+            data_.q, data_.A.get(), data_.l, data_.u, data_.m, data_.n,
+            &settings_); // Setup workspace
+#else
     auto exitflag = osqp_setup(&work_, &data_, &settings_); // Setup workspace
+#endif
 //    DEB_error_if( (exitflag != 0), ("OSQP Setup failed with exit flag " << int(exitflag)) );
 //    COMISO_THROW_if(exitflag != 0, QP_INITIALIZATION_FAILED);
     return int(exitflag);
@@ -166,14 +184,16 @@ public:
 
   void get_x( double* _x) const
   {
+    const auto &x = get_x();
     for(unsigned int i=0; i<q_.size(); ++i)
-      _x[i] = work_->solution->x[i];
+      _x[i] = x[i];
   }
 
   void get_y( double* _y) const
   {
+    const auto &y = get_x();
     for(unsigned int i=0; i<A_.rows(); ++i)
-      _y[i] = work_->solution->y[i];
+      _y[i] = y[i];
   }
 
   double objective_value() const { return work_->info->obj_val; }
@@ -184,7 +204,11 @@ public:
   {
     for(long i=0; i<_q.size(); ++i)
       q_[i] = _q[i];
+#if COMISO_OSQP_NEW_API
+    osqp_update_data_vec(work_, q_.data(), nullptr, nullptr);
+#else
     osqp_update_lin_cost(work_, q_.data()); // dense array for linear part of cost function (size n)
+#endif
 
     // geta data of upper triangular part
     std::vector<Eigen::Triplet<double> > trip;
@@ -202,7 +226,12 @@ public:
     for(c_int i=0; i<P_upper_.nonZeros(); ++i)
       P_v[i] = P_upper_.valuePtr()[i];
 
+#if COMISO_OSQP_NEW_API
+    return osqp_update_data_mat(work_, P_v.data(), nullptr, 0,
+            nullptr, nullptr, 0);
+#else
     return osqp_update_P(work_, P_v.data(), nullptr, 0); // update all values
+#endif
   }
 
   int update_bounds(const Eigen::VectorXd& _lower_bnd, const Eigen::VectorXd& _upper_bnd)
@@ -213,10 +242,20 @@ public:
       upper_bnd_[i] = _upper_bnd[i];
     }
 
+#if COMISO_OSQP_NEW_API
+    return osqp_update_data_vec(work_, nullptr, lower_bnd_.data(), upper_bnd_.data());
+#else
     return osqp_update_bounds(work_, lower_bnd_.data(), upper_bnd_.data());
+#endif
   }
 
-  csc* create_osqp_csc(const Eigen::SparseMatrix<double,Eigen::ColMajor>& _A, std::vector<c_float>& _A_v, std::vector<c_int>& _A_i, std::vector<c_int>& _A_c)
+#if COMISO_OSQP_NEW_API
+    std::unique_ptr<OSQPCscMatrix>
+#else
+  csc* 
+#endif
+      
+      create_osqp_csc(const Eigen::SparseMatrix<double,Eigen::ColMajor>& _A, std::vector<c_float>& _A_v, std::vector<c_int>& _A_i, std::vector<c_int>& _A_c)
   {
     c_int    nnz  = _A.nonZeros(); // number of non zeros
 
@@ -232,7 +271,19 @@ public:
     for(c_int i=0; i<_A.outerSize()+1; ++i)
       _A_c[i] =  _A.outerIndexPtr()[i];
 
+#if COMISO_OSQP_NEW_API
+    auto m = std::make_unique<OSQPCscMatrix>();
+    m->m = _A.rows();
+    m->n = _A.cols();
+    m->p = _A_c.data();
+    m->i = _A_i.data();
+    m->x = _A_v.data();
+    m->nzmax = nnz;
+    m->nz = -1; // csc
+    return m;
+#else
     return csc_matrix(_A.rows(), _A.cols(), nnz, _A_v.data(), _A_i.data(), _A_c.data());
+#endif
   }
 
   OSQPSettings& settings() {return settings_;}
@@ -240,7 +291,11 @@ public:
 private:
   OSQPSettings   settings_;
   OSQPData       data_;
+#if COMISO_OSQP_NEW_API
+  ::OSQPSolver     *work_ = nullptr;
+#else
   OSQPWorkspace* work_ = nullptr;
+#endif
 
   // QP data
   Eigen::SparseMatrix<double,Eigen::ColMajor> P_upper_;
@@ -261,6 +316,4 @@ private:
 
 //=============================================================================
 #endif // COMISO_OSQP_AVAILABLE
-//=============================================================================
-#endif // COMISO_OSQPSOLVER_HH defined
 //=============================================================================
