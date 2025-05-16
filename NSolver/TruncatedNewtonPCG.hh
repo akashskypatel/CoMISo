@@ -17,16 +17,14 @@
 
 //== INCLUDES =================================================================
 
-#include <iomanip>
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/NSolver/NProblemInterface.hh>
 #include <CoMISo/NSolver/NConstraintInterface.hh>
 #include <CoMISo/NSolver/LinearConstraint.hh>
+#include <CoMISo/NSolver/TruncatedNewtonPCGConfig.hh>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-
-//== FORWARDDECLARATIONS ======================================================
 
 //== NAMESPACES ===============================================================
 
@@ -34,14 +32,6 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
-
-/** \class NewtonSolver NewtonSolver.hh <CoMISo/.../TruncatedNewtonPCG.hh>
-
-    Brief Description.
-  
-    A more elaborate description follows.
-*/
 class COMISODLLEXPORT TruncatedNewtonPCG
 {
 public:
@@ -120,18 +110,31 @@ public:
   };
 
 
-  /// Default constructor  (for default parameters see initialization below)
-  TruncatedNewtonPCG()
+  using Config = TruncatedNewtonPCGConfig;
+
+  explicit TruncatedNewtonPCG(Config const& _config = {})
+      : config_(_config)
   {}
 
   /// deprecated: old constructor provided for backwards compatibility
+  [[deprecated]]
   TruncatedNewtonPCG(const double _eps, const double _eps_line_search = 1e-8,
                      const int _max_iters = 500, const double _alpha_ls = 0.2,
                      const double _beta_ls = 0.6)
-          : eps_(_eps), eps_ls_(_eps_line_search), eps_gdx_(0.1), max_iters_(_max_iters), max_pcg_iters_(500),
-            alpha_ls_(_alpha_ls), beta_ls_(_beta_ls), max_feasible_step_safety_factor_(0.5),
-            adaptive_tolerance_(true), always_update_preconditioner_(true), allow_warmstart_(false), adaptive_tolerance_modifier_(1.0), silent_(false)
   {
+      config_.eps = _eps;
+      config_.eps_ls = _eps_line_search;
+      config_.max_iters = _max_iters;
+      config_.alpha_ls = _alpha_ls;
+      config_.beta_ls = _beta_ls;
+      // old defaults:
+      config_.max_pcg_iters = 500;
+      config_.max_feasible_step_safety_factor = 0.5;
+      config_.eps_gdx = 0.1; // !! Different from TruncatedNewtonPCGConfig default
+      config_.adaptive_tolerance_modifier = 1.0;
+      config_.allow_warmstart = false;
+      config_.always_update_preconditioner = true;
+      config_.adaptive_tolerance = true;
   }
 
   // optimize unconstrained problem
@@ -163,49 +166,67 @@ public:
 
   bool converged() { return status_.converged_to_local_optimum(); }
   bool feasible_solution_found() { return status_.feasible; }
-  void set_silent(const bool _silent) { silent_ = _silent;}
 
-  void set_eps_constraints_violation(double eps){ eps_constraints_violation_ = eps; }
+  TruncatedNewtonPCGConfig const& config() const {return config_;}
+  TruncatedNewtonPCGConfig & config() {return config_;}
 
-  void set_eps_constraints_violation_desirable(double eps){ eps_constraints_violation_desirable_ = eps; }
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  void set_silent(const bool _silent) { config_.silent = _silent;}
+
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  void set_eps_constraints_violation(double eps){ config_.eps_constraints_violation = eps; }
+
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  void set_eps_constraints_violation_desirable(double eps){ config_.eps_constraints_violation_desirable = eps; }
 
   double reduced_gradient_norm() { return status_.projected_gradient_norm;};
 
-  bool& always_update_preconditioner() { return always_update_preconditioner_;};
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  bool& always_update_preconditioner() { return config_.always_update_preconditioner;};
 
-  double& adaptive_tolerance_modifier() { return adaptive_tolerance_modifier_;};
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& adaptive_tolerance_modifier() { return config_.adaptive_tolerance_modifier;};
 
-  double& tolerance_newton_decrement() { return eps_gdx_;}
-  // deprecated
-  double& tolerance_gdx() { return eps_gdx_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& tolerance_newton_decrement() { return config_.eps_gdx;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& tolerance_gdx() { return config_.eps_gdx;}
 
-  double& tolerance_reduced_gradient_norm() { return eps_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& tolerance_reduced_gradient_norm() { return config_.eps;}
 
-  int& max_iters()     { return max_iters_;}
-  int& max_pcg_iters() { return max_pcg_iters_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  int& max_iters()     { return config_.max_iters;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  int& max_pcg_iters() { return config_.max_pcg_iters;}
 
-  bool& allow_warmstart() { return allow_warmstart_;};
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  bool& allow_warmstart() { return config_.allow_warmstart;};
 
-  double& max_feasible_step_safety_factor() { return max_feasible_step_safety_factor_;}
+  double& max_feasible_step_safety_factor() { return config_.max_feasible_step_safety_factor;}
 
-  // parameters to adaptively skip hessian matrix updates
-  int&    hessian_max_skips() {return hessian_max_skips_;}
-  double& hessian_min_acceptable_alpha() {return hessian_min_acceptable_alpha_;}
-  double& hessian_min_acceptable_rel_objective_decrease() {return hessian_min_acceptable_rel_objective_decrease_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  int&    hessian_max_skips() {return config_.hessian_max_skips;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& hessian_min_acceptable_alpha() {return config_.hessian_min_acceptable_alpha;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& hessian_min_acceptable_rel_objective_decrease() {return config_.hessian_min_acceptable_rel_objective_decrease;}
 
-  [[deprecated("Not used anymore, replaced by min_preconditioner_value and max_preconditioner_value")]]
-  double& max_preconditioner_range() { return max_preconditioner_range_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& min_preconditioner_value() { return config_.min_preconditioner_value;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& max_preconditioner_value() { return config_.max_preconditioner_value;}
 
-  double& min_preconditioner_value() { return min_preconditioner_value_;}
-  double& max_preconditioner_value() { return max_preconditioner_value_;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& alpha_ls() {return config_.alpha_ls;}
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
+  double& beta_ls()  {return config_.beta_ls;}
 
-  double& alpha_ls() {return alpha_ls_;}
-  double& beta_ls()  {return beta_ls_;}
   size_t n_iterations_used() const {return n_iterations_used_;}
 
-  bool line_search_feasibility_step() {return line_search_feasibility_step_;}
+  bool line_search_feasibility_step() {return config_.line_search_feasibility_step;}
 
-  bool& compute_dual_variables() {return compute_dual_variables_;}
+  bool& compute_dual_variables() {return config_.compute_dual_variables;}
 
   VectorD& nue() {return nue_;}
 
@@ -237,68 +258,15 @@ public:
 
 
 private:
-
-  double eps_           = 1e-3;
-  double eps_ls_        = 1e-8;
-  double eps_gdx_       = 1e-3;
-  int    max_iters_     = 500;
-  int    max_pcg_iters_ = 500;
-  double pcg_tolerance_ = 1e-4;
-
-  double alpha_ls_      = 0.1;
-  double beta_ls_       = 0.8;
-
-  // parameters of L1 Merit function line search
-  bool   line_search_feasibility_step_ = true;
-  double rho_merit_     = 0.5;
-
-  // max inf-norm constraint violation allowed for feasibility
-  double eps_constraints_violation_ = 1e-6;
-  // max inf-norm constraint violation above which feasibility steps are still performed
-  double eps_constraints_violation_desirable_ = 1e-9;
-
-  // deprecated parameter
-  double max_preconditioner_range_ = 1e9;
-
-  // set limits for preconditioner values
-//  double min_preconditioner_value_ = 1e-12;
-//  double max_preconditioner_value_ = 1e12;
-  double min_preconditioner_value_ = 1e-6;
-  double max_preconditioner_value_ = 1e6;
-
-  double max_feasible_step_safety_factor_ = 0.5;
-  double max_infeasibility_step_safety_factor_ = 0.6;
-
-  // adaptively choose tolerance of CG optimization?
-  bool adaptive_tolerance_ = true;
-  bool always_update_preconditioner_ = true;
-  bool allow_warmstart_ = false;
-
-  // parameters for adaptive hessian update
-  int    hessian_max_skips_ = 10; // maximum number of skipped hessian updates
-  double hessian_min_acceptable_alpha_ = 0.1; // minimal acceptable line-search step length to skip hessian update
-  double hessian_min_acceptable_rel_objective_decrease_ = 0.1; // minimal acceptable relative objective descrease to skip hessian update
-
-  double adaptive_tolerance_modifier_ = 1.0;
-
-  bool compute_dual_variables_ = false;
-
-  // iterative refinement parameters
-  bool enable_iterative_refinement_ = true;
-  int  max_iterative_refinement_iters_ = 5;
-  double iterative_refinement_cos_angle_threshold_ = 1e-12;
-  // perform additional projection for Newton search direction (should not be necessary when iterative refinement is used)
-  bool project_dx_before_update_ = false;
-
+  TruncatedNewtonPCGConfig config_;
   // dual variables
   VectorD nue_;
 
+  // deprecated: use status_
   size_t n_iterations_used_ = 0;
 
   // Optimizer Status for last iterate
   OptimizerStatus status_;
-
-  bool silent_ = false;
 
   // deprecated ---> remove and only use status_
   bool feasible_solution_found_ = false;

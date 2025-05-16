@@ -18,7 +18,6 @@
 
 #include <CoMISo/Utils/StopWatch.hh>
 #include <CoMISo/NSolver/LinearConstraintConverter.hh>
-#include <CoMISo/Utils/MatrixDecomposition.hh>
 
 #include <Base/Debug/DebTime.hh>
 #include <Eigen/IterativeLinearSolvers>
@@ -48,18 +47,18 @@ solve(NProblemInterface* _problem)
 
   // number of unknowns
   Eigen::Index n = _problem->n_unknowns();
-  DEB_line_if(!silent_, 2, "optimize via TruncatedNewtonPCG with " << (int)n << " unknowns");
+  DEB_line_if(!config_.silent, 2, "optimize via TruncatedNewtonPCG with " << (int)n << " unknowns");
 
   // Newton parameters
-  const int    max_iters  = max_iters_;
-  const double newton_tol = eps_;
+  const int    max_iters  = config_.max_iters;
+  const double newton_tol = config_.eps;
 //    const double relative_improvement_thres = 1e-3;
   // CG parameters
 //    const int max_pcg_iters = std::max(100, _problem->n_unknowns()/10);
-  const int max_pcg_iters = max_pcg_iters_;
+  const int max_pcg_iters = config_.max_pcg_iters;
 
   // allow minimal steps of 1e-6
-  const int max_iter_ls   = int ( std::log(1e-6)/std::log(beta_ls_));
+  const int max_iter_ls   = int ( std::log(1e-6)/std::log(config_.beta_ls));
 
   // initialize vectors of unknowns
   VectorD x(n);
@@ -76,7 +75,7 @@ solve(NProblemInterface* _problem)
 //    Eigen::ConjugateGradient<SMatrixD, Eigen::Lower|Eigen::Upper, Eigen::IncompleteCholesky<double> > pcg;
   Eigen::ConjugateGradient<SMatrixD, Eigen::Lower|Eigen::Upper> pcg;
   pcg.setMaxIterations(max_pcg_iters);
-  pcg.setTolerance(pcg_tolerance_);
+  pcg.setTolerance(config_.pcg_tolerance);
 
   // statistics
   int n_pcg_iters(0);
@@ -87,10 +86,10 @@ solve(NProblemInterface* _problem)
   double fx = _problem->eval_f(x.data());
   double fx_old = fx;
 
-  DEB_line_if(!silent_, 2, "intial objective value =" << fx);
+  DEB_line_if(!config_.silent, 2, "intial objective value =" << fx);
   if(!std::isfinite(fx))
   {
-    DEB_line_if(!silent_, 2, "ERROR: intial objective value is not finite ---> abort");
+    DEB_line_if(!config_.silent, 2, "ERROR: intial objective value is not finite ---> abort");
     return false;
   }
 
@@ -106,9 +105,9 @@ solve(NProblemInterface* _problem)
     _problem->eval_gradient(x.data(), g.data());
 
     if(iter == 0 || // first iteration
-       count_hessian_skip >= hessian_max_skips_ || // maximum number of Hessians have been skipped
-       alpha_line_search < hessian_min_acceptable_alpha_ || // line search truncated too much
-       rel_objective_decrease < hessian_min_acceptable_rel_objective_decrease_ // objective did not decrease sufficiently
+       count_hessian_skip >= config_.hessian_max_skips || // maximum number of Hessians have been skipped
+       alpha_line_search < config_.hessian_min_acceptable_alpha || // line search truncated too much
+       rel_objective_decrease < config_.hessian_min_acceptable_rel_objective_decrease // objective did not decrease sufficiently
             ) // update Hessian?
     {
       _problem->eval_hessian(x.data(), H);
@@ -126,7 +125,7 @@ solve(NProblemInterface* _problem)
     status_.projected_gradient_norm = gn;
     if(status_.converged_to_local_optimum())
     {
-      DEB_line_if(!silent_, 4,
+      DEB_line_if(!config_.silent, 4,
                   "iter = " << iter << ", f(x) = " << fx
                             << ", |grad| = " << gn
                             << ", #PCG_iters = " << n_pcg_iters
@@ -150,7 +149,7 @@ solve(NProblemInterface* _problem)
     // stop if line search could not make any progress
     if(status_.line_search_t == 0.0)
     {
-      DEB_line_if(!silent_, 4,
+      DEB_line_if(!config_.silent, 4,
                   "iter = " << iter << ", f(x) = " << fx
                             << ", |grad| = " << gn
                             << ", #PCG_iters = " << n_pcg_iters
@@ -174,7 +173,7 @@ solve(NProblemInterface* _problem)
     bool warm_start = false;
     double gdx = g.dot(dx);
     status_.newton_decrement = gdx;
-    if(gdx < 0.0 && allow_warmstart_)
+    if(gdx < 0.0 && config_.allow_warmstart)
     {
       warm_start = true;
       double s = -gdx/(dx.transpose()*H*dx);
@@ -221,7 +220,7 @@ solve(NProblemInterface* _problem)
 
     // get maximal reasonable step
     double t_max  = std::min(1.0,
-                             max_feasible_step_safety_factor_ * _problem->max_feasible_step(x.data(), dx.data()));
+                             config_.max_feasible_step_safety_factor * _problem->max_feasible_step(x.data(), dx.data()));
     status_.line_search_t_max_feasible = t_max;
 
     // backtracking line search
@@ -231,9 +230,9 @@ solve(NProblemInterface* _problem)
     double fxt = _problem->eval_f(xt.data());
     int iter_ls = 0;
     ls_succeeded = false;
-    while(! (fxt <= fx + alpha_ls_*gdx*t) )
+    while(! (fxt <= fx + config_.alpha_ls*gdx*t) )
     {
-      t *= beta_ls_;
+      t *= config_.beta_ls;
       xt = x + t*dx;
       fxt = _problem->eval_f(xt.data());
       ++iter_ls;
@@ -262,7 +261,7 @@ solve(NProblemInterface* _problem)
 
     if(status_.converged_to_local_optimum())
     {
-      DEB_line_if(!silent_, 4,
+      DEB_line_if(!config_.silent, 4,
                   "iter = " << iter << ", f(x) = " << fx
                             << ", |grad| = " << gn
                             << ", gdx = " << gdx
@@ -272,7 +271,7 @@ solve(NProblemInterface* _problem)
     }
 
 
-    DEB_line_if(!silent_, 4,
+    DEB_line_if(!config_.silent, 4,
                 "iter = " << iter << ", f(x) = " << fx << ", t = " << t
                           << " (tmax=" << status_.line_search_t_max_feasible << "), " << "#ls = "
                           << status_.line_search_iterations
@@ -323,12 +322,12 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
   Eigen::Index n = _problem->n_unknowns();
   Eigen::Index m = _A.rows();
 
-  DEB_line_if(!silent_, 2,
+  DEB_line_if(!config_.silent, 2,
               "optimize via TruncatedNewton with " << (int) n << " unknowns and " << (int) m
                                                                               << " linear constraints");
 
   // allow only steps larger than eps_ls_ in line search
-  const int max_iter_ls = int(std::log(eps_ls_) / std::log(beta_ls_));
+  const int max_iter_ls = int(std::log(config_.eps_ls) / std::log(config_.beta_ls));
   const int max_iter_ls_negative_curvature = 20;
 
   // initialize mu for merit-function based line search
@@ -339,7 +338,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
   _problem->initial_x(x.data());
 
   status_.constraint_violation_inf_norm = (_A * x - _b).lpNorm<Eigen::Infinity>();
-  if (status_.constraint_violation_inf_norm < eps_constraints_violation_)
+  if (status_.constraint_violation_inf_norm < config_.eps_constraints_violation)
   {
     feasible_solution_found_ = true;
     status_.feasible = true;
@@ -358,7 +357,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
   // storage for iterative refinement
   // ToDo: can we reduce number of temporaries by using them in several non-overlapping places?
   VectorD rho_q, rho_v, dq, dv, A_inv_row_norm;
-  if (enable_iterative_refinement_)
+  if (config_.enable_iterative_refinement)
   {
     rho_q.resize(n);
     rho_v.resize(n);
@@ -390,7 +389,6 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
   // Diagonal Preconditioner
   VectorD W(n), Wi(n);
 
-  auto md_alg = MatrixDecompositionAlgorithm::Cholmod_Supernodal;
   std::unique_ptr<MatrixDecomposition<double>> decomposed_projection;
 
   // get function value at current point
@@ -398,7 +396,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 //  DEB_line_if(!silent_, 2, "initial objective value = " << status_.fx);
   if (!std::isfinite(status_.fx))
   {
-    DEB_line_if(!silent_, 2, "ERROR: intial objective value is not finite ---> abort");
+    DEB_line_if(!config_.silent, 2, "ERROR: intial objective value is not finite ---> abort");
     return false;
   }
 
@@ -413,7 +411,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
   // link iter to status_.n_newton_iters
   int& iter = status_.n_newton_iters;
-  for (iter=1; iter <= max_iters_; ++iter)
+  for (iter=1; iter <= config_.max_iters; ++iter)
   {
     // initialize
     status_.refinement_iters = 0;
@@ -423,9 +421,9 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
     const bool update_hessian =
             (iter == 0 || // first iteration
-             count_hessian_skip >= hessian_max_skips_ || // maximum number of Hessians have been skipped
-             status_.line_search_t < hessian_min_acceptable_alpha_ || // line search truncated too much
-             rel_objective_decrease < hessian_min_acceptable_rel_objective_decrease_); // objective did not decrease sufficiently
+             count_hessian_skip >= config_.hessian_max_skips || // maximum number of Hessians have been skipped
+             status_.line_search_t < config_.hessian_min_acceptable_alpha || // line search truncated too much
+             rel_objective_decrease < config_.hessian_min_acceptable_rel_objective_decrease); // objective did not decrease sufficiently
 
 
     if(update_hessian) // update Hessian?
@@ -442,7 +440,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
     // pre-factor projection matrix and update preconditioner
     if (iter == 0 ||
-        (always_update_preconditioner_ && status_.hessian_updated))
+        (config_.always_update_preconditioner && status_.hessian_updated))
     {
       // setup preconditioner W = (|diag(H)|)
       // and Wi = (|diag(H)|)^-1
@@ -454,20 +452,20 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
         if (!std::isfinite(d))
         {
           d = 1.0;
-          DEB_line_if(!silent_, 2, "ERROR: diagonal entry of Hessian is not finite ---> ignore for preconditioner");
+          DEB_line_if(!config_.silent, 2, "ERROR: diagonal entry of Hessian is not finite ---> ignore for preconditioner");
         }
 
         // clamp preconditioner range
-        if (d < min_preconditioner_value_)
+        if (d < config_.min_preconditioner_value)
         {
 //          DEB_line_if(!silent_, 2, "iter = " << iter << ", increase preconditioner value from " << d << " to " << min_preconditioner_value_);
-          d = min_preconditioner_value_;
+          d = config_.min_preconditioner_value;
         }
 
-        if (d > max_preconditioner_value_)
+        if (d > config_.max_preconditioner_value)
         {
 //          DEB_line_if(!silent_, 2, "iter = " << iter << ", decrease preconditioner value from " << d << " to " << max_preconditioner_value_);
-          d = max_preconditioner_value_;
+          d = config_.max_preconditioner_value;
         }
 
         W[j] = d;
@@ -493,7 +491,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
         swf.start();
         if (!decomposed_projection)
         {
-          decomposed_projection = make_decomposition<double>(md_alg);
+          decomposed_projection = make_decomposition<double>(config_.matrix_decomposition_algo);
           decomposed_projection->analyzePattern(AWiAt);
         }
         decomposed_projection->factorize(AWiAt);
@@ -506,7 +504,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
           for (unsigned int j = 0; j < 10; ++j)
           {
             double reg = 1e-8 * AWiAt.diagonal().sum() / double(m);
-            DEB_line_if(!silent_, 2,
+            DEB_line_if(!config_.silent, 2,
                         "Warning: LDLT factorization failed --> regularize ADAt (could lead to reduced accuracy), reg="
                                 << reg);
             for (Eigen::Index j = 0; j < AWiAt.rows(); ++j)
@@ -523,7 +521,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
     // perform feasiblity step?
     status_.feasibility_step_productive = false;
-    if (status_.constraint_violation_inf_norm >= eps_constraints_violation_desirable_)
+    if (status_.constraint_violation_inf_norm >= config_.eps_constraints_violation_desirable)
     {
 //        // optimize constraint violation in Hessian-diagonal norm
 //        v  = ldlt.solve(_b-_A*x);
@@ -542,13 +540,13 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
       // truncate feasiblity step
       double t_max = std::min(1.0,
-                              max_infeasibility_step_safety_factor_ * _problem->max_feasible_step(x.data(), dz.data()));
+                              config_.max_infeasibility_step_safety_factor * _problem->max_feasible_step(x.data(), dz.data()));
 
       status_.line_search_t_inf_max_feasible = t_max;
 
       //      std::cerr << "debug: t_max = " << t_max << std::endl;
 
-      if (line_search_feasibility_step_)
+      if (config_.line_search_feasibility_step)
       {
         double fxn = status_.fx;
         double t = backtracking_line_search_infeasible_merit_l1(_problem, H, _A, _b, x, status_.fx,
@@ -581,7 +579,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
             status_.fx = fx_new;
 
             // feasible solution found?
-            if (status_.constraint_violation_inf_norm < eps_constraints_violation_)
+            if (status_.constraint_violation_inf_norm < config_.eps_constraints_violation)
               status_.feasible = true;
 
             // update gradient
@@ -589,7 +587,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
           }
           else
           {
-            DEB_line_if(!silent_, 2, "Warning: feasibility step line search truncated to 0.0");
+            DEB_line_if(!config_.silent, 2, "Warning: feasibility step line search truncated to 0.0");
             status_.feasibility_step_productive = false;
           }
         }
@@ -619,7 +617,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
             status_.fx = fx_new;
 
             // feasible solution found?
-            if (status_.constraint_violation_inf_norm < eps_constraints_violation_)
+            if (status_.constraint_violation_inf_norm < config_.eps_constraints_violation)
               status_.feasible = true;
 
             // update gradient
@@ -627,12 +625,12 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
           }
           else
           {
-            DEB_line_if(!silent_, 2, "Warning: feasibility step resulted in non-finite objective value --> revert to previous x");
+            DEB_line_if(!config_.silent, 2, "Warning: feasibility step resulted in non-finite objective value --> revert to previous x");
           }
         }
         else
         {
-          DEB_line_if(!silent_, 2, "Warning: feasibility step was not productive --> revert to previous x");
+          DEB_line_if(!config_.silent, 2, "Warning: feasibility step was not productive --> revert to previous x");
         }
       }
     }
@@ -643,7 +641,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
     // choose starting point
     bool warmstart = false;
-    if(allow_warmstart_ && g.dot(dx) < 0.0)
+    if(config_.allow_warmstart && g.dot(dx) < 0.0)
       warmstart = true;
     else
       dx.setZero();
@@ -665,13 +663,13 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
       _v_proj = Wi.asDiagonal() * (_v - _A.transpose() * _v_help);
 
       // perform iterative refinement
-      if (enable_iterative_refinement_)
+      if (config_.enable_iterative_refinement)
       {
         int n_iters = 0;
-        for (; n_iters < max_iterative_refinement_iters_; ++n_iters)
+        for (; n_iters < config_.max_iterative_refinement_iters; ++n_iters)
         {
           // desired accuracy reached?
-          if (max_abs_cos_angle(_A, A_inv_row_norm, _v_proj) < iterative_refinement_cos_angle_threshold_)
+          if (max_abs_cos_angle(_A, A_inv_row_norm, _v_proj) < config_.iterative_refinement_cos_angle_threshold)
             break;
 
           rho_q = _v - W.asDiagonal() * _v_proj - _A.transpose() * _v_help;
@@ -701,21 +699,21 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
 
     // check convergence
     status_.projected_gradient_norm = gz.norm();
-    status_.projected_gradient_norm_within_tolerance = (status_.projected_gradient_norm <= eps_);
+    status_.projected_gradient_norm_within_tolerance = (status_.projected_gradient_norm <= config_.eps);
     if (status_.converged_to_local_optimum())
       break;
 
     // choose CG tolerance
     double eta;
-    if(adaptive_tolerance_)
-      eta = adaptive_tolerance_modifier_*std::min(0.1, std::sqrt(status_.projected_gradient_norm))*status_.projected_gradient_norm;
+    if(config_.adaptive_tolerance)
+      eta = config_.adaptive_tolerance_modifier*std::min(0.1, std::sqrt(status_.projected_gradient_norm))*status_.projected_gradient_norm;
     else
-      eta = pcg_tolerance_*status_.projected_gradient_norm;
+      eta = config_.pcg_tolerance*status_.projected_gradient_norm;
 
 //      if(gzn >= newton_tol) // avoid numerical issues when still infeasible but projected gradient is vanishing
     {
       int n_pcg_iters = 0;
-      for (int pcg_iter = 0; pcg_iter < max_pcg_iters_; ++pcg_iter)
+      for (int pcg_iter = 0; pcg_iter < config_.max_pcg_iters; ++pcg_iter)
       {
         // compute norm of projected residual (in original norm)
         double rpn = (W.asDiagonal() * q).norm();
@@ -776,7 +774,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
         ++n_pcg_iters;
       }
 
-      if (project_dx_before_update_)
+      if (config_.project_dx_before_update)
       {
         // project dx
         if (_A.rows() > 0 && _A.cols() > 0)
@@ -802,13 +800,13 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
       double gdx = g.dot(dx);
       // update Newton decrement
       status_.newton_decrement = gdx;
-      status_.newton_decrement_within_tolerance = (std::abs(status_.newton_decrement) < eps_gdx_);
+      status_.newton_decrement_within_tolerance = (std::abs(status_.newton_decrement) < config_.eps_gdx);
 
       if (gdx < 0.0) // require descent direction!!!
       {
         // get maximal reasonable step
         status_.line_search_t_max_feasible =
-                max_feasible_step_safety_factor_ * _problem->max_feasible_step(x.data(), dx.data());
+                config_.max_feasible_step_safety_factor * _problem->max_feasible_step(x.data(), dx.data());
         double t_max = status_.line_search_t_max_feasible;
 
         double fxn = status_.fx;
@@ -842,18 +840,18 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
         if (status_.line_search_t > 0.0)
         {
           // TODO: original dx is needed to compute dual variables such that update here is harmful
-          if (allow_warmstart_) // update dx if needed afterwards
+          if (config_.allow_warmstart) // update dx if needed afterwards
             dx = xn - x;
           x.swap(xn);
           status_.fx = fxn;
           // update constraint violation
           status_.constraint_violation_inf_norm = (_A * x - _b).lpNorm<Eigen::Infinity>();
-          status_.feasible = (status_.constraint_violation_inf_norm < eps_constraints_violation_);
+          status_.feasible = (status_.constraint_violation_inf_norm < config_.eps_constraints_violation);
         }
       }
       else
       {
-        DEB_line_if(!silent_, 2, "Warning: dx is not a descent direction, gdx = " << gdx);
+        DEB_line_if(!config_.silent, 2, "Warning: dx is not a descent direction, gdx = " << gdx);
       }
 
       // line-search not productive?
@@ -861,12 +859,12 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
       {
         if (!status_.feasible && status_.feasibility_step_productive)
         {
-          DEB_line_if(!silent_, 4,
+          DEB_line_if(!config_.silent, 4,
                       "Info: line search failed but infeasible ---> continue since feasibility_step_productive");
         }
         else
         {
-          DEB_line_if(!silent_, 4,
+          DEB_line_if(!config_.silent, 4,
                       "Warning: line search failed at infeasible point and feasibility step non-productive ---> terminate");
 
           break;
@@ -889,7 +887,7 @@ solve(NProblemInterface *_problem, const SMatrixD &_A, const VectorD &_b)
   _problem->store_result(x.data());
 
   // compute dual variables
-  if (compute_dual_variables_)
+  if (config_.compute_dual_variables)
   {
     if (!decomposed_projection)
     {
@@ -1016,7 +1014,7 @@ backtracking_line_search_infeasible_merit_l1(NProblemInterface *_problem, const 
   double res_primal_1 = (_A * _x - _b).template lpNorm<1>();
   double gdx = _g.transpose() * _dx;
   double dxHdx = _dx.transpose() * _H * _dx;
-  double mu_new = 1.2 * (gdx + 0.5 * std::max(0.0, dxHdx)) / ((1.0 - rho_merit_) * res_primal_1);
+  double mu_new = 1.2 * (gdx + 0.5 * std::max(0.0, dxHdx)) / ((1.0 - config_.rho_merit) * res_primal_1);
   _mu_merit = std::max(mu_new, _mu_merit);
 
   // current step size
@@ -1048,7 +1046,7 @@ backtracking_line_search_infeasible_merit_l1(NProblemInterface *_problem, const 
       //     std::cerr << "t=" << t << ", merit(t)=" << merit_t << ", merit(0)+alpha*t*Dmerit(0)=" << merit_0 + alpha_ls_*t*D_merit_0 << std::endl;
 
       // sufficient decrease in residual?
-      if (merit_t <= merit_0 + alpha_ls_ * t * D_merit_0)
+      if (merit_t <= merit_0 + config_.alpha_ls * t * D_merit_0)
       {
         // succesfull line search
         _fx_new = fx;
@@ -1058,7 +1056,7 @@ backtracking_line_search_infeasible_merit_l1(NProblemInterface *_problem, const 
     //   else std::cerr << "t=" << t << ", merit(t)=" << std::numeric_limits<double>::infinity() << std::endl;
 
     // shrink with factor beta
-    t *= beta_ls_;
+    t *= config_.beta_ls;
     ++_n_iters;
   }
 
@@ -1086,9 +1084,9 @@ backtracking_line_search(NProblemInterface* _problem,
   _fx_new = _problem->eval_f(_x_new.data());
 
   _iter_ls = 0;
-  while (!(_fx_new <= _fx + alpha_ls_ * _gdx * t))
+  while (!(_fx_new <= _fx + config_.alpha_ls * _gdx * t))
   {
-    t *= beta_ls_;
+    t *= config_.beta_ls;
     _x_new = _x + t * _dx;
     _fx_new = _problem->eval_f(_x_new.data());
     ++_iter_ls;
@@ -1231,7 +1229,7 @@ print_iteration_data(const OptimizerStatus& _status) const
 
   std::stringstream ss_out;
 
-  if(!silent_ && _status.n_newton_iters % 10 == 0)
+  if(!config_.silent && _status.n_newton_iters % 10 == 0)
   {
     ss_out    << std::left << std::setw(6) << "iter" << " | "
               << std::left << std::setw(11) << "f(x)" << " | "
@@ -1252,7 +1250,7 @@ print_iteration_data(const OptimizerStatus& _status) const
               << std::endl;
   }
 
-  if(!silent_)
+  if(!config_.silent)
   {
     char feasible = ' ';
     if(_status.feasible)
@@ -1303,7 +1301,7 @@ print_iteration_data(const OptimizerStatus& _status) const
     }
   }
 
-  DEB_line_if(!silent_, 2, ss_out.str());
+  DEB_line_if(!config_.silent, 2, ss_out.str());
 }
 
 
@@ -1316,17 +1314,17 @@ print_summary(const OptimizerStatus& _status) const
 {
   DEB_enter_func;
 
-  DEB_line_if(!silent_, 2, "------------------ TruncatedNewtonSummary BEGIN ------------------");
-  DEB_line_if(!silent_, 2, "Converged to local optimum = " << int(_status.converged_to_local_optimum()));
-  DEB_line_if(!silent_, 2, "objective f(x)   = " << _status.fx);
-  DEB_line_if(!silent_, 2, "||Ax-b||_inf     = " << _status.constraint_violation_inf_norm);
-  DEB_line_if(!silent_, 2, "||proj(grad)||   = " << status_.projected_gradient_norm);
-  DEB_line_if(!silent_, 2, "Newton decrement = " << status_.newton_decrement);
-  DEB_line_if(!silent_, 2, "#iters Newton    = " << status_.n_newton_iters);
-  DEB_line_if(!silent_, 2, "#iters PCG       = " << status_.cg_iterations_total);
-  DEB_line_if(!silent_, 2, "#iters Neg. curv.= " << status_.n_negative_curvature_iters);
-  DEB_line_if(!silent_, 2, "#iters refinement= " << status_.refinement_iters_total);
-  DEB_line_if(!silent_, 2, "------------------ TruncatedNewtonSummary END ------------------");
+  DEB_line_if(!config_.silent, 2, "------------------ TruncatedNewtonSummary BEGIN ------------------");
+  DEB_line_if(!config_.silent, 2, "Converged to local optimum = " << int(_status.converged_to_local_optimum()));
+  DEB_line_if(!config_.silent, 2, "objective f(x)   = " << _status.fx);
+  DEB_line_if(!config_.silent, 2, "||Ax-b||_inf     = " << _status.constraint_violation_inf_norm);
+  DEB_line_if(!config_.silent, 2, "||proj(grad)||   = " << status_.projected_gradient_norm);
+  DEB_line_if(!config_.silent, 2, "Newton decrement = " << status_.newton_decrement);
+  DEB_line_if(!config_.silent, 2, "#iters Newton    = " << status_.n_newton_iters);
+  DEB_line_if(!config_.silent, 2, "#iters PCG       = " << status_.cg_iterations_total);
+  DEB_line_if(!config_.silent, 2, "#iters Neg. curv.= " << status_.n_negative_curvature_iters);
+  DEB_line_if(!config_.silent, 2, "#iters refinement= " << status_.refinement_iters_total);
+  DEB_line_if(!config_.silent, 2, "------------------ TruncatedNewtonSummary END ------------------");
 }
 
 
