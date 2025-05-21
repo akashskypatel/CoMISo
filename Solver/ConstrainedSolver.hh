@@ -259,6 +259,19 @@ public:
   /// Access the MISolver (e.g. to change settings)
   COMISO::MISolver& misolver() { return miso_; }
 
+  /// Support changing the RHS of the constraint system in resolve(). Enabled by default.
+  /// If this is needed, it must be enabled for the initial solve, not just before the resolve!
+  /// Warning: This can impose substantial memory overhead for large sparse constraint systems.
+  void set_support_constraint_rhs_resolve(bool _val)
+  {
+    support_constraint_rhs_resolve_ = _val;
+    if (!_val)
+    {
+      // Disabling support means we don't need the content of D_ anymore.
+      this->rhs_update_table_.D_ = {};
+    }
+  }
+
 private:
 
   /** @name Eliminate constraints
@@ -355,18 +368,6 @@ private:
           HalfSparseColMatrix& _target_cmat,
     const Eigen::Index         _zero_col = -1);
 
-  /// Support changing the RHS of the constraint system in resolve(). Enabled by default.
-  /// If this is needed, it must be enabled for the initial solve, not just before the resolve!
-  /// Warning: This can impose substantial memory overhead for large sparse constraint systems.
-  void set_support_constraint_rhs_resolve(bool _val)
-  {
-    support_constraint_rhs_resolve_ = _val;
-    if (!_val)
-    {
-      // Disabling support means we don't need the content of D_ anymore.
-      this->rhs_update_table_.D_ = {};
-    }
-  }
 
 
   // warning: order of replacement not the same as in _columns (internal sort)
