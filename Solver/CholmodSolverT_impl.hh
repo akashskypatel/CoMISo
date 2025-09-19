@@ -179,6 +179,9 @@ bool CholmodSolver::update_downdate_factor_eigen( const Eigen_MatrixT& _mat, con
                                          values_,
                                          rowind_,
                                          colptr_ );
+#else
+    std::cerr << "CoMISo CholmodSolver::update_downdate_factor_eigen not available, Eigen3 is missing." << std::endl;
+    return false;
 #endif
 
     if(show_timings_)
