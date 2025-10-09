@@ -73,7 +73,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = true}};
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_}};
       tn.solve(&alp);
 
       // current solution
