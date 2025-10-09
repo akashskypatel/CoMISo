@@ -16,7 +16,6 @@
 //== INCLUDES =================================================================
 
 #include <stdio.h>
-#include <iostream>
 #include <vector>
 
 #include <CoMISo/Utils/gmm.hh>
@@ -139,15 +138,6 @@ COMISODLLEXPORT ConstraintRemovalResult remove_dependent_linear_constraints_only
 typedef gmm::wsvector<double>         SVectorGMM;
 typedef gmm::row_matrix< SVectorGMM > RMatrixGMM;
 typedef gmm::col_matrix< SVectorGMM > CMatrixGMM;
-
-static gmm::size_type find_max_abs_coeff(SVectorGMM& _v);
-
-static void add_row_simultaneously( gmm::size_type _row_i,
-                                    double      _coeff,
-                                    SVectorGMM& _row,
-                                    RMatrixGMM& _rmat,
-                                    CMatrixGMM& _cmat,
-                                    const double _eps );
 
 #endif // COMISO_GMM_AVAILABLE
 
