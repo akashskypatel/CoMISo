@@ -34,14 +34,6 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
-
-/** \class NewtonSolver NewtonSolver.hh <CoMISo/.../TruncatedNewtonPCG.hh>
-
-    Brief Description.
-  
-    A more elaborate description follows.
-*/
 class COMISODLLEXPORT AugmentedLagrangianMethod
 {
 public:
