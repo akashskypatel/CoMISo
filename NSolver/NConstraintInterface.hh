@@ -20,7 +20,6 @@
 
 #include <Base/Code/Quality.hh>
 LOW_CODE_QUALITY_SECTION_BEGIN
-#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 #include <Eigen/Sparse>
 LOW_CODE_QUALITY_SECTION_END
 
@@ -53,7 +52,7 @@ public:
   enum ConstraintType {NC_EQUAL, NC_LESS_EQUAL, NC_GREATER_EQUAL};
 
   /// Default constructor
-  NConstraintInterface(const ConstraintType _type = NC_EQUAL, double _eps = 1e-6) : type_(_type) {}
+  NConstraintInterface(const ConstraintType _type = NC_EQUAL, double /*_eps*/ = 1e-6) : type_(_type) {}
 
   /// Destructor
   virtual ~NConstraintInterface() {}

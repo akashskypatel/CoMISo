@@ -603,6 +603,54 @@ GaussEliminationResult gauss_elimination(HalfSparseRowMatrix& _constraints,
 
 #if COMISO_GMM_AVAILABLE
 
+//-----------------------------------------------------------------------------
+
+static gmm::size_type
+find_max_abs_coeff(SVectorGMM& _v)
+{
+  size_t n = _v.size();
+  gmm::size_type imax(0);
+  double       vmax(-1.0);
+
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(_v);
+  gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(_v);
+
+  for(; c_it != c_end; ++c_it)
+    if(c_it.index() != n-1)
+      if(std::abs(*c_it) > vmax)
+      {
+        imax = c_it.index();
+        vmax = std::abs(*c_it);
+      }
+
+  return imax;
+}
+
+
+static void
+add_row_simultaneously( gmm::size_type _row_i,
+                        double      _coeff,
+                        SVectorGMM& _row,
+                        RMatrixGMM& _rmat,
+                        CMatrixGMM& _cmat,
+                        const double _eps )
+{
+  typedef gmm::linalg_traits<SVectorGMM>::const_iterator RIter;
+  RIter r_it  = gmm::vect_const_begin(_row);
+  RIter r_end = gmm::vect_const_end(_row);
+
+  for(; r_it!=r_end; ++r_it)
+  {
+    _rmat(_row_i, r_it.index()) += _coeff*(*r_it);
+    _cmat(_row_i, r_it.index()) += _coeff*(*r_it);
+    if( std::abs(_rmat(_row_i, r_it.index())) < _eps )
+    {
+      _rmat(_row_i, r_it.index()) = 0.0;
+      _cmat(_row_i, r_it.index()) = 0.0;
+    }
+  }
+}
+
 ConstraintTools::ConstraintRemovalResult
 remove_dependent_linear_constraints_only_linear_equality_gmm( std::vector<NConstraintInterface*>& _constraints, const double _eps)
 {
@@ -755,57 +803,6 @@ remove_dependent_linear_constraints_only_linear_equality_gmm( std::vector<NConst
 //    std::cerr << std::scientific << v << std::endl;
 }
 
-
-//-----------------------------------------------------------------------------
-
-gmm::size_type
-find_max_abs_coeff(SVectorGMM& _v)
-{
-  size_t n = _v.size();
-  gmm::size_type imax(0);
-  double       vmax(-1.0);
-
-  gmm::linalg_traits<SVectorGMM>::const_iterator c_it   = gmm::vect_const_begin(_v);
-  gmm::linalg_traits<SVectorGMM>::const_iterator c_end  = gmm::vect_const_end(_v);
-
-  for(; c_it != c_end; ++c_it)
-    if(c_it.index() != n-1)
-      if(std::abs(*c_it) > vmax)
-      {
-        imax = c_it.index();
-        vmax = std::abs(*c_it);
-      }
-
-  return imax;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-void
-add_row_simultaneously( gmm::size_type _row_i,
-                        double      _coeff,
-                        SVectorGMM& _row,
-                        RMatrixGMM& _rmat,
-                        CMatrixGMM& _cmat,
-                        const double _eps )
-{
-  typedef gmm::linalg_traits<SVectorGMM>::const_iterator RIter;
-  RIter r_it  = gmm::vect_const_begin(_row);
-  RIter r_end = gmm::vect_const_end(_row);
-
-  for(; r_it!=r_end; ++r_it)
-  {
-    _rmat(_row_i, r_it.index()) += _coeff*(*r_it);
-    _cmat(_row_i, r_it.index()) += _coeff*(*r_it);
-    if( std::abs(_rmat(_row_i, r_it.index())) < _eps )
-    {
-      _rmat(_row_i, r_it.index()) = 0.0;
-      _cmat(_row_i, r_it.index()) = 0.0;
-    }
-  }
-}
 
 
 #endif // COMISO_GMM_AVAILABLE
