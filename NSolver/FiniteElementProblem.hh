@@ -50,7 +50,7 @@ public:
 
   virtual void accumulate_hessian ( const double* _x , std::vector<Triplet>& _triplets) = 0;
 
-  virtual double max_feasible_step( const double* _x, const double* _v) { return DBL_MAX;}
+  virtual double max_feasible_step( const double* /*_x*/, const double* /*_v*/) { return DBL_MAX;}
 
   virtual unsigned int n_instances() = 0;
 

@@ -53,7 +53,7 @@ public:
   enum ConstraintType {NC_EQUAL, NC_LESS_EQUAL, NC_GREATER_EQUAL};
 
   /// Default constructor
-  NConstraintInterface(const ConstraintType _type = NC_EQUAL, double _eps = 1e-6) : type_(_type) {}
+  NConstraintInterface(const ConstraintType _type = NC_EQUAL, double /*_eps*/ = 1e-6) : type_(_type) {}
 
   /// Destructor
   virtual ~NConstraintInterface() {}
