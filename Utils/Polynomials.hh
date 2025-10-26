@@ -215,6 +215,64 @@ public:
   }
 
 
+  // compute roots within parameter domain [0,1]
+  void roots_in_interval(std::vector<double>& _roots, const double _eps=1e-6)
+  {
+    _roots.clear();
+    double t=0.0;
+    if(!first_root_of_control_polygon(t))
+      return;
+    else
+    {
+      if( _eps > 1.0)
+      {
+        // return root
+        _roots.emplace_back(t);
+        return;
+      }
+      else
+      {
+        // accuracy not sufficient ---> subdivide
+        double t_sub = 0.5;
+        if(t < 0.2)
+          t_sub = 2.0*t;
+        else if(t > 0.8)
+          t_sub = 2.0*t-1.0;
+
+        // truncate to warrant progress
+        if(t_sub < 0.05) t_sub = 0.05;
+        if(t_sub > 0.95) t_sub = 0.95;
+
+        BezierCurve b0, b1;
+        subdivide(t_sub, b0, b1);
+
+        std::vector<double> roots0;
+        b0.roots_in_interval(roots0, _eps / t_sub);
+        for(const auto& r : roots0)
+        {
+          // re-parametrize result
+          double rp = r * t_sub;
+          // add to output if sufficiently different from previous one
+          if(_roots.empty() || std::abs(_roots.front()-rp) > _eps)
+            _roots.emplace_back(rp);
+        }
+
+        std::vector<double> roots1;
+        b1.roots_in_interval(roots1, _eps / (1.0 - t_sub));
+        for(const auto& r : roots1)
+        {
+          // re-parametrize result
+          double rp = t_sub + r * (1.0 - t_sub);
+          // add to output if sufficiently different from previous one
+          if(_roots.empty() || std::abs(_roots.front()-rp) > _eps)
+            _roots.emplace_back(rp);
+        }
+      }
+    }
+  }
+
+
+
   bool first_root_of_control_polygon(double& _t_root)
   {
     DEB_enter_func;
@@ -339,7 +397,23 @@ public:
       return false;
   }
 
+  // robustly find roots of f(x) = _a0 + _a1*x + _a2*x^2 + _a3*x^2 + ... in interval [_t_start,_t_end]
+  // the estimated roots are computed with accuracy |_t-t^*| < _eps
+  // roots t1, t2 with |t1-t2| <= 2*_eps might not be distinguished
 
+  template<int DIMENSION>
+  static void roots_in_interval(const Monomial<DIMENSION>& _m, const double _t_start, const double _t_end, std::vector<double>& _roots, const double _eps=1e-6)
+  {
+    BezierCurve<DIMENSION> b(_m, _t_start, _t_end);
+    std::vector<double> b_roots;
+    b.roots_in_interval( b_roots, _eps);
+
+    // clear old data and compute result
+    _roots.clear();
+    for(const auto& r : b_roots)
+      // re-parametrize roots
+      _roots.emplace_back((1.0-r)*_t_start + r*_t_end);
+  }
 
   // robustly find **positive** roots of f(x) = _a x^2 + _b x + _c
   // return {-1, 0, 1, 2} which corresponds to number of roots, or -1 which means infinitely many roots for a=b=c=0

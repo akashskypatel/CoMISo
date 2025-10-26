@@ -203,6 +203,7 @@ public:
   [[deprecated("Pass appropriate config to constructor, or use config()")]]
   bool& allow_warmstart() { return config_.allow_warmstart;};
 
+  [[deprecated("Pass appropriate config to constructor, or use config()")]]
   double& max_feasible_step_safety_factor() { return config_.max_feasible_step_safety_factor;}
 
   [[deprecated("Pass appropriate config to constructor, or use config()")]]
