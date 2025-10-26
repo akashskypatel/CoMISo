@@ -323,9 +323,9 @@ bool CholmodSolver::update_downdate_factor( const std::vector<int>&    _colptr,
                                             const std::vector<double>& _values,
                                             const bool                 _upd)
 {
-#ifndef CHOLMOD_HAS_MATRIXOPS
-    // cholmod_submatrix
-    std::cerr << "CoMISo CholmodSolver::update_downdate_factor not available, as CHOLMOD was built without MATRIXOPS feature." << std::endl;
+#if !(defined(CHOLMOD_HAS_MATRIXOPS) && defined(CHOLMOD_HAS_MODIFY))
+    // cholmod_submatrix, cholmod_updown
+    std::cerr << "CoMISo CholmodSolver::update_downdate_factor not available, as CHOLMOD must be build with MATRIXOPS and MODIFY features to support this." << std::endl;
     return false;
 #else
     if(show_timings_) sw_.start();

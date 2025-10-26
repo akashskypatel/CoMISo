@@ -73,7 +73,7 @@ public:
   // advanced properties
   virtual bool   constant_gradient ()                                    const { return false; }
   virtual bool   constant_hessian  ()                                    const { return false; }
-  virtual double max_feasible_step ( const double* _x, const double* _v)       { return DBL_MAX; }
+  virtual double max_feasible_step ( const double* /*_x*/, const double* /*_v*/)       { return DBL_MAX; }
 };
 
 

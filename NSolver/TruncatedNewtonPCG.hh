@@ -117,7 +117,7 @@ public:
   {}
 
   /// deprecated: old constructor provided for backwards compatibility
-  [[deprecated]]
+  [[deprecated("Use TruncatedNewtonPCG(TruncatedNewtonPCGConfig const&) instead")]]
   TruncatedNewtonPCG(const double _eps, const double _eps_line_search = 1e-8,
                      const int _max_iters = 500, const double _alpha_ls = 0.2,
                      const double _beta_ls = 0.6)

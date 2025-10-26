@@ -5,7 +5,7 @@ variables:
   GIT_STRATEGY: fetch
 
 include:
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.8
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.10
     inputs:
       stage: build
       tags:
@@ -13,7 +13,7 @@ include:
         - linux
         - docker-docker
       debian_release: bookworm
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.8
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.10
     inputs:
       stage: build
       tags:
@@ -21,12 +21,12 @@ include:
         - linux
         - docker-docker
       debian_release: trixie
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.7
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.10
     inputs:
       stage: build
       tags:
         - cgg
-        - win22
+        - win25
         - docker-windows
       cmake_options: "-DCOMISO_ENABLE_METIS=OFF"
 

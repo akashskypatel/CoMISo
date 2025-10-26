@@ -34,14 +34,6 @@ namespace COMISO {
 
 //== CLASS DEFINITION =========================================================
 
-	      
-
-/** \class NewtonSolver NewtonSolver.hh <CoMISo/.../TruncatedNewtonPCG.hh>
-
-    Brief Description.
-  
-    A more elaborate description follows.
-*/
 class COMISODLLEXPORT AugmentedLagrangianMethod
 {
 public:
@@ -81,8 +73,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn(tau);
-      tn.set_silent(silent_);
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_}};
       tn.solve(&alp);
 
       // current solution
@@ -169,9 +160,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn(tau);
-      tn.set_silent(silent_);
-      tn.always_update_preconditioner() = true;
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_, .always_update_preconditioner=true}};
       tn.solve_projected_normal_equation(&alp, _linear_constraints);
 
       // current solution
@@ -261,9 +250,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn(tau);
-      tn.set_silent(silent_);
-      tn.always_update_preconditioner() = true;
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_, .always_update_preconditioner=true}};
       tn.solve_projected_normal_equation(&alp, _linear_constraints);
 
       // current solution
