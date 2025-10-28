@@ -79,8 +79,13 @@ project(DVectorT &_x)
   double max_abs = 0.0;
   for (int i = 0; i < _x.size(); ++i)
     max_abs = std::max(max_abs, std::abs(_x[i]));
+  if (max_abs == 0.) {
+    K_ = std::numeric_limits<double>::min_exponent;
+  } else {
+    K_ = std::logb(max_abs) + 1;
+  }
+  K_ += static_cast<double>(K_margin_);
 
-  K_ = std::ceil(std::log2(max_abs)) + static_cast<double>(K_margin_);
   delta_ = std::pow(2, K_);
 
   //determine epsilon (the largest bit, which will always be truncated)
