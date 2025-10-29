@@ -63,6 +63,7 @@ public:
 
     // convert to dense matrix
     Eigen::Matrix<double,NV,NV> H;
+    H.resize(_x.size(),_x.size());
     H.setZero();
     for(auto t : _triplets)
       H(t.row(), t.col()) += t.value();
@@ -73,8 +74,8 @@ public:
       project_to_positive_semidefinite(H);
 
       _triplets.clear();
-      for (unsigned int i = 0; i < NV; ++i)
-        for (unsigned int j = 0; j < NV; ++j)
+      for (Eigen::Index i = 0; i < H.rows(); ++i)
+        for (Eigen::Index j = 0; j < H.cols(); ++j)
           _triplets.push_back(Triplet(i, j, H(i, j)));
     }
   }
@@ -151,6 +152,7 @@ public:
 
     // convert to dense matrix
     Eigen::Matrix<double,NV,NV> H;
+    H.resize(_x.size(),_x.size());
     H.setZero();
     for(auto t : _triplets)
       H(t.row(), t.col()) += t.value();
@@ -161,8 +163,8 @@ public:
       project_to_positive_semidefinite(H);
 
       _triplets.clear();
-      for (unsigned int i = 0; i < NV; ++i)
-        for (unsigned int j = 0; j < NV; ++j)
+      for (Eigen::Index i = 0; i < H.rows(); ++i)
+        for (Eigen::Index j = 0; j < H.cols(); ++j)
           _triplets.push_back(Triplet(i, j, H(i, j)));
     }
   }

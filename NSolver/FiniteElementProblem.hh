@@ -67,8 +67,8 @@ private:
 //class FiniteElementType
 //{
 //  // define dimensions of variables and constants
-//  const static int NV = 3;
-//  const static int NC = 1;
+//  const static Eigen::Index NV = 3;  // can be Eigen::Dynamic
+//  const static Eigen::Index NC = 1;  // can be Eigen::Dynamic
 //
 //  typedef Eigen::Matrix<size_t,NV,1> VecI;
 //  typedef Eigen::Matrix<double,NV,1> VecV;
@@ -98,8 +98,8 @@ template<class FiniteElementType>
 class FiniteElementInstancesVector
 {
 public:
-  const static int NV = FiniteElementType::NV;
-  const static int NC = FiniteElementType::NC;
+  const static Eigen::Index NV = FiniteElementType::NV;
+  const static Eigen::Index NC = FiniteElementType::NC;
 
   typedef typename FiniteElementType::VecI VecI;
   typedef typename FiniteElementType::VecC VecC;
@@ -126,6 +126,16 @@ public:
     return indices_[_instance][_nr];
   }
 
+  const VecI& indices(const size_t _instance) const
+  {
+    return indices_[_instance];
+  }
+
+  VecI& indices(const size_t _instance)
+  {
+    return indices_[_instance];
+  }
+
   const VecC& c( const size_t _instance) const
   {
     return constants_[_instance];
@@ -142,15 +152,16 @@ private:
   std::vector<VecC> constants_;
 };
 
-
+/*
+ * old static version not supporting dynamically sized elements
 template<class FiniteElementType, class FiniteElementInstancesType = FiniteElementInstancesVector<FiniteElementType> >
 class FiniteElementSet : public FiniteElementSetBase
 {
 public:
 
   // export dimensions of element
-  const static int NV = FiniteElementType::NV;
-  const static int NC = FiniteElementType::NC;
+  const static Eigen::Index NV = FiniteElementType::NV;
+  const static Eigen::Index NC = FiniteElementType::NC;
 
   typedef typename FiniteElementType::VecI VecI;
   typedef typename FiniteElementType::VecV VecV;
@@ -244,6 +255,150 @@ public:
     {
       // get local x vector
       for(unsigned int j=0; j<NV; ++j)
+        x_[j] = _x[instances_.index(i,j)];
+
+      // store result in corresponding output entry
+      _fi[i] = element_.eval_f(x_, instances_.c(i));
+    }
+  }
+
+
+private:
+
+  FiniteElementType element_;
+
+  FiniteElementInstancesType instances_;
+
+  VecV x_;
+  VecV g_;
+
+  std::vector<Triplet> triplets_;
+};
+*/
+
+template<class FiniteElementType, class FiniteElementInstancesType = FiniteElementInstancesVector<FiniteElementType> >
+class FiniteElementSet : public FiniteElementSetBase
+{
+public:
+
+  // export dimensions of element
+  const static Eigen::Index NV = FiniteElementType::NV; // could be Eigen::Dynamic
+  const static Eigen::Index NC = FiniteElementType::NC; // could be Eigen::Dynamic
+
+  typedef typename FiniteElementType::VecI VecI;
+  typedef typename FiniteElementType::VecV VecV;
+  typedef typename FiniteElementType::VecC VecC;
+
+  FiniteElementSet(const std::string _name = "NoName") : FiniteElementSetBase(_name) {}
+
+  // access element for setting constants per element etc.
+  FiniteElementType& element() { return element_;}
+
+  // access instances for adding etc.
+  FiniteElementInstancesType& instances() { return instances_;}
+
+  virtual double eval_f( const double* _x )
+  {
+    double f(0.0);
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // resize local vectors
+      const auto nv = instances_.indices(i).size();
+      x_.resize(nv);
+
+      // get local x vector
+      for(unsigned int j=0; j<nv; ++j)
+        x_[j] = _x[instances_.index(i,j)];
+
+      f += element_.eval_f(x_, instances_.c(i));
+    }
+    return f;
+  }
+
+  virtual void accumulate_gradient( const double* _x , double* _g)
+  {
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // resize local vectors
+      const auto nv = instances_.indices(i).size();
+      x_.resize(nv);
+      g_.resize(nv);
+
+      // get local x vector
+      for(unsigned int j=0; j<nv; ++j)
+        x_[j] = _x[instances_.index(i,j)];
+
+      element_.eval_gradient(x_, instances_.c(i), g_);
+
+      // accumulate into global gradient
+      for(unsigned int j=0; j<nv; ++j)
+        _g[instances_.index(i,j)] += g_[j];
+    }
+  }
+
+  virtual void accumulate_hessian ( const double* _x , std::vector<Triplet>& _triplets)
+  {
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // resize local vectors
+      const auto nv = instances_.indices(i).size();
+      x_.resize(nv);
+
+      // get local x vector
+      for(unsigned int j=0; j<nv; ++j)
+        x_[j] = _x[instances_.index(i,j)];
+
+      triplets_.clear();
+      element_.eval_hessian(x_, instances_.c(i), triplets_);
+
+      for(unsigned int j=0; j<triplets_.size(); ++j)
+      {
+        // add re-indexed Triplet
+        _triplets.push_back(Triplet( (int)instances_.index(i,triplets_[j].row()),
+                                     (int)instances_.index(i,triplets_[j].col()),
+                                     triplets_[j].value()                   ));
+      }
+    }
+  }
+
+  virtual double max_feasible_step( const double* _x, const double* _v)
+  {
+    double t = DBL_MAX;
+
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // resize local vectors
+      const auto nv = instances_.indices(i).size();
+      x_.resize(nv);
+      g_.resize(nv);
+
+      // get local x vector and v vector
+      for(unsigned int j=0; j<nv; ++j)
+      {
+        x_[j] = _x[instances_.index(i,j)];
+        g_[j] = _v[instances_.index(i,j)];
+      }
+      t = std::min(t, element_.max_feasible_step(x_, g_, instances_.c(i)));
+    }
+
+    return t;
+  }
+
+  virtual unsigned int n_instances()
+  {
+    return instances_.size();
+  }
+
+  virtual void eval_f_per_element( const double* _x , double* _fi)
+  {
+    for(unsigned int i=0; i<instances_.size(); ++i)
+    {
+      // resize local vectors
+      const auto nv = instances_.indices(i).size();
+      x_.resize(nv);
+
+      // get local x vector
+      for(unsigned int j=0; j<nv; ++j)
         x_[j] = _x[instances_.index(i,j)];
 
       // store result in corresponding output entry
