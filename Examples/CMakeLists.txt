@@ -8,6 +8,8 @@ add_subdirectory (small_nleast_squares)
 add_subdirectory (small_nsolver)
 add_subdirectory (small_exact_constraint_satifaction_example)
 add_subdirectory (small_symmetric_dirichlet)
+add_subdirectory (small_tinyad)
+add_subdirectory (small_tinyad_dynamic)
 
 if (COMISO_GMM_AVAILABLE)
     add_subdirectory (small_factored_example)
