@@ -503,7 +503,7 @@ if (COMISO_ENABLE_CBC)
     endif ()
 endif()
 
-if (COMISO_ENABLE_CBC)
+if (COMISO_ENABLE_CLP)
     find_package (CLP)
     if (CLP_FOUND )
         set (COMISO_CLP_CONFIG_FILE_SETTINGS "#define COMISO_CLP_AVAILABLE 1" )
