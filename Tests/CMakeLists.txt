@@ -1,3 +1,8 @@
 add_executable(comiso_tests test.cpp)
-target_link_libraries(comiso_tests PRIVATE Catch2::Catch2WithMain CoMISo::CoMISo)
-catch_discover_tests(comiso_tests)
+target_link_libraries(comiso_tests PRIVATE GTest::gtest GTest::gtest_main)
+
+gtest_discover_tests(comiso_tests
+    EXTRA_ARGS "--gtest_color=yes"
+    DISCOVERY_MODE PRE_TEST
+)
+
