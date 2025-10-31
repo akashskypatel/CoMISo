@@ -1,5 +1,7 @@
 add_executable(comiso_tests test.cpp)
-target_link_libraries(comiso_tests PRIVATE GTest::gtest GTest::gtest_main)
+target_link_libraries(comiso_tests PRIVATE
+    CoMISo::CoMISo
+    GTest::gtest GTest::gtest_main)
 
 gtest_discover_tests(comiso_tests
     EXTRA_ARGS "--gtest_color=yes"
