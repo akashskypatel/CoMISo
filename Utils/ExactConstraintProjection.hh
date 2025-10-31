@@ -93,8 +93,8 @@ private:
   std::vector<bool> is_free_variable_;
 
   // largest required exponent
-  double K_ = 0;
-  int    K_margin_ = 1;
+  int K_ = 0;
+  int K_margin_ = 1;
   // largest number 2^K_
   double delta_ = 0.0;
   // first bit, which will always be zeroed
