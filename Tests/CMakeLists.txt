@@ -1,4 +1,7 @@
-add_executable(comiso_tests test.cpp)
+add_executable(comiso_tests
+    test.cpp
+    exact_constraint_projection.cpp
+    )
 target_link_libraries(comiso_tests PRIVATE
     CoMISo::CoMISo
     GTest::gtest GTest::gtest_main)
