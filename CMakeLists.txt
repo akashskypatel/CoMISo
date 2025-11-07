@@ -71,6 +71,7 @@ set(COMISO_ENABLE_METIS   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo wit
 set(COMISO_ENABLE_MOSEK   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with Mosek (if found)" )
 set(COMISO_ENABLE_MPI     ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with MPI (if found). Only used for TAO and PETSc." )
 set(COMISO_ENABLE_MUMPS   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with MUMPS (if found)" )
+set(COMISO_ENABLE_OPENMP  ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with OpenMP (if found)" )
 set(COMISO_ENABLE_OSI     ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with OSI (if found)" )
 set(COMISO_ENABLE_OSQP    ${COMISO_ENABLE_DEFAULT}   CACHE BOOL "Build CoMISo with OSQP (if found)" )
 set(COMISO_ENABLE_PETSC   ${COMISO_ENABLE_DEFAULT}  CACHE BOOL "Build CoMISo with PETSc (if found)." )
@@ -261,11 +262,12 @@ endif( COMISO_ENABLE_QT )
 
 
 
-set(NEED_LAPACK "")
 
-find_package(OpenMP)
-if(TARGET OpenMP::OpenMP_CXX)
-    target_link_libraries(CoMISo PUBLIC OpenMP::OpenMP_CXX)
+if(CMAKE_ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(TARGET OpenMP::OpenMP_CXX)
+        target_link_libraries(CoMISo PUBLIC OpenMP::OpenMP_CXX)
+    endif()
 endif()
 
 
@@ -302,6 +304,7 @@ else()
     message (STATUS "CoMISo: Building without boost (COMISO_ENABLE_BOOST=OFF)")
 endif()
 
+set(NEED_LAPACK "")
 
 if(COMISO_ENABLE_GMM)
     if (TARGET GMM::GMM)
