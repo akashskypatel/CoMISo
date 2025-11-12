@@ -24,7 +24,7 @@
 
 #include <CoMISo/Config/config.hh>
 #include <CoMISo/Utils/StopWatch.hh>
-#include <vector>
+#include <iostream>
 #include <CoMISo/NSolver/FiniteElementTinyAD.hh>
 
 #if COMISO_TINYAD_AVAILABLE
@@ -113,7 +113,7 @@ int main(void)
   return 0;
 }
 
-#elif
+#else
 
 int main(void)
 {

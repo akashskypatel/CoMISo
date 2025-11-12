@@ -12,76 +12,13 @@ include:
         - cgg
         - linux
         - docker-docker
-      debian_release: bookworm
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.10
-    inputs:
-      stage: build
-      tags:
-        - cgg
-        - linux
-        - docker-docker
       debian_release: trixie
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.10
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.12
     inputs:
       stage: build
       tags:
         - cgg
         - win25
         - docker-windows
-      cmake_options: "-DCOMISO_ENABLE_METIS=OFF"
-
-.job-template-build-with-tests:
-  variables:
-    CMAKE_APPLE_SILICON_PROCESSOR: "x86_64"
-  script:
-    - export PATH=/usr/lib/ccache:${PATH}
-    - >
-      ${TIME} cmake .. -G Ninja
-      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-      -DCMAKE_APPLE_SILICON_PROCESSOR=${CMAKE_APPLE_SILICON_PROCESSOR}
-    - ${TIME} -v cmake --build .
-    - ${TIME} -v ctest --output-junit test-report.xml
-    - ccache -s
-    #- ${TIME} -v ./Build/bin/unittests --gtest_output=xml:test-report.xml
-  artifacts:
-    when: always
-    reports:
-      junit: build-${CI_JOB_NAME}/test-report.xml
-
-
-#.job-template-macos:
-#  needs: []
-#  extends: .job-template-build-with-tests
-#  tags:
-#    - cgg
-#    - macos
-#  variables:
-#    CXX: /opt/llvm/bin/clang++
-#    CC: /opt/llvm/bin/clang
-#    CMAKE_BUILD_TYPE: Debug
-#    TIME: /opt/local/bin/gtime
-#    BEAROPT_STL_DEBUG: "OFF"
-#  before_script:
-#    - "${CXX} --version"
-#    - cmake --version
-#    - uname -a
-#    - ccache -s
-#    - mkdir build-${CI_JOB_NAME}
-#    - cd build-${CI_JOB_NAME}
-#  allow_failure: true # just for now as the Macs are offline
-
-#macos-intel:
-#  extends: .job-template-macos
-#  tags:
-#    - amd64
-#
-#macos-arm:
-#  variables:
-#    # gitlab-runner is an x86_64 binary, so it sets the current architecture to that,
-#    # cf https://gitlab.kitware.com/cmake/cmake/-/merge_requests/5589
-#    CMAKE_APPLE_SILICON_PROCESSOR: "arm64"
-#  extends: .job-template-macos
-#  tags:
-#    - arm64
-#
+      after_script:
+        - 'dependencies.exe -depth 1 -modules ${Env:BUILD_DIR}/Build/bin/comiso_tests.exe'
