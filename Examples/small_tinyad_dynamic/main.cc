@@ -41,9 +41,6 @@ using VecVd = Eigen::Matrix<double,N,1>;
 template <class ScalarT>
 ScalarT eval_f(const Eigen::Matrix<ScalarT,N,1>& _x)
 {
-  // ScalarT t0 = 0.0*_x[0];
-  // ScalarT t1 = 0.0*_x[0];
-
   ScalarT t0 = 0.0;
   ScalarT t1 = 0.0;
   t0 += t1;
