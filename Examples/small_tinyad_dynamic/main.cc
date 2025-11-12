@@ -4,7 +4,7 @@
  *      Copyright (C) 2008-2009 by Computer Graphics Group, RWTH Aachen      *
  *                           www.rwth-graphics.de                            *
  *                                                                           *
- *---------------------------------------------------------------------------* 
+ *---------------------------------------------------------------------------*
  *  This file is part of CoMISo.                                             *
  *                                                                           *
  *  CoMISo is free software: you can redistribute it and/or modify           *
@@ -20,7 +20,7 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with CoMISo.  If not, see <http://www.gnu.org/licenses/>.          *
  *                                                                           *
-\*===========================================================================*/ 
+\*===========================================================================*/
 
 #include <CoMISo/Config/config.hh>
 #include <CoMISo/Utils/StopWatch.hh>
@@ -35,13 +35,18 @@ using TADH = TinyAD::Scalar<N,double,true>;
 
 using VecVd = Eigen::Matrix<double,N,1>;
 
+
 //------------------------------------------------------------------------------------------------------
 
 template <class ScalarT>
 ScalarT eval_f(const Eigen::Matrix<ScalarT,N,1>& _x)
 {
-  ScalarT t0 = 0.0*_x[0];
-  ScalarT t1 = 0.0*_x[0];
+  // ScalarT t0 = 0.0*_x[0];
+  // ScalarT t1 = 0.0*_x[0];
+
+  ScalarT t0 = 0.0;
+  ScalarT t1 = 0.0;
+  t0 += t1;
 
   for(Eigen::Index i=0; i<_x.size(); i+=2)
     t0 += (i+1)*_x[i];
@@ -53,6 +58,7 @@ ScalarT eval_f(const Eigen::Matrix<ScalarT,N,1>& _x)
 
   return f;
 }
+
 
 //------------------------------------------------------------------------------------------------------
 
@@ -115,4 +121,3 @@ int main(void)
 }
 
 #endif
-
