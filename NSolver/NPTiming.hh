@@ -72,11 +72,13 @@ private:
   double timing_eval_f_;
   double timing_eval_gradient_;
   double timing_eval_hessian_;
+  double timing_max_feasible_step_;
 
   // number of function executions
   int n_eval_f_;
   int n_eval_gradient_;
   int n_eval_hessian_;
+  int n_max_feasible_step_;
 };
 
 

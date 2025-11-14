@@ -66,7 +66,11 @@ void NPTiming::store_result ( const double* _x )
 
 double NPTiming::max_feasible_step ( const double* _x, const double* _v)
 {
-  return base_->max_feasible_step(_x, _v);
+  ++n_max_feasible_step_;
+  sw_.start();
+  double mfs = base_->max_feasible_step(_x, _v);
+  timing_max_feasible_step_ += sw_.stop();
+  return mfs;
 }
 
 
@@ -88,10 +92,12 @@ void NPTiming::start_timing()
   timing_eval_f_ = 0.0;
   timing_eval_gradient_ = 0.0;
   timing_eval_hessian_ = 0.0;
+  timing_max_feasible_step_ = 0.0;
 
   n_eval_f_ = 0;
   n_eval_gradient_ = 0;
   n_eval_hessian_ = 0;
+  n_max_feasible_step_ = 0;
 }
 
 
@@ -99,7 +105,7 @@ void NPTiming::print_statistics()
 {
   double time_total = swg_.stop();
 
-  double time_np = timing_eval_f_ + timing_eval_gradient_ + timing_eval_hessian_;
+  double time_np = timing_eval_f_ + timing_eval_gradient_ + timing_eval_hessian_+timing_max_feasible_step_;
 
 
 
@@ -107,9 +113,10 @@ void NPTiming::print_statistics()
   std::cerr << "total time    : " << time_total/1000.0 << "s\n";
   std::cerr << "total time NP : " << time_np/1000.0 << "s  (" << time_np/time_total*100.0 << " %)\n";
 
-  double timing_eval_f_avg        = timing_eval_f_/double(n_eval_f_);
-  double timing_eval_gradient_avg = timing_eval_gradient_/double(n_eval_gradient_);
-  double timing_eval_hessian_avg  = timing_eval_hessian_/double(n_eval_hessian_);
+  double timing_eval_f_avg             = timing_eval_f_/double(n_eval_f_);
+  double timing_eval_gradient_avg      = timing_eval_gradient_/double(n_eval_gradient_);
+  double timing_eval_hessian_avg       = timing_eval_hessian_/double(n_eval_hessian_);
+  double timing_max_feasible_step_avg  = timing_max_feasible_step_/double(n_max_feasible_step_);
 
   std::cerr << std::fixed << std::setprecision(5)
   << "eval_f time   : " << timing_eval_f_/1000.0
@@ -120,7 +127,10 @@ void NPTiming::print_statistics()
   << timing_eval_gradient_avg/1000.0 << "s, factor: " <<  timing_eval_gradient_avg / timing_eval_f_avg << ")\n"
   << "eval_hess time: " << timing_eval_hessian_/1000.0
   << "s  ( #evals: " << n_eval_hessian_ << " -> avg "
-  << timing_eval_hessian_avg/1000.0 << "s, factor: " <<  timing_eval_hessian_avg / timing_eval_f_avg << ")\n";
+  << timing_eval_hessian_avg/1000.0 << "s, factor: " <<  timing_eval_hessian_avg / timing_eval_f_avg << ")\n"
+  << "max_fs time   : " << timing_max_feasible_step_/1000.0
+  << "s  ( #evals: " << n_max_feasible_step_ << " -> avg "
+  << timing_max_feasible_step_avg/1000.0 << "s, factor: " <<  timing_max_feasible_step_avg / timing_eval_f_avg << ")\n";
 }
 
 
