@@ -7,7 +7,7 @@ namespace COMISO {
 /// Config for TruncatedNewtonPCG solver
 struct TruncatedNewtonPCGConfig
 {
-  MatrixDecompositionAlgorithm matrix_decomposition_algo = MatrixDecompositionAlgorithm::Cholmod_Supernodal;
+  MatrixDecompositionAlgorithm matrix_decomposition_algo = MatrixDecompositionAlgorithm::Default;
   double eps           = 1e-3;
   /// Line search epsilon
   double eps_ls        = 1e-8;

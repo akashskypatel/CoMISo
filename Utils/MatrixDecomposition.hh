@@ -3,6 +3,8 @@
 #include <memory>
 #include <Eigen/Core>
 #include <Eigen/Sparse>
+#include <CoMISo/Config/config.hh>
+#include <CoMISo/Config/config_suitesparse.hh>
 
 namespace COMISO {
 
@@ -16,6 +18,13 @@ enum class MatrixDecompositionAlgorithm {
     Cholmod_Supernodal,
     Cholmod_SimplicialLLT,
     UmfPack_LU,
+#if COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+    Default = Cholmod_Supernodal,
+#elif COMISO_METIS_AVAILABLE
+    Default = Eigen_SimplicialLDLD_MetisOrdering,
+#else
+    Default = Eigen_SimplicialLDLT_AMDOrdering,
+#endif
 };
 
 
