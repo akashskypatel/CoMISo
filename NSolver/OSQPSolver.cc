@@ -61,6 +61,11 @@ Eigen::VectorXd get_linear_energy_coefficients(NProblemInterface* _problem)
   _problem->eval_gradient(zero.data(), q.data());
   return q;
 }
+double get_constant_coefficient(NProblemInterface* _problem)
+{
+  std::vector<double> zero(_problem->n_unknowns(), 0);
+  return _problem->eval_f(zero.data());
+}
 
 void get_constraints(int _n_cols, const ContraintVector& _constraints,
     SMatrix& _C, Eigen::VectorXd& _lower_bounds,
@@ -163,10 +168,11 @@ public:
 
   void solve(NProblemInterface* _problem, const ContraintVector& _constraints);
   const double* get_solution() const { return osqp_eigen_.get_x(); }
-        double  objective_value() const{ return osqp_eigen_.objective_value();}
+        double  objective_value() const{ return const_coeff_ + osqp_eigen_.objective_value();}
 
 private:
   OSQPEigen osqp_eigen_;
+  double const_coeff_ = 0.;
 };
 
 void Impl::solve(
@@ -174,6 +180,9 @@ void Impl::solve(
 {
   const auto H = get_hessian(_problem);
   const auto lin_q = get_linear_energy_coefficients(_problem);
+  const_coeff_ = get_constant_coefficient(_problem);
+
+
 
   SMatrix A; // inequality constraints
   Eigen::VectorXd lower;                  // lower bounds
@@ -327,10 +336,11 @@ void OSQPSolver::solve(NProblemInterface* _problem,
     bool _final_step_with_all_constraints)
 {
   Impl impl;
-  const auto solve_function = [&impl](
+  const auto solve_function = [&](
       NProblemInterface* _problem, const ContraintVector _constraints)
   {
-    return impl.solve(_problem, _constraints);
+    impl.solve(_problem, _constraints);
+    obj_val_ = impl.objective_value();
   };
   const auto result_function = [&impl]() { return impl.get_solution(); };
 
@@ -339,7 +349,6 @@ void OSQPSolver::solve(NProblemInterface* _problem,
       _almost_infeasible_threshold, _max_passes,
       _final_step_with_all_constraints);
 
-  obj_val_ = impl.objective_value();
 }
 
 
