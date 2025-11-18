@@ -5,20 +5,30 @@ variables:
   GIT_STRATEGY: fetch
 
 include:
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.10
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.11
     inputs:
+      job_name: "debian-reldeb"
       stage: build
-      tags:
-        - cgg
-        - linux
-        - docker-docker
-      debian_release: trixie
-  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.0.12
+      CMAKE_BUILD_TYPE: RelWithDebInfo
+
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/debian-linux/debian@v0.0.11
     inputs:
+      job_name: "debian-debug"
       stage: build
-      tags:
-        - cgg
-        - win25
-        - docker-windows
-      after_script:
-        - 'dependencies.exe -depth 1 -modules ${Env:BUILD_DIR}/Build/bin/comiso_tests.exe'
+      CMAKE_BUILD_TYPE: Debug
+
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.1.0
+    inputs:
+      job_name: "win-ninja-debug"
+      before_script:
+        - vcpkg install eigen3
+      enable_ctest: true
+      CMAKE_BUILD_TYPE: Debug
+
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/windows/vs22-cmake@v0.1.0
+    inputs:
+      job_name: "win-ninja-release"
+      before_script:
+        - vcpkg install eigen3
+      enable_ctest: true
+      CMAKE_BUILD_TYPE: Release
