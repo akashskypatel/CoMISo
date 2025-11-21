@@ -141,7 +141,8 @@ void IPOPTSolver::Impl::setup_ipopt_defaults()
 #endif
 
 #ifdef DEB_ON
-  if (!Debug::Config::query().console())
+  if (!Debug::Config::query().console()
+          || Debug::Config::query().output_level < 2)
 #endif
   {// Block any output on cout and cerr from Ipopt.
     set_ipopt_option("suppress_all_output", "yes");
