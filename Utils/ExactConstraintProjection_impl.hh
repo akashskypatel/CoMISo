@@ -23,6 +23,7 @@ bool
 ExactConstraintProjection::
 initialize(const SMatrixEigen &_A, const DVectorEigen &_b)
 {
+  DEB_enter_func
   COMISO::StopWatch sw;
   sw.start();
 
@@ -56,7 +57,7 @@ initialize(const SMatrixEigen &_A, const DVectorEigen &_b)
   // perform transformation
   bool valid = transform_to_IRREF();
 
-  std::cerr << "IRREF transformation took " << sw.stop() / 1000.0 << " seconds" << std::endl;
+  DEB_line(2, "IRREF transformation took " << sw.stop() / 1000.0 << " seconds");
   return valid;
 }
 
@@ -69,6 +70,7 @@ bool
 ExactConstraintProjection::
 project(DVectorT &_x)
 {
+  DEB_enter_func;
   COMISO::StopWatch sw; sw.start();
 
   bool valid = true;
@@ -91,8 +93,8 @@ project(DVectorT &_x)
   assert(round_to_F_delta(    epsilon_)==0.0);
   assert(round_to_F_delta(2.0*epsilon_) >0.0);
 
-  std::cerr << "delta   = " << delta_ << std::endl;
-  std::cerr << "epsilon = " << epsilon_ << std::endl;
+  DEB_line(2, "delta   = " << delta_);
+  DEB_line(2, "epsilon = " << epsilon_);
 
   // 2. truncate free variables (collect divisors)
   double max_abs_diff_free_variables = 0.0;
@@ -146,15 +148,14 @@ project(DVectorT &_x)
       }
 
     if(enable_detailed_logging_)
-      std::cerr << "*** projection process variable " << pivot_i << " with #dp coefficients = " << dp.size() << std::endl;
+      DEB_line(2, "*** projection process variable " << pivot_i << " with #dp coefficients = " << dp.size());
 
     double b_div = b_IRREF_[row_idx] / C_pivot;
 
     // check divisibility of rhs
     if (static_cast<int>(b_div * C_pivot) != b_IRREF_[row_idx])
     {
-      std::cerr << "Warning: rhs value " << b_IRREF_[row_idx] << " is not exactly divisible by row pivot value "
-                << C_pivot << std::endl;
+      DEB_line(2, "Warning: rhs value " << b_IRREF_[row_idx] << " is not exactly divisible by row pivot value " << C_pivot);
       valid = false;
     }
 
@@ -166,11 +167,11 @@ project(DVectorT &_x)
   }
 
   // output statistics on max/avg change
-  std::cerr << "max_diff_free_variables      = " << max_abs_diff_free_variables << std::endl;
-  std::cerr << "max_diff_dependent_variables = " << max_abs_diff_dependent_variables << std::endl;
-  std::cerr << "max_lcm                      = " << max_lcm << std::endl;
+  DEB_line(2, "max_diff_free_variables      = " << max_abs_diff_free_variables);
+  DEB_line(2, "max_diff_dependent_variables = " << max_abs_diff_dependent_variables);
+  DEB_line(2, "max_lcm                      = " << max_lcm);
 
-  std::cerr << "project took " << sw.stop()/1000.0 << " seconds" << std::endl;
+  DEB_line(2, "project took " << sw.stop()/1000.0 << " seconds");
 
 #if DEB_ON
   // verify result
@@ -180,7 +181,7 @@ project(DVectorT &_x)
     double deviation = b_IRREF_[i]-safe_dot(A_IRREF_R_.row(i), _x);
     max_abs_deviation = std::max(max_abs_deviation, std::abs(deviation));
   }
-  std::cerr << "result verification max_abs_deviation = " << max_abs_deviation << std::endl;
+  DEB_line(2, "result verification max_abs_deviation = " << max_abs_deviation);
 #endif
 
 
