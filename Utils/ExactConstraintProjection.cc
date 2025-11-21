@@ -9,6 +9,7 @@
 \*===========================================================================*/
 
 #include "ExactConstraintProjection.hh"
+#include <CoMISo/Base/Debug/DebOut.hh>
 
 #include <numeric>
 #include <set>
@@ -43,6 +44,7 @@ bool
 ExactConstraintProjection::
 transform_to_IRREF()
 {
+  DEB_enter_func
   COMISO::StopWatch sw; sw.start();
 
   int n = A_IRREF_R_.rows();
@@ -110,8 +112,8 @@ transform_to_IRREF()
     {
       if(b_IRREF_[_i] != 0)
       {
-        std::cerr << "Warning: infeasible linear condition with zero coefficients but non-zero rhs = " << b_IRREF_[_i]
-                  << " detected during elimination" << std::endl;
+        DEB_line(2, "Warning: infeasible linear condition with zero coefficients but non-zero rhs = "
+                << b_IRREF_[_i] << " detected during elimination");
         valid = false;
       }
     }
@@ -187,14 +189,13 @@ transform_to_IRREF()
           nnz_min_1 = std::min(nnz, nnz_min_1);
       }
 
-        std::cerr << "*** process row " << row_cur << ", remaining "
+      DEB_line(2, "*** process row " << row_cur << ", remaining "
                 << to_process_with_unit_pivot.size() + to_process.size()
                 << ", pivot_idx = " << pivot_cur
                 << ", pivot_val = " << pivot_val
                 << ", #nnz in pivot col = " << A_IRREF_C_.col(pivot_cur).nonZeros()
                 << ", min #nnz in col = " << nnz_min
-                << ", min #nnz in col with |1| coeff = " << nnz_min_1
-                << std::endl;
+                << ", min #nnz in col with |1| coeff = " << nnz_min_1);
     }
 
     // verify data consistency
@@ -266,16 +267,16 @@ transform_to_IRREF()
     A_IRREF_C_.prune_col(pivot_cur, 0);
   }
 
-  std::cerr << "#independent      conditions in IRREF = " << std::scientific << n_pivots << std::endl;
-  std::cerr << "#linear dependent conditions in IRREF = " << std::scientific << n-n_pivots << std::endl;
-  std::cerr << "value |pivot_max| = " << pivot_max_abs_val << std::endl;
+  DEB_line(2, "#independent      conditions in IRREF = " << n_pivots);
+  DEB_line(2, "#linear dependent conditions in IRREF = " << n-n_pivots);
+  DEB_line(2, "value |pivot_max| = " << pivot_max_abs_val);
   if(!row_nnz.empty())
   {
-    std::cerr << "max #nnz in row = " << *std::max_element(row_nnz.begin(), row_nnz.end()) << std::endl;
-    std::cerr << "#nnz in IRREF   = " << std::accumulate(row_nnz.begin(), row_nnz.end(), 0) << std::endl;
+    DEB_line(2, "max #nnz in row = " << *std::max_element(row_nnz.begin(), row_nnz.end()));
+    DEB_line(2, "#nnz in IRREF   = " << std::accumulate(row_nnz.begin(), row_nnz.end(), 0));
   }
 
-  std::cerr << "transform_to_IRREF took " << sw.stop()/1000.0 << "seconds" << std::endl;
+  DEB_line(2, "transform_to_IRREF took " << sw.stop()/1000.0 << "seconds");
 
   // verify consistency
   if(1)
@@ -349,8 +350,8 @@ safe_dot(const std::vector<PairDD>& _dp) const
       // catch and handle infeasible case
       if (k == 0.0)
       {
-        std::cerr << "ERROR: safe dot ended up in infeasible case for pos ---> numerical precision loss might occur" << std::endl;
-        std::cerr << "r=" << r << ", delta=" << delta_ << ", pos.size()= " << pos.size() << ", neg.size()= " << neg.size() << std::endl;
+        DEB_error("safe_dot: ended up in infeasible case for pos ---> numerical precision loss might occur: "
+                << "r=" << r << ", delta=" << delta_ << ", pos.size()= " << pos.size() << ", neg.size()= " << neg.size());
         // perform full update and ignore lost precision
         k = p.first;
       }
@@ -372,8 +373,8 @@ safe_dot(const std::vector<PairDD>& _dp) const
       // catch and handle infeasible case
       if (k == 0.0)
       {
-        std::cerr << "ERROR: safe dot ended up in infeasible case for neg ---> numerical precision loss might occur" << std::endl;
-        std::cerr << "r=" << r << ", delta=" << delta_ << ", pos.size()= " << pos.size() << ", neg.size()= " << neg.size() << std::endl;
+        DEB_error("safe_dot: ended up in infeasible case for neg ---> numerical precision loss might occur: "
+            << "r=" << r << ", delta=" << delta_ << ", pos.size()= " << pos.size() << ", neg.size()= " << neg.size());
         // perform full update and ignore lost precision
         k = p.first;
       }
@@ -396,6 +397,7 @@ void
 ExactConstraintProjection::
 check_consistency()
 {
+  DEB_enter_func
   A_IRREF_R_.prune(0.);
   A_IRREF_C_.prune(0.);
 
@@ -406,8 +408,8 @@ check_consistency()
       int val_r = it.value();
       int val_c = A_IRREF_C_.coeff(k,it.index());
       if( val_r != val_c)
-        std::cerr << "ERROR: inconsistent row and col matrix at (i,j)=(" << it.row() << "," << it.col() << ") and values "
-                  << val_r << " vs. " << val_c << " detected in row matrix" << std::endl;
+        DEB_error("ExactConstraintProjection: inconsistent row and col matrix at (i,j)=(" << it.row() << "," << it.col()
+                << ") and values " << val_r << " vs. " << val_c << " detected in row matrix");
     }
 
   for (int k=0; k<A_IRREF_C_.outerSize(); ++k)
@@ -416,8 +418,8 @@ check_consistency()
       int val_r = it.value();
       int val_c = A_IRREF_R_.coeff(it.index(),k);
       if( val_r != val_c)
-        std::cerr << "ERROR: inconsistent row and col matrix at (i,j)=(" << it.row() << "," << it.col() << ") and values "
-                  << val_r << " vs. " << val_c << " detected in col matrix" << std::endl;
+        DEB_error("ExactConstraintProjection: inconsistent row and col matrix at (i,j)=(" << it.row() << "," << it.col()
+                << ") and values " << val_r << " vs. " << val_c << " detected in col matrix");
     }
 
   // verify that all rows without pivot element are zero
@@ -427,21 +429,21 @@ check_consistency()
     {
       int nnz_c = A_IRREF_C_.col(pivot_[i]).nonZeros();
       if(nnz_c != 1)
-        std::cerr << "ERROR: pivot column has #nonzeros = " << nnz_c << " but should have only one" << std::endl;
+        DEB_error("ExactConstraintProjection: pivot column has #nonzeros = " << nnz_c << " but should have only one");
     }
     else
     {
       int nnz_r = A_IRREF_R_.row(i).nonZeros();
       if(nnz_r != 0)
-        std::cerr << "ERROR: non-pivot row has #nonzeros = " << nnz_r << " but should have zero" << std::endl;
+        DEB_error("ExactConstraintProjection: non-pivot row has #nonzeros = " << nnz_r << " but should have zero");
       if(b_IRREF_[i] != 0)
-        std::cerr << "ERROR: zero row with non-zero rhs = " << b_IRREF_[i] << std::endl;
+        DEB_error("ExactConstraintProjection: zero row with non-zero rhs = " << b_IRREF_[i]);
     }
 
   int nnz_max_in_row = 0;
   for (int k=0; k<A_IRREF_R_.outerSize(); ++k)
     nnz_max_in_row = std::max(nnz_max_in_row, static_cast<int>(A_IRREF_R_.row(k).nonZeros()));
-  std::cerr << "max #nnz in row checked = " << nnz_max_in_row << std::endl;
+  DEB_line(2, "max #nnz in row checked = " << nnz_max_in_row);
 }
 
 } // NAMESPACE COMISO
