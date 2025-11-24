@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <Eigen/Sparse>
 #include <osqp.h>
 
