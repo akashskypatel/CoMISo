@@ -75,18 +75,19 @@ project(DVectorT &_x)
 
   bool valid = true;
 
-  // 1. determine K=max_i ceil(log2(|x_i|) + 1 and delta = 2^K
+  // 0. smallest K where we can find a non-subnormal epsilon
+  K_ = std::numeric_limits<double>::min_exponent + std::numeric_limits<double>::digits;
+  // 1. determine K=max_i ceil(log2(|x_i|) + 1 + K_margin_ and delta = 2^K
   double max_abs = 0.0;
-  for (int i = 0; i < _x.size(); ++i)
-    max_abs = std::max(max_abs, std::abs(_x[i]));
+  for (int i = 0; i < _x.size(); ++i) {
+    K_ = std::max(K_, std::ilogb(_x[i]));
+  }
 
-  K_ = std::ceil(std::log2(max_abs)) + static_cast<double>(K_margin_);
-  delta_ = std::pow(2, K_);
+  K_ += 1 + K_margin_;
 
-  //determine epsilon (the largest bit, which will always be truncated)
-  epsilon_ = delta_;
-  while (((epsilon_ + delta_) - delta_) == epsilon_)
-    epsilon_ *= 0.5;
+  // delta = 2^K
+  delta_ = std::ldexp(1., K_);
+  epsilon_ = std::ldexp(delta_, -std::numeric_limits<double>::digits);
 
   // verify epsilon
   assert(!is_in_F_delta(epsilon_));
