@@ -20,13 +20,15 @@ public:
 
 public:
   //! Constructor.
-  Error(const Index _idx) : Base::Error((int)_idx) {}
+  Error(const Index _idx) : Error((int)_idx) {};
+  Error(const Index _idx, const char* message) : Error((int)_idx, message) {}
 
   //! Return the error message 
   virtual const char* message() const;
 
 protected:
-  Error(const int _idx) : Base::Error(_idx) {}
+  Error(const int _idx);
+  Error(const int _idx, const char *message) : Base::Error(_idx, message) {}
 };
 
 }//namespace COMISO

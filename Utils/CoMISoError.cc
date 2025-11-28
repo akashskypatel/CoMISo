@@ -11,6 +11,7 @@ static const char* ERROR_MESSAGE[] =
   #undef DEFINE_ERROR
 };
 
+Error::Error(const int _idx) : Error(_idx, ERROR_MESSAGE[_idx]) {}
 const char* Error::message() const { return ERROR_MESSAGE[idx_]; }
 
 }//namespace COMISO
