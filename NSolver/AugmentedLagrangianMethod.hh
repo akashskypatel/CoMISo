@@ -73,7 +73,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_}};
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .always_update_preconditioner=true, .silent = silent_}};
       tn.solve(&alp);
 
       // current solution
@@ -160,7 +160,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_, .always_update_preconditioner=true}};
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .always_update_preconditioner=true, .silent = silent_}};
       tn.solve_projected_normal_equation(&alp, _linear_constraints);
 
       // current solution
@@ -250,7 +250,7 @@ public:
       alp.mu() = mu;
 
       // optimize unconstrained
-      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .silent = silent_, .always_update_preconditioner=true}};
+      TruncatedNewtonPCG tn{TruncatedNewtonPCGConfig{.eps=tau, .always_update_preconditioner=true, .silent = silent_}};
       tn.solve_projected_normal_equation(&alp, _linear_constraints);
 
       // current solution
