@@ -920,7 +920,7 @@ void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
 #if COMISO_OSQP_AVAILABLE
       solve_kkt_system_osqp(_dx); break;
 #else
-      DEB_warning(1, "OSQP Solver selected but not available");
+      DEB_warning(1, "OSQP Solver selected but not available"); break;
 #endif
     default: DEB_warning(1, "selected linear solver not available"); break;
   }
