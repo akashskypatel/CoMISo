@@ -13,6 +13,7 @@
 
 #include <numeric>
 #include <set>
+#include <cassert>
 
 namespace COMISO {
 
