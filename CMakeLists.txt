@@ -595,16 +595,17 @@ else()
 endif ()
 
 if (COMISO_ENABLE_MOSEK)
-    find_package (MOSEK QUIET)
+    find_package (Mosek QUIET)
     if (MOSEK_FOUND )
         set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 1" )
-        target_link_libraries (CoMISo PUBLIC Mosek::MosekC Mosek::FusionCXX)
+        target_link_libraries (CoMISo PRIVATE Mosek::FusionCXX)
+        message (STATUS "CoMISo: Building with MOSEK")
     else ()
-        message (STATUS "MOSEK not found!")
+        message (WARNING "CoMISo: COMISO_ENABLE_MOSEK is set, but MOSEK not found")
         set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 0" )
     endif ()
 else()
-    message (STATUS "MOSEK disabled (enable with COMISO_ENABLE_MOSEK)")
+    message (STATUS "CoMISo: Building without MOSEK (enable with COMISO_ENABLE_MOSEK)")
     set (COMISO_MOSEK_CONFIG_FILE_SETTINGS "#define COMISO_MOSEK_AVAILABLE 0" )
 endif()
 
@@ -783,11 +784,18 @@ if(NOT COMISO_NO_INSTALL)
       "${CMAKE_CURRENT_BINARY_DIR}/CoMISoConfigVersion.cmake"
       DESTINATION ${INSTALL_CONFIGDIR})
 
+
+  set(INSTALL_TARGETS "CoMISo")
+  if(TARGET Mosek::FusionCXX)
+      list(APPEND INSTALL_TARGETS "FusionCXX")
+  endif()
   # Install library
-  install(TARGETS CoMISo EXPORT CoMISoTargets
-          RUNTIME DESTINATION lib
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib)
+  install(TARGETS ${INSTALL_TARGETS}
+      EXPORT CoMISoTargets
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      )
 
   # Install Header Files
   install(DIRECTORY .
