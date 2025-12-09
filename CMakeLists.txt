@@ -810,6 +810,9 @@ if(NOT COMISO_NO_INSTALL)
   if(TARGET Mosek::FusionCXX)
       list(APPEND INSTALL_TARGETS "FusionCXX")
   endif()
+  if(TARGET Gurobi::GurobiCXX)
+      list(APPEND INSTALL_TARGETS "GurobiCXX")
+  endif()
   # Install library
   install(TARGETS ${INSTALL_TARGETS}
       EXPORT CoMISoTargets
