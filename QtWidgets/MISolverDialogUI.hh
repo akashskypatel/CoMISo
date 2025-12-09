@@ -48,7 +48,7 @@
 // #include "QtMISolverDialogBase.hh"
 
 
-#include <Solver/MISolver.hh>
+#include <CoMISo/Solver/MISolver.hh>
 
 //== FORWARDDECLARATIONS ======================================================
 
