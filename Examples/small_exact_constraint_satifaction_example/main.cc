@@ -23,8 +23,8 @@
 \*===========================================================================*/
 
 #include <CoMISo/Config/config.hh>
-#include <CoMISo/Base/Debug/DebOut.hh>
-#include <CoMISo/Base/Debug/DebConfig.hh>
+#include <Base/Debug/DebOut.hh>
+#include <Base/Debug/DebConfig.hh>
 
 #include <CoMISo/NSolver/NewtonSolver.hh>
 #include <CoMISo/NSolver/NProblemInterface.hh>
