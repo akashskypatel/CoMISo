@@ -1,5 +1,5 @@
 [submodule "Base"]
-	path = Base
+	path = src/Base
 	url = ../Base.git
 [submodule "cmake-library"]
 	path = cmake-library
