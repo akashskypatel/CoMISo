@@ -22,7 +22,7 @@ void EigenLSQSolverT<DIM>::solve(Result& _result)
 {
   using SparseMatrix = Eigen::SparseMatrix<double>;
   using ColumnMatrix = Eigen::Matrix<double, Eigen::Dynamic, DIM>;
-  std::vector<Eigen::Triplet<double, size_t>> A_coeff;
+  std::vector<Eigen::Triplet<double, SparseMatrix::Index>> A_coeff;
   A_coeff.reserve(lin_eqs_.size() * 5); // Estimation of 5 coefficient per row
   ColumnMatrix B(lin_eqs_.size(), DIM);
   size_t max_col = 0;
