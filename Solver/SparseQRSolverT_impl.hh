@@ -28,8 +28,7 @@
 
 #include "SparseQRSolver.hh"
 #include <CoMISo/Solver/Eigen_Tools.hh>
-
-#if(COMISO_SUITESPARSE_SPQR_AVAILABLE)
+#include <CoMISo/Solver/GMM_Tools.hh>
 
 namespace COMISO {
 
@@ -121,7 +120,7 @@ bool SparseQRSolver::update_system_eigen( const Eigen_MatrixT& _mat)
 //-----------------------------------------------------------------------------
 
 
-#if COMISO_GMM_AVAILABLE
+#if COMISO_GMM_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE && COMISO_SUITESPARSE_SPQR_AVAILABLE
 template< class GMM_MatrixT, class GMM_MatrixT2, class GMM_MatrixT3, class IntT>
 int
 SparseQRSolver::
@@ -186,7 +185,6 @@ factorize_system_gmm( const GMM_MatrixT& _A, GMM_MatrixT2& _Q, GMM_MatrixT3& _R,
 
   return rank;
 }
-#endif // COMISO_GMM_AVAILABLE
 
 
 //-----------------------------------------------------------------------------
@@ -369,6 +367,6 @@ solve_system_eigen_min2norm( const Eigen_MatrixT& _A, const Eigen_MatrixT& _b, E
 }
 
 
+#endif // COMISO_GMM_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE && COMISO_SUITESPARSE_SPQR_AVAILABLE
 
 }
-#endif//COMISO_SUITESPARSE_SPQR_AVAILABLE
