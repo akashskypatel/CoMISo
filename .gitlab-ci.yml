@@ -8,11 +8,6 @@ clang-c++11:
   tags:
     - Linux
 
-macos-c++11:
-  script: "CI/ci-mac.sh C++11"
-  tags:
-    - Apple
-
 CoMISo-VS2017-Qt-5.10.1-x64:
   variables:
     BUILD_PLATFORM: "VS2017"

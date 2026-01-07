@@ -9,10 +9,11 @@
 \*===========================================================================*/
 
 #include "ExactConstraintProjection.hh"
-#include <CoMISo/Base/Debug/DebOut.hh>
+#include <Base/Debug/DebOut.hh>
 
 #include <numeric>
 #include <set>
+#include <cassert>
 
 namespace COMISO {
 

@@ -877,7 +877,7 @@ bool NewtonSolver::numerical_factorization(SMatrixD& _KKT)
       umfpack_solver_.factorize(_KKT); 
       return (umfpack_solver_.info() == Eigen::Success);
 #endif
-#if COMISO_SUITESPARSE_SPQR_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
+#if COMISO_SUITESPARSE_SPQR_AVAILABLE &&  COMISO_SUITESPARSE_CHOLMOD_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
       case LS_SPQR:
 //      spqr_solver_.factorize(_KKT);
       spqr_solver_.compute(_KKT);
@@ -908,7 +908,7 @@ void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
 #if COMISO_SUITESPARSE_UMFPACK_AVAILABLE
     case LS_Umfpack: _dx = umfpack_solver_.solve(_rhs); break;
 #endif
-#if COMISO_SUITESPARSE_SPQR_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
+#if COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE && EIGEN_VERSION_AT_LEAST(3,4,90)
     case LS_SPQR: _dx = spqr_solver_.solve(_rhs); break;
 #endif
     case LS_EigenCG: _dx = cg_solver_.solve(_rhs); break;
@@ -920,7 +920,7 @@ void NewtonSolver::solve_kkt_system(const VectorD& _rhs, VectorD& _dx)
 #if COMISO_OSQP_AVAILABLE
       solve_kkt_system_osqp(_dx); break;
 #else
-      DEB_warning(1, "OSQP Solver selected but not available");
+      DEB_warning(1, "OSQP Solver selected but not available"); break;
 #endif
     default: DEB_warning(1, "selected linear solver not available"); break;
   }
