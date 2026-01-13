@@ -28,6 +28,11 @@ struct TruncatedNewtonPCGConfig
   // max inf-norm constraint violation above which feasibility steps are still performed
   double eps_constraints_violation_desirable = 1e-9;
 
+  // minimal acceptable relative decrease of constraint violation (cv_old-cv_min)/c_old
+  double min_acceptable_rel_constraint_violation_decrease = 1e-4;
+  // minimal acceptable relative decrease of objective function (obj_old-opj_min)/obj_old (used to detec convergenc to infeasible point)
+  double min_acceptable_rel_objective_decrease = 1e-4;
+
   // set limits for preconditioner values
 //  double min_preconditioner_value = 1e-12;
 //  double max_preconditioner_value = 1e12;

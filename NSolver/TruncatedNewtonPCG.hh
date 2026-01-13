@@ -54,17 +54,23 @@ public:
     // check whether optimizer converged to a locally infeasible point
     bool converged_to_infeasible_point() const
     {
-      return (!feasible && !feasibility_step_productive && (newton_decrement_within_tolerance || line_search_t == 0.0));
+      return (!feasible && !feasibility_step_productive && !optimization_step_productive);
     }
 
-    // function value at last iterate
-    double fx = DBL_MAX;
+    // objective function value at last iterate
+    double objective_function = DBL_MAX;
+    // relative decrease of objective function in last iteration ( (objective_old-objective_new)/objective_old)
+    double rel_objective_function_decrease = DBL_MAX;
+    // did optimization step of last iterate improve objective sufficiently?
+    bool optimization_step_productive = false;
 
     // was last iterate feasible w.r.t. eps_constraints_violation_, i.e. ||residual||_max <= eps_constraints_violation_
     bool feasible = false;
     // constraint violation ||residual||_max of last iterate
     double constraint_violation_inf_norm = DBL_MAX;
-    // did feasibility step of last iterate improve feasbility?
+    // relative decrease of constraint violation in last iteration ( (constraint_violation_inf_norm_old-constraint_violation_inf_norm_new)/constraint_violation_inf_norm_old)
+    double rel_constraint_violation_inf_norm_decrease = DBL_MAX;
+    // did feasibility step of last iterate improve feasbility sufficiently?
     bool feasibility_step_productive = false;
 
     // was Newton decrement of last iterate within specified tolerance eps_gdx_?

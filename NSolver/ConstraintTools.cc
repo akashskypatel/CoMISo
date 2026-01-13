@@ -778,8 +778,8 @@ remove_dependent_linear_constraints_only_linear_equality_gmm( std::vector<NConst
   // only update _constraints if at least one constraint has been removed, otherwise preserve order and leave _constraints untouched!!!
   if(result.n_constraints_eliminated > 0)
   {
-    DEB_line(2, "removed " << result.n_constraints_eliminated <<
-                           " dependent linear constraints out of " << _constraints.size());
+//    DEB_line(2, "removed " << result.n_constraints_eliminated <<
+//                           " dependent linear constraints out of " << _constraints.size());
 
     // 4. store updated constraints
     std::vector<NConstraintInterface *> new_constraints;
