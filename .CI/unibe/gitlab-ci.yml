@@ -32,3 +32,11 @@ include:
         - vcpkg install eigen3
       enable_ctest: true
       CMAKE_BUILD_TYPE: Release
+
+  - component: $CI_SERVER_FQDN/CGG-public/ci-components/macos/sonoma@v0.0.3
+    inputs:
+      job_name: "macos-sonoma"
+      before_script:
+        - brew install eigen
+      enable_ctest: true
+      CMAKE_BUILD_TYPE: Debug
