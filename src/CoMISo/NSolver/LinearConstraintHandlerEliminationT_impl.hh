@@ -32,7 +32,7 @@ initialize( const MatrixT& _C, const VectorT& _c)
   {
 
 	  // require SPQR SOLVER!!!
-#if(COMISO_SUITESPARSE_SPQR_AVAILABLE)
+#if(COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
     // Construct constraints basis form via QR-factorization (see Nocedal 426...)
     // Constraints in basis transformation form x_orig = b_ + C_*x_reduced
     // notice that C_ is a basis of the nullspace of the constraints
@@ -98,7 +98,7 @@ initialize( const MatrixT& _C, const VectorT& _c)
     //  std::cerr << "dim Q = " << gmm::mat_nrows(Q) << " x " << gmm::mat_ncols(Q) << std::endl;
     //  std::cerr << "dim R = " << gmm::mat_nrows(R) << " x " << gmm::mat_ncols(R) << std::endl;
 #else
-    std::cerr << "ERROR: SQPR-Solver required by LinearConstraintHandlerElimination not available !!!" << std::endl;
+    std::cerr << "ERROR: CHOLMOD and SQPR required by LinearConstraintHandlerElimination, but not available !!!" << std::endl;
 #endif
   }
 }
