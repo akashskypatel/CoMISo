@@ -27,6 +27,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 set (CMAKE_DEBUG_POSTFIX "d")
 
 include(FindPkgConfig)
+include(GenerateExportHeader)
 include(VCICommon)
 include(VCIQt)
 include(VCIOutput)
@@ -116,71 +117,70 @@ if(DEFINED COMISO_BUILD_WITHOUT_BOOST AND COMISO_BUILD_WITHOUT_BOOST)
     set(COMISO_ENABLE_BOOST OFF)
 endif()
 
-
 add_library(CoMISo
-    ./Base/Debug/DebCallStack.cc
-    ./Base/Debug/DebConfig.cc
-    ./Base/Debug/DebFile.cc
-    ./Base/Debug/DebIndexMeshOut.cc
-    ./Base/Debug/DebStream.cc
-    ./Base/Utils/BaseError.cc
-    ./Base/Utils/Environment.cc
-    ./Base/Utils/FileOutput.cc
-    ./Base/Utils/IOutputStream.cc
-    ./Base/Utils/NullOutputStream.cc
-    ./Base/Utils/OStringStream.cc
-    ./Base/Utils/Option.cc
-    ./Base/Utils/RedirectStream.cc
-    ./Base/Utils/StopWatch.cc
-    ./EigenSolver/ArpackSolver.cc
-    ./NSolver/BoundConstraint.cc
-    ./NSolver/CBCSolver.cc
-    ./NSolver/COMISOSolver.cc
-    ./NSolver/CPLEXSolver.cc
-    ./NSolver/CombinedProblem.cc
-    ./NSolver/ConeConstraint.cc
-    ./NSolver/ConstraintTools.cc
-    #./NSolver/DOCloudCache.cc
-    #./NSolver/DOCloudJob.cc
-    #./NSolver/DOCloudSolver.cc
-    ./NSolver/FiniteElementProblem.cc
-    ./NSolver/GUROBISolver.cc
-    ./NSolver/GurobiHelper.cc
-    ./NSolver/IPOPTProblemInstance.cc
-    ./NSolver/IPOPTSolver.cc
-    ./NSolver/LPSolveSolver.cc
-    ./NSolver/LeastSquaresProblem.cc
-    ./NSolver/LinearConstraint.cc
-    ./NSolver/LinearConstraintHandlerElimination.cc
-    ./NSolver/LinearConstraintHandlerPenalty.cc
-    ./NSolver/LinearProblem.cc
-    ./NSolver/NPDerivativeChecker.cc
-    ./NSolver/NPLinearConstraints.cc
-    ./NSolver/NPTiming.cc
-    ./NSolver/NProblemInterface.cc
-    ./NSolver/NewtonSolver.cc
-    ./NSolver/OSQPSolver.cc
-    ./NSolver/SymmetricDirichletProblem.cc
-    ./NSolver/TAOSolver.cc
-    ./NSolver/TapeIDSingleton.cc
-    ./NSolver/TruncatedNewtonPCG.cc
-    ./NSolver/cURLpp.cc
-    ./Solver/CholmodSolver.cc
-    ./Solver/ConstrainedSolver.cc
-    ./Solver/EigenLDLTSolver.cc
-    ./Solver/EigenLSQSolver.cc
-    ./Solver/GMM_Tools.cc
-    ./Solver/IterativeSolver.cc
-    ./Solver/MISolver.cc
-    ./Solver/MultiDimConstrainedSolver.cc
-    ./Solver/SparseQRSolver.cc
-    ./Solver/SubProblemSolver.cc
-    ./Solver/TaucsSolver.cc
-    ./Solver/UMFPACKSolver.cc
-    ./Utils/CoMISoError.cc
-    ./Utils/ExactConstraintSatisfaction.cc
-    ./Utils/ExactConstraintProjection.cc
-    ./Utils/MatrixDecomposition.cc
+    src/Base/Debug/DebCallStack.cc
+    src/Base/Debug/DebConfig.cc
+    src/Base/Debug/DebFile.cc
+    src/Base/Debug/DebIndexMeshOut.cc
+    src/Base/Debug/DebStream.cc
+    src/Base/Utils/BaseError.cc
+    src/Base/Utils/Environment.cc
+    src/Base/Utils/FileOutput.cc
+    src/Base/Utils/IOutputStream.cc
+    src/Base/Utils/NullOutputStream.cc
+    src/Base/Utils/OStringStream.cc
+    src/Base/Utils/Option.cc
+    src/Base/Utils/RedirectStream.cc
+    src/Base/Utils/StopWatch.cc
+    src/CoMISo/EigenSolver/ArpackSolver.cc
+    src/CoMISo/NSolver/BoundConstraint.cc
+    src/CoMISo/NSolver/CBCSolver.cc
+    src/CoMISo/NSolver/COMISOSolver.cc
+    src/CoMISo/NSolver/CPLEXSolver.cc
+    src/CoMISo/NSolver/CombinedProblem.cc
+    src/CoMISo/NSolver/ConeConstraint.cc
+    src/CoMISo/NSolver/ConstraintTools.cc
+    #src/CoMISo/NSolver/DOCloudCache.cc
+    #src/CoMISo/NSolver/DOCloudJob.cc
+    #src/CoMISo/NSolver/DOCloudSolver.cc
+    src/CoMISo/NSolver/FiniteElementProblem.cc
+    src/CoMISo/NSolver/GUROBISolver.cc
+    src/CoMISo/NSolver/GurobiHelper.cc
+    src/CoMISo/NSolver/IPOPTProblemInstance.cc
+    src/CoMISo/NSolver/IPOPTSolver.cc
+    src/CoMISo/NSolver/LPSolveSolver.cc
+    src/CoMISo/NSolver/LeastSquaresProblem.cc
+    src/CoMISo/NSolver/LinearConstraint.cc
+    src/CoMISo/NSolver/LinearConstraintHandlerElimination.cc
+    src/CoMISo/NSolver/LinearConstraintHandlerPenalty.cc
+    src/CoMISo/NSolver/LinearProblem.cc
+    src/CoMISo/NSolver/NPDerivativeChecker.cc
+    src/CoMISo/NSolver/NPLinearConstraints.cc
+    src/CoMISo/NSolver/NPTiming.cc
+    src/CoMISo/NSolver/NProblemInterface.cc
+    src/CoMISo/NSolver/NewtonSolver.cc
+    src/CoMISo/NSolver/OSQPSolver.cc
+    src/CoMISo/NSolver/SymmetricDirichletProblem.cc
+    src/CoMISo/NSolver/TAOSolver.cc
+    src/CoMISo/NSolver/TapeIDSingleton.cc
+    src/CoMISo/NSolver/TruncatedNewtonPCG.cc
+    src/CoMISo/NSolver/cURLpp.cc
+    src/CoMISo/Solver/CholmodSolver.cc
+    src/CoMISo/Solver/ConstrainedSolver.cc
+    src/CoMISo/Solver/EigenLDLTSolver.cc
+    src/CoMISo/Solver/EigenLSQSolver.cc
+    src/CoMISo/Solver/GMM_Tools.cc
+    src/CoMISo/Solver/IterativeSolver.cc
+    src/CoMISo/Solver/MISolver.cc
+    src/CoMISo/Solver/MultiDimConstrainedSolver.cc
+    src/CoMISo/Solver/SparseQRSolver.cc
+    src/CoMISo/Solver/SubProblemSolver.cc
+    src/CoMISo/Solver/TaucsSolver.cc
+    src/CoMISo/Solver/UMFPACKSolver.cc
+    src/CoMISo/Utils/CoMISoError.cc
+    src/CoMISo/Utils/ExactConstraintSatisfaction.cc
+    src/CoMISo/Utils/ExactConstraintProjection.cc
+    src/CoMISo/Utils/MatrixDecomposition.cc
 )
 
 
@@ -202,19 +202,17 @@ endif ()
 
 add_library(CoMISo::CoMISo ALIAS CoMISo)
 
-
-
 target_include_directories(CoMISo
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/CoMISo>     # LEGACY! TODO: remove
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/CoMISo> # LEGACY! TODO: remove (first only add to INTERFACE)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>       # LEGACY! TODO: remove
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # TODO: this is dangerous!
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CoMISo>
 )
-
-include(GenerateExportHeader)
 
 option(COMISO_EXCLUDE_DEPRECATED "Exclude deprecated parts of CoMISo" FALSE)
 if (COMISO_EXCLUDE_DEPRECATED)
@@ -225,16 +223,16 @@ endif()
 
 
 generate_export_header(CoMISo
-    BASE_NAME COMISO
-    EXPORT_FILE_NAME "src/CoMISo/Config/Export.hh"
-    ${NO_BUILD_DEPRECATED}
+    BASE_NAME BASE
+    EXPORT_FILE_NAME "include/Base/Config/Export.hh"
 )
 
 generate_export_header(CoMISo
-    BASE_NAME BASE
-    EXPORT_FILE_NAME "src/Base/Config/Export.hh"
+    BASE_NAME COMISO
+    EXPORT_FILE_NAME "include/CoMISo/Config/Export.hh"
     ${NO_BUILD_DEPRECATED}
 )
+
 
 
 # Maybe CoMISo was added using add_subdirectory and Eigen is already available?
@@ -249,7 +247,7 @@ if( COMISO_ENABLE_QT )
   vci_qt ()
 
   if( QT_FOUND)
-    target_sources(CoMISo PRIVATE ./QtWidgets/MISolverDialogUI.cc)
+    target_sources(CoMISo PRIVATE src/CoMISo/QtWidgets/MISolverDialogUI.cc)
     set_target_properties (CoMISo PROPERTIES
         AUTOMOC ON
         AUTOUIC ON)
@@ -794,12 +792,12 @@ set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 vci_print_configure_header (COMISO "CoMISo")
 
 # write config file
-configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config.hh.in"
-     "CoMISo/Config/config.hh" @ONLY IMMEDIATE)
+configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/include/CoMISo/Config/config.hh.in"
+     "include/CoMISo/Config/config.hh" @ONLY IMMEDIATE)
 
 # TODO: split into multiple config files to minimize re-compilation when unrelated dependencies change:
-configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/Config/config_suitesparse.hh.in"
-     "CoMISo/Config/config_suitesparse.hh" @ONLY IMMEDIATE)
+configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/include/CoMISo/Config/config_suitesparse.hh.in"
+     "include/CoMISo/Config/config_suitesparse.hh" @ONLY IMMEDIATE)
 
 
 
@@ -850,23 +848,23 @@ if(NOT COMISO_NO_INSTALL)
       )
 
   # Install Header Files
-  install(DIRECTORY .
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CoMISo # include/CoMISo
-          FILES_MATCHING
-          PATTERN "*.hh"
-          PATTERN "*T.cc"
-          PATTERN "CVS" EXCLUDE
-          PATTERN ".svn" EXCLUDE
-          PATTERN ".git" EXCLUDE
-          PATTERN "Examples" EXCLUDE
-          PATTERN "CI" EXCLUDE
-          PATTERN "tmp" EXCLUDE
-          PATTERN "Templates" EXCLUDE
-          PATTERN "Debian*" EXCLUDE)
+    install(DIRECTORY
+        include/CoMISo
+        src/CoMISo
+        src/Base
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING
+        PATTERN "*.hh"
+        PATTERN "*T.cc"
+    )
 
   # Install Config File
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CoMISo/Config/config.hh
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/CoMISo/Config/config.hh
+                    ${CMAKE_CURRENT_BINARY_DIR}/include/CoMISo/Config/Export.hh
+                    ${CMAKE_CURRENT_BINARY_DIR}/include/CoMISo/Config/config_suitesparse.hh
           DESTINATION include/CoMISo/Config)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Base/Config/Export.hh
+          DESTINATION include/Base/Config)
 
   # Create export target to reference CoMISo installation
   install(EXPORT CoMISoTargets
@@ -891,6 +889,7 @@ if (COMISO_ENABLE_UNITTESTS)
         FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
             GIT_TAG        v1.17.x
+            EXCLUDE_FROM_ALL # do not install
         )
         if(WIN32)
             # avoid linking errors, cf https://stackoverflow.com/questions/12540970/how-to-make-gtest-build-mdd-instead-of-mtd-by-default-using-cmake
