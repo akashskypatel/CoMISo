@@ -1,3 +1,4 @@
+#pragma once
 /*===========================================================================*\
  *                                                                           *
  *                               CoMISo                                      *
@@ -29,28 +30,19 @@
 //
 //=============================================================================
 
-#ifndef COMISO_SPARSE_QR_SOLVER_HH
-#define COMISO_SPARSE_QR_SOLVER_HH
-
-
-//== INCLUDES =================================================================
-
-
 #include <CoMISo/Config/CoMISoDefines.hh>
 #include <CoMISo/Config/config.hh>
-#include "GMM_Tools.hh"
+#include <CoMISo/Solver/GMM_Tools.hh>
 #include <Base/Utils/StopWatch.hh>
 
-#include <iostream>
 #include <vector>
 
-
 //== BUILD-TIME DEPENDENCIES =================================================================
-#if(COMISO_SUITESPARSE_SPQR_AVAILABLE)
+#if(COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
 //============================================================================================
 
-#include "SuiteSparseQR.hpp"
-#include "cholmod.h"
+#include <SuiteSparseQR.hpp>
+#include <cholmod.h>
 
 
 //typedef struct cholmod_common_struct               cholmod_common;
@@ -166,7 +158,5 @@ private:
 #include "SparseQRSolverT_impl.hh"
 #endif
 //== BUILD-TIME DEPENDENCIES ==================================================
-#endif
-//=============================================================================
-#endif // COMISO_SPARSE_QR_SOLVER_HH defined
+#endif // (COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
 //=============================================================================

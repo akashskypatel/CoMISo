@@ -26,8 +26,8 @@
 
 #include "SparseQRSolver.hh"
 
-//== BUILD-TIME DEPENDENCIES =================================================================
-#if(COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
+//== BUILD-TIME DEPENDENCIES ================================================================
+#if(COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
 //============================================================================================
 
 
@@ -239,4 +239,4 @@ bool SparseQRSolver::solve( double * _x, double * _b)
 
 }
 
-#endif // COMISO_SUITESPARSE_CHOLMOD_AVAILABLE
+#endif // #if(COMISO_SUITESPARSE_SPQR_AVAILABLE && COMISO_SUITESPARSE_CHOLMOD_AVAILABLE)
