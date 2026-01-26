@@ -435,11 +435,11 @@ if(COMISO_ENABLE_TAO)
     target_link_directories   (CoMISo PRIVATE ${TAO_LIBRARY_DIR})
     target_link_libraries     (CoMISo PRIVATE ${TAO_LIBRARY})
   else ()
-    message (STATUS "TAO or PETSC or MPI not found!")
+      message (STATUS "CoMISo: COMISO_ENABLE_TAO set, but TAO or PETSC or MPI not found!")
     set (COMISO_TAO_CONFIG_FILE_SETTINGS "#define COMISO_TAO_AVAILABLE 0" )
   endif ()
 else ()
-  message (STATUS "TAO disabled!")
+    message (STATUS "CoMISo: building without TAO (enable with COMISO_ENABLE_TAO)")
   set (COMISO_TAO_CONFIG_FILE_SETTINGS "#define COMISO_TAO_AVAILABLE 0" )
 endif ()
 
@@ -480,7 +480,7 @@ endif ()
 
 if(COMISO_ENABLE_IPOPT)
     if (TARGET IPOPT::IPOPT)
-          target_link_libraries (CoMISo PUBLIC PkgConfig::IPOPT)
+        target_link_libraries (CoMISo PUBLIC IPOPT::IPOPT)
           set (COMISO_IPOPT_CONFIG_FILE_SETTINGS "#define COMISO_IPOPT_AVAILABLE 1" )
           set (COMISO_HSL_CONFIG_FILE_SETTINGS "#define COMISO_HSL_AVAILABLE 0" )
           message(STATUS "CoMISo: linking against provided target IPOPT::IPOPT.")
@@ -595,24 +595,27 @@ if (COMISO_ENABLE_OSI)
         target_include_directories(CoMISo PRIVATE ${OSI_INCLUDE_DIRS})
         target_link_libraries     (CoMISo PRIVATE ${OSI_LIBRARIES})
     else ()
-        message (STATUS "OSI not found!")
+        message (STATUS "CoMISo: COMISO_ENABLE_OSI set, but OSI not found!")
         set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
     endif ()
+else()
+    message (STATUS "CoMISo: Building without OSI (set COMISO_ENABLE_OSI to enable)")
+    set (COMISO_OSI_CONFIG_FILE_SETTINGS "#define COMISO_OSI_AVAILABLE 0" )
 endif()
 
 if (COMISO_ENABLE_TAUCS)
     find_package (Taucs QUIET)
     if (TAUCS_FOUND AND NOT SUPRESS_TAUCS)
-    list (APPEND NEED_LAPACK "Taucs")
-    set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
-    target_include_directories(CoMISo PRIVATE ${TAUCS_INCLUDE_DIR})
-    target_link_libraries     (CoMISo PRIVATE ${TAUCS_LIBRARY})
-
+        list (APPEND NEED_LAPACK "Taucs")
+        set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 1" )
+        target_include_directories(CoMISo PRIVATE ${TAUCS_INCLUDE_DIR})
+        target_link_libraries     (CoMISo PRIVATE ${TAUCS_LIBRARY})
     else ()
-    message (STATUS "TAUCS not found!")
-    set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
+        message (STATUS "TAUCS not found!")
+        set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
     endif ()
 else()
+    message (STATUS "CoMISo: Building without TAUCS (set COMISO_ENABLE_TAUCS to enable)")
     set (COMISO_TAUCS_CONFIG_FILE_SETTINGS "#define COMISO_TAUCS_AVAILABLE 0" )
 endif()
 
@@ -630,7 +633,7 @@ if (COMISO_ENABLE_GUROBI)
     endif()
 else()
     set (COMISO_GUROBI_CONFIG_FILE_SETTINGS "#define COMISO_GUROBI_AVAILABLE 0" )
-    message (STATUS "CoMISo: Building without Gurobi")
+    message (STATUS "CoMISo: Building without Gurobi (set COMISO_ENABLE_GUROBI to enable)")
 endif ()
 
 if (COMISO_ENABLE_MOSEK)
@@ -735,25 +738,6 @@ else()
     set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
 endif()
 
-# generate dllexport macros on windows
-if (WIN32)
-  target_compile_definitions(CoMISo PRIVATE
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_USE_MATH_DEFINES
-      -DNOMINMAX
-      )
-endif ()
-# ignore "... needs to have dll-interface to be used by clients"
-target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
-
-# enable debug stuff
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
-  # disable unused parameter warning
-  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
-  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
-endif()
-
 if(COMISO_ENABLE_OSQP)
     if (NOT TARGET osqp::osqp AND NOT TARGET osqp::osqpstatic)
         find_package(osqp CONFIG)
@@ -784,6 +768,25 @@ else()
     message (STATUS "CoMISo: Building without OSQP (enable with COMISO_ENABLE_OSQP)")
     set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
 endif()
+
+if (WIN32)
+  target_compile_definitions(CoMISo PRIVATE
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_USE_MATH_DEFINES
+      -DNOMINMAX
+      )
+endif ()
+# ignore "... needs to have dll-interface to be used by clients"
+target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
+
+# enable debug stuff
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
+  # disable unused parameter warning
+  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
+  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
+endif()
+
 
 set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 
