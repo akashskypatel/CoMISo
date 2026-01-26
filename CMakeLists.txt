@@ -738,24 +738,6 @@ else()
     set (COMISO_LPSOLVE_CONFIG_FILE_SETTINGS "#define COMISO_LPSOLVE_AVAILABLE 0" )
 endif()
 
-if (WIN32)
-  target_compile_definitions(CoMISo PRIVATE
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_USE_MATH_DEFINES
-      -DNOMINMAX
-      )
-endif ()
-# ignore "... needs to have dll-interface to be used by clients"
-target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
-
-# enable debug stuff
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
-  # disable unused parameter warning
-  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
-  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
-endif()
-
 if(COMISO_ENABLE_OSQP)
     if (NOT TARGET osqp::osqp AND NOT TARGET osqp::osqpstatic)
         find_package(osqp CONFIG)
@@ -786,6 +768,25 @@ else()
     message (STATUS "CoMISo: Building without OSQP (enable with COMISO_ENABLE_OSQP)")
     set (COMISO_OSQP_CONFIG_FILE_SETTINGS "#define COMISO_OSQP_AVAILABLE 0" )
 endif()
+
+if (WIN32)
+  target_compile_definitions(CoMISo PRIVATE
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_USE_MATH_DEFINES
+      -DNOMINMAX
+      )
+endif ()
+# ignore "... needs to have dll-interface to be used by clients"
+target_compile_options(CoMISo PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/wd4251>")
+
+# enable debug stuff
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "[cC][lL][aA][nN][gG]")
+  # disable unused parameter warning
+  #add_definitions(-Wno-unused-parameter -Wno-deprecated-register)
+  target_compile_options(CoMISo PRIVATE -Wno-unused-parameter -Wno-deprecated-register)
+endif()
+
 
 set_target_properties(CoMISo PROPERTIES INSTALL_RPATH_USE_LINK_PATH 1)
 
