@@ -408,12 +408,26 @@ bool CholmodSolver::solve( double * _x, double * _b)
 
     if( !(x = cholmod_solve( CHOLMOD_A, mp_L, &b, mp_cholmodCommon )) )
     {
-	std::cout << "cholmod_solve failed" << std::endl;
-	return false;
+        DEB_error("cholmod_solve failed with status "
+                  + std::to_string(mp_cholmodCommon->status));
+        return false;
     }
     
     for( unsigned int i = 0; i < n; ++i )
-	_x[i] = ((double*)x->x)[i];
+    {
+        _x[i] = ((double*)x->x)[i];
+
+        // cholmod_solve above can produce NaN values after warning
+        // about a non-positive definite matrix while mp_cholmodCommon->status = 0 (ok).
+        // This can lead to a poisoning of the entire system without any trace of
+        // where the NaNs are coming from, so we explicitly check here.
+        if (!std::isfinite(_x[i])) {
+            DEB_error("cholmod_solve produced invalid value "
+                      + std::to_string(_x[i]) + " at index "
+                      + std::to_string(i));
+            return false;
+        }
+    }
 
     cholmod_free_dense( &x, mp_cholmodCommon );
 
