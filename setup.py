@@ -69,6 +69,19 @@ def cmake_command(*args: str) -> list[str]:
     return [*resolve_cmake_command(), *args]
 
 
+def extract_cmake_definition_key(token: str) -> str | None:
+    if not token.startswith("-D"):
+        return None
+
+    definition = token[2:]
+    if not definition:
+        return None
+
+    name = definition.split("=", 1)[0]
+    name = name.split(":", 1)[0]
+    return name or None
+
+
 def read_version() -> str:
     content = CMAKE_LISTS.read_text(encoding="utf-8")
     match = re.search(r"project\(CoMISo VERSION ([0-9.]+)", content)
@@ -120,7 +133,9 @@ class CMakeCommand(Command):
         ("cmake-generator=", None, "CMake generator name"),
         ("cmake-args=", None, "Additional arguments passed to cmake configure"),
         ("build-type=", None, "CMake build type"),
+        ("build-tests", None, "Build CoMISo unit tests"),
     ]
+    boolean_options = ["build-tests"]
 
     def initialize_options(self) -> None:
         self.build_dir = None
@@ -128,6 +143,7 @@ class CMakeCommand(Command):
         self.cmake_generator = None
         self.cmake_args = None
         self.build_type = None
+        self.build_tests = None
 
     def finalize_options(self) -> None:
         self.build_dir = self.build_dir or os.environ.get(
@@ -139,25 +155,46 @@ class CMakeCommand(Command):
         self.cmake_generator = self.cmake_generator or os.environ.get("CMAKE_GENERATOR")
         self.cmake_args = self.cmake_args or os.environ.get("COMISO_CMAKE_ARGS", "")
         self.build_type = self.build_type or os.environ.get("CMAKE_BUILD_TYPE", "Release")
+        if self.build_tests is None:
+            self.build_tests = os.environ.get("COMISO_BUILD_TESTS", "").lower() in (
+                "1",
+                "true",
+                "on",
+                "yes",
+            )
 
         self.build_dir = str(Path(self.build_dir).resolve())
         self.install_prefix = str(Path(self.install_prefix).resolve())
 
     def configure_args(self) -> list[str]:
+        extra_args = split_cmake_args(self.cmake_args)
+        extra_definition_keys = {
+            key for key in (extract_cmake_definition_key(arg) for arg in extra_args) if key
+        }
+
+        configured_definitions = [
+            f"-DCMAKE_INSTALL_PREFIX={self.install_prefix}",
+            f"-DCMAKE_BUILD_TYPE={self.build_type}",
+            "-DCOMISO_FETCH_EIGEN=ON",
+            "-DCOMISO_BUILD_EXAMPLES=OFF",
+            f"-DCOMISO_ENABLE_UNITTESTS={'ON' if self.build_tests else 'OFF'}",
+        ]
+        configured_definitions = [
+            definition
+            for definition in configured_definitions
+            if extract_cmake_definition_key(definition) not in extra_definition_keys
+        ]
+
         args = cmake_command(
             "-S",
             str(ROOT),
             "-B",
             self.build_dir,
-            f"-DCMAKE_INSTALL_PREFIX={self.install_prefix}",
-            f"-DCMAKE_BUILD_TYPE={self.build_type}",
-            "-DCOMISO_FETCH_EIGEN=ON",
-            "-DCOMISO_BUILD_EXAMPLES=OFF",
-            "-DCOMISO_ENABLE_UNITTESTS=OFF",
         )
+        args.extend(configured_definitions)
         if self.cmake_generator:
             args.extend(["-G", self.cmake_generator])
-        args.extend(split_cmake_args(self.cmake_args))
+        args.extend(extra_args)
         return args
 
     def build_args(self) -> list[str]:

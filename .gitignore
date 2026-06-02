@@ -7,3 +7,4 @@ Config/config.hh
 /build*/
 CMakeLists.txt.user*
 .cache/
+__pycache__/
