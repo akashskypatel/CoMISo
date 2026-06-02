@@ -44,11 +44,40 @@ This repository also includes a `setup.py` wrapper for the native CMake build. I
 Using the requested virtual environment on Windows:
 
 ```powershell
-.venv\Scripts\python.exe setup.py build_native
-.venv\Scripts\python.exe setup.py install_native
+python setup.py build_native
+python setup.py install_native
+# build for linux via wsl
+python setup.py build_native_linux
+python setup.py build_native_linux --wsl-distro Ubuntu
 ```
 
 By default, `install_native` uses the active Python environment's `sys.prefix` as `CMAKE_INSTALL_PREFIX`, so running it with the above interpreter installs CoMISo into that virtual environment. Extra CMake configure flags can be passed with `--cmake-args="..."` or the `COMISO_CMAKE_ARGS` environment variable.
+
+`build_native_linux` relays the build through WSL. Pass `--wsl-distro` to target a specific distro, or set `COMISO_WSL_DISTRO`. If neither is provided, the first distro returned by `wsl.exe -l -q` is used automatically. Override the Linux-side Python executable with `COMISO_WSL_PYTHON`.
+
+On a native Linux environment, use the direct native commands instead of the WSL relay:
+
+```bash
+python3 setup.py build_native
+python3 setup.py install_native
+```
+
+The native Linux path runs fully inside the local Linux environment and uses a separate default build directory from Windows (`build/python-linux` versus `build/python-windows`).
+
+On a native macOS environment, use the same direct native commands:
+
+```bash
+python3 setup.py build_native
+python3 setup.py install_native
+```
+
+If `cmake` is not already available on `PATH`, install the Python `cmake` package for the active interpreter first, for example:
+
+```bash
+python3 -m pip install --user cmake
+```
+
+The native macOS path uses its own default build directory (`build/python-macos`).
 
 
 ## Building (for use with OpenFlipper)

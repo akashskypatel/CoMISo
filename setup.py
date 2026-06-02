@@ -9,12 +9,32 @@ import sys
 from pathlib import Path
 
 from setuptools import Command, setup
-from setuptools.command.build import build as _build
-from setuptools.command.install import install as _install
+try:
+    from setuptools.command.build import build as _build
+except ImportError:
+    from distutils.command.build import build as _build
+try:
+    from setuptools.command.install import install as _install
+except ImportError:
+    from distutils.command.install import install as _install
 
 
 ROOT = Path(__file__).resolve().parent
 CMAKE_LISTS = ROOT / "CMakeLists.txt"
+
+
+def default_build_dir() -> Path:
+    system = os.environ.get("COMISO_BUILD_PLATFORM")
+    if not system:
+        if sys.platform.startswith("linux"):
+            system = "linux"
+        elif sys.platform == "darwin":
+            system = "macos"
+        elif os.name == "nt":
+            system = "windows"
+        else:
+            system = sys.platform.replace(os.sep, "-")
+    return ROOT / "build" / f"python-{system}"
 
 
 def resolve_cmake_command() -> list[str]:
@@ -66,6 +86,33 @@ def run_command(args: list[str], cwd: Path) -> None:
     subprocess.run(args, cwd=str(cwd), check=True)
 
 
+def select_wsl_distro(explicit_name: str | None) -> str:
+    if explicit_name:
+        return explicit_name
+
+    result = subprocess.run(
+        ["wsl.exe", "-l", "-q"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    distros = [line.strip().lstrip("\ufeff") for line in result.stdout.splitlines() if line.strip()]
+    if not distros:
+        raise RuntimeError(
+            "No WSL distributions are available. Set COMISO_WSL_DISTRO or pass --wsl-distro."
+        )
+    return distros[0]
+
+
+def windows_to_wsl_path(path: str) -> str:
+    resolved = Path(path).resolve()
+    drive = resolved.drive.rstrip(":").lower()
+    parts = [part for part in resolved.parts[1:] if part not in ("\\", "/")]
+    if not drive:
+        raise RuntimeError(f"Cannot convert non-drive path to WSL format: {resolved}")
+    return f"/mnt/{drive}/" + "/".join(parts)
+
+
 class CMakeCommand(Command):
     user_options = [
         ("build-dir=", None, "Out-of-source CMake build directory"),
@@ -84,7 +131,7 @@ class CMakeCommand(Command):
 
     def finalize_options(self) -> None:
         self.build_dir = self.build_dir or os.environ.get(
-            "COMISO_BUILD_DIR", str(ROOT / "build" / "python")
+            "COMISO_BUILD_DIR", str(default_build_dir())
         )
         self.install_prefix = self.install_prefix or os.environ.get(
             "COMISO_INSTALL_PREFIX", sys.prefix
@@ -145,6 +192,77 @@ class InstallNative(CMakeCommand):
         run_command(self.install_args(), ROOT)
 
 
+class WSLCommand(Command):
+    user_options = [
+        ("wsl-distro=", None, "WSL distribution name"),
+        ("python-executable=", None, "Python executable inside WSL"),
+        ("build-dir=", None, "Out-of-source CMake build directory inside WSL"),
+        ("install-prefix=", None, "CMake install prefix inside WSL"),
+        ("cmake-generator=", None, "CMake generator name inside WSL"),
+        ("cmake-args=", None, "Additional arguments passed to cmake configure inside WSL"),
+        ("build-type=", None, "CMake build type"),
+    ]
+
+    subcommand = ""
+    description = "Run a setup.py native command inside WSL"
+
+    def initialize_options(self) -> None:
+        self.wsl_distro = None
+        self.python_executable = None
+        self.build_dir = None
+        self.install_prefix = None
+        self.cmake_generator = None
+        self.cmake_args = None
+        self.build_type = None
+
+    def finalize_options(self) -> None:
+        self.wsl_distro = select_wsl_distro(self.wsl_distro or os.environ.get("COMISO_WSL_DISTRO"))
+        self.python_executable = self.python_executable or os.environ.get(
+            "COMISO_WSL_PYTHON", "python3"
+        )
+        self.cmake_args = self.cmake_args or os.environ.get("COMISO_CMAKE_ARGS", "")
+        self.build_type = self.build_type or os.environ.get("CMAKE_BUILD_TYPE", "Release")
+
+    def relay_args(self) -> list[str]:
+        args = [self.subcommand]
+        if self.build_dir:
+            args.extend(["--build-dir", windows_to_wsl_path(self.build_dir)])
+        if self.install_prefix:
+            args.extend(["--install-prefix", windows_to_wsl_path(self.install_prefix)])
+        if self.cmake_generator:
+            args.extend(["--cmake-generator", self.cmake_generator])
+        if self.cmake_args:
+            args.extend(["--cmake-args", self.cmake_args])
+        if self.build_type:
+            args.extend(["--build-type", self.build_type])
+        return args
+
+    def run(self) -> None:
+        if os.name != "nt":
+            raise RuntimeError(f"{self.subcommand} is intended to be launched from Windows.")
+
+        repo_root = windows_to_wsl_path(str(ROOT))
+        relay = " ".join(shlex.quote(arg) for arg in self.relay_args())
+        shell_command = (
+            f"cd {shlex.quote(repo_root)} && "
+            f"{shlex.quote(self.python_executable)} setup.py {relay}"
+        )
+        run_command(
+            ["wsl.exe", "-d", self.wsl_distro, "sh", "-lc", shell_command],
+            ROOT,
+        )
+
+
+class BuildNativeLinux(WSLCommand):
+    description = "Run the native CoMISo Linux build inside a WSL distribution"
+    subcommand = "build_native"
+
+
+class InstallNativeLinux(WSLCommand):
+    description = "Run the native CoMISo Linux install inside a WSL distribution"
+    subcommand = "install_native"
+
+
 class BuildCommand(_build):
     sub_commands = [("build_native", None)] + _build.sub_commands
 
@@ -169,7 +287,9 @@ setup(
     cmdclass={
         "build": BuildCommand,
         "build_native": BuildNative,
+        "build_native_linux": BuildNativeLinux,
         "install": InstallCommand,
         "install_native": InstallNative,
+        "install_native_linux": InstallNativeLinux,
     },
 )
