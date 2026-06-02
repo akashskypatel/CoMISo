@@ -38,6 +38,18 @@ Assuming CoMISo was unpacked to the directory `SOME_DIRECTORY/CoMISo` (where `SO
 
 The binaries (examples) and the shared library are found under `/SOME_DIRECTORY/CoMISO/build/Build/bin/` and `/SOME_DIRECTORY/CoMISO/build/Build/lib/CoMISo/`.
 
+## Building via setup.py
+This repository also includes a `setup.py` wrapper for the native CMake build. It is intended for environments that want to drive the build through Python while still using CoMISo's existing CMake targets.
+
+Using the requested virtual environment on Windows:
+
+```powershell
+C:\Users\Akash\Documents\ComfyUI\.venv\Scripts\python.exe setup.py build_native
+C:\Users\Akash\Documents\ComfyUI\.venv\Scripts\python.exe setup.py install_native
+```
+
+By default, `install_native` uses the active Python environment's `sys.prefix` as `CMAKE_INSTALL_PREFIX`, so running it with the above interpreter installs CoMISo into that virtual environment. Extra CMake configure flags can be passed with `--cmake-args="..."` or the `COMISO_CMAKE_ARGS` environment variable.
+
 
 ## Building (for use with OpenFlipper)
 Simply extract / checkout the CoMISo directory to the `/PATH_TO_OPENFLIPPER/libs/` directory. The library will be automatically built and you will find the shared library `libCoMISo.so` under the OpenFlipper build directory.

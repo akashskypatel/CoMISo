@@ -236,8 +236,28 @@ generate_export_header(CoMISo
 
 
 # Maybe CoMISo was added using add_subdirectory and Eigen is already available?
+option(COMISO_FETCH_EIGEN "Download Eigen3 automatically if it is not already available" ${PROJECT_IS_TOP_LEVEL})
 if (NOT TARGET Eigen3::Eigen)
-    find_package (Eigen3 REQUIRED CONFIG)
+    find_package (Eigen3 CONFIG QUIET)
+endif()
+if (NOT TARGET Eigen3::Eigen AND COMISO_FETCH_EIGEN)
+    message(STATUS "CoMISo: Eigen3 not found, fetching Eigen 3.4.0")
+    include(FetchContent)
+    FetchContent_Declare(
+        eigen3
+        URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(eigen3)
+    if (NOT TARGET Eigen3::Eigen)
+        add_library(Eigen3::Eigen INTERFACE IMPORTED)
+        set_target_properties(Eigen3::Eigen PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${eigen3_SOURCE_DIR}"
+        )
+    endif()
+endif()
+if (NOT TARGET Eigen3::Eigen)
+    message(FATAL_ERROR "Could not find Eigen3. Set Eigen3_DIR/CMAKE_PREFIX_PATH or enable COMISO_FETCH_EIGEN.")
 endif()
 target_link_libraries     (CoMISo PUBLIC Eigen3::Eigen)
 set (COMISO_EIGEN3_CONFIG_FILE_SETTINGS "#define COMISO_EIGEN3_AVAILABLE 1" )
