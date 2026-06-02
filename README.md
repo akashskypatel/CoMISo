@@ -44,8 +44,8 @@ This repository also includes a `setup.py` wrapper for the native CMake build. I
 Using the requested virtual environment on Windows:
 
 ```powershell
-C:\Users\Akash\Documents\ComfyUI\.venv\Scripts\python.exe setup.py build_native
-C:\Users\Akash\Documents\ComfyUI\.venv\Scripts\python.exe setup.py install_native
+.venv\Scripts\python.exe setup.py build_native
+.venv\Scripts\python.exe setup.py install_native
 ```
 
 By default, `install_native` uses the active Python environment's `sys.prefix` as `CMAKE_INSTALL_PREFIX`, so running it with the above interpreter installs CoMISo into that virtual environment. Extra CMake configure flags can be passed with `--cmake-args="..."` or the `COMISO_CMAKE_ARGS` environment variable.
